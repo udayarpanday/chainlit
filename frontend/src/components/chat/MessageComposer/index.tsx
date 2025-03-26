@@ -1,8 +1,9 @@
-import { useCallback, useRef, useState, useContext } from 'react';
+import { useCallback, useContext, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRecoilState, useSetRecoilState } from 'recoil';
 import { v4 as uuidv4 } from 'uuid';
 
+import { WidgetContext } from '@chainlit/copilot/src/context';
 import {
   FileSpec,
   ICommand,
@@ -25,7 +26,6 @@ import SubmitButton from './SubmitButton';
 import UploadButton from './UploadButton';
 import VoiceButton from './VoiceButton';
 
-import { WidgetContext } from '@chainlit/copilot/src/context';
 interface Props {
   fileSpec: FileSpec;
   onFileUpload: (payload: File[]) => void;
@@ -131,7 +131,7 @@ export default function MessageComposer({
     } else {
       submitMessage();
     }
-  }
+  };
 
   const submitMessage = useCallback(() => {
     if (disabled || (value === '' && attachments.length === 0)) {
@@ -156,13 +156,19 @@ export default function MessageComposer({
   ]);
 
   return (
-    <div className={`bg-accent p-3 px-4 w-full ${(evoya && evoya.type == 'dashboard') || evoya==undefined ? "min-h-24 rounded-3xl":"rounded-full"} flex flex-col`}>
+    <div
+      className={`bg-accent p-3 px-4 w-full ${
+        (evoya && evoya.type == 'dashboard') || evoya == undefined
+          ? 'min-h-24 rounded-3xl'
+          : 'rounded-full'
+      } flex flex-col`}
+    >
       {attachments.length > 0 ? (
         <div className="mb-1">
           <Attachments />
         </div>
       ) : null}
-      {((evoya && evoya?.type == 'dashboard') || evoya==undefined) &&
+      {((evoya && evoya?.type == 'dashboard') || evoya == undefined) && (
         <Input
           ref={inputRef}
           id="chat-input"
@@ -175,7 +181,7 @@ export default function MessageComposer({
           submitProxy={submitProxy}
           placeholder={t('chat.input.placeholder', 'Type your message here...')}
         />
-      }
+      )}
       <div className="flex items-center justify-between">
         <div className="flex items-center -ml-1.5">
           <UploadButton
@@ -186,6 +192,7 @@ export default function MessageComposer({
           />
           <CommandButton
             disabled={disabled}
+            selectedCommand={selectedCommand}
             onCommandSelect={setSelectedCommand}
           />
           {chatSettingsInputs.length > 0 && (
@@ -202,7 +209,7 @@ export default function MessageComposer({
           )}
           <VoiceButton disabled={disabled} />
         </div>
-        {evoya && evoya?.type  != 'dashboard' &&
+        {evoya && evoya?.type != 'dashboard' && (
           <Input
             ref={inputRef}
             id="chat-input"
@@ -213,15 +220,15 @@ export default function MessageComposer({
             onEnter={submit}
             onPaste={onPaste}
             submitProxy={submitProxy}
-            placeholder={t('chat.input.placeholder', 'Type your message here...')}
+            placeholder={t(
+              'chat.input.placeholder',
+              'Type your message here...'
+            )}
             className={'min-h-0'}
           />
-        }
+        )}
         <div className="flex items-center gap-1">
-          <SubmitButton
-            onSubmit={submit}
-            disabled={disabled || !value.trim()}
-          />
+          <SubmitButton onSubmit={submit} disabled={disabled} />
         </div>
       </div>
     </div>

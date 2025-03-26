@@ -111,7 +111,11 @@ export default function UserMessage({
               </div>
             </div>
           ) : (
-            <div className="flex flex-col">
+            <div
+              className={`flex ${
+                message.command ? 'gap-2 items-center' : 'flex-col'
+              }`}
+            >
               {message.command ? (
                 <div className="font-bold text-[#08f] command-span">
                   {message.command}

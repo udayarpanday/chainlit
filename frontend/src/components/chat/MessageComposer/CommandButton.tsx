@@ -3,6 +3,7 @@ import {
   PopoverContent,
   PopoverTrigger
 } from '@radix-ui/react-popover';
+import { useState } from 'react';
 import { useRecoilValue } from 'recoil';
 
 import { ICommand, commandsState } from '@chainlit/react-client';
@@ -12,7 +13,9 @@ import { ToolBox } from '@/components/icons/ToolBox';
 import { Button } from '@/components/ui/button';
 import {
   Command,
+  CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
   CommandList
 } from '@/components/ui/command';
@@ -26,15 +29,21 @@ import {
 interface Props {
   disabled?: boolean;
   onCommandSelect: (command: ICommand) => void;
+  selectedCommand: ICommand;
 }
 
-export const CommandButton = ({ disabled = false, onCommandSelect }: Props) => {
+export const CommandButton = ({
+  disabled = false,
+  onCommandSelect,
+  selectedCommand
+}: Props) => {
   const commands = useRecoilValue(commandsState);
+  const [open, setOpen] = useState(false);
 
   if (!commands.length) return null;
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -60,28 +69,37 @@ export const CommandButton = ({ disabled = false, onCommandSelect }: Props) => {
         sideOffset={12}
         className="focus:outline-none"
       >
-        <Command className="rounded-lg border shadow-md">
-          <CommandList>
-            <CommandGroup>
-              {commands.map((command) => (
-                <CommandItem
-                  key={command.id}
-                  onSelect={() => onCommandSelect(command)}
-                  className="command-item cursor-pointer flex items-center space-x-2 p-2"
-                >
-                  <Icon
-                    name={command.icon}
-                    className="!size-5 text-muted-foreground"
-                  />
-                  <div>
-                    <div className="font-medium">{command.id}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {command.description}
+        <Command className="rounded-lg border shadow-none">
+          <div className="flex items-center px-3 pt-3 pb-2">
+            <CommandInput placeholder="Search prompts..." className="h-9" />
+          </div>
+          <CommandList className="max-h-[400px] overflow-auto flex">
+            <CommandEmpty>No results found.</CommandEmpty>
+            <div className="flex">
+              <CommandGroup>
+                {commands.map((command) => (
+                  <CommandItem
+                    key={command.id}
+                    onSelect={() => onCommandSelect(command)}
+                    className="command-item cursor-pointer px-3 py-3 rounded-none"
+                  >
+                    <Icon
+                      name={command.icon}
+                      className="!size-5 text-muted-foreground"
+                    />
+                    <div>
+                      <div className="font-medium">{command.id}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {command?.description ?? commands[0].description}
+                      </div>
                     </div>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+              <div>
+                <p>{selectedCommand?.description ?? commands[0].description}</p>
+              </div>
+            </div>
           </CommandList>
         </Command>
       </PopoverContent>
