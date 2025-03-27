@@ -368,7 +368,9 @@
         "speech": {
             "start": "Aufnahme starten",
             "stop": "Aufnahme stoppen",
-            "connecting": "Verbinde..."
+            "connecting": "Verbinde...",
+            "voiceMode": "Sprachmodus verwenden",
+            "speechText": "Sprache-zu-Text-Modus verwenden"
         },
         "fileUpload": {
             "dragDrop": "Ziehe die Dateien hierhin",
