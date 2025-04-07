@@ -8,7 +8,6 @@ import { useRecoilValue } from 'recoil';
 
 import { ICommand, commandsState } from '@chainlit/react-client';
 
-import Icon from '@/components/Icon';
 import { ToolBox } from '@/components/icons/ToolBox';
 import { Button } from '@/components/ui/button';
 import {
@@ -68,43 +67,49 @@ export const CommandButton = ({
       <PopoverContent
         align="start"
         sideOffset={12}
-        className="focus:outline-none md:w-[700px] "
-
+        className="focus:outline-none md:w-[950px]"
+        style={{
+          position: 'relative',
+          bottom: '42px',
+          right: '48px'
+        }}
       >
-        <Command className="rounded-lg border shadow-none">
-          <div className="flex items-center px-3 pt-3 pb-0">
-            <CommandInput placeholder="Search prompts..." className="h-9" />
-          </div>
-          <CommandList className="max-h-[500px] overflow-auto flex">
-            <CommandEmpty>No results found.</CommandEmpty>
-            <div className="flex">
-              <CommandGroup className='w-[200px] p-2'>
-                {commands.map((command) => (
-                  <CommandItem
-                    key={command.id}
-                    onSelect={() => onCommandSelect(command)}
-                    className="command-item cursor-pointer px-3 py-3 justify-between rounded-md"
-                  >
-                    <div>
-                      <div className="font-medium">{command.id}</div>
-                    </div>
-                    <div className="text-gray-400">
-                      <ChevronDown className="h-5 w-5 rotate-[-90deg]" />
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-              <div className='border-l-2 md:w-[400px] hidden md:block'>
+        <div>
+          <Command className="rounded-lg border shadow-none">
+            <div className="flex items-center px-3 pt-3 pb-0">
+              <CommandInput placeholder="Search prompts..." className="h-9" />
+            </div>
+            <CommandList className="max-h-[500px] overflow-auto flex">
+              <CommandEmpty>No results found.</CommandEmpty>
+              <div className="flex">
+                <CommandGroup className='w-[200px] p-2'>
+                  {commands.map((command) => (
+                    <CommandItem
+                      key={command.id}
+                      onSelect={() => {onCommandSelect(command);setOpen(false)}}
+                      className="command-item cursor-pointer px-3 py-3 justify-between rounded-md"
+                    >
+                      <div>
+                        <div className="font-medium">{command.id}</div>
+                      </div>
+                      <div className="text-gray-400">
+                        <ChevronDown className="h-5 w-5 rotate-[-90deg]" />
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+                <div className='border-l-2 md:w-[580px] hidden md:block'>
                   <div class="flex-1 overflow-y-auto p-6">
                     <div class="bg-gray-50 rounded-md p-4 relative">
                       <p class="text-sm text-gray-700 whitespace-pre-wrap font-sans">{selectedCommand?.description ?? commands[0].description}</p>
-                      </div>
                     </div>
-                <p></p>
+                  </div>
+                  <p></p>
+                </div>
               </div>
-            </div>
-          </CommandList>
-        </Command>
+            </CommandList>
+          </Command>
+        </div>
       </PopoverContent>
     </Popover>
   );

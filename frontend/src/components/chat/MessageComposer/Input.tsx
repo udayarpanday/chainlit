@@ -13,10 +13,13 @@ import { ICommand, commandsState } from '@chainlit/react-client';
 import Icon from '@/components/Icon';
 import {
   Command,
+  CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
   CommandList
 } from '@/components/ui/command';
+import { ChevronDown } from "lucide-react"
 
 interface Props {
   id?: string;
@@ -406,32 +409,39 @@ const Input = forwardRef<InputMethods, Props>(
         />
 
         {showCommands && filteredCommands.length ? (
-          <div className="absolute z-50 -top-4 left-0 -translate-y-full">
-            <Command className="rounded-lg border shadow-md">
-              <CommandList>
-                <CommandGroup>
-                  {filteredCommands.map((command, index) => (
-                    <CommandItem
-                      key={command.id}
-                      onSelect={() => handleCommandSelect(command)}
-                      className={cn(
-                        'cursor-pointer command-item flex items-center space-x-2 p-2',
-                        index === selectedIndex ? 'bg-accent' : ''
-                      )}
-                    >
-                      <Icon
-                        name={command.icon}
-                        className="!size-5 text-muted-foreground"
-                      />
-                      <div>
-                        <div className="font-medium">{command.id}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {command.description}
+          <div className="absolute z-50 -top-4 -left-[15px] -translate-y-full md:w-[950px]">
+            <Command className="rounded-lg border shadow-none">
+              <div className="flex items-center px-3 pt-3 pb-0">
+                <CommandInput placeholder="Search prompts..." className="h-9" />
+              </div>
+              <CommandList className="max-h-[500px] overflow-auto flex">
+                <CommandEmpty>No results found.</CommandEmpty>
+                <div className="flex">
+                  <CommandGroup className='w-[200px] p-2'>
+                    {filteredCommands.map((command) => (
+                      <CommandItem
+                        key={command.id}
+                        onSelect={() => handleCommandSelect(command)}
+                        className="command-item cursor-pointer px-3 py-3 justify-between rounded-md"
+                      >
+                        <div>
+                          <div className="font-medium">{command.id}</div>
                         </div>
+                        <div className="text-gray-400">
+                          <ChevronDown className="h-5 w-5 rotate-[-90deg]" />
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                  <div className='border-l-2 md:w-[580px] hidden md:block'>
+                    <div class="flex-1 overflow-y-auto p-6">
+                      <div class="bg-gray-50 rounded-md p-4 relative">
+                        <p class="text-sm text-gray-700 whitespace-pre-wrap font-sans">{selectedCommand?.description ?? commands[0].description}</p>
                       </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
+                    </div>
+                    <p></p>
+                  </div>
+                </div>
               </CommandList>
             </Command>
           </div>
