@@ -100,10 +100,8 @@ const useChatInteract = () => {
   }, [session?.socket]);
 
   const passAudioType = useCallback((type) => {
-    console.log(session,'pass-socket')
     session?.socket.emit('audio_type',{
       audioType:type,
-      id:session?.socket.auth
     });
   }, [session?.socket]);
 
