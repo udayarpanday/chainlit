@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { ChevronDown } from 'lucide-react';
 import React, {
   forwardRef,
   useEffect,
@@ -19,7 +20,6 @@ import {
   CommandItem,
   CommandList
 } from '@/components/ui/command';
-import { ChevronDown } from "lucide-react"
 
 interface Props {
   id?: string;
@@ -70,6 +70,9 @@ const Input = forwardRef<InputMethods, Props>(
     const lastCommandSpanRef = useRef<HTMLElement | null>(null);
     const mutationObserverRef = useRef<MutationObserver | null>(null);
     const isUpdatingRef = useRef(false);
+    const [searchResults, setSearchResults] = useState<ICommand[]>([]);
+    const [hoveredCommand, setHoveredCommand] = useState<ICommand | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const getContentWithoutCommand = () => {
       if (!contentEditableRef.current) return '';
@@ -273,7 +276,8 @@ const Input = forwardRef<InputMethods, Props>(
                   newRange.selectNodeContents(contentDiv);
                   newRange.collapse(false);
 
-                  const newSelection = shadowRoot.getSelection() || window.getSelection();
+                  const newSelection =
+                    shadowRoot.getSelection() || window.getSelection();
                   newSelection?.removeAllRanges();
                   newSelection?.addRange(newRange);
 
@@ -319,7 +323,6 @@ const Input = forwardRef<InputMethods, Props>(
         textarea.removeEventListener('paste', _onPaste);
       };
     }, [onPaste]);
-
 
     const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
       if (isUpdatingRef.current) return;
@@ -390,6 +393,32 @@ const Input = forwardRef<InputMethods, Props>(
       }, 0);
     };
 
+    // Initialize search results with all commands
+    useEffect(() => {
+      setSearchResults(commands);
+    }, [commands]);
+
+    // Handle search input changes
+    const handleSearch = (value: string) => {
+      setSearchTerm(value);
+      if (!value.trim()) {
+        setSearchResults(commands);
+        return;
+      }
+
+      const filtered = commands.filter(
+        (command) =>
+          command.id.toLowerCase().includes(value.toLowerCase()) ||
+          command.description?.toLowerCase().includes(value.toLowerCase()) ||
+          command.prompt_content?.toLowerCase().includes(value.toLowerCase())
+      );
+      setSearchResults(filtered);
+    };
+
+    // Get the currently displayed command (hovered, selected, or first available)
+    const displayedCommand =
+      hoveredCommand || selectedCommand || searchResults[0] || null;
+
     return (
       <div className="relative w-full">
         <div
@@ -409,41 +438,59 @@ const Input = forwardRef<InputMethods, Props>(
         />
 
         {showCommands && filteredCommands.length ? (
-          <div className="absolute z-50 -top-4 -left-[15px] -translate-y-full md:w-[950px]">
-            <Command className="rounded-lg border shadow-none">
-              <div className="flex items-center px-3 pt-3 pb-0">
-                <CommandInput placeholder="Search prompts..." className="h-9" />
-              </div>
-              <CommandList className="max-h-[500px] overflow-auto flex">
-                <CommandEmpty>No results found.</CommandEmpty>
-                <div className="flex">
-                  <CommandGroup className='w-[200px] p-2'>
-                    {filteredCommands.map((command) => (
-                      <CommandItem
-                        key={command.id}
-                        onSelect={() => handleCommandSelect(command)}
-                        className="command-item cursor-pointer px-3 py-3 justify-between rounded-md"
-                      >
-                        <div>
-                          <div className="font-medium">{command.id}</div>
+          <div className="absolute z-50 -top-4 -left-[15px] -translate-y-full max-w-[950px]">
+            <div className="w-full">
+              <Command className="rounded-lg border shadow-none">
+                <div className="flex items-center px-3 pt-3 pb-0">
+                  <CommandInput
+                    placeholder="Search prompts..."
+                    className="h-9"
+                    onValueChange={handleSearch}
+                  />
+                </div>
+                <CommandList className="max-h-[500px] overflow-auto">
+                  <CommandEmpty>No results found.</CommandEmpty>
+                  <div className="flex flex-col md:flex-row">
+                    <CommandGroup className="w-full md:w-[250px] p-2">
+                      {searchResults.map((command) => (
+                        <CommandItem
+                          key={command.id}
+                          onSelect={() => {
+                            handleCommandSelect(command)
+                            setShowCommands(false)
+                          }}
+                          className="command-item cursor-pointer px-3 py-3 justify-between rounded-md"
+                          onMouseEnter={() => setHoveredCommand(command)}
+                          onMouseLeave={() => setHoveredCommand(null)}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">
+                              {command.id}
+                            </div>
+                            <div className="font-light text-xs truncate">
+                              {command.description}
+                            </div>
+                          </div>
+                          <div className="text-gray-400 ml-2 flex-shrink-0">
+                            <ChevronDown className="h-5 w-5 rotate-[-90deg]" />
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    <div className="border-t-2 md:border-t-0 md:border-l-2 w-full">
+                      <div className="flex-1 overflow-y-auto p-4 md:p-6">
+                        <div className="bg-gray-50 rounded-md p-4 relative">
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap font-sans">
+                            {displayedCommand?.prompt_content ||
+                              'Select a command to view its content'}
+                          </p>
                         </div>
-                        <div className="text-gray-400">
-                          <ChevronDown className="h-5 w-5 rotate-[-90deg]" />
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                  <div className='border-l-2 md:w-[580px] hidden md:block'>
-                    <div class="flex-1 overflow-y-auto p-6">
-                      <div class="bg-gray-50 rounded-md p-4 relative">
-                        <p class="text-sm text-gray-700 whitespace-pre-wrap font-sans">{selectedCommand?.description ?? commands[0].description}</p>
                       </div>
                     </div>
-                    <p></p>
                   </div>
-                </div>
-              </CommandList>
-            </Command>
+                </CommandList>
+              </Command>
+            </div>
           </div>
         ) : null}
       </div>
