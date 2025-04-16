@@ -3,7 +3,8 @@ import {
   PopoverContent,
   PopoverTrigger
 } from '@radix-ui/react-popover';
-import { useState, useEffect } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useRecoilValue } from 'recoil';
 
 import { ICommand, commandsState } from '@chainlit/react-client';
@@ -24,7 +25,6 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from '@/components/ui/tooltip';
-import { ChevronDown } from "lucide-react";
 
 interface Props {
   disabled?: boolean;
@@ -48,10 +48,10 @@ export const CommandButton = ({
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth < 1024);
     };
-    
+
     checkIfMobile();
     window.addEventListener('resize', checkIfMobile);
-    
+
     return () => {
       window.removeEventListener('resize', checkIfMobile);
     };
@@ -69,7 +69,7 @@ export const CommandButton = ({
     }
 
     const filtered = commands.filter(
-      command => 
+      (command) =>
         command.id.toLowerCase().includes(value.toLowerCase()) ||
         command.description?.toLowerCase().includes(value.toLowerCase()) ||
         command.prompt_content?.toLowerCase().includes(value.toLowerCase())
@@ -78,7 +78,15 @@ export const CommandButton = ({
   };
 
   // Get the currently displayed command (hovered, selected, or first available)
-  const displayedCommand = hoveredCommand || selectedCommand || searchResults[0] || null;
+  const displayedCommand =
+    hoveredCommand || selectedCommand || searchResults[0] || null;
+
+  const handleMouseEnter = (command) => {
+    // Small delay before changing the displayed command
+    setTimeout(() => {
+      setHoveredCommand(command);
+    }, 200);
+  };
 
   if (!commands.length) return null;
 
@@ -105,24 +113,24 @@ export const CommandButton = ({
         </Tooltip>
       </TooltipProvider>
       <PopoverContent
-        align={isMobile ? "center" : "start"}
-        side={isMobile ? "top" : undefined}
+        align={isMobile ? 'center' : 'start'}
+        side={isMobile ? 'top' : undefined}
         sideOffset={isMobile ? 5 : 12}
-        className="focus:outline-none w-[52vw] min-w-[320px] max-w-[950px] p-0"
+        className="focus:outline-none w-[52vw] min-w-[320px] w-[950px] p-0"
         style={{
-          position: isMobile ? "fixed" : "relative",
-          bottom: isMobile ? "-82vh" : "42px",
-          right: isMobile ? "auto" : "48px",
-          left: isMobile ? "45px" : "auto",
-          transform: "none",
+          position: isMobile ? 'fixed' : 'relative',
+          bottom: isMobile ? '-82vh' : '42px',
+          right: isMobile ? 'auto' : '48px',
+          left: isMobile ? '45px' : 'auto',
+          transform: 'none',
           zIndex: 50
         }}
       >
         <div className="w-full">
           <Command className="rounded-lg border shadow-md">
             <div className="flex items-center px-3 pt-3 pb-0">
-              <CommandInput 
-                placeholder="Search prompts..." 
+              <CommandInput
+                placeholder="Search prompts..."
                 className="h-9"
                 onValueChange={handleSearch}
               />
@@ -134,14 +142,18 @@ export const CommandButton = ({
                   {searchResults.map((command) => (
                     <CommandItem
                       key={command.id}
-                      onSelect={() => {onCommandSelect(command); setOpen(false)}}
+                      onSelect={() => {
+                        onCommandSelect(command);
+                        setOpen(false);
+                      }}
                       className="command-item cursor-pointer px-3 py-3 justify-between rounded-md"
-                      onMouseEnter={() => setHoveredCommand(command)}
-                      onMouseLeave={() => setHoveredCommand(null)}
-                    > 
+                      onMouseEnter={() => handleMouseEnter(command)}
+                    >
                       <div className="flex-1 min-w-0">
                         <div className="font-medium truncate">{command.id}</div>
-                        <div className="font-light text-xs truncate">{command.description}</div>
+                        <div className="font-light text-xs truncate">
+                          {command.description}
+                        </div>
                       </div>
                       <div className="text-gray-400 ml-2 flex-shrink-0">
                         <ChevronDown className="h-5 w-5 rotate-[-90deg]" />
@@ -149,15 +161,18 @@ export const CommandButton = ({
                     </CommandItem>
                   ))}
                 </CommandGroup>
-                <div className="border-t-2 md:border-t-0 md:border-l-2 w-full">
-                  <div className="flex-1 overflow-y-auto p-4 md:p-6">
-                    <div className="bg-gray-50 rounded-md p-4 relative">
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap font-sans">
-                        {displayedCommand?.prompt_content || "Select a command to view its content"}
-                      </p>
+                {searchResults.length > 0 && (
+                  <div className="border-t-2 md:border-t-0 md:border-l w-full">
+                    <div className="flex-1 overflow-y-auto p-2 md:p-2">
+                      <div className="bg-gray-50 rounded-md p-4 relative">
+                        <p className="text-sm text-gray-700 whitespace-pre-wrap font-sans">
+                          {displayedCommand?.prompt_content ||
+                            'Select a command to view its content'}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             </CommandList>
           </Command>

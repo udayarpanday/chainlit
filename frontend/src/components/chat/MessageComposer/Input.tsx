@@ -415,9 +415,12 @@ const Input = forwardRef<InputMethods, Props>(
       setSearchResults(filtered);
     };
 
-    // Get the currently displayed command (hovered, selected, or first available)
-    const displayedCommand =
-      hoveredCommand || selectedCommand || searchResults[0] || null;
+    const handleMouseEnter = (index) => {
+      // Small delay before changing the displayed command
+      setTimeout(() => {
+        setSelectedIndex(index);
+      }, 100);
+    };
 
     return (
       <div className="relative w-full">
@@ -436,9 +439,8 @@ const Input = forwardRef<InputMethods, Props>(
           onCompositionStart={() => setIsComposing(true)}
           onCompositionEnd={() => setIsComposing(false)}
         />
-
         {showCommands && filteredCommands.length ? (
-          <div className="absolute z-50 -top-4 -left-[15px] -translate-y-full max-w-[950px]">
+          <div className="absolute z-50 -top-4 -left-[15px] -translate-y-full w-[950px]">
             <div className="w-full">
               <Command className="rounded-lg border shadow-none">
                 <div className="flex items-center px-3 pt-3 pb-0">
@@ -452,16 +454,18 @@ const Input = forwardRef<InputMethods, Props>(
                   <CommandEmpty>No results found.</CommandEmpty>
                   <div className="flex flex-col md:flex-row">
                     <CommandGroup className="w-full md:w-[250px] p-2">
-                      {searchResults.map((command) => (
+                      {filteredCommands.map((command, index) => (
                         <CommandItem
                           key={command.id}
                           onSelect={() => {
-                            handleCommandSelect(command)
-                            setShowCommands(false)
+                            handleCommandSelect(command);
+                            setShowCommands(false);
                           }}
-                          className="command-item cursor-pointer px-3 py-3 justify-between rounded-md"
-                          onMouseEnter={() => setHoveredCommand(command)}
-                          onMouseLeave={() => setHoveredCommand(null)}
+                          onMouseEnter={() => handleMouseEnter(index)}
+                          className={cn(
+                            'command-item !bg-transparent cursor-pointer px-3 py-3 justify-between rounded-md',
+                            index === selectedIndex ? '!bg-accent' : ''
+                          )}
                         >
                           <div className="flex-1 min-w-0">
                             <div className="font-medium truncate">
@@ -477,16 +481,19 @@ const Input = forwardRef<InputMethods, Props>(
                         </CommandItem>
                       ))}
                     </CommandGroup>
-                    <div className="border-t-2 md:border-t-0 md:border-l-2 w-full">
-                      <div className="flex-1 overflow-y-auto p-4 md:p-6">
-                        <div className="bg-gray-50 rounded-md p-4 relative">
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap font-sans">
-                            {displayedCommand?.prompt_content ||
-                              'Select a command to view its content'}
-                          </p>
+                    {filteredCommands.length > 0 && (
+                      <div className="border-t-2 md:border-t-0 md:border-l w-full">
+                        <div className="flex-1 overflow-y-auto p-2 md:p-2">
+                          <div className="bg-gray-50 rounded-md p-4 relative">
+                            <p className="text-sm text-gray-700 whitespace-pre-wrap font-sans">
+                              {filteredCommands[selectedIndex]
+                                ?.prompt_content ||
+                                'Select a command to view its content'}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </CommandList>
               </Command>
