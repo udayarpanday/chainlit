@@ -25,11 +25,13 @@ const useAudio = () => {
     await startAudioStream();
   }, [startAudioStream]);
 
-  const endConversation = useCallback(async () => {
+  const endConversation = useCallback(async (end=true) => {
     setAudioConnection('off');
     await wavRecorder.end();
     await wavStreamPlayer.interrupt();
-    await endAudioStream();
+    if (end) {
+      endAudioStream();
+    }
   }, [endAudioStream, wavRecorder, wavStreamPlayer]);
 
   return {
