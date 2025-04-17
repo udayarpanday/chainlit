@@ -367,7 +367,8 @@
         },
         "speech": {
             "start": "Start recording",
-            "stop": "Stop recording",
+            "stop": "Cancel",
+            "submit":"Submit recording",
             "connecting": "Connecting",
             "voiceMode":"Use Voice Mode",
             "speechText":"Use Speech to Text Mode"
