@@ -1,4 +1,4 @@
-import { CircleStop, Mic, X } from 'lucide-react';
+import { CircleCheck, Mic, CircleX } from 'lucide-react';
 import { useState } from 'react';
 
 import { useAudio, useConfig } from '@chainlit/react-client';
@@ -56,26 +56,48 @@ const VoiceButton = ({ disabled }: Props) => {
         />
       )}
       {isAudioOn && modalityType == 'speech' && (
-        <Button
-          disabled={disabled}
-          variant="ghost"
-          size="icon"
-          className="hover:bg-muted"
-          onClick={endConversation}
-        >
-          <CircleStop className="!size-5" />
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                disabled={disabled}
+                variant="ghost"
+                size="icon"
+                className="hover:bg-muted"
+                onClick={endConversation}
+              >
+                <CircleCheck className="!size-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                <Translator path={'chat.speech.submit'} />
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       )}
       {isAudioOn ? (
-        <Button
-          disabled={disabled}
-          variant="ghost"
-          size="icon"
-          className="hover:bg-muted"
-          onClick={() => endConversation(!(modalityType == 'speech'))}
-        >
-          <X className="!size-5" />
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                disabled={disabled}
+                variant="ghost"
+                size="icon"
+                className="hover:bg-muted"
+                onClick={() => endConversation(!(modalityType == 'speech'))}
+              >
+                <CircleX className="!size-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                <Translator path={'chat.speech.stop'} />
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       ) : (
         <>
           <TooltipProvider>
