@@ -4,7 +4,7 @@ import {
   PopoverTrigger
 } from '@radix-ui/react-popover';
 import { ChevronDown } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRecoilValue } from 'recoil';
 
 import { ICommand, commandsState } from '@chainlit/react-client';
@@ -41,6 +41,9 @@ export const CommandButton = ({
   const [open, setOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<ICommand[]>([]);
   const [hoveredCommand, setHoveredCommand] = useState<ICommand | null>(null);
+  const [displayedCommand, setDisplayedCommand] = useState<ICommand | null>(
+    null
+  );
   const [searchTerm, setSearchTerm] = useState('');
   const [isMobile, setIsMobile] = useState(false);
 
@@ -61,6 +64,12 @@ export const CommandButton = ({
     setSearchResults(commands);
   }, [commands]);
 
+  useEffect(() => {
+    setDisplayedCommand(
+      hoveredCommand || selectedCommand || searchResults[0] || null
+    );
+  }, [hoveredCommand, selectedCommand, searchResults]);
+
   const handleSearch = (value: string) => {
     setSearchTerm(value);
     if (!value.trim()) {
@@ -77,10 +86,6 @@ export const CommandButton = ({
     setSearchResults(filtered);
   };
 
-  // Get the currently displayed command (hovered, selected, or first available)
-  const displayedCommand =
-    hoveredCommand || selectedCommand || searchResults[0] || null;
-
   const handleMouseEnter = (command) => {
     // Small delay before changing the displayed command
     setTimeout(() => {
@@ -88,10 +93,29 @@ export const CommandButton = ({
     }, 200);
   };
 
+
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus()
+      }
+    }, 100)
+
+    return () => clearTimeout(timer)
+  }, [open])
+
   if (!commands.length) return null;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(open) => {
+        setOpen(open);
+        setHoveredCommand(null);
+      }}
+    >
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -116,7 +140,7 @@ export const CommandButton = ({
         align={isMobile ? 'center' : 'start'}
         side={isMobile ? 'top' : undefined}
         sideOffset={isMobile ? 5 : 12}
-        className="focus:outline-none w-[52vw] min-w-[320px] w-[950px] p-0"
+        className="focus:outline-none w-[52vw] min-w-[320px] w-md-[820px] w-lg-[950px] p-0"
         style={{
           position: isMobile ? 'fixed' : 'relative',
           bottom: isMobile ? '-82vh' : '42px',
@@ -128,10 +152,12 @@ export const CommandButton = ({
       >
         <div className="w-full">
           <Command className="rounded-lg border shadow-md">
-            <div className="flex items-center px-3 pt-3 pb-0">
+            <div className="flex items-center pb-0">
               <CommandInput
                 placeholder="Search prompts..."
-                className="h-9"
+                className="h-12"
+                ref={inputRef} 
+                autoFocus
                 onValueChange={handleSearch}
               />
             </div>
@@ -162,7 +188,7 @@ export const CommandButton = ({
                   ))}
                 </CommandGroup>
                 {searchResults.length > 0 && (
-                  <div className="border-t-2 md:border-t-0 md:border-l w-full">
+                  <div className="border-t-2 md:border-t-0 md:border-l w-full min-h-[280px]">
                     <div className="flex-1 overflow-y-auto p-2 md:p-2">
                       <div className="bg-gray-50 rounded-md p-4 relative">
                         <p className="text-sm text-gray-700 whitespace-pre-wrap font-sans">

@@ -440,13 +440,13 @@ const Input = forwardRef<InputMethods, Props>(
           onCompositionEnd={() => setIsComposing(false)}
         />
         {showCommands && filteredCommands.length ? (
-          <div className="absolute z-50 -top-4 -left-[15px] -translate-y-full w-[950px]">
+          <div className="absolute z-50 -top-4 -left-[15px] -translate-y-full w-md-[820px] w-lg-[950px] w-[52vw]">
             <div className="w-full">
               <Command className="rounded-lg border shadow-none">
-                <div className="flex items-center px-3 pt-3 pb-0">
+                <div className="flex items-center pb-0">
                   <CommandInput
                     placeholder="Search prompts..."
-                    className="h-9"
+                    className="h-12"
                     onValueChange={handleSearch}
                   />
                 </div>
@@ -482,7 +482,7 @@ const Input = forwardRef<InputMethods, Props>(
                       ))}
                     </CommandGroup>
                     {filteredCommands.length > 0 && (
-                      <div className="border-t-2 md:border-t-0 md:border-l w-full">
+                      <div className="border-t-2 md:border-t-0 md:border-l w-full min-h-[280px]">
                         <div className="flex-1 overflow-y-auto p-2 md:p-2">
                           <div className="bg-gray-50 rounded-md p-4 relative">
                             <p className="text-sm text-gray-700 whitespace-pre-wrap font-sans">
