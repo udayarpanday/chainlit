@@ -21,6 +21,8 @@ import {
   CommandList
 } from '@/components/ui/command';
 
+import { useIsMobile } from '@/hooks/use-mobile';
+
 interface Props {
   id?: string;
   className?: string;
@@ -73,6 +75,7 @@ const Input = forwardRef<InputMethods, Props>(
     const [searchResults, setSearchResults] = useState<ICommand[]>([]);
     const [hoveredCommand, setHoveredCommand] = useState<ICommand | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const isMobile = useIsMobile();
 
     const getContentWithoutCommand = () => {
       if (!contentEditableRef.current) return '';
@@ -184,43 +187,65 @@ const Input = forwardRef<InputMethods, Props>(
             }
           }
 
-          let textNode;
-
-          // Create a text node after the command span if none exists
-          if (!newCommandBlock.nextSibling) {
-            textNode = document.createTextNode('\u200B');
-            content.appendChild(textNode); // Zero-width space
+          // Ensure there's a text node after the command block for cursor positioning
+          let textNode = newCommandBlock.nextSibling;
+          if (!textNode || textNode.nodeType !== Node.TEXT_NODE) {
+            textNode = document.createTextNode('\u200B'); // Zero-width space
+            content.appendChild(textNode);
           }
 
-          // Ensure cursor is placed after the command span
-          const selection = window.getSelection();
+          // Create and set the selection range
+          window.getSelection().removeAllRanges();
           const range = document.createRange();
 
-          // Set cursor after the command span
-          range.setStartAfter(textNode || newCommandBlock);
+          // Set cursor position at the beginning of the text node
+          range.setStart(textNode, 0);
           range.collapse(true);
 
           // Apply the selection
-          selection?.removeAllRanges();
-          selection?.addRange(range);
+          window.getSelection().addRange(range);
 
-          // Force focus on the content editable
+          // Force focus with delay to ensure it happens after any button close events
           content.focus();
-          selection?.addRange(range);
 
-          // Trigger onChange with content excluding command
-          onChange(getContentWithoutCommand());
+          // Double-focus technique - helps in some browsers/situations
+          setTimeout(() => {
+            // Make sure caret is visible
+            content.style.caretColor = 'black';
+
+            // Re-focus and set cursor position again
+            content.focus();
+
+            if (window.getSelection().rangeCount > 0) {
+              window.getSelection().removeAllRanges();
+              window.getSelection().addRange(range);
+            }
+
+            // Trigger onChange with content excluding command
+            onChange(getContentWithoutCommand());
+          }, 10);
         } else if (existingCommandSpan) {
           // Remove existing command span
           existingCommandSpan.remove();
           lastCommandSpanRef.current = null;
+
+          // Ensure cursor is placed at start
+          const range = document.createRange();
+          range.setStart(content, 0);
+          range.collapse(true);
+
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+
+          content.focus();
           onChange(getContentWithoutCommand());
         }
       } finally {
         // Use setTimeout to ensure all DOM updates are complete
         setTimeout(() => {
           isUpdatingRef.current = false;
-        }, 0);
+        }, 20);
       }
     }, [selectedCommand, onChange]);
 
@@ -450,10 +475,10 @@ const Input = forwardRef<InputMethods, Props>(
                     onValueChange={handleSearch}
                   />
                 </div>
-                <CommandList className="max-h-[500px] overflow-auto">
+                <CommandList className="max-h-[60vh] md:max-h-[300px] !overflow-hidden">
                   <CommandEmpty>No results found.</CommandEmpty>
                   <div className="flex flex-col md:flex-row">
-                    <CommandGroup className="w-full md:w-[250px] p-2">
+                    <CommandGroup className="w-full md:w-[250px] p-2 h-[280px] overflow-auto">
                       {filteredCommands.map((command, index) => (
                         <CommandItem
                           key={command.id}
@@ -481,9 +506,9 @@ const Input = forwardRef<InputMethods, Props>(
                         </CommandItem>
                       ))}
                     </CommandGroup>
-                    {filteredCommands.length > 0 && (
-                      <div className="border-t-2 md:border-t-0 md:border-l w-full min-h-[280px]">
-                        <div className="flex-1 overflow-y-auto p-2 md:p-2">
+                    {filteredCommands.length > 0 && !isMobile && (
+                      <div className="border-t-2 md:border-t-0 md:border-l w-full h-[280px] overflow-auto">
+                        <div className="flex-1 p-2 md:p-2">
                           <div className="bg-gray-50 rounded-md p-4 relative">
                             <p className="text-sm text-gray-700 whitespace-pre-wrap font-sans">
                               {filteredCommands[selectedIndex]

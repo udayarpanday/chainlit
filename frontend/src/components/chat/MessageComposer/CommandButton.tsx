@@ -35,7 +35,7 @@ interface Props {
 export const CommandButton = ({
   disabled = false,
   onCommandSelect,
-  selectedCommand
+  selectedCommand,
 }: Props) => {
   const commands = useRecoilValue(commandsState);
   const [open, setOpen] = useState(false);
@@ -87,24 +87,23 @@ export const CommandButton = ({
   };
 
   const handleMouseEnter = (command) => {
-    // Small delay before changing the displayed command
     setTimeout(() => {
       setHoveredCommand(command);
     }, 200);
   };
 
-
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null);
+  const buttonRef = useRef(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       if (inputRef.current) {
-        inputRef.current.focus()
+        inputRef.current.focus();
       }
-    }, 100)
+    }, 100);
 
-    return () => clearTimeout(timer)
-  }, [open])
+    return () => clearTimeout(timer);
+  }, [open]);
 
   if (!commands.length) return null;
 
@@ -114,6 +113,7 @@ export const CommandButton = ({
       onOpenChange={(open) => {
         setOpen(open);
         setHoveredCommand(null);
+        setSearchResults(commands);
       }}
     >
       <TooltipProvider>
@@ -122,6 +122,7 @@ export const CommandButton = ({
             <PopoverTrigger asChild>
               <Button
                 id="command-button"
+                ref={buttonRef}
                 variant="ghost"
                 size="icon"
                 className="hover:bg-muted"
@@ -156,21 +157,26 @@ export const CommandButton = ({
               <CommandInput
                 placeholder="Search prompts..."
                 className="h-12"
-                ref={inputRef} 
+                ref={inputRef}
                 autoFocus
                 onValueChange={handleSearch}
               />
             </div>
-            <CommandList className="max-h-[60vh] md:max-h-[500px] overflow-auto">
+            <CommandList className="max-h-[60vh] md:max-h-[300px] !overflow-hidden">
               <CommandEmpty>No results found.</CommandEmpty>
               <div className="flex flex-col md:flex-row">
-                <CommandGroup className="w-full md:w-[250px] p-2">
+                <CommandGroup className="w-full md:w-[250px] p-2 h-[280px] overflow-auto">
                   {searchResults.map((command) => (
                     <CommandItem
                       key={command.id}
                       onSelect={() => {
                         onCommandSelect(command);
                         setOpen(false);
+                        setTimeout(() => {
+                          if (buttonRef.current) {
+                            buttonRef.current.blur();
+                          }
+                        }, 10);
                       }}
                       className="command-item cursor-pointer px-3 py-3 justify-between rounded-md"
                       onMouseEnter={() => handleMouseEnter(command)}
@@ -187,9 +193,9 @@ export const CommandButton = ({
                     </CommandItem>
                   ))}
                 </CommandGroup>
-                {searchResults.length > 0 && (
-                  <div className="border-t-2 md:border-t-0 md:border-l w-full min-h-[280px]">
-                    <div className="flex-1 overflow-y-auto p-2 md:p-2">
+                {searchResults.length > 0 && !isMobile &&(
+                  <div className="border-t-2 md:border-t-0 md:border-l w-full h-[280px] overflow-auto">
+                    <div className="flex-1 p-2 md:p-2">
                       <div className="bg-gray-50 rounded-md p-4 relative">
                         <p className="text-sm text-gray-700 whitespace-pre-wrap font-sans">
                           {displayedCommand?.prompt_content ||
