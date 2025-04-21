@@ -1,5 +1,5 @@
-import { X } from 'lucide-react';
-import { useHotkeys } from 'react-hotkeys-hook';
+import { CircleCheck, Mic, CircleX } from 'lucide-react';
+import { useState } from 'react';
 
 import { useAudio, useConfig } from '@chainlit/react-client';
 
@@ -23,23 +23,30 @@ interface Props {
 const VoiceButton = ({ disabled }: Props) => {
   const { config } = useConfig();
   const { startConversation, endConversation, audioConnection } = useAudio();
-  const isEnabled = !!config?.features.audio.enabled;
+  const [modalityType, setModalityType] = useState<
+    'realtime' | 'speech' | null
+  >(null);
 
-  useHotkeys(
-    'p',
-    () => {
-      if (!isEnabled) return;
-      if (audioConnection === 'on') return endConversation();
-      return startConversation();
-    },
-    [isEnabled, audioConnection, startConversation, endConversation]
-  );
+  const isEnabled = !!config?.features.audio.enabled;
+  const isAudioOn = audioConnection === 'on';
+  const isAudioOff = audioConnection === 'off';
+  const isConnecting = audioConnection === 'connecting';
 
   if (!isEnabled) return null;
 
+  const handleToggle = (mode: 'realtime' | 'speech') => {
+    if (isAudioOn) {
+      setModalityType(null);
+      endConversation();
+    } else if (isAudioOff) {
+      setModalityType(mode);
+      startConversation(mode);
+    }
+  };
+
   return (
     <div className="flex items-center gap-1">
-      {audioConnection === 'on' ? (
+      {isAudioOn && (
         <AudioPresence
           type="client"
           height={18}
@@ -47,49 +54,117 @@ const VoiceButton = ({ disabled }: Props) => {
           barCount={4}
           barSpacing={2}
         />
-      ) : null}
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              disabled={disabled}
-              variant="ghost"
-              size="icon"
-              className="hover:bg-muted"
-              onClick={
-                audioConnection === 'on'
-                  ? endConversation
-                  : audioConnection === 'off'
-                  ? startConversation
-                  : undefined
-              }
-            >
-              {audioConnection === 'on' ? <X className="!size-5" /> : null}
-              {audioConnection === 'off' ? (
-                <VoiceLines className="!size-6" />
-              ) : null}
-              {audioConnection === 'connecting' ? (
-                <Loader className="!size-5" />
-              ) : null}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>
-              <Translator
-                path={
-                  audioConnection === 'on'
-                    ? 'chat.speech.stop'
-                    : audioConnection === 'off'
-                    ? 'chat.speech.start'
-                    : 'chat.speech.connecting'
-                }
-                suffix=" (P)"
-              />
-            </p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      )}
+      {isAudioOn && modalityType == 'speech' && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                disabled={disabled}
+                variant="ghost"
+                size="icon"
+                className="hover:bg-muted"
+                onClick={endConversation}
+              >
+                <CircleCheck className="!size-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                <Translator path={'chat.speech.submit'} />
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+      {isAudioOn ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                disabled={disabled}
+                variant="ghost"
+                size="icon"
+                className="hover:bg-muted"
+                onClick={() => endConversation(!(modalityType == 'speech'))}
+              >
+                <CircleX className="!size-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                <Translator path={'chat.speech.stop'} />
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  disabled={disabled}
+                  variant="ghost"
+                  size="icon"
+                  className="hover:bg-muted"
+                  onClick={() => handleToggle('realtime')}
+                >
+                  {isAudioOff && <VoiceLines className="!size-6" />}
+                  {isConnecting && <Loader className="!size-5" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  <Translator
+                    path={
+                      isAudioOn
+                        ? 'chat.speech.stop'
+                        : isAudioOff
+                        ? 'chat.speech.voiceMode'
+                        : 'chat.speech.connecting'
+                    }
+                  />
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          {/* Speech Mode Button */}
+          {isAudioOff && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    disabled={disabled}
+                    variant="ghost"
+                    size="icon"
+                    className="hover:bg-muted"
+                    onClick={() => handleToggle('speech')}
+                  >
+                    <Mic className="!size-6" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    <Translator
+                      path={
+                        isAudioOn
+                          ? 'chat.speech.stop'
+                          : isAudioOff
+                          ? 'chat.speech.speechText'
+                          : 'chat.speech.connecting'
+                      }
+                    />
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </>
+      )}
     </div>
   );
 };
+
 export default VoiceButton;
