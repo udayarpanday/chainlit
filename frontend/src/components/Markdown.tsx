@@ -94,6 +94,7 @@ const Markdown = ({
   className,
   children
 }: Props) => {
+  const rawContent=children
   const apiClient = useContext(ChainlitContext);
 
   const rehypePlugins = useMemo(() => {
@@ -265,13 +266,24 @@ const Markdown = ({
           );
         },
         p(props) {
+          const thinkEndIndex = rawContent.indexOf('</think>');
+
+          const isBeforeThink = typeof props.children=='string' && thinkEndIndex !== -1 && rawContent.indexOf(props.children) < thinkEndIndex;
+        
           return (
             <div
               {...omit(props, ['node'])}
-              style={{ lineHeight: '28px' }}
+              style={{
+                lineHeight: '28px',
+                color: isBeforeThink ? 'gray' : 'inherit',
+                fontStyle: isBeforeThink ? 'italic' : 'inherit',  
+                fontSize: isBeforeThink ? '12px' : 'inherit',    
+              }}
               className="leading-7 [&:not(:first-child)]:mt-4 whitespace-pre-wrap break-words"
               role="article"
-            />
+            >
+              {props.children}
+            </div>
           );
         },
         table({ children, ...props }) {

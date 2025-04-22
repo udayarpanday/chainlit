@@ -271,72 +271,84 @@ const Input = forwardRef<InputMethods, Props>(
         if (textData) {
           const escapedText = escapeHtml(textData);
           const textWithNewLines = escapedText.replace(/\n/g, '<br>');
-
+        
           const selection = window.getSelection();
           if (selection?.rangeCount) {
             const range = selection.getRangeAt(0);
             range.deleteContents();
-
+        
             // Find the shadow root and chat input
             const shadowHost = document.getElementById('chainlit-copilot');
             if (shadowHost) {
               const shadowRoot = shadowHost.shadowRoot;
               if (shadowRoot) {
                 const chatInput = shadowRoot.querySelector('#chat-input');
-
+        
                 if (chatInput) {
-                  // Ensure there's a single container inside #chat-input
-                  let contentDiv = chatInput.querySelector('.pasted-content');
-                  if (!contentDiv) {
-                    contentDiv = document.createElement('div');
-                    contentDiv.classList.add('pasted-content');
-                    chatInput.appendChild(contentDiv);
+                  // Create a temporary div to hold the HTML content
+                  const tempDiv = document.createElement('div');
+                  tempDiv.innerHTML = textWithNewLines;
+                  
+                  // Create a document fragment to hold the nodes
+                  const fragment = document.createDocumentFragment();
+                  while (tempDiv.firstChild) {
+                    fragment.appendChild(tempDiv.firstChild);
                   }
-
-                  // Append the new content inside the existing container
-                  contentDiv.innerHTML += textWithNewLines;
-
-                  // Move cursor to the end of content inside shadow DOM
-                  const newRange = document.createRange();
-                  newRange.selectNodeContents(contentDiv);
-                  newRange.collapse(false);
-
-                  const newSelection =
-                    shadowRoot.getSelection() || window.getSelection();
-                  newSelection?.removeAllRanges();
-                  newSelection?.addRange(newRange);
-
+                  
+                  // Get the selection within the shadow DOM
+                  const shadowSelection = shadowRoot.getSelection() || window.getSelection();
+                  
+                  if (shadowSelection?.rangeCount) {
+                    const shadowRange = shadowSelection.getRangeAt(0);
+                    shadowRange.deleteContents();
+                    shadowRange.insertNode(fragment);
+                    
+                    // Move cursor to end of pasted content
+                    shadowRange.collapse(false);
+                    shadowSelection.removeAllRanges();
+                    shadowSelection.addRange(shadowRange);
+                  } else {
+                    // Fallback if no selection in shadow DOM
+                    chatInput.appendChild(fragment);
+                  }
+                  
+                  // Focus on the chat input
                   chatInput.focus();
                 }
               }
             } else {
-              // Insert normally if shadow DOM is not used
-              let contentDiv = textarea.querySelector('.pasted-content');
-              if (!contentDiv) {
-                contentDiv = document.createElement('div');
-                contentDiv.classList.add('pasted-content');
-                textarea.appendChild(contentDiv);
+              // Insert the HTML content (original else block)
+              const tempDiv = document.createElement('div');
+              tempDiv.innerHTML = textWithNewLines;
+              const fragment = document.createDocumentFragment();
+              while (tempDiv.firstChild) {
+                fragment.appendChild(tempDiv.firstChild);
               }
-              contentDiv.innerHTML += textWithNewLines;
-
-              // Move cursor to the end
-              const newRange = document.createRange();
-              newRange.selectNodeContents(contentDiv);
-              newRange.collapse(false);
-
-              const newSelection = window.getSelection();
-              newSelection?.removeAllRanges();
-              newSelection?.addRange(newRange);
+              range.insertNode(fragment);
+        
+              // Move cursor to end of pasted content
+              range.collapse(false);
+              selection.removeAllRanges();
+              selection.addRange(range);
+              
+              // Force focus back to the content editable
+              textarea.focus();
+              textarea.scrollTop = textarea.scrollHeight;
             }
-
-            // Force focus back to the content editable
-            textarea.focus();
-            textarea.scrollTop = textarea.scrollHeight;
+        
+            // Trigger input event to update state
+            const inputEvent = new Event('input', { bubbles: true });
+            
+            // Dispatch the event to the appropriate element
+            if (shadowHost && shadowHost.shadowRoot) {
+              const chatInput = shadowHost.shadowRoot.querySelector('#chat-input');
+              if (chatInput) {
+                chatInput.dispatchEvent(inputEvent);
+              }
+            } else if (textarea) {
+              textarea.dispatchEvent(inputEvent);
+            }
           }
-
-          // Trigger input event to update state
-          const inputEvent = new Event('input', { bubbles: true });
-          textarea.dispatchEvent(inputEvent);
         }
 
         onPaste(event);
