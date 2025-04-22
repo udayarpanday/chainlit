@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { ChevronDown } from 'lucide-react';
 import React, {
   forwardRef,
   useEffect,
@@ -13,10 +14,14 @@ import { ICommand, commandsState } from '@chainlit/react-client';
 import Icon from '@/components/Icon';
 import {
   Command,
+  CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
   CommandList
 } from '@/components/ui/command';
+
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Props {
   id?: string;
@@ -67,6 +72,10 @@ const Input = forwardRef<InputMethods, Props>(
     const lastCommandSpanRef = useRef<HTMLElement | null>(null);
     const mutationObserverRef = useRef<MutationObserver | null>(null);
     const isUpdatingRef = useRef(false);
+    const [searchResults, setSearchResults] = useState<ICommand[]>([]);
+    const [hoveredCommand, setHoveredCommand] = useState<ICommand | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const isMobile = useIsMobile();
 
     const getContentWithoutCommand = () => {
       if (!contentEditableRef.current) return '';
@@ -178,43 +187,65 @@ const Input = forwardRef<InputMethods, Props>(
             }
           }
 
-          let textNode;
-
-          // Create a text node after the command span if none exists
-          if (!newCommandBlock.nextSibling) {
-            textNode = document.createTextNode('\u200B');
-            content.appendChild(textNode); // Zero-width space
+          // Ensure there's a text node after the command block for cursor positioning
+          let textNode = newCommandBlock.nextSibling;
+          if (!textNode || textNode.nodeType !== Node.TEXT_NODE) {
+            textNode = document.createTextNode('\u200B'); // Zero-width space
+            content.appendChild(textNode);
           }
 
-          // Ensure cursor is placed after the command span
-          const selection = window.getSelection();
+          // Create and set the selection range
+          window.getSelection().removeAllRanges();
           const range = document.createRange();
 
-          // Set cursor after the command span
-          range.setStartAfter(textNode || newCommandBlock);
+          // Set cursor position at the beginning of the text node
+          range.setStart(textNode, 0);
           range.collapse(true);
 
           // Apply the selection
-          selection?.removeAllRanges();
-          selection?.addRange(range);
+          window.getSelection().addRange(range);
 
-          // Force focus on the content editable
+          // Force focus with delay to ensure it happens after any button close events
           content.focus();
-          selection?.addRange(range);
 
-          // Trigger onChange with content excluding command
-          onChange(getContentWithoutCommand());
+          // Double-focus technique - helps in some browsers/situations
+          setTimeout(() => {
+            // Make sure caret is visible
+            content.style.caretColor = 'black';
+
+            // Re-focus and set cursor position again
+            content.focus();
+
+            if (window.getSelection().rangeCount > 0) {
+              window.getSelection().removeAllRanges();
+              window.getSelection().addRange(range);
+            }
+
+            // Trigger onChange with content excluding command
+            onChange(getContentWithoutCommand());
+          }, 10);
         } else if (existingCommandSpan) {
           // Remove existing command span
           existingCommandSpan.remove();
           lastCommandSpanRef.current = null;
+
+          // Ensure cursor is placed at start
+          const range = document.createRange();
+          range.setStart(content, 0);
+          range.collapse(true);
+
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+
+          content.focus();
           onChange(getContentWithoutCommand());
         }
       } finally {
         // Use setTimeout to ensure all DOM updates are complete
         setTimeout(() => {
           isUpdatingRef.current = false;
-        }, 0);
+        }, 20);
       }
     }, [selectedCommand, onChange]);
 
@@ -270,7 +301,8 @@ const Input = forwardRef<InputMethods, Props>(
                   newRange.selectNodeContents(contentDiv);
                   newRange.collapse(false);
 
-                  const newSelection = shadowRoot.getSelection() || window.getSelection();
+                  const newSelection =
+                    shadowRoot.getSelection() || window.getSelection();
                   newSelection?.removeAllRanges();
                   newSelection?.addRange(newRange);
 
@@ -316,7 +348,6 @@ const Input = forwardRef<InputMethods, Props>(
         textarea.removeEventListener('paste', _onPaste);
       };
     }, [onPaste]);
-
 
     const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
       if (isUpdatingRef.current) return;
@@ -387,6 +418,35 @@ const Input = forwardRef<InputMethods, Props>(
       }, 0);
     };
 
+    // Initialize search results with all commands
+    useEffect(() => {
+      setSearchResults(commands);
+    }, [commands]);
+
+    // Handle search input changes
+    const handleSearch = (value: string) => {
+      setSearchTerm(value);
+      if (!value.trim()) {
+        setSearchResults(commands);
+        return;
+      }
+
+      const filtered = commands.filter(
+        (command) =>
+          command.id.toLowerCase().includes(value.toLowerCase()) ||
+          command.description?.toLowerCase().includes(value.toLowerCase()) ||
+          command.prompt_content?.toLowerCase().includes(value.toLowerCase())
+      );
+      setSearchResults(filtered);
+    };
+
+    const handleMouseEnter = (index) => {
+      // Small delay before changing the displayed command
+      setTimeout(() => {
+        setSelectedIndex(index);
+      }, 100);
+    };
+
     return (
       <div className="relative w-full">
         <div
@@ -404,36 +464,65 @@ const Input = forwardRef<InputMethods, Props>(
           onCompositionStart={() => setIsComposing(true)}
           onCompositionEnd={() => setIsComposing(false)}
         />
-
         {showCommands && filteredCommands.length ? (
-          <div className="absolute z-50 -top-4 left-0 -translate-y-full">
-            <Command className="rounded-lg border shadow-md">
-              <CommandList>
-                <CommandGroup>
-                  {filteredCommands.map((command, index) => (
-                    <CommandItem
-                      key={command.id}
-                      onSelect={() => handleCommandSelect(command)}
-                      className={cn(
-                        'cursor-pointer command-item flex items-center space-x-2 p-2',
-                        index === selectedIndex ? 'bg-accent' : ''
-                      )}
-                    >
-                      <Icon
-                        name={command.icon}
-                        className="!size-5 text-muted-foreground"
-                      />
-                      <div>
-                        <div className="font-medium">{command.id}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {command.description}
+          <div className="absolute z-50 -top-4 -left-[15px] -translate-y-full w-md-[820px] w-lg-[950px] w-[52vw]">
+            <div className="w-full">
+              <Command className="rounded-lg border shadow-none">
+                <div className="flex items-center pb-0">
+                  <CommandInput
+                    placeholder="Search prompts..."
+                    className="h-12"
+                    onValueChange={handleSearch}
+                  />
+                </div>
+                <CommandList className="max-h-[60vh] md:max-h-[300px] !overflow-hidden">
+                  <CommandEmpty>No results found.</CommandEmpty>
+                  <div className="flex flex-col md:flex-row">
+                    <CommandGroup className="w-full md:w-[250px] p-2 h-[280px] overflow-auto">
+                      {filteredCommands.map((command, index) => (
+                        <CommandItem
+                          key={command.id}
+                          onSelect={() => {
+                            handleCommandSelect(command);
+                            setShowCommands(false);
+                          }}
+                          onMouseEnter={() => handleMouseEnter(index)}
+                          className={cn(
+                            'command-item !bg-transparent cursor-pointer px-3 py-3 justify-between rounded-md',
+                            index === selectedIndex ? '!bg-accent' : ''
+                          )}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">
+                              {command.id}
+                            </div>
+                            <div className="font-light text-xs truncate">
+                              {command.description}
+                            </div>
+                          </div>
+                          <div className="text-gray-400 ml-2 flex-shrink-0">
+                            <ChevronDown className="h-5 w-5 rotate-[-90deg]" />
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    {filteredCommands.length > 0 && !isMobile && (
+                      <div className="border-t-2 md:border-t-0 md:border-l w-full h-[280px] overflow-auto">
+                        <div className="flex-1 p-2 md:p-2">
+                          <div className="bg-gray-50 rounded-md p-4 relative">
+                            <p className="text-sm text-gray-700 whitespace-pre-wrap font-sans">
+                              {filteredCommands[selectedIndex]
+                                ?.prompt_content ||
+                                'Select a command to view its content'}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
+                    )}
+                  </div>
+                </CommandList>
+              </Command>
+            </div>
           </div>
         ) : null}
       </div>
