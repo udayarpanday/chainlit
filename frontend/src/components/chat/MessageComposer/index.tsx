@@ -93,11 +93,11 @@ export default function MessageComposer({
         .map((a) => ({ id: a.serverId! }));
 
       setAutoScroll(true);
-      
+
       // @ts-expect-error is not a valid prop
       if (window.sendCreatorMessage) {
         // @ts-expect-error is not a valid prop
-        window.sendCreatorMessage(message)
+        window.sendCreatorMessage(message);
       } else {
         sendMessage(message, fileReferences);
       }
@@ -197,11 +197,13 @@ export default function MessageComposer({
             onFileUploadError={onFileUploadError}
             onFileUpload={onFileUpload}
           />
-          <CommandButton
-            disabled={disabled}
-            selectedCommand={selectedCommand}
-            onCommandSelect={setSelectedCommand}
-          />
+          {evoya && evoya?.type == 'dashboard' && (
+            <CommandButton
+              disabled={disabled}
+              selectedCommand={selectedCommand}
+              onCommandSelect={setSelectedCommand}
+            />
+          )}
           {chatSettingsInputs.length > 0 && (
             <Button
               id="chat-settings-open-modal"
@@ -214,9 +216,9 @@ export default function MessageComposer({
               <Settings className="!size-6" />
             </Button>
           )}
-          {((evoya && evoya?.type == 'dashboard')) &&
+          {evoya && evoya?.type == 'dashboard' && (
             <VoiceButton disabled={disabled} />
-          }
+          )}
         </div>
         {evoya && evoya?.type != 'dashboard' && (
           <Input

@@ -78,7 +78,7 @@ const Header = ({ expanded, setExpanded, isPopup }: Props): JSX.Element => {
           {!creatorEnabled &&
             <>
               <NewChatButton />
-              {evoya?.evoyaCreator?.enabled && <EvoyaCreatorButton />}
+              {evoya?.evoyaCreator?.enabled && !isTabletOrMobile && <EvoyaCreatorButton />}
               <PrivacyShieldToggle />
             </>
           }
@@ -125,9 +125,9 @@ const Header = ({ expanded, setExpanded, isPopup }: Props): JSX.Element => {
             onClick={() => { setExpanded(!expanded); window.dispatchEvent(new CustomEvent('copilot-open-modal')); }}
           >
             {expanded ? (
-              <X className={`!size-5 'text-muted-foreground'}`} style={{ color: evoya?.type !== 'dashboard' && evoya.chainlitConfig.style.color }} />
+              <X className={`!size-5`} style={{ color: evoya?.type !== 'dashboard' && evoya.chainlitConfig.style.color }} />
             ) : (
-              !isPopup && <Maximize2 className={`!size-5 text-muted-foreground`} style={{ color: evoya?.type !== 'dashboard' && evoya.chainlitConfig.style.color }} />
+              !isPopup && <Maximize2 className={`!size-5 `} style={{ color: evoya?.type !== 'dashboard' && evoya.chainlitConfig.style.color }} />
             )}
           </Button>
         }
