@@ -1,19 +1,9 @@
-import { Eye, EyeOff, Lock, LockOpen, Shield, ShieldOff } from 'lucide-react';
+import { Eye, EyeOff, Lock, LockOpen } from 'lucide-react';
 import { useState } from 'react';
 import { useMediaQuery } from 'react-responsive';
 
 import { Translator } from '@chainlit/app/src/components/i18n';
 import { Button } from '@chainlit/app/src/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@chainlit/app/src/components/ui/dropdown-menu';
-import { Label } from '@chainlit/app/src/components/ui/label';
-import { Switch } from '@chainlit/app/src/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
@@ -24,11 +14,9 @@ import {
 import { usePrivacyShield } from './usePrivacyShield';
 
 const PrivacyShieldToggle = (): JSX.Element => {
-  const [menuOpen, setMenuOpen] = useState(false);
   const { enabled, setEnabled, enabledVisual, setEnabledVisual, sections } =
     usePrivacyShield();
-  const isTabletOrMobile = useMediaQuery({ query: '(max-width: 1199px)' });
-
+  
   return (
     <div className="flex items-center -ml-2">
       <TooltipProvider delayDuration={100}>
@@ -44,9 +32,9 @@ const PrivacyShieldToggle = (): JSX.Element => {
                 onClick={() => setEnabled(!enabled)}
               >
                 {enabled ? (
-                  <Shield className="!size-5 text-primary" />
+                  <Lock className="!size-5 text-primary" />
                 ) : (
-                  <ShieldOff className="!size-5" />
+                  <LockOpen className="!size-5" />
                 )}
               </Button>
               {/* <Switch
