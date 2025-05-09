@@ -260,7 +260,7 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
         <TooltipProvider delayDuration={100}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Share2 fill='#5c5c5c' className="!size-5 text-muted-foreground" strokeWidth={1.25} />
+              <Share2 fill='#5c5c5c' className="!size-5 " strokeWidth={1.25} />
             </TooltipTrigger>
             <TooltipContent>
               <p>
@@ -285,7 +285,7 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
             <>
               <div className='flex items-center justify-between flex-wrap'>
                 <div className='flex gap-3'>
-                  <MdContentCopy className="!size-5 text-muted-foreground " />
+                  <MdContentCopy className="!size-5  " />
                   <Translator path="components.molecules.shareSession.types.static" />
                 </div>
                 <div className='flex gap-3'>
@@ -312,7 +312,7 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
               </div>
               <div className='flex items-center justify-between flex-wrap' >
                 <div className='flex gap-3'>
-                  <MdContentCopy className="!size-5 text-muted-foreground " />
+                  <MdContentCopy className="!size-5  " />
                   <Translator path="components.molecules.shareSession.types.dynamic" />
                 </div>
                 <div className='flex gap-3'>

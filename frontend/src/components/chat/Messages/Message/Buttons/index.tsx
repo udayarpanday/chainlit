@@ -7,10 +7,12 @@ import {
 
 import CopyButton from '@/components/CopyButton';
 
+import { useIsMobile } from '@/hooks/use-mobile';
+
 import MessageActions from './Actions';
 import { DebugButton } from './DebugButton';
-import { FeedbackButtons } from './FeedbackButtons';
 import { EvoyaCreatorButton } from './EvoyaCreatorButton';
+import { FeedbackButtons } from './FeedbackButtons';
 
 interface Props {
   message: IStep;
@@ -21,6 +23,7 @@ interface Props {
 const MessageButtons = ({ message, actions, run }: Props) => {
   const { config } = useConfig();
   const { firstInteraction } = useChatMessages();
+  const isMobile = useIsMobile();
 
   const isUser = message.type === 'user_message';
   const isAsk = message.waitForAnswer;
@@ -41,7 +44,7 @@ const MessageButtons = ({ message, actions, run }: Props) => {
   return (
     <div className="-ml-1.5 flex items-center flex-wrap">
       {showCopyButton ? <CopyButton content={message.output} /> : null}
-      <EvoyaCreatorButton message={message} />
+      {!isMobile ? <EvoyaCreatorButton message={message} /> : null}
       {run ? <FeedbackButtons message={run} /> : null}
       {messageActions.length ? (
         <MessageActions actions={messageActions} />

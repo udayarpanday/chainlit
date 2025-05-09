@@ -87,7 +87,7 @@ const FavoriteSessionButton = ({ sessionUuid }: Props): JSX.Element => {
           <Tooltip>
             <TooltipTrigger asChild>
               {
-                isFavorite ? <Star fill='#5c5c5c' className="!size-5 text-muted-foreground" /> : <Star className="!size-5 text-muted-foreground" />
+                isFavorite ? <Star fill='#facc15' className="!size-5 text-yellow-400" /> : <Star className="!size-5" />
               }
             </TooltipTrigger>
             <TooltipContent>

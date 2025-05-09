@@ -59,7 +59,7 @@ export default function WidgetEmbedded() {
   }, []);
 
   return (
-    <div className={cn("flex flex-col rounded-xl bg-background h-full w-full relative shadow-lg ", 
+    <div className={cn("flex flex-col bg-background h-full w-full relative shadow-lg ", 
       expanded
       ? 'copilot-container-expanded'
       : 'copilot-container-collapsed')}>
