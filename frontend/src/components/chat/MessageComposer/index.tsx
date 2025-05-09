@@ -95,7 +95,7 @@ export default function MessageComposer({
       setAutoScroll(true);
       
       // @ts-expect-error is not a valid prop
-      if (window.sendCreatorMessage) {
+      if (window.sendCreatorMessage && window.evoyaCreatorEnabled) {
         // @ts-expect-error is not a valid prop
         window.sendCreatorMessage(message)
       } else {
