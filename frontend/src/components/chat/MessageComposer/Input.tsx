@@ -195,7 +195,8 @@ const Input = forwardRef<InputMethods, Props>(
           }
 
           // Create and set the selection range
-          window.getSelection().removeAllRanges();
+          const selection = window.getSelection();
+          selection.removeAllRanges();
           const range = document.createRange();
 
           // Set cursor position at the beginning of the text node
@@ -203,7 +204,7 @@ const Input = forwardRef<InputMethods, Props>(
           range.collapse(true);
 
           // Apply the selection
-          window.getSelection().addRange(range);
+          selection.addRange(range);
 
           // Force focus with delay to ensure it happens after any button close events
           content.focus();
@@ -216,9 +217,9 @@ const Input = forwardRef<InputMethods, Props>(
             // Re-focus and set cursor position again
             content.focus();
 
-            if (window.getSelection().rangeCount > 0) {
-              window.getSelection().removeAllRanges();
-              window.getSelection().addRange(range);
+            if (selection.rangeCount > 0) {
+              selection.removeAllRanges();
+              selection.addRange(range);
             }
 
             // Trigger onChange with content excluding command
@@ -259,105 +260,77 @@ const Input = forwardRef<InputMethods, Props>(
         return indexA - indexB;
       });
 
+    // Improved paste handler that works across browsers
     useEffect(() => {
       const textarea = contentEditableRef.current;
       if (!textarea || !onPaste) return;
 
-      const _onPaste = (event: ClipboardEvent) => {
+      const handlePaste = (event: ClipboardEvent) => {
+        // Prevent the default paste behavior
         event.preventDefault();
 
+        // Get plain text from clipboard
         const textData = event.clipboardData?.getData('text/plain');
-
-        if (textData) {
-          const escapedText = escapeHtml(textData);
-          const textWithNewLines = escapedText.replace(/\n/g, '<br>');
         
-          const selection = window.getSelection();
-          if (selection?.rangeCount) {
-            const range = selection.getRangeAt(0);
-            range.deleteContents();
+        if (!textData) return;
         
-            // Find the shadow root and chat input
-            const shadowHost = document.getElementById('chainlit-copilot');
-            if (shadowHost) {
-              const shadowRoot = shadowHost.shadowRoot;
-              if (shadowRoot) {
-                const chatInput = shadowRoot.querySelector('#chat-input');
+        // Process the text - convert newlines to <br> tags and escape HTML
+        const escapedText = escapeHtml(textData);
+        const textWithNewLines = escapedText.replace(/\n/g, '<br>');
         
-                if (chatInput) {
-                  // Create a temporary div to hold the HTML content
-                  const tempDiv = document.createElement('div');
-                  tempDiv.innerHTML = textWithNewLines;
-                  
-                  // Create a document fragment to hold the nodes
-                  const fragment = document.createDocumentFragment();
-                  while (tempDiv.firstChild) {
-                    fragment.appendChild(tempDiv.firstChild);
-                  }
-                  
-                  // Get the selection within the shadow DOM
-                  const shadowSelection = shadowRoot.getSelection() || window.getSelection();
-                  
-                  if (shadowSelection?.rangeCount) {
-                    const shadowRange = shadowSelection.getRangeAt(0);
-                    shadowRange.deleteContents();
-                    shadowRange.insertNode(fragment);
-                    
-                    // Move cursor to end of pasted content
-                    shadowRange.collapse(false);
-                    shadowSelection.removeAllRanges();
-                    shadowSelection.addRange(shadowRange);
-                  } else {
-                    // Fallback if no selection in shadow DOM
-                    chatInput.appendChild(fragment);
-                  }
-                  
-                  // Focus on the chat input
-                  chatInput.focus();
-                }
-              }
-            } else {
-              // Insert the HTML content (original else block)
-              const tempDiv = document.createElement('div');
-              tempDiv.innerHTML = textWithNewLines;
-              const fragment = document.createDocumentFragment();
-              while (tempDiv.firstChild) {
-                fragment.appendChild(tempDiv.firstChild);
-              }
-              range.insertNode(fragment);
-        
-              // Move cursor to end of pasted content
-              range.collapse(false);
-              selection.removeAllRanges();
-              selection.addRange(range);
-              
-              // Force focus back to the content editable
-              textarea.focus();
-              textarea.scrollTop = textarea.scrollHeight;
-            }
-        
-            // Trigger input event to update state
-            const inputEvent = new Event('input', { bubbles: true });
-            
-            // Dispatch the event to the appropriate element
-            if (shadowHost && shadowHost.shadowRoot) {
-              const chatInput = shadowHost.shadowRoot.querySelector('#chat-input');
-              if (chatInput) {
-                chatInput.dispatchEvent(inputEvent);
-              }
-            } else if (textarea) {
-              textarea.dispatchEvent(inputEvent);
-            }
-          }
+        // Handle insertion into the DOM
+        // Use execCommand for better cross-browser compatibility
+        if (document.queryCommandSupported('insertHTML')) {
+          document.execCommand('insertHTML', false, textWithNewLines);
+        } else {
+          // Fallback method for browsers that don't support execCommand
+          insertTextAtCursor(textWithNewLines);
         }
-
+        
+        // Ensure the textarea has focus
+        textarea.focus();
+        
+        // Call the onPaste callback
         onPaste(event);
+        
+        // Trigger input event to update state
+        setTimeout(() => {
+          const inputEvent = new Event('input', { bubbles: true });
+          textarea.dispatchEvent(inputEvent);
+        }, 0);
+      };
+      
+      // Helper function to insert text at cursor position
+      const insertTextAtCursor = (html: string) => {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+        
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+        
+        // Create a fragment with our HTML
+        const fragment = document.createDocumentFragment();
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        
+        // Move nodes from temp div to fragment
+        while (tempDiv.firstChild) {
+          fragment.appendChild(tempDiv.firstChild);
+        }
+        
+        // Insert the fragment
+        range.insertNode(fragment);
+        
+        // Move cursor to end of inserted content
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
       };
 
-      textarea.addEventListener('paste', _onPaste);
+      textarea.addEventListener('paste', handlePaste);
 
       return () => {
-        textarea.removeEventListener('paste', _onPaste);
+        textarea.removeEventListener('paste', handlePaste);
       };
     }, [onPaste]);
 
@@ -388,8 +361,20 @@ const Input = forwardRef<InputMethods, Props>(
     const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
       if (!showCommands) {
         if (e.key === 'Enter' && !e.shiftKey && onEnter && !isComposing) {
-          e.preventDefault();
-          onEnter(e);
+          // Check if on mobile device
+          if (isMobile) {
+            // On mobile, only send if there's a special modifier key pressed
+            // This allows normal Enter presses to create new lines
+            if (e.ctrlKey) {
+              e.preventDefault();
+              onEnter(e);
+            }
+            // Otherwise let the default behavior happen (create new line)
+          } else {
+            // On desktop, maintain current behavior
+            e.preventDefault();
+            onEnter(e);
+          }
         }
         return;
       }
@@ -476,6 +461,29 @@ const Input = forwardRef<InputMethods, Props>(
           onCompositionStart={() => setIsComposing(true)}
           onCompositionEnd={() => setIsComposing(false)}
         />
+        {/* Add a send button for mobile users
+        {isMobile && (
+          <button
+            onClick={handleSendOnMobile}
+            className="absolute right-2 bottom-2 p-2 rounded-full bg-blue-500 text-white"
+            aria-label="Send message"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        )} */}
         {showCommands && filteredCommands.length ? (
           <div className="absolute z-50 -top-4 -left-[15px] -translate-y-full w-md-[820px] w-lg-[950px] w-[52vw]">
             <div className="w-full">

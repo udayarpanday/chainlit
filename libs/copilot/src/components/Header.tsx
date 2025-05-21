@@ -52,7 +52,6 @@ const Header = ({ expanded, setExpanded, isPopup }: Props): JSX.Element => {
       setSessionUuid(sessionJson.session_uuid);
       localStorage.setItem(sessionTokenKey, sessionJson.session_uuid);
       document.cookie = `${sessionTokenKey}=${sessionJson.session_uuid};path=/`;
-      console.log('session_token', sessionJson.session_uuid);
     } catch (e) {
       return;
     }
