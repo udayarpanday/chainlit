@@ -26,7 +26,7 @@ const HighlightedCode = ({ language, children }: CodeSnippetProps) => {
   }, []);
 
   return (
-    <pre className="m-0">
+    <pre className="m-0 whitespace-break-spaces">
       <code
         ref={codeRef}
         className={`language-${language} font-mono text-sm rounded-b-md block`}

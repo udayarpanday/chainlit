@@ -1,16 +1,17 @@
 import { cn } from '@/lib/utils';
 import { omit } from 'lodash';
-import { useContext, useMemo, isValidElement } from 'react';
+import { isValidElement, useContext, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { PluggableList } from 'react-markdown/lib';
+import { VegaLite } from 'react-vega';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import remarkDirective from 'remark-directive';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import { visit } from 'unist-util-visit';
-import { VegaLite } from 'react-vega';
 
+import ResponseTextItem from '@chainlit/copilot/src/evoya/privacyShield/ResponseTextItem';
 import { ChainlitContext, type IMessageElement } from '@chainlit/react-client';
 
 import { AspectRatio } from '@/components/ui/aspect-ratio';
@@ -30,8 +31,6 @@ import CodeSnippet from './CodeSnippet';
 import { ElementRef } from './Elements/ElementRef';
 import { MarkdownAlert, alertComponents } from './MarkdownAlert';
 import { MermaidDiagram } from './Mermaid';
-
-import ResponseTextItem from '@chainlit/copilot/src/evoya/privacyShield/ResponseTextItem';
 
 interface Props {
   allowHtml?: boolean;
@@ -87,6 +86,26 @@ const cursorPlugin = () => {
   };
 };
 
+const fixDirectiveColonPlugin = () => {
+  return (tree: any) => {
+    visit(tree, (node: any, index: number, parent: any) => {
+      if (
+        (node.type === 'textDirective' ||
+         node.type === 'leafDirective' ||
+         node.type === 'containerDirective') &&
+        !node.data?.hName &&
+        /^[a-zA-Z0-9_-]+$/.test(node.name) 
+      ) {
+        const directiveText = `:${node.name}`;
+        parent.children.splice(index, 1, {
+          type: 'text',
+          value: directiveText
+        });
+      }
+    });
+  };
+};
+
 const Markdown = ({
   allowHtml,
   latex,
@@ -94,7 +113,7 @@ const Markdown = ({
   className,
   children
 }: Props) => {
-  const rawContent=children
+  const rawContent = children;
   const apiClient = useContext(ChainlitContext);
 
   const rehypePlugins = useMemo(() => {
@@ -103,7 +122,10 @@ const Markdown = ({
       rehypePlugins = [rehypeRaw as any, ...rehypePlugins];
     }
     if (latex) {
-      rehypePlugins = [[rehypeKatex as any, { output: 'mathml' }], ...rehypePlugins];
+      rehypePlugins = [
+        [rehypeKatex as any, { output: 'mathml' }],
+        ...rehypePlugins
+      ];
     }
     return rehypePlugins;
   }, [allowHtml, latex]);
@@ -113,6 +135,7 @@ const Markdown = ({
       cursorPlugin,
       remarkGfm as any,
       remarkDirective as any,
+      fixDirectiveColonPlugin,
       MarkdownAlert
     ];
 
@@ -132,7 +155,9 @@ const Markdown = ({
         span({ children, ...props }) {
           if (props.node?.properties.dataPrivacyComponent) {
             return (
-              <ResponseTextItem sectionId={props.node?.properties.dataPrivacyComponent.toString()} />
+              <ResponseTextItem
+                sectionId={props.node?.properties.dataPrivacyComponent.toString()}
+              />
             );
           }
           return <span {...props}>{children}</span>;
@@ -155,7 +180,9 @@ const Markdown = ({
               } else if (className?.includes('-json')) {
                 const jsonContent = JSON.parse(rawContent);
                 if (jsonContent.$schema?.includes('vega.github.io')) {
-                  return <VegaLite spec={jsonContent} data={jsonContent.data} />;
+                  return (
+                    <VegaLite spec={jsonContent} data={jsonContent.data} />
+                  );
                 }
               } else if (className?.includes('-mermaid')) {
                 return <MermaidDiagram>{rawContent}</MermaidDiagram>;
@@ -186,10 +213,13 @@ const Markdown = ({
         img: (image: any) => {
           return (
             <div className="relative">
-              <AspectRatio ratio={16 / 9} className="bg-muted rounded-md overflow-hidden">
+              <AspectRatio
+                ratio={16 / 9}
+                className="bg-muted rounded-md overflow-hidden"
+              >
                 <img
                   src={
-                    image.src.startsWith("/public")
+                    image.src.startsWith('/public')
                       ? apiClient.buildEndpoint(image.src)
                       : image.src
                   }
@@ -267,17 +297,18 @@ const Markdown = ({
         },
         p(props) {
           const thinkEndIndex = rawContent.indexOf('</think>');
-
-          const isBeforeThink = typeof props.children=='string' && thinkEndIndex !== -1 && rawContent.indexOf(props.children) < thinkEndIndex;
-        
+          const isBeforeThink =
+            typeof props.children == 'string' &&
+            thinkEndIndex !== -1 &&
+            rawContent.indexOf(props.children) < thinkEndIndex;
           return (
             <div
               {...omit(props, ['node'])}
               style={{
                 lineHeight: '28px',
                 color: isBeforeThink ? 'gray' : 'inherit',
-                fontStyle: isBeforeThink ? 'italic' : 'inherit',  
-                fontSize: isBeforeThink ? '12px' : 'inherit',    
+                fontStyle: isBeforeThink ? 'italic' : 'inherit',
+                fontSize: isBeforeThink ? '12px' : 'inherit'
               }}
               className="leading-7 [&:not(:first-child)]:mt-4 whitespace-pre-wrap break-words"
               role="article"

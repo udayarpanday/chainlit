@@ -271,7 +271,7 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
         </TooltipProvider>
       </Button>
       <Dialog open={open} onOpenChange={handleClose} aria-labelledby="share-alert-dialog-title" aria-describedby="share-alert-dialog-description">
-        <DialogContent className="z-[999] sm:max-w-[425px] lg:max-w-[960px]">
+        <DialogContent className="z-[9999] sm:max-w-[425px] lg:max-w-[960px]">
           <DialogHeader>
             <DialogTitle id="share-alert-dialog-title">
               <Translator path="components.molecules.shareSession.openButton" />
