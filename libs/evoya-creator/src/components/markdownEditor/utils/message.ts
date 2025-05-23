@@ -165,6 +165,28 @@ additional = {
   }
 }
 
+
+function escapeBrackets(text: string) {
+  const pattern =
+    /(```[\s\S]*?```|`.*?`)|\\\[([\s\S]*?[^\\])\\\]|\\\((.*?)\\\)|(\${1})/g;
+  const res = text.replace(
+    pattern,
+    (match, codeBlock, squareBracket, roundBracket, dollarSign) => {
+      if (codeBlock) {
+        return codeBlock;
+      } else if (squareBracket) {
+        return `$$\n${squareBracket}\n$$`;
+      } else if (roundBracket) {
+        return `$${roundBracket}$`;
+      } else if (dollarSign) {
+        // return '\\$';
+      }
+      return match;
+    },
+  );
+  return res;
+}
+
 export const messageParser = (message: string): CreatorMessage => {
   const belowRegex = /\[below\]((.|\n|\r)*)\[\/below\]/;
   const aboveRegex = /\[above\]((.|\n|\r)*)\[\/above\]/;
@@ -210,7 +232,7 @@ export const messageParser = (message: string): CreatorMessage => {
 
   return {
     insertType,
-    content,
+    content: escapeBrackets(content),
     feedback
   };
 }
