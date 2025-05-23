@@ -20,6 +20,7 @@ import {
 import {
   SelectDocument,
   ExportContent,
+  ResetDocument,
 } from './plugins/toolbar/components';
 
 export default function MDXEditorToolbar() {
@@ -53,6 +54,8 @@ export default function MDXEditorToolbar() {
                   <SelectDocument />
                   <Separator />
                   <ExportContent />
+                  <Separator />
+                  <ResetDocument />
               </>
             )
           }

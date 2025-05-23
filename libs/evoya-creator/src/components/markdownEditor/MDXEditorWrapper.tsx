@@ -42,7 +42,7 @@ import {
 } from '@mdxeditor/editor';
 import mdxCss from '@mdxeditor/editor/style.css?inline';
 import mdxCustomCss from './custom.css?inline';
-import styles from '@mdxeditor/editor/dist/styles/ui.module.css.js';
+// import styles from '@mdxeditor/editor/dist/styles/ui.module.css.js';
 
 import useEvoyaCreator from '@/hooks/useEvoyaCreator';
 import MDXEditorToolbar from './MDXEditorToolbar';
@@ -64,6 +64,10 @@ import {
 import {
   evoyaMathPlugin,
 } from './plugins/math';
+
+import {
+  evoyaMathDialogPlugin,
+} from './plugins/math/mathDialog';
 
 import {
   evoyaRootPlugin,
@@ -290,6 +294,7 @@ export default function MDXEditorWrapper() {
             },
           }),
           evoyaMathPlugin(),
+          evoyaMathDialogPlugin(),
           diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: creatorContent }),
         ]}
         // readOnly={false}

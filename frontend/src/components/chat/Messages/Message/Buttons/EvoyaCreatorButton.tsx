@@ -34,7 +34,7 @@ function escapeBrackets(text: string) {
       } else if (roundBracket) {
         return `$${roundBracket}$`;
       } else if (dollarSign) {
-        return '\\$';
+        // return '\\$';
       }
       return match;
     },

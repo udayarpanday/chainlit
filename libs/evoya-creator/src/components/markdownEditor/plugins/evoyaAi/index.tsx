@@ -578,6 +578,7 @@ export const setNodeSelectionByKey$ = Signal<any>((r) => {});
 export const setCodeSelection$ = Signal<any>((r) => {});
 export const resetSelection$ = Action((r) => {});
 export const selectDocument$ = Action((r) => {});
+export const resetDocument$ = Action((r) => {});
 export const creatorType$ = Cell<string>('', (r) => {});
 // export const evoyaAiParams$ = Cell<EvoyaAiPluginParams | null>(null, (r) => {});
 
@@ -602,6 +603,13 @@ export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
       }
 
       realm.pub(evoyaAiState$, selectionContext);
+    });
+
+    realm.sub(realm.pipe(resetDocument$, withLatestFrom(activeEditor$)), ([value, activeEditor]) => {
+      activeEditor?.update(() => {
+        const root = $getRoot();
+        root.clear();
+      });
     });  
 
     // const updateScrollOffset = () => {

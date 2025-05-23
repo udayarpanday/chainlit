@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { MdOutlineStar } from "react-icons/md";
 import { Star } from 'lucide-react';
@@ -25,7 +25,7 @@ function escapeBrackets(text: string) {
       } else if (roundBracket) {
         return `$${roundBracket}$`;
       } else if (dollarSign) {
-        return '\\$';
+        // return '\\$';
       }
       return match;
     },
@@ -34,6 +34,7 @@ function escapeBrackets(text: string) {
 }
 
 const EvoyaCreatorButton = (): JSX.Element => {
+  // const [hasContent, setHasContent] = useState(false);
   const handleClick = async () => {
     const restoreContent = localStorage.getItem('evoya-creator');
 
@@ -41,9 +42,26 @@ const EvoyaCreatorButton = (): JSX.Element => {
         const restoreContentObj = JSON.parse(restoreContent);
 
         // @ts-expect-error custom property
-        window.openEvoyaCreator({output: restoreContentObj.content}, { type: restoreContentObj.type });
+        window.openEvoyaCreator({output: escapeBrackets(restoreContentObj.content)}, { type: restoreContentObj.type });
     }
   };
+
+  useEffect(() => {
+    const restoreContent = localStorage.getItem('evoya-creator');
+
+    if (restoreContent) {
+        const restoreContentObj = JSON.parse(restoreContent);
+
+        if (restoreContentObj.content) {
+          // @ts-expect-error custom property
+          window.evoyaCreatorContent = true;
+          // setHasContent(true);
+        }
+    }
+  }, []);
+
+  // @ts-expect-error custom property
+  const hasContent = window.evoyaCreatorContent;
 
   return (
     <div>
@@ -51,14 +69,15 @@ const EvoyaCreatorButton = (): JSX.Element => {
       <TooltipProvider delayDuration={100}>
         <Tooltip>
           <TooltipTrigger asChild>
-      <Button
-        id="favorite-session-button"
-        size="icon"
-        variant="ghost"
-        onClick={handleClick}
-      >
-        <FilePlus className="!size-5" />
-      </Button>
+            <Button
+              id="favorite-session-button"
+              size="icon"
+              variant="ghost"
+              onClick={handleClick}
+              className={hasContent ? 'text-primary' : ''}
+            >
+              <FilePlus className="!size-5" />
+            </Button>
           </TooltipTrigger>
           <TooltipContent>
             <p>
@@ -71,4 +90,4 @@ const EvoyaCreatorButton = (): JSX.Element => {
   );
 }
 
-export default EvoyaCreatorButton
+export default EvoyaCreatorButton;

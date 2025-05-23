@@ -7,7 +7,57 @@
 }
 
 .evoya-creator-editor {
-    
+    .inline-action {
+        display: inline-flex;
+        align-items: center;
+        height: 16px;
+        width: 16px;
+        color: var(--baseText);
+        opacity: .15;
+        cursor: pointer;
+
+        :is(svg) {
+            height: 100%;
+        }
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+
+    .math-wrapper {
+        display: inline-flex;
+        align-items: center;
+
+        .math-formula {
+            padding: 0 5px;
+        }
+
+        .inline-action {
+            display: none;
+            margin-left: 5px;
+        }
+
+        &:hover {
+            .math-formula {
+                background-color: var(--baseBg);
+                border-radius: var(--radius-medium);
+            }
+
+            .inline-action {
+                display: inline-flex;
+            }
+        }
+    }
+}
+
+.math-dialog-content {
+    padding: 1rem;
+    min-width: 350px;
+
+    .math-preview {
+        padding: .5rem 0;
+    }
 }
 
 .mermaidBlockWrapper {

@@ -9,6 +9,9 @@ import {
   addToMarkdownExtension$,
   addSyntaxExtension$,
   MdastImportVisitor,
+  iconComponentFor$,
+  addComposerChild$,
+  activeEditor$,
 } from "@mdxeditor/editor";
 
 import {
@@ -20,6 +23,7 @@ import {
   EditorConfig,
   LexicalEditor,
   LexicalNode,
+  $getNodeByKey,
 } from "lexical";
 
 import {
@@ -36,6 +40,18 @@ import {
 import {
   renderToString
 } from "katex";
+
+import {
+  useCellValue,
+  usePublisher,
+  Cell,
+  Signal,
+  withLatestFrom,
+} from '@mdxeditor/gurx';
+
+import { useMemo, useState } from "react";
+
+import { editMathFormula$ } from './mathDialog';
 
 export const MdastMathVisitor: MdastImportVisitor<Math> = {
   testNode: 'math',
@@ -132,17 +148,18 @@ export class MathNode extends DecoratorNode<JSX.Element> {
   }
 
   decorate(_parentEditor: LexicalEditor): JSX.Element {
-    var html = renderToString(this.__mathString, {
-      throwOnError: false,
-      output: "mathml",
-    });
-    if (html) {
-      return (
-        <span dangerouslySetInnerHTML={{__html: html}} />
-      );
-    }
+    return <MathFormulaRenderer formula={this.__mathString} nodeKey={this.__key} />
+    // var html = renderToString(this.__mathString, {
+    //   throwOnError: false,
+    //   output: "mathml",
+    // });
+    // if (html) {
+    //   return (
+    //     <span dangerouslySetInnerHTML={{__html: html}} />
+    //   );
+    // }
 
-    return <span>{this.__mathString}</span>;
+    // return <span>{this.__mathString}</span>;
   }
 
   isInline(): boolean {
@@ -199,6 +216,11 @@ export class InlineMathNode extends DecoratorNode<JSX.Element> {
     return span;
   }
 
+  setMathString(mathString: string): void {
+    const writable = this.getWritable();
+    writable.__mathString = mathString;
+  }
+
   updateDOM(): false {
     return false;
   }
@@ -218,22 +240,52 @@ export class InlineMathNode extends DecoratorNode<JSX.Element> {
   }
 
   decorate(_parentEditor: LexicalEditor): JSX.Element {
-    var html = renderToString(this.__mathString, {
-      throwOnError: false,
-      output: "mathml",
-    });
-    if (html) {
-      return (
-        <span dangerouslySetInnerHTML={{__html: html}} />
-      );
-    }
+    return <MathFormulaRenderer formula={this.__mathString} inline nodeKey={this.__key} />
+    // const html = renderToString(this.__mathString, {
+    //   throwOnError: false,
+    //   output: "mathml",
+    // });
+    // if (html) {
+    //   return (
+    //     <span>
+    //       <span dangerouslySetInnerHTML={{__html: html}} />
 
-    return <span>{this.__mathString}</span>;
+    //     </span>
+    //   );
+    // }
+
+    // return <span>{this.__mathString}</span>;
   }
 
   isInline(): boolean {
     return true;
   }
+}
+
+export const MathFormulaRenderer = ({ formula, nodeKey }: { formula: string; inline?: boolean; nodeKey: string; }) => {
+  const iconComponentFor = useCellValue(iconComponentFor$);
+  const setShowEditMath = usePublisher(editMathFormula$);
+  const showEditMath = useCellValue(editMathFormula$);
+  const [editMath, setEditMath] = useState(false);
+  const formulaHtml = useMemo(() => {
+    return renderToString(formula, {
+      throwOnError: false,
+      output: "mathml",
+    });
+  }, [formula]);
+
+  if (formulaHtml) {
+    return (
+      <span className={`math-wrapper ${showEditMath?.nodeKey === nodeKey ? '_active' : ''}`} onDoubleClick={() => setShowEditMath({ nodeKey, mathFormula: formula })}>
+        <span className="math-formula" dangerouslySetInnerHTML={{__html: formulaHtml}} />
+        {/* <span className="inline-action" onClick={() => setShowEditMath({ nodeKey, mathFormula: formula })}>{iconComponentFor('edit')}</span> */}
+      </span>
+    );
+  }
+
+  return (
+    <span>{formula}</span>
+  );
 }
 
 export interface CreateInlineMathNodeParameters {
