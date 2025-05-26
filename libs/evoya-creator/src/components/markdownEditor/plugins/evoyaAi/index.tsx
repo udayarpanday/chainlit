@@ -40,6 +40,7 @@ import {
   $isTableNode,
   $isCodeBlockNode,
   $createCodeBlockNode,
+  $isImageNode,
 } from "@mdxeditor/editor";
 
 import {
@@ -391,9 +392,13 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
             } else {
               const selectionStartNode = $isTextNode(newChildren[0]) ? newChildren[0] : newChildren[0].getFirstDescendant();
               const selectionEndNode = $isTextNode(newChildren[newChildren.length - 1]) ? newChildren[newChildren.length - 1] : newChildren[newChildren.length - 1].getLastDescendant();
-              newSelection.setTextNodeRange(selectionStartNode, 0, selectionEndNode, selectionEndNode.getTextContent().length);
-              console.log(newSelection);
-              $setSelection(newSelection);
+              if ($isTextNode(selectionStartNode) && $isTextNode(selectionEndNode)) {
+                newSelection.setTextNodeRange(selectionStartNode, 0, selectionEndNode, selectionEndNode.getTextContent().length);
+                console.log(newSelection);
+                $setSelection(newSelection);
+              } else {
+                // TODO?
+              }
             }
           }
 
@@ -413,158 +418,6 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
     }
   });
 });
-/*export const replaceSelectionContent$ = Signal<{ message: string, context: SelectionContext}>((realm) => {
-  realm.sub(realm.pipe(replaceSelectionContent$, withLatestFrom(activeEditor$)), ([value, activeEditor]) => {
-    console.log(value);
-    if (value && value.message && value.context) {
-      activeEditor?.update(() => {
-        console.log('selection context', value.context);
-        const selectionContext = value.context;
-        const lexicalSelection = value.context.lexical;
-
-        if (!lexicalSelection) return;
-
-        const importPoint = {
-          children: [] as LexicalNode[],
-          append(node: LexicalNode) {
-            this.children.push(node)
-          },
-          getType() {
-            // return lexicalSelection.getNodes()[0].getType();
-            return 'importroot';
-          }
-        }
-
-        tryImportingMarkdown(realm, importPoint, value.message);
-        console.log('importPoint', importPoint);
-        const importChildren = importPoint.children;
-        console.log('importChildren', importChildren);
-
-        if (selectionContext.insertType === 'after' || selectionContext.insertType === 'before') {
-          // Selection not implemented yet
-          if ($isRangeSelection(lexicalSelection)) {
-            const lastPoint = lexicalSelection.isBackward() ? lexicalSelection.anchor : lexicalSelection.focus;
-            const firstPoint = lexicalSelection.isBackward() ? lexicalSelection.focus : lexicalSelection.anchor;
-            let targetNode = selectionContext.insertType === 'before' ? firstPoint.getNode() : lastPoint.getNode();
-            
-            if (targetNode.getType() === 'text') {
-              targetNode = targetNode.getParent();
-            }
-
-            console.log(targetNode)
-
-            // parapgraphChildren.forEach((child) => {
-            //   if (selectionContext.insertType === 'before') {
-            //     targetNode.insertBefore(child, false);
-            //   } else {
-            //     targetNode.insertAfter(child, false);
-            //   }
-            // });
-          } else {
-            const targetNode = lexicalSelection.getNodes()[0];
-
-            console.log(targetNode)
-
-            // parapgraphChildren.forEach((child) => {
-            //   if (selectionContext.insertType === 'before') {
-            //     targetNode.insertBefore(child, false);
-            //   } else {
-            //     targetNode.insertAfter(child, false);
-            //   }
-            // });
-          }
-        } else if (selectionContext.insertType === 'replace') {
-          if (selectionContext.selectionType === 'document') {
-            const rootElement = $getRoot();
-            rootElement.clear();
-            // importMarkdownToLexical({
-            evoyaImportMarkdownToLexical({
-              root: rootElement,
-              visitors: realm.getValue(importVisitors$),
-              mdastExtensions: realm.getValue(mdastExtensions$),
-              markdown: value.message,
-              syntaxExtensions: realm.getValue(syntaxExtensions$),
-              jsxComponentDescriptors: realm.getValue(jsxComponentDescriptors$),
-              directiveDescriptors: realm.getValue(directiveDescriptors$),
-              codeBlockEditorDescriptors: realm.getValue(codeBlockEditorDescriptors$)
-            });
-          } else {
-            const selectedNodes = lexicalSelection.getNodes();
-            console.log('selectedNodes', selectedNodes);
-            if ($isRangeSelection(lexicalSelection)) {
-              const lastPoint = lexicalSelection.isBackward() ? lexicalSelection.anchor : lexicalSelection.focus;
-              const firstPoint = lexicalSelection.isBackward() ? lexicalSelection.focus : lexicalSelection.anchor;
-              
-              if (selectedNodes.every((sn: LexicalNode) => sn.getType() === 'text')) {
-                let insertAnchor = lastPoint.getNode();
-                let newChildren = importChildren;
-
-                if (importChildren.length === 1) {
-                  if ($isListNode(importChildren[0])) {
-                    insertAnchor = insertAnchor.getParent();
-                    newChildren = importChildren[0].getChildren();
-                  } else if ($isParagraphNode(importChildren[0]) || $isHeadingNode(importChildren[0])) {
-                    newChildren = importChildren[0].getChildren();
-                  } else if ($isTableNode(importChildren[0])) {
-                    // do i need to handle?
-                  }
-                } else {
-                  insertAnchor = insertAnchor.getParent();
-                }
-
-                console.log('before insert nodes 1', newChildren, insertAnchor);
-
-                newChildren.forEach((node) => insertAnchor.insertAfter(node));
-                selectedNodes.forEach((node) => node.remove());
-              } else {
-                let insertAnchor = lastPoint.getNode().getParent();
-                let newChildren = importChildren;
-
-                if (importChildren.length === 1) {
-                  if ($isListNode(importChildren[0])) {
-                    newChildren = importChildren[0].getChildren();
-                  } else if ($isTableNode(importChildren[0])) {
-                    // do i need to handle?
-                  }
-                }
-
-                console.log('before insert nodes 2', newChildren, insertAnchor);
-
-                newChildren.toReversed().forEach((node) => insertAnchor.insertAfter(node));
-                selectedNodes.forEach((node) => node.remove());
-              }
-            } else {
-              // lexicalSelection.insertNodes(paragraph.getChildren());
-              if (importChildren.every((sn: LexicalNode) => sn.getType() === 'text')) {
-                // lexicalSelection.insertNodes(importChildren);
-              } else {
-                if (selectedNodes.length === 1) {
-                  if ($isParagraphNode(selectedNodes[0]) || $isHeadingNode(selectedNodes[0])) {
-                    importChildren.toReversed().forEach((node) => selectedNodes[0].insertAfter(node));
-                    selectedNodes[0].remove();
-                  } else if ($isListItemNode(selectedNodes[0])) {
-                    console.log('insert list item', importChildren[0].getChildren());
-                    importChildren[0].getChildren().toReversed().forEach((node) => selectedNodes[0].insertAfter(node));
-                    selectedNodes[0].remove();
-                  } else if ($isTableCellNode(selectedNodes[0])) {
-                    // do i need to handle?
-                  } else if ($isTableNode(selectedNodes[0])) {
-                    importChildren.toReversed().forEach((node) => selectedNodes[0].insertAfter(node));
-                    selectedNodes[0].remove();
-                  } else {
-                    // no use case yet
-                  }
-                } else {
-                  // no use case yet
-                }
-              }
-            }
-          }
-        }
-      });
-    }
-  });
-});*/
 
 type EvoyaAiPluginParams = {
   containerRef: RefObject<HTMLElement>;
@@ -692,80 +545,6 @@ export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
             }
 
             realm.pub(evoyaAiState$, selectionContext);
-            /*if ($isAtNodeEnd(selection.anchor)) {
-              // const selectionContext = {
-              //   lexical: restoredSelection,
-              //   markdown: null,
-              //   selectionType: 'caret' as 'caret',
-              //   insertType: 'after' as 'after',
-              // };
-              const selectionContext = {
-                lexical: restoredSelection,
-                markdown: null,
-                selectionType: 'document' as 'document',
-                insertType: 'replace' as 'replace',
-              };
-              
-              if (params?.setSelectionContext) {
-                params.setSelectionContext(selectionContext);
-              }
-
-              realm.pub(evoyaAiState$, selectionContext);
-            } else {
-              const anchorNode = selection.anchor.getNode();
-              const anchorNodeParent = anchorNode.getParent();
-              const nodeSelection = $createNodeSelection();
-
-              if (anchorNode.getType() === 'text' && anchorNodeParent && anchorNodeParent.getType() !== 'root') {
-                const domElement = activeEditor.getElementByKey(anchorNodeParent.getKey());
-                let newRect;
-                if (domElement) {
-                  newRect = domElement.getBoundingClientRect();
-                }
-                console.log(newRect);
-
-                nodeSelection.add(anchorNodeParent.__key);
-
-                const selectionContext = {
-                  lexical: nodeSelection,
-                  markdown: nodeToMarkdown(anchorNodeParent),
-                  selectionType: 'node' as 'node',
-                  insertType: 'replace' as 'replace',
-                  rect: newRect,
-                  scrollOffset
-                };
-                
-                if (params?.setSelectionContext) {
-                  params.setSelectionContext(selectionContext);
-                }
-
-                realm.pub(evoyaAiState$, selectionContext);
-              } else {
-                const domElement = activeEditor.getElementByKey(anchorNode.getKey());
-                let newRect;
-                if (domElement) {
-                  newRect = domElement.getBoundingClientRect()
-                }
-                console.log(newRect);
-                
-                nodeSelection.add(anchorNode.__key);
-
-                const selectionContext = {
-                  lexical: nodeSelection,
-                  markdown: nodeToMarkdown(anchorNode),
-                  selectionType: 'node' as 'node',
-                  insertType: 'replace' as 'replace',
-                  rect: newRect,
-                  scrollOffset
-                };
-                
-                if (params?.setSelectionContext) {
-                  params.setSelectionContext(selectionContext);
-                }
-
-                realm.pub(evoyaAiState$, selectionContext);
-              }
-            }*/
           } else {
             const selectedNodes = selection.getNodes();
             console.log(selection);
@@ -998,8 +777,13 @@ export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
       const selection = $createNodeSelection();
       selection.add(value.__key);
 
+      let mdExportTarget = value;
+      if ($isImageNode(value)) {
+        mdExportTarget = value.getParent();
+      }
+
       const selMd = exportMarkdownFromLexical({
-        root: value,
+        root: mdExportTarget,
         visitors: realm.getValue(exportVisitors$),
         jsxComponentDescriptors: realm.getValue(jsxComponentDescriptors$),
         toMarkdownExtensions: realm.getValue(toMarkdownExtensions$),

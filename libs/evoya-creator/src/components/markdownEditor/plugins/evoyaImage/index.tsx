@@ -1,127 +1,81 @@
-import * as Mdast from 'mdast';
-import { MdastImportVisitor, $createImageNode, ImageNode, CreateImageNodeParameters } from '@mdxeditor/editor';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { useCellValues, usePublisher } from '@mdxeditor/gurx';
+import classNames from 'classnames';
+import { $getNodeByKey } from 'lexical';
+import React from 'react';
 import {
-  RangeSelection,
-  LexicalEditor,
-  createEditor,
-  LexicalNode,
-  ElementNode,
-  DecoratorNode,
-  RootNode,
-  ParagraphNode,
-  TextNode,
-  $isTextNode,
-  $isParagraphNode,
-  $isRangeSelection,
-  $isNodeSelection,
-  $getRoot,
-  $copyNode,
-  $createParagraphNode,
-  $createTextNode,
-  KlassConstructor,
-  $setSelection,
-  $getSelection,
-  $getPreviousSelection,
-  $createPoint,
-  $createRangeSelection,
-  $createNodeSelection,
-  $isElementNode,
-  $isDecoratorNode,
-  SerializedEditor,
-  NodeSelection,
-  NodeKey,
-  $insertNodes,
-} from "lexical";
+  disableImageSettingsButton$,
+  openEditImageDialog$,
+  iconComponentFor$,
+  readOnly$,
+  useTranslation,
+} from "@mdxeditor/editor";
+import styles from '@mdxeditor/editor/dist/styles/ui.module.css.js';
+import { setNodeSelectionByKey$ } from '../evoyaAi';
 
-import { ReactNode } from "react";
-
-export const MdastImageVisitor: MdastImportVisitor<Mdast.Image> = {
-  testNode: 'image',
-  priority: 100,
-  visitNode({ mdastNode, actions }) {
-    const evoyaImageNode = $createEvoyaImageNode();
-    const imageNode = $createImageNode({
-      src: mdastNode.url,
-      altText: mdastNode.alt ?? '',
-      title: mdastNode.title ?? ''
-    });
-
-    evoyaImageNode.append(imageNode);
-
-    actions.addAndStepInto(
-      imageNode
-    )
-  }
+export interface EditImageToolbarProps {
+  nodeKey: string
+  imageSource: string
+  initialImagePath: string | null
+  title: string
+  alt: string
 }
 
-// export class EvoyaImageNode extends DecoratorNode<ReactNode> {
-export class EvoyaImageNode extends ImageNode {
-  static getType(): string {
-    return 'evoyaimage';
-  }
+export function EditImageToolbar({ nodeKey, imageSource, initialImagePath, title, alt }: EditImageToolbarProps): JSX.Element {
+  const [disableImageSettingsButton, iconComponentFor, readOnly] = useCellValues(disableImageSettingsButton$, iconComponentFor$, readOnly$);
+  const [editor] = useLexicalComposerContext();
+  const openEditImageDialog = usePublisher(openEditImageDialog$);
+  const setNodeSelectionByKey = usePublisher(setNodeSelectionByKey$);
+  const t = useTranslation();
 
-  // static clone(node: EvoyaImageNode): EvoyaImageNode {
-  //   return new EvoyaImageNode(node.__key);
-  // }
-
-  static clone(node: EvoyaImageNode): EvoyaImageNode {
-    return new EvoyaImageNode(node.__src, node.__altText, node.__title, node.__width, node.__height, node.__rest, node.__key)
-  }
-
-  // constructor(key?: NodeKey) {
-  //   super(key);
-  // }
-
-  createDOM(): HTMLElement {
-    return document.createElement('div');
-  }
-
-  updateDOM(): false {
-    return false;
-  }
-
-  // decorate(): ReactNode {
-  //   return <div className="evoyaImage"></div>;
-  // }
-
-  decorate(_parentEditor: LexicalEditor): JSX.Element {
-    return (<div className="testtt">
-      {super.decorate(_parentEditor)}
-    </div>);
-    
-    // return (
-    //   <ImageEditor
-    //     src={this.getSrc()}
-    //     title={this.getTitle()}
-    //     nodeKey={this.getKey()}
-    //     width={this.__width}
-    //     height={this.__height}
-    //     alt={this.__altText}
-    //     rest={this.__rest}
-    //   />
-    // )
-  }
+  return (
+    <div className={styles.editImageToolbar}>
+      <button
+        className={styles.iconButton}
+        type="button"
+        title={t('imageEditor.selectImage', 'Select image')}
+        disabled={readOnly}
+        onClick={(e) => {
+          e.preventDefault();
+          setNodeSelectionByKey(nodeKey);
+        }}
+      >
+        {iconComponentFor('handPointer')}
+      </button>
+      <button
+        className={styles.iconButton}
+        type="button"
+        title={t('imageEditor.deleteImage', 'Delete image')}
+        disabled={readOnly}
+        onClick={(e) => {
+          e.preventDefault()
+          editor.update(() => {
+            $getNodeByKey(nodeKey)?.remove()
+          })
+        }}
+      >
+        {iconComponentFor('delete_small')}
+      </button>
+      {!disableImageSettingsButton && (
+        <button
+          type="button"
+          className={classNames(styles.iconButton, styles.editImageButton)}
+          title={t('imageEditor.editImage', 'Edit image')}
+          disabled={readOnly}
+          onClick={() => {
+            openEditImageDialog({
+              nodeKey: nodeKey,
+              initialValues: {
+                src: !initialImagePath ? imageSource : initialImagePath,
+                title,
+                altText: alt
+              }
+            })
+          }}
+        >
+          {iconComponentFor('settings')}
+        </button>
+      )}
+    </div>
+  )
 }
-
-export function $createEvoyaImageNode(params: CreateImageNodeParameters): ImageNode {
-  const { altText, title, src, key, width, height, rest } = params
-  return new ImageNode(src, altText, title, width, height, rest, key)
-}
-
-/**
- * Retruns true if the node is an {@link ImageNode}.
- * @group Image
- */
-export function $isEvoyaImageNode(node: LexicalNode | null | undefined): node is ImageNode {
-  return node instanceof EvoyaImageNode
-}
-
-// export function $createEvoyaImageNode(id: string): EvoyaImageNode {
-//   return new EvoyaImageNode(id);
-// }
-
-// export function $isEvoyaImageNode(
-//   node: LexicalNode | null | undefined,
-// ): node is EvoyaImageNode {
-//   return node instanceof EvoyaImageNode;
-// }

@@ -1,5 +1,5 @@
 import { ContentEditable } from '@lexical/react/LexicalContentEditable.js';
-import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary.js';
+import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { LexicalNestedComposer } from '@lexical/react/LexicalNestedComposer.js';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin.js';
 import * as RadixPopover from '@radix-ui/react-popover';

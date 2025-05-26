@@ -66,6 +66,10 @@ import {
 } from './plugins/math';
 
 import {
+  EditImageToolbar,
+} from './plugins/evoyaImage';
+
+import {
   evoyaMathDialogPlugin,
 } from './plugins/math/mathDialog';
 
@@ -277,6 +281,9 @@ export default function MDXEditorWrapper() {
         iconComponentFor={getSvgIcon}
         plugins={[
           ...MDX_PLUGINS,
+          imagePlugin({
+            EditImageToolbar: EditImageToolbar
+          }),
           evoyaAiPlugin({
             containerRef,
             creatorType,
@@ -324,7 +331,7 @@ export const MDX_PLUGINS = [
   //   imageAutocompleteSuggestions: ['https://via.placeholder.com/150', 'https://via.placeholder.com/150'],
   //   imageUploadHandler: async () => Promise.resolve('https://picsum.photos/200/300')
   // }),
-  imagePlugin({}),
+  // imagePlugin({}),
   // tablePlugin(),
   thematicBreakPlugin(),
   // frontmatterPlugin(),
