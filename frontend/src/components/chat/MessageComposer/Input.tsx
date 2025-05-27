@@ -272,8 +272,6 @@ const Input = forwardRef<InputMethods, Props>(
         // Get plain text from clipboard
         const textData = event.clipboardData?.getData('text/plain');
         
-        if (!textData) return;
-        
         // Process the text - convert newlines to <br> tags and escape HTML
         const escapedText = escapeHtml(textData);
         const textWithNewLines = escapedText.replace(/\n/g, '<br>');

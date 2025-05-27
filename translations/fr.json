@@ -1,0 +1,501 @@
+{
+    "components": {
+        "atoms": {
+            "buttons": {
+                "userButton": {
+                    "menu": {
+                        "settings": "Paramètres",
+                        "settingsKey": "P",
+                        "APIKeys": "Clés API",
+                        "logout": "Déconnexion"
+                    }
+                }
+            }
+        },
+        "molecules": {
+            "newChatButton": {
+                "newChat": "Nouveau Chat",
+                "newChatSession": "Session"
+            },
+            "maximizeChatButton": {
+                "maximizeChat": "Superposition de Chat"
+            },
+            "evoyaCreatorButton": {
+                "label": "Ouvrir le Créateur"
+            },
+            "shareSession": {
+                "openButton": "Partager le Chat",
+                "closeButton": "Fermer",
+                "copyButton": "Créer et copier le lien",
+                "copyUpdateButton": "Mettre à jour et copier le lien",
+                "revokeLinkButton": "Révoquer le lien",
+                "types": {
+                    "static": "Partager une copie de l'historique de chat actuel.",
+                    "dynamic": "Donner un accès en lecture seule continu à cet historique de chat."
+                },
+                "messages": {
+                    "success": "Lien copié",
+                    "successRemove": "Lien révoqué",
+                    "created": "Vous avez créé un <shareLink>Lien</shareLink> vers cette session de chat qui expire <expires />.",
+                    "error": "Une erreur s'est produite"
+                },
+                "expire": {
+                    "expiresIn": "Expire",
+                    "1day": "dans un jour",
+                    "7days": "dans 7 jours",
+                    "30days": "dans 30 jours",
+                    "xDays": "dans <days/> jours",
+                    "never": "jamais"
+                }
+            },
+            "favoriteSession": {
+                "favoriteButton": "Chat Favori",
+                "messages": {
+                    "success": "Session de chat ajoutée aux favoris",
+                    "successRemove": "Session de chat retirée des favoris",
+                    "error": "Une erreur s'est produite"
+                }
+            },
+            "tasklist": {
+                "TaskList": {
+                    "title": "🗒️ Liste des Tâches",
+                    "loading": "Chargement...",
+                    "error": "Une erreur s'est produite"
+                }
+            },
+            "attachments": {
+                "cancelUpload": "Annuler le téléchargement",
+                "removeAttachment": "Supprimer la pièce jointe"
+            },
+            "newChatDialog": {
+                "createNewChat": "Créer un nouveau chat ?",
+                "clearChat": "Cela effacera les messages actuels et commencera un nouveau chat.",
+                "cancel": "Annuler",
+                "confirm": "Confirmer"
+            },
+            "settingsModal": {
+                "expandMessages": "Agrandir les Messages",
+                "hideChainOfThought": "Cacher la Chaîne de Pensée",
+                "darkMode": "Mode Sombre"
+            },
+            "detailsButton": {
+                "using": "Utilisation",
+                "used": "Utilisé"
+            },
+            "auth": {
+                "authLogin": {
+                    "title": "Connectez-vous pour accéder à l'application.",
+                    "form": {
+                        "email": "Adresse e-mail",
+                        "password": "Mot de passe",
+                        "noAccount": "Vous n'avez pas de compte ?",
+                        "alreadyHaveAccount": "Vous avez déjà un compte ?",
+                        "signup": "S'inscrire",
+                        "signin": "Se connecter",
+                        "or": "OU",
+                        "continue": "Continuer",
+                        "forgotPassword": "Mot de passe oublié ?",
+                        "passwordMustContain": "Votre mot de passe doit contenir :",
+                        "emailRequired": "l'email est un champ requis",
+                        "passwordRequired": "le mot de passe est un champ requis"
+                    },
+                    "error": {
+                        "default": "Impossible de se connecter.",
+                        "signin": "Essayez de vous connecter avec un autre compte.",
+                        "oauthsignin": "Essayez de vous connecter avec un autre compte.",
+                        "redirect_uri_mismatch": "L'URI de redirection ne correspond pas à la configuration de l'application oauth.",
+                        "oauthcallbackerror": "Essayez de vous connecter avec un autre compte.",
+                        "oauthcreateaccount": "Essayez de vous connecter avec un autre compte.",
+                        "emailcreateaccount": "Essayez de vous connecter avec un autre compte.",
+                        "callback": "Essayez de vous connecter avec un autre compte.",
+                        "oauthaccountnotlinked": "Pour confirmer votre identité, connectez-vous avec le même compte que vous avez utilisé à l'origine.",
+                        "emailsignin": "L'e-mail n'a pas pu être envoyé.",
+                        "emailverify": "Veuillez vérifier votre e-mail, un nouvel e-mail a été envoyé.",
+                        "credentialssignin": "Échec de la connexion. Vérifiez que les informations fournies sont correctes.",
+                        "sessionrequired": "Veuillez vous connecter pour accéder à cette page."
+                    }
+                },
+                "authVerifyEmail": {
+                    "almostThere": "Vous y êtes presque ! Nous avons envoyé un e-mail à ",
+                    "verifyEmailLink": "Veuillez cliquer sur le lien dans cet e-mail pour compléter votre inscription.",
+                    "didNotReceive": "Vous ne trouvez pas l'e-mail ?",
+                    "resendEmail": "Renvoyer l'e-mail",
+                    "goBack": "Retourner",
+                    "emailSent": "E-mail envoyé avec succès.",
+                    "verifyEmail": "Vérifiez votre adresse e-mail"
+                },
+                "providerButton": {
+                    "continue": "Continuer avec {{provider}}",
+                    "signup": "S'inscrire avec {{provider}}"
+                },
+                "authResetPassword": {
+                    "newPasswordRequired": "Le nouveau mot de passe est un champ requis",
+                    "passwordsMustMatch": "Les mots de passe doivent correspondre",
+                    "confirmPasswordRequired": "La confirmation du mot de passe est un champ requis",
+                    "newPassword": "Nouveau mot de passe",
+                    "confirmPassword": "Confirmer le mot de passe",
+                    "resetPassword": "Réinitialiser le mot de passe"
+                },
+                "authForgotPassword": {
+                    "email": "Adresse e-mail",
+                    "emailRequired": "l'email est un champ requis",
+                    "emailSent": "Veuillez vérifier l'adresse e-mail {{email}} pour les instructions de réinitialisation de votre mot de passe.",
+                    "enterEmail": "Entrez votre adresse e-mail et nous vous enverrons des instructions pour réinitialiser votre mot de passe.",
+                    "resendEmail": "Renvoyer l'e-mail",
+                    "continue": "Continuer",
+                    "goBack": "Retourner"
+                }
+            }
+        },
+        "organisms": {
+            "privacyShield": {
+                "showPrivacyTable": "Afficher le tableau des mots anonymisés",
+                "hidePrivacyTable": "Cacher le tableau des mots anonymisés",
+                "info": "Avec le Privacy Shield, vous pouvez anonymiser les données sensibles avant de les envoyer à un modèle de langage externe. Tout d'abord, activez le Privacy Shield, entrez votre texte, et appuyez sur Entrée. Ensuite, sélectionnez des mots ou des phrases (par exemple, 'John Doe') et étiquetez-les en utilisant les catégories contextuelles comme 'Nom'. Une fois anonymisé, le modèle ne verra que des termes génériques (par exemple, 'Personne') au lieu des détails originaux, garantissant la confidentialité de vos données.",
+                "actions": {
+                    "cancel": "Annuler",
+                    "submit": "Soumettre",
+                    "createSection": "Créer une section"
+                },
+                "word": {
+                    "anon": "Anonymisé par Privacy Shield",
+                    "notAnon": "Non anonymisé par Privacy Shield"
+                },
+                "createSection": {
+                    "title": {
+                        "edit": "Modifier la Section de Confidentialité",
+                        "create": "Créer une Section de Confidentialité"
+                    },
+                    "actions": {
+                        "close": "Fermer",
+                        "save": "Enregistrer",
+                        "create": "Créer"
+                    },
+                    "typefield": {
+                        "label": "Type",
+                        "options": {
+                            "name": "Nom",
+                            "location": "Localisation",
+                            "phone": "Numéro de téléphone",
+                            "email": "Adresse e-mail",
+                            "other": "Autre"
+                        }
+                    }
+                }
+            },
+            "chat": {
+                "history": {
+                    "index": {
+                        "showHistory": "Afficher l'historique",
+                        "lastInputs": "Dernières Entrées",
+                        "noInputs": "Tellement vide...",
+                        "loading": "Chargement..."
+                    }
+                },
+                "inputBox": {
+                    "input": {
+                        "placeholder": "Tapez votre message ici..."
+                    },
+                    "speechButton": {
+                        "start": "Commencer l'enregistrement",
+                        "stop": "Arrêter l'enregistrement"
+                    },
+                    "SubmitButton": {
+                        "sendMessage": "Envoyer le message",
+                        "stopTask": "Arrêter la tâche"
+                    },
+                    "UploadButton": {
+                        "attachFiles": "Joindre des fichiers"
+                    },
+                    "waterMark": {
+                        "text": "Propulsé par"
+                    },
+                    "additionalInfo": {
+                        "text": "Toutes les informations fournies sans garantie. Veuillez vérifier l'exactitude des informations fournies."
+                    }
+                },
+                "Messages": {
+                    "index": {
+                        "running": "En cours",
+                        "executedSuccessfully": "exécuté avec succès",
+                        "failed": "échoué",
+                        "feedbackUpdated": "Retour d'information mis à jour",
+                        "updating": "Mise à jour"
+                    }
+                },
+                "dropScreen": {
+                    "dropYourFilesHere": "Déposez vos fichiers ici"
+                },
+                "index": {
+                    "failedToUpload": "Échec du téléchargement",
+                    "cancelledUploadOf": "Téléchargement annulé de",
+                    "couldNotReachServer": "Impossible d'atteindre le serveur",
+                    "continuingChat": "Poursuite du chat précédent"
+                },
+                "settings": {
+                    "settingsPanel": "Panneau de paramètres",
+                    "reset": "Réinitialiser",
+                    "cancel": "Annuler",
+                    "confirm": "Confirmer"
+                }
+            },
+            "threadHistory": {
+                "sidebar": {
+                    "filters": {
+                        "FeedbackSelect": {
+                            "feedbackAll": "Retour : Tous",
+                            "feedbackPositive": "Retour : Positif",
+                            "feedbackNegative": "Retour : Négatif"
+                        },
+                        "SearchBar": {
+                            "search": "Rechercher"
+                        }
+                    },
+                    "DeleteThreadButton": {
+                        "confirmMessage": "Cela supprimera le fil ainsi que ses messages et éléments.",
+                        "cancel": "Annuler",
+                        "confirm": "Confirmer",
+                        "deletingChat": "Suppression du chat",
+                        "chatDeleted": "Chat supprimé"
+                    },
+                    "index": {
+                        "pastChats": "Chats Passés"
+                    },
+                    "ThreadList": {
+                        "empty": "Vide...",
+                        "today": "Aujourd'hui",
+                        "yesterday": "Hier",
+                        "previous7days": "7 derniers jours",
+                        "previous30days": "30 derniers jours"
+                    },
+                    "TriggerButton": {
+                        "closeSidebar": "Fermer la barre latérale",
+                        "openSidebar": "Ouvrir la barre latérale"
+                    }
+                },
+                "Thread": {
+                    "backToChat": "Retourner au chat",
+                    "chatCreatedOn": "Ce chat a été créé le"
+                }
+            },
+            "header": {
+                "chat": "Chat",
+                "readme": "Lisez-moi"
+            }
+        }
+    },
+    "hooks": {
+        "useLLMProviders": {
+            "failedToFetchProviders": "Échec de la récupération des fournisseurs :"
+        }
+    },
+    "pages": {
+        "Design": {},
+        "Env": {
+            "savedSuccessfully": "Enregistré avec succès",
+            "requiredApiKeys": "Clés API requises",
+            "requiredApiKeysInfo": "Pour utiliser cette application, les clés API suivantes sont requises. Les clés sont stockées sur le stockage local de votre appareil."
+        },
+        "Page": {
+            "notPartOfProject": "Vous ne faites pas partie de ce projet."
+        },
+        "ResumeButton": {
+            "resumeChat": "Reprendre le Chat"
+        }
+    },
+    "common": {
+        "actions": {
+            "cancel": "Annuler",
+            "confirm": "Confirmer",
+            "continue": "Continuer",
+            "goBack": "Retourner",
+            "reset": "Réinitialiser",
+            "submit": "Soumettre"
+        },
+        "status": {
+            "loading": "Chargement...",
+            "error": {
+                "default": "Une erreur s'est produite",
+                "serverConnection": "Impossible d'atteindre le serveur"
+            }
+        }
+    },
+    "auth": {
+        "login": {
+            "title": "Connectez-vous pour accéder à l'application",
+            "form": {
+                "email": {
+                    "label": "Adresse e-mail",
+                    "required": "l'email est un champ requis"
+                },
+                "password": {
+                    "label": "Mot de passe",
+                    "required": "le mot de passe est un champ requis"
+                },
+                "actions": {
+                    "signin": "Se connecter"
+                },
+                "alternativeText": {
+                    "or": "OU"
+                }
+            },
+            "errors": {
+                "default": "Impossible de se connecter",
+                "signin": "Essayez de vous connecter avec un autre compte",
+                "oauthSignin": "Essayez de vous connecter avec un autre compte",
+                "redirectUriMismatch": "L'URI de redirection ne correspond pas à la configuration de l'application oauth",
+                "oauthCallback": "Essayez de vous connecter avec un autre compte",
+                "oauthCreateAccount": "Essayez de vous connecter avec un autre compte",
+                "emailCreateAccount": "Essayez de vous connecter avec un autre compte",
+                "callback": "Essayez de vous connecter avec un autre compte",
+                "oauthAccountNotLinked": "Pour confirmer votre identité, connectez-vous avec le même compte que vous avez utilisé à l'origine",
+                "emailSignin": "L'e-mail n'a pas pu être envoyé",
+                "emailVerify": "Veuillez vérifier votre e-mail, un nouvel e-mail a été envoyé",
+                "credentialsSignin": "Échec de la connexion. Vérifiez que les informations fournies sont correctes",
+                "sessionRequired": "Veuillez vous connecter pour accéder à cette page"
+            }
+        },
+        "provider": {
+            "continue": "Continuer avec {{provider}}"
+        }
+    },
+    "chat": {
+        "input": {
+            "placeholder": "Tapez votre message ici...",
+            "actions": {
+                "send": "Envoyer le message",
+                "stop": "Arrêter la tâche",
+                "attachFiles": "Joindre des fichiers"
+            }
+        },
+        "speech": {
+            "start": "Commencer l'enregistrement",
+            "stop": "Annuler",
+            "submit": "Soumettre l'enregistrement",
+            "connecting": "Connexion",
+            "voiceMode": "Utiliser le Mode Voix",
+            "speechText": "Utiliser le Mode Parole en Texte"
+        },
+        "fileUpload": {
+            "dragDrop": "Glissez et déposez les fichiers ici",
+            "browse": "Parcourir les fichiers",
+            "sizeLimit": "Limite :",
+            "errors": {
+                "failed": "Échec du téléchargement",
+                "cancelled": "Téléchargement annulé de"
+            }
+        },
+        "messages": {
+            "status": {
+                "using": "Utilisation",
+                "used": "Utilisé"
+            },
+            "actions": {
+                "copy": {
+                    "button": "Copier dans le presse-papiers",
+                    "success": "Copié !"
+                },
+                "download": {
+                    "button": "Télécharger cette image"
+                }
+            },
+            "feedback": {
+                "positive": "Utile",
+                "negative": "Pas utile",
+                "edit": "Modifier le retour d'information",
+                "dialog": {
+                    "title": "Ajouter un commentaire",
+                    "submit": "Soumettre le retour d'information"
+                },
+                "status": {
+                    "updating": "Mise à jour",
+                    "updated": "Retour d'information mis à jour"
+                }
+            }
+        },
+        "history": {
+            "title": "Dernières Entrées",
+            "empty": "Tellement vide...",
+            "show": "Afficher l'historique"
+        },
+        "settings": {
+            "title": "Panneau de paramètres"
+        },
+        "watermark": "Construit avec"
+    },
+    "threadHistory": {
+        "sidebar": {
+            "title": "Chats Passés",
+            "filters": {
+                "search": "Rechercher"
+            },
+            "timeframes": {
+                "today": "Aujourd'hui",
+                "yesterday": "Hier",
+                "previous7days": "7 derniers jours",
+                "previous30days": "30 derniers jours"
+            },
+            "empty": "Aucun fil trouvé",
+            "actions": {
+                "close": "Fermer la barre latérale",
+                "open": "Ouvrir la barre latérale"
+            }
+        },
+        "thread": {
+            "untitled": "Conversation Sans Titre",
+            "menu": {
+                "rename": "Renommer",
+                "delete": "Supprimer"
+            },
+            "actions": {
+                "delete": {
+                    "title": "Confirmer la suppression",
+                    "description": "Cela supprimera le fil ainsi que ses messages et éléments. Cette action ne peut pas être annulée",
+                    "success": "Chat supprimé",
+                    "inProgress": "Suppression du chat"
+                },
+                "rename": {
+                    "title": "Renommer le Fil",
+                    "description": "Entrez un nouveau nom pour ce fil",
+                    "form": {
+                        "name": {
+                            "label": "Nom",
+                            "placeholder": "Entrez un nouveau nom"
+                        }
+                    },
+                    "success": "Fil renommé !",
+                    "inProgress": "Renommage du fil"
+                }
+            }
+        }
+    },
+    "navigation": {
+        "header": {
+            "chat": "Chat",
+            "readme": "Lisez-moi"
+        },
+        "newChat": {
+            "button": "Nouveau Chat",
+            "dialog": {
+                "title": "Créer un Nouveau Chat",
+                "description": "Cela effacera votre historique de chat actuel. Êtes-vous sûr de vouloir continuer ?",
+                "tooltip": "Nouveau Chat"
+            }
+        },
+        "user": {
+            "menu": {
+                "settings": "Paramètres",
+                "settingsKey": "P",
+                "apiKeys": "Clés API",
+                "logout": "Déconnexion"
+            }
+        }
+    },
+    "apiKeys": {
+        "title": "Clés API Requises",
+        "description": "Pour utiliser cette application, les clés API suivantes sont requises. Les clés sont stockées sur le stockage local de votre appareil.",
+        "success": {
+            "saved": "Enregistré avec succès"
+        }
+    }
+}

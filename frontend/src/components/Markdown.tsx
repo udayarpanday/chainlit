@@ -31,6 +31,7 @@ import CodeSnippet from './CodeSnippet';
 import { ElementRef } from './Elements/ElementRef';
 import { MarkdownAlert, alertComponents } from './MarkdownAlert';
 import { MermaidDiagram } from './Mermaid';
+import Step from './chat/Messages/Message/Step';
 
 interface Props {
   allowHtml?: boolean;
@@ -174,23 +175,32 @@ const Markdown = ({
           try {
             if (children && isValidElement(children)) {
               const { className, children: rawContent } = children?.props || {};
-              if (className?.includes('-vega')) {
-                const vegaSpec = JSON.parse(rawContent);
-                return <VegaLite spec={vegaSpec} data={vegaSpec.data} />;
-              } else if (className?.includes('-json')) {
-                const jsonContent = JSON.parse(rawContent);
-                if (jsonContent.$schema?.includes('vega.github.io')) {
+        
+              if (className?.includes('-vega') || className?.includes('-json')) {
+                const parsed = JSON.parse(rawContent);
+                const isVega = parsed?.$schema?.includes('vega.github.io');
+        
+                if (isVega) {
+                  if (!parsed.width) parsed.width = 'container';
+                  if (!parsed.height) parsed.height = 'container';
+        
                   return (
-                    <VegaLite spec={jsonContent} data={jsonContent.data} />
+                    <div style={{ width: '100%', height: '400px', position: 'relative' }}>
+                      <VegaLite spec={parsed} data={parsed.data} />
+                    </div>
                   );
                 }
-              } else if (className?.includes('-mermaid')) {
+              }
+        
+              if (className?.includes('-mermaid')) {
                 return <MermaidDiagram>{rawContent}</MermaidDiagram>;
               }
             }
           } catch (e) {
+            console.error('Render error:', e);
             return <CodeSnippet {...props} />;
           }
+        
           return <CodeSnippet {...props} />;
         },
         a({ children, ...props }) {

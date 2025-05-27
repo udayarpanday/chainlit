@@ -131,3 +131,8 @@ code {
   background-repeat: no-repeat;
   background-size: 50% 200%;
 }
+
+.vega-embed.has-actions{
+  width: 100%;
+  height: 400px;
+}
