@@ -42,18 +42,9 @@ import {
 } from '@mdxeditor/editor';
 import mdxCss from '@mdxeditor/editor/style.css?inline';
 import mdxCustomCss from './custom.css?inline';
-// import styles from '@mdxeditor/editor/dist/styles/ui.module.css.js';
 
 import useEvoyaCreator from '@/hooks/useEvoyaCreator';
 import MDXEditorToolbar from './MDXEditorToolbar';
-
-// import {
-//   SelectionContext,
-//   evoyaAiPlugin,
-//   replaceSelectionContent$,
-//   highlightSelectionContent$,
-//   evoyaAiState$,
-// } from './plugins/evoyaAiPlugin';
 
 import {
   evoyaAiPlugin,
@@ -81,10 +72,6 @@ import {
   CodeSelectionContext,
   SelectionContext,
 } from "types";
-
-import {
-  tablePlugin as evoyaTablePlugin,
-} from './plugins/extend/table';
 
 import {
   MermaidCodeEditorDescriptor,
@@ -293,21 +280,11 @@ export default function MDXEditorWrapper() {
             },
             setRealm: setMdxRealm
           }),
-          evoyaTablePlugin({
-            containerRef,
-            setSelectionContext: (context: SelectionContext | null) => {
-              console.log('selectionContext', context);
-              setEditorSelectionContext(context);
-            },
-          }),
           evoyaMathPlugin(),
           evoyaMathDialogPlugin(),
           diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: creatorContent }),
         ]}
-        // readOnly={false}
         onChange={(md) => {
-          // console.log(md);
-          // setCreatorContent(md);
           setMdContent(md);
           localStorage.setItem('evoya-creator', JSON.stringify({
             content: md,
@@ -327,12 +304,7 @@ export const MDX_PLUGINS = [
   headingsPlugin(),
   linkPlugin(),
   linkDialogPlugin(),
-  // imagePlugin({
-  //   imageAutocompleteSuggestions: ['https://via.placeholder.com/150', 'https://via.placeholder.com/150'],
-  //   imageUploadHandler: async () => Promise.resolve('https://picsum.photos/200/300')
-  // }),
-  // imagePlugin({}),
-  // tablePlugin(),
+  tablePlugin(),
   thematicBreakPlugin(),
   // frontmatterPlugin(),
   codeBlockPlugin({

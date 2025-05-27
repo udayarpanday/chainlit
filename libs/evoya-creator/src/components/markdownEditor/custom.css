@@ -7,21 +7,32 @@
 }
 
 .evoya-creator-editor {
+    .evoya-table-wrapper {
+        position: relative;
+
+        .table-select-btn {
+            position: absolute;
+        }
+    }
+
+    .table-select-btn, .inline-action {
+        opacity: .15;
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+
     .inline-action {
         display: inline-flex;
         align-items: center;
         height: 16px;
         width: 16px;
         color: var(--baseText);
-        opacity: .15;
         cursor: pointer;
 
         :is(svg) {
             height: 100%;
-        }
-
-        &:hover {
-            opacity: 1;
         }
     }
 
