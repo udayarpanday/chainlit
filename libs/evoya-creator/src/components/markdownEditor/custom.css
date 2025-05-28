@@ -204,3 +204,7 @@
         }
     }
 }
+
+.evoya-creator-editor [aria-label="editable markdown"] {
+    height: calc(100vh - 145px);
+}
