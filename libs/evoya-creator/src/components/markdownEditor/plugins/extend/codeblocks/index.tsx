@@ -4,6 +4,9 @@ import {
 import {
   EvoyaCodeEditorDescriptor
 } from './EvoyaCodeEditor';
+import {
+  VegaLiteCodeEditorDescriptor
+} from './VegaLite';
 
 import {
   realmPlugin,
@@ -21,6 +24,7 @@ const evoyaCodePlugin = realmPlugin<{codeBlockLanguages: Record<string, string>}
 
 export {
   MermaidCodeEditorDescriptor,
+  VegaLiteCodeEditorDescriptor,
   EvoyaCodeEditorDescriptor,
   evoyaCodePlugin,
 }

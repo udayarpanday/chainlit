@@ -90,7 +90,13 @@
         background-color: #ffffff;
 
         > div {
-            padding: .5rem;
+            padding: 1rem;
+            position: relative;
+
+            > .vega-embed {
+                height: 300px;
+                width: 100%;
+            }
         }
     }
 
@@ -124,7 +130,7 @@
         align-items: center;
         justify-content: center;
         position: absolute;
-        top: -.5rem;
+        top: -.75rem;
         left: -.5rem;
         border: 1px solid #c3c3c3;
         z-index: 5;
@@ -132,6 +138,10 @@
 
         &:hover {
             background-color: #eeeeee;
+        }
+
+        + .mermaidBlockAction {
+            left: 1.25rem;
         }
     }
 }

@@ -75,6 +75,7 @@ import {
 
 import {
   MermaidCodeEditorDescriptor,
+  VegaLiteCodeEditorDescriptor,
   EvoyaCodeEditorDescriptor,
   evoyaCodePlugin,
 } from './plugins/extend/codeblocks';
@@ -310,6 +311,7 @@ export const MDX_PLUGINS = [
   codeBlockPlugin({
     codeBlockEditorDescriptors: [
       MermaidCodeEditorDescriptor,
+      VegaLiteCodeEditorDescriptor,
       EvoyaCodeEditorDescriptor,
       // { priority: -10, match: (_) => true, Editor: CodeMirrorEditor }
     ]
