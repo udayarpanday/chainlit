@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect} from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import mermaid from 'mermaid';
 import {
   CodeBlockEditorDescriptor,
@@ -6,12 +6,10 @@ import {
   CodeMirrorEditor,
   editorInFocus$,
   rootEditor$,
+  iconComponentFor$,
 } from '@mdxeditor/editor';
 
-import { usePublisher, useRealm } from '@mdxeditor/gurx';
-
-import EvoyaLogo from '@/svg/EvoyaLogo';
-import HandPointer from '@/svg/HandPointer';
+import { usePublisher, useRealm, useCellValue } from '@mdxeditor/gurx';
 
 import { setNodeSelection$, setNodeSelectionByKey$, setCodeSelection$ } from '../../evoyaAi';
 
@@ -39,7 +37,9 @@ export const MermaidCodeEditorDescriptor: CodeBlockEditorDescriptor = {
   Editor: (props) => {
     console.log(props);
     const setNodeSelection = usePublisher(setNodeSelectionByKey$);
+    const iconComponentFor = useCellValue(iconComponentFor$);
     const realm = useRealm();
+    const [previewMode, setPerviewMode] = useState(true);
 
     const selectionChange = useCallback(() => {
       const editorInFocus = realm.getValue(editorInFocus$);
@@ -78,16 +78,23 @@ export const MermaidCodeEditorDescriptor: CodeBlockEditorDescriptor = {
       >
         <div className="mermaidBlockWrapper">
           <div className="mermaidBlockAction" onClick={() => setNodeSelection(props.nodeKey)}>
-            <HandPointer />
+            {iconComponentFor('handPointer')}
           </div>
-          <div className="mermaidEditorWrapper">
-            <CodeMirrorEditor {...props} />
+          <div className="mermaidBlockAction" onClick={() => setPerviewMode(!previewMode)}>
+            {previewMode ? iconComponentFor('code') : iconComponentFor('eye')}
           </div>
-          <div className="mermaidPreviewWrapper">
-            <div>
-              <MermaidPreview code={props.code} />
+          {!previewMode &&
+            <div className="mermaidEditorWrapper">
+              <CodeMirrorEditor {...props} />
             </div>
-          </div>
+          }
+          {previewMode &&
+            <div className="mermaidPreviewWrapper">
+              <div>
+                <MermaidPreview code={props.code} />
+              </div>
+            </div>
+          }
         </div>
       </div>
     );

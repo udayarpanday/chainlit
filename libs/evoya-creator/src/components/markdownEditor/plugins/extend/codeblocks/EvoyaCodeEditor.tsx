@@ -5,6 +5,7 @@ import {
   CodeMirrorEditor,
   editorInFocus$,
   rootEditor$,
+  iconComponentFor$,
 } from '@mdxeditor/editor';
 
 import {
@@ -12,9 +13,6 @@ import {
 } from 'lexical';
 
 import { usePublisher, useCellValue, useRealm } from '@mdxeditor/gurx';
-
-import EvoyaLogo from '@/svg/EvoyaLogo';
-import HandPointer from '@/svg/HandPointer';
 
 import { setNodeSelection$, setNodeSelectionByKey$, setCodeSelection$ } from '../../evoyaAi';
 
@@ -26,6 +24,7 @@ export const EvoyaCodeEditorDescriptor: CodeBlockEditorDescriptor = {
   Editor: (props) => {
     console.log(props);
     const setNodeSelection = usePublisher(setNodeSelectionByKey$);
+    const iconComponentFor = useCellValue(iconComponentFor$);
     // const editorInFocus = useCellValue(editorInFocus$);
     const realm = useRealm();
     // const cb = useCodeBlockEditorContext();
@@ -72,7 +71,7 @@ export const EvoyaCodeEditorDescriptor: CodeBlockEditorDescriptor = {
       >
         <div className="codeBlockWrapper">
           <div className="codeBlockAction" onClick={() => setNodeSelection(props.nodeKey)}>
-            <HandPointer />
+            {iconComponentFor('handPointer')}
           </div>
           <div className="codeEditorWrapper">
             <CodeMirrorEditor {...props} />

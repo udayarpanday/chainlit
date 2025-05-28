@@ -88,10 +88,10 @@ export const TextSelection = () => {
           position: 'fixed',
           backgroundColor: 'highlight',
           zIndex: '-1',
-          top: `${(theRect?.top ?? 0) + scrollCompensation}px`,
-          left: `${theRect?.left ?? 0}px`,
-          width: `${theRect?.width ?? 0}px`,
-          height: `${theRect?.height ?? 0}px`
+          top: `${(theRect?.top ?? 0) - rectCompensation + scrollCompensation}px`,
+          left: `${(theRect?.left ?? 0) - rectCompensation}px`,
+          width: `${(theRect?.width ?? 0) + rectCompensation * 2}px`,
+          height: `${(theRect?.height ?? 0) + rectCompensation * 2}px`
         }}
         ></div>
       )}

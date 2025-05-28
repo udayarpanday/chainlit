@@ -94,7 +94,7 @@
             position: relative;
 
             > .vega-embed {
-                height: 300px;
+                min-height: 300px;
                 width: 100%;
             }
         }
@@ -121,7 +121,7 @@
     }
 
     .mermaidBlockAction {
-        color: #0038FF;
+        color: var(--baseText);
         background-color: #ffffff;
         height: 1.5rem;
         width: 1.5rem;
@@ -138,6 +138,7 @@
 
         &:hover {
             background-color: #eeeeee;
+            color: #0038FF;
         }
 
         + .mermaidBlockAction {
@@ -172,7 +173,7 @@
     }
 
     .codeBlockAction {
-        color: #0038FF;
+        color: var(--baseText);
         background-color: #ffffff;
         height: 1.5rem;
         width: 1.5rem;
@@ -189,6 +190,7 @@
 
         &:hover {
             background-color: #eeeeee;
+            color: #0038FF;
         }
     }
 }
@@ -206,5 +208,5 @@
 }
 
 .evoya-creator-editor [aria-label="editable markdown"] {
-    height: calc(100vh - 145px);
+    min-height: calc(100vh - 145px);
 }

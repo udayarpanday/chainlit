@@ -10,8 +10,6 @@ import {
 
 import { usePublisher, useRealm, useCellValue } from '@mdxeditor/gurx';
 
-import HandPointer from '@/svg/HandPointer';
-
 import { setNodeSelection$, setNodeSelectionByKey$, setCodeSelection$ } from '../../evoyaAi';
 
 import { VegaLite } from 'react-vega';
@@ -24,7 +22,11 @@ const VegaPreview: React.FC<{ code: string }> = ({ code }) => {
     try {
       const json = JSON.parse(code);
 
-      return json;
+      return {
+        ...json,
+        width: json.width ?? 'container',
+        height: json.height ?? 300
+      };
     } catch(e) {
       return null;
     }
@@ -82,7 +84,7 @@ export const VegaLiteCodeEditorDescriptor: CodeBlockEditorDescriptor = {
       >
         <div className="mermaidBlockWrapper">
           <div className="mermaidBlockAction" onClick={() => setNodeSelection(props.nodeKey)}>
-            <HandPointer />
+            {iconComponentFor('handPointer')}
           </div>
           <div className="mermaidBlockAction" onClick={() => setPerviewMode(!previewMode)}>
             {previewMode ? iconComponentFor('code') : iconComponentFor('eye')}
