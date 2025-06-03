@@ -34,15 +34,15 @@ function escapeBrackets(text: string) {
 }
 
 const EvoyaCreatorButton = (): JSX.Element => {
-  // const [hasContent, setHasContent] = useState(false);
-  const handleClick = async () => {
+  const [hasContent, setHasContent] = useState(false);
+  const handleClick = () => {
     const restoreContent = localStorage.getItem('evoya-creator');
 
     if (restoreContent) {
-        const restoreContentObj = JSON.parse(restoreContent);
+      const restoreContentObj = JSON.parse(restoreContent);
 
-        // @ts-expect-error custom property
-        window.openEvoyaCreator({output: escapeBrackets(restoreContentObj.content)}, { type: restoreContentObj.type });
+      // @ts-expect-error custom property
+      window.openEvoyaCreator({output: escapeBrackets(restoreContentObj.content)}, { type: restoreContentObj.type });
     }
   };
 
@@ -50,18 +50,19 @@ const EvoyaCreatorButton = (): JSX.Element => {
     const restoreContent = localStorage.getItem('evoya-creator');
 
     if (restoreContent) {
-        const restoreContentObj = JSON.parse(restoreContent);
+      const restoreContentObj = JSON.parse(restoreContent);
 
-        if (restoreContentObj.content) {
-          // @ts-expect-error custom property
-          window.evoyaCreatorContent = true;
-          // setHasContent(true);
-        }
+      if (restoreContentObj.content) {
+        // @ts-expect-error custom property
+        window.evoyaCreatorContent = true;
+        setHasContent(true);
+      } else {
+        // @ts-expect-error custom property
+        window.evoyaCreatorContent = false;
+        setHasContent(false);
+      }
     }
   }, []);
-
-  // @ts-expect-error custom property
-  const hasContent = window.evoyaCreatorContent;
 
   return (
     <div>

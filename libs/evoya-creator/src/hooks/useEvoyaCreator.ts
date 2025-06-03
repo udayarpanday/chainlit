@@ -41,8 +41,6 @@ export default function useEvoyaCreator() {
     setActive(true);
     // @ts-expect-error is not a valid prop
     window.evoyaCreatorEnabled = true;
-    // @ts-expect-error is not a valid prop
-    window.evoyaCreatorContent = true;
   }
 
   const closeCreatorOverlay = () => {
