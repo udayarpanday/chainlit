@@ -43,6 +43,9 @@ const EvoyaCreatorButton = (): JSX.Element => {
 
       // @ts-expect-error custom property
       window.openEvoyaCreator({output: escapeBrackets(restoreContentObj.content)}, { type: restoreContentObj.type });
+    } else {
+      // @ts-expect-error custom property
+      window.openEvoyaCreator({output: ''}, { type: 'markdown' });
     }
   };
 
