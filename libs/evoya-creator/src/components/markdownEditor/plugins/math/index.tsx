@@ -129,6 +129,11 @@ export class MathNode extends DecoratorNode<JSX.Element> {
     return div;
   }
 
+  setMathString(mathString: string): void {
+    const writable = this.getWritable();
+    writable.__mathString = mathString;
+  }
+
   updateDOM(): false {
     return false;
   }
