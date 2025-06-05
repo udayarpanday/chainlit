@@ -183,11 +183,19 @@ export default function MDXEditorWrapper() {
       console.log(editorSelectionMessageContext);
       const parsedMessage = messageParser(message.output);
       console.log(parsedMessage);
+      const getStoredContent=JSON.parse(localStorage.getItem('evoya-creator')).content
+      if(getStoredContent===''){
+        mdxEditorRef.current.setMarkdown(parsedMessage.content);
+        localStorage.setItem('evoya-creator', JSON.stringify({
+          content: parsedMessage.content,
+          type: 'markdown'
+        }));
+      }
       mdxRealm?.pub(replaceSelectionContent$, {message: parsedMessage, context: editorSelectionMessageContext});
 
       return parsedMessage.feedback;
     };
-  }, [mdxRealm, editorSelectionMessageContext]);
+  }, [mdxRealm, editorSelectionMessageContext,mdxEditorRef]);
 
   const stylesCache = createCache({
     key: "creator-portal", // <style data-emotion="your-key">...
@@ -276,7 +284,6 @@ export default function MDXEditorWrapper() {
             containerRef,
             creatorType,
             setSelectionContext: (context: SelectionContext | null) => {
-              console.log('selectionContext', context);
               setEditorSelectionContext(context);
             },
             setRealm: setMdxRealm
