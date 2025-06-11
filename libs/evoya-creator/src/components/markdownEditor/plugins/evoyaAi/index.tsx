@@ -151,8 +151,12 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
       console.log('selection context', value.context);
       const selectionContext = value.context;
       const lexicalSelection = value.context.lexical;
-      const markdownMessage = value.message.content;
       const insertType = value.message.insertType;
+
+      const stored = localStorage.getItem('evoya-creator');
+      const getStoredContent = stored ? JSON.parse(stored).content : null;
+      
+      let markdownMessage = value.message.content;
 
       // if (!lexicalSelection && selectionContext.selectionType !== 'document') return;
 
@@ -175,6 +179,31 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
         const importChildren = importPoint.children;
         console.log('importChildren', importChildren);
         let newChildren = importChildren;
+
+        if ( getStoredContent === '') {
+          localStorage.setItem(
+            'evoya-creator',
+            JSON.stringify({
+              content: value.message.content,
+              type: 'markdown'
+            })
+          );
+       
+          const rootElement = $getRoot();
+          rootElement.clear();
+          evoyaImportMarkdownToLexical({
+            root: rootElement,
+            visitors: realm.getValue(importVisitors$),
+            mdastExtensions: realm.getValue(mdastExtensions$),
+            markdown: markdownMessage,
+            syntaxExtensions: realm.getValue(syntaxExtensions$),
+            jsxComponentDescriptors: realm.getValue(jsxComponentDescriptors$),
+            directiveDescriptors: realm.getValue(directiveDescriptors$),
+            codeBlockEditorDescriptors: realm.getValue(codeBlockEditorDescriptors$)
+          });
+          realm.pub(selectDocument$);
+          return
+        }
 
         if (selectionContext.selectionType === 'codeblock') {
           if ($isCodeBlockNode(importChildren[0])) {
