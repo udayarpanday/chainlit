@@ -1,9 +1,14 @@
-import { useEffect } from 'react';
+import { useContext, useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 import { router } from 'router';
 
-import { useAuth, useChatSession, useConfig } from '@chainlit/react-client';
+import {
+  ChainlitContext,
+  useAuth,
+  useChatSession,
+  useConfig
+} from '@chainlit/react-client';
 
 import ChatSettingsModal from './components/ChatSettings';
 import { ThemeProvider } from './components/ThemeProvider';
@@ -25,8 +30,9 @@ declare global {
 function App() {
   const { config } = useConfig();
 
-  const { isAuthenticated, data, isReady } = useAuth();
+  const apiClient = useContext(ChainlitContext);
   const userEnv = useRecoilValue(userEnvState);
+  const { isAuthenticated, data, isReady, setUserFromAPI } = useAuth();
   const { connect, chatProfile, setChatProfile } = useChatSession();
 
   const configLoaded = !!config;
@@ -36,6 +42,17 @@ function App() {
       ? !!chatProfile
       : true
     : false;
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const token =
+      searchParams.get('access_token') ||
+      localStorage.getItem('chainlit_token_iframe');
+    apiClient
+      .jwtAuth(token)
+      .then((res) => setUserFromAPI())
+      .catch((err) => console.log(err));
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated || !isReady || !chatProfileOk) {
