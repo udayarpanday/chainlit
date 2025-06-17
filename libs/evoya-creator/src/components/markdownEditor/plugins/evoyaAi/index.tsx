@@ -154,14 +154,14 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
       const insertType = value.message.insertType;
 
       const stored = localStorage.getItem('evoya-creator');
-      const getStoredContent = stored ? JSON.parse(stored).content : null;
+      let getStoredContent = stored ? JSON.parse(stored).content : null;
       
       let markdownMessage = value.message.content;
 
       // if (!lexicalSelection && selectionContext.selectionType !== 'document') return;
 
       activeEditor?.update(() => {
-
+        $setSelection(null);
         const importPoint = {
           children: [] as LexicalNode[],
           append(node: LexicalNode) {
@@ -189,20 +189,38 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
             })
           );
        
-          const rootElement = $getRoot();
-          rootElement.clear();
-          evoyaImportMarkdownToLexical({
-            root: rootElement,
-            visitors: realm.getValue(importVisitors$),
-            mdastExtensions: realm.getValue(mdastExtensions$),
-            markdown: markdownMessage,
-            syntaxExtensions: realm.getValue(syntaxExtensions$),
-            jsxComponentDescriptors: realm.getValue(jsxComponentDescriptors$),
-            directiveDescriptors: realm.getValue(directiveDescriptors$),
-            codeBlockEditorDescriptors: realm.getValue(codeBlockEditorDescriptors$)
+          activeEditor.update(() => {
+            const root = $getRoot();
+            $setSelection(null);
+            root.clear();
+          
+            evoyaImportMarkdownToLexical({
+              root,
+              visitors: realm.getValue(importVisitors$),
+              mdastExtensions: realm.getValue(mdastExtensions$),
+              markdown: markdownMessage,
+              syntaxExtensions: realm.getValue(syntaxExtensions$),
+              jsxComponentDescriptors: realm.getValue(jsxComponentDescriptors$),
+              directiveDescriptors: realm.getValue(directiveDescriptors$),
+              codeBlockEditorDescriptors: realm.getValue(codeBlockEditorDescriptors$)
+            });
+          
+            const firstNode = root.getFirstChild();
+            if (firstNode !== null) {
+              const selection = $createRangeSelection();
+              selection.anchor.set(firstNode.getKey(), 0);
+              selection.focus.set(firstNode.getKey(), 0);
+              $setSelection(selection);
+            } else {
+              const paragraphNode = $createParagraphNode();
+              root.append(paragraphNode);
+              const selection = $createRangeSelection();
+              selection.anchor.set(paragraphNode.getKey(), 0);
+              selection.focus.set(paragraphNode.getKey(), 0);
+              $setSelection(selection);
+            }
+            realm.pub(selectDocument$);
           });
-          realm.pub(selectDocument$);
-          return
         }
 
         if (selectionContext.selectionType === 'codeblock') {
@@ -409,22 +427,19 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
 
           // select inserted children (didnt work)
         if (newChildren.length > 0) {
-          if (insertType === 'replace' && selectionContext.selectionType === 'document') {
+          if ((insertType === 'replace' && selectionContext.selectionType === 'document') || getStoredContent === '') {
             // $selectAll();
             realm.pub(selectDocument$);
           } else {
-            console.log('select new content', newChildren);
-            const newSelection = $createRangeSelection();
-            // const selectionStartNode = $isTextNode(newChildren[0]) ? newChildren[0] : newChildren[0].getFirstDescendant();
-            if ($isTableNode(newChildren[0])) {
-              realm.pub(setNodeSelection$, newChildren[0]);
-            } else {
-              const selectionStartNode = $isTextNode(newChildren[0]) ? newChildren[0] : newChildren[0].getFirstDescendant();
-              const selectionEndNode = $isTextNode(newChildren[newChildren.length - 1]) ? newChildren[newChildren.length - 1] : newChildren[newChildren.length - 1].getLastDescendant();
-              if ($isTextNode(selectionStartNode) && $isTextNode(selectionEndNode)) {
-                newSelection.setTextNodeRange(selectionStartNode, 0, selectionEndNode, selectionEndNode.getTextContent().length);
-                console.log(newSelection);
-                $setSelection(newSelection);
+            const lastElement = newChildren[newChildren.length - 1];
+            if (lastElement) {
+               if ($isTableNode(newChildren[0])) {
+                realm.pub(setNodeSelection$, newChildren[0]);
+              }else{
+                if ($isTextNode(lastElement)){
+                  lastElement.select(lastElement.getTextContent().length);
+                }
+              }
               } else {
                 // TODO?
               }
@@ -443,7 +458,7 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
           // $setSelection(insertedContentSelection);
           // $wrapSelectionInMarkNode(newSelection, false, 'evoyainsert');
         }
-      });
+      );
     }
   });
 });

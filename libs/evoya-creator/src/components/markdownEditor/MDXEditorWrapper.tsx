@@ -187,7 +187,7 @@ export default function MDXEditorWrapper() {
 
       return parsedMessage.feedback;
     };
-  }, [mdxRealm, editorSelectionMessageContext,mdxEditorRef]);
+  }, [mdxRealm, editorSelectionMessageContext]);
 
   const stylesCache = createCache({
     key: "creator-portal", // <style data-emotion="your-key">...
