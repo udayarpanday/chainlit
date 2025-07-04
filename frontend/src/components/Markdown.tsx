@@ -161,7 +161,7 @@ const Markdown = ({
               />
             );
           }
-          return <span {...props}>{children}</span>;
+          return <span {...omit(props, ['node'])}>{children}</span>;
         },
         code(props) {
           return (
@@ -320,7 +320,7 @@ const Markdown = ({
                 fontStyle: isBeforeThink ? 'italic' : 'inherit',
                 fontSize: isBeforeThink ? '12px' : 'inherit'
               }}
-              className="leading-7 [&:not(:first-child)]:mt-4 whitespace-pre-wrap break-words"
+              className="leading-7 [&:not(:first-child)]:mt-4 break-words"
               role="article"
             >
               {props.children}
@@ -333,6 +333,9 @@ const Markdown = ({
               <Table {...(props as any)}>{children}</Table>
             </Card>
           );
+        },
+        li({ children, ...props }) {
+          return <li {...omit(props, ['node'])} className="mb-2">{children}</li>
         },
         thead({ children, ...props }) {
           return <TableHeader {...(props as any)}>{children}</TableHeader>;
