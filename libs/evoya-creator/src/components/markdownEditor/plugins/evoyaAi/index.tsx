@@ -151,13 +151,15 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
       console.log('selection context', value.context);
       const selectionContext = value.context;
       const lexicalSelection = value.context.lexical;
-      const markdownMessage = value.message.content;
       const insertType = value.message.insertType;
+      const stored = localStorage.getItem('evoya-creator');
+      let getStoredContent = stored ? JSON.parse(stored).content : null;
+
+      let markdownMessage = value.message.content;
 
       // if (!lexicalSelection && selectionContext.selectionType !== 'document') return;
-
       activeEditor?.update(() => {
-
+        $setSelection(null);
         const importPoint = {
           children: [] as LexicalNode[],
           append(node: LexicalNode) {
@@ -176,6 +178,33 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
         console.log('importChildren', importChildren);
         let newChildren = importChildren;
 
+        if ( getStoredContent === '') {
+          localStorage.setItem(
+            'evoya-creator',
+            JSON.stringify({
+              content: value.message.content,
+              type: 'markdown'
+            })
+          );
+
+            const root = $getRoot();
+            $setSelection(null);
+            root.clear();
+
+            evoyaImportMarkdownToLexical({
+              root,
+              visitors: realm.getValue(importVisitors$),
+              mdastExtensions: realm.getValue(mdastExtensions$),
+              markdown: markdownMessage,
+              syntaxExtensions: realm.getValue(syntaxExtensions$),
+              jsxComponentDescriptors: realm.getValue(jsxComponentDescriptors$),
+              directiveDescriptors: realm.getValue(directiveDescriptors$),
+              codeBlockEditorDescriptors: realm.getValue(codeBlockEditorDescriptors$)
+            });
+
+            return
+        }
+       
         if (selectionContext.selectionType === 'codeblock') {
           if ($isCodeBlockNode(importChildren[0])) {
             const codeBlockNode = lexicalSelection.getNodes()[0];
@@ -379,8 +408,8 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
         // realm.pub(resetSelection$);
 
           // select inserted children (didnt work)
-        if (newChildren.length > 0) {
-          if (insertType === 'replace' && selectionContext.selectionType === 'document') {
+        if (newChildren.length > 0 && insertType!='none') {
+          if (insertType === 'replace' && selectionContext.selectionType === 'document' && getStoredContent === '') {
             // $selectAll();
             realm.pub(selectDocument$);
           } else {
