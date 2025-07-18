@@ -32,6 +32,7 @@ export default function MDXEditorToolbar() {
           {
             fallback: () => (
               <>
+                  <ResetDocument />
                   <UndoRedo />
                   <Separator />
                   <BoldItalicUnderlineToggles />
@@ -55,7 +56,6 @@ export default function MDXEditorToolbar() {
                   <Separator />
                   <ExportContent />
                   <Separator />
-                  <ResetDocument />
               </>
             )
           }
