@@ -13,6 +13,12 @@ export interface EvoyaConfig {
   headerConfig?:EvoyaHeaderConfig;
   chainlitConfig?:EvoyaChainlitConfig;
   evoyaCreator?: EvoyaCreatorConfig;
+  autoOpen?: EvoyaAutoOpenConfig;
+}
+
+export type EvoyaAutoOpenConfig = {
+  enabled: boolean;
+  delay: number;
 }
 
 export interface EvoyaCreatorConfig {

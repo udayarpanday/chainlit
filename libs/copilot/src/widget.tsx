@@ -23,6 +23,8 @@ interface Props {
   error?: string;
 }
 
+const autoOpenLS = 'EVOYA_AUTO_OPEN_USED';
+
 const Widget = ({ config, error }: Props) => {
   const { evoya } = useContext(WidgetContext)
   const [expanded, setExpanded] = useState(false);
@@ -61,6 +63,21 @@ const Widget = ({ config, error }: Props) => {
       }
     }
 
+  }, []);
+
+  useEffect(() => {
+    if (evoya?.autoOpen?.enabled) {
+      console.log(evoya.autoOpen);
+      const autoOpenDone = sessionStorage.getItem(autoOpenLS);
+      if (autoOpenDone !== '1') {
+        if (evoya.autoOpen.delay > 0) {
+          setTimeout(() => window.toggleChainlitCopilot(), evoya.autoOpen.delay);
+        } else {
+          window.toggleChainlitCopilot();
+        }
+        sessionStorage.setItem(autoOpenLS, "1");
+      }
+    }
   }, []);
 
   const customClassName = config?.button?.className || '';
