@@ -277,7 +277,7 @@ const Markdown = ({
           return (
             <h1
               {...omit(props, ['node'])}
-              className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mt-8 first:mt-0"
+              className="scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-5xl mt-8 first:mt-0"
             />
           );
         },
@@ -285,7 +285,7 @@ const Markdown = ({
           return (
             <h2
               {...omit(props, ['node'])}
-              className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight mt-8 first:mt-0"
+              className="scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight mt-8 first:mt-0"
             />
           );
         },
@@ -293,7 +293,7 @@ const Markdown = ({
           return (
             <h3
               {...omit(props, ['node'])}
-              className="scroll-m-20 text-2xl font-semibold tracking-tight mt-6 first:mt-0"
+              className="scroll-m-20 text-xl font-semibold tracking-tight mt-6 first:mt-0"
             />
           );
         },
@@ -301,7 +301,7 @@ const Markdown = ({
           return (
             <h4
               {...omit(props, ['node'])}
-              className="scroll-m-20 text-xl font-semibold tracking-tight mt-6 first:mt-0"
+              className="scroll-m-20 text-lg font-semibold tracking-tight mt-6 first:mt-0"
             />
           );
         },
