@@ -229,7 +229,7 @@ const Markdown = ({
               >
                 <img
                   src={
-                    image.src.startsWith('/public')
+                    image.src && image.src.startsWith('/public')
                       ? apiClient.buildEndpoint(image.src)
                       : image.src
                   }
