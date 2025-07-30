@@ -10,7 +10,7 @@ import { firstUserInteraction, evoyaCreatorEnabledState } from '@chainlit/react-
 
 export default function WidgetEmbedded() {
   const { evoya } = useContext(WidgetContext)
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(evoya?.overlay ?? false);
   const [visualViewportHeight, setVisualViewportHeight] = useState(window.innerHeight);
   const [visualViewportOffsetTop, setVisualViewportOffsetTop] = useState(0);
   const setCreatorEnabled = useSetRecoilState(evoyaCreatorEnabledState);
@@ -50,13 +50,13 @@ export default function WidgetEmbedded() {
     }
   }, []);
 
-  useEffect(() => {
-    window.toggleChainlitCopilot = () => setExpanded((prev) => !prev);
+  // useEffect(() => {
+  //   window.toggleChainlitCopilot = () => setExpanded((prev) => !prev);
 
-    return () => {
-      window.toggleChainlitCopilot = () => console.error('Widget not mounted.');
-    };
-  }, []);
+  //   return () => {
+  //     window.toggleChainlitCopilot = () => console.error('Widget not mounted.');
+  //   };
+  // }, []);
 
   return (
     <div className={cn("flex flex-col bg-background h-full w-full relative shadow-lg ", 

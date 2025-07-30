@@ -14,6 +14,7 @@ export interface EvoyaConfig {
   chainlitConfig?:EvoyaChainlitConfig;
   evoyaCreator?: EvoyaCreatorConfig;
   autoOpen?: EvoyaAutoOpenConfig;
+  overlay?: boolean;
 }
 
 export type EvoyaAutoOpenConfig = {
