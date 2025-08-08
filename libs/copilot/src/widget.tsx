@@ -106,6 +106,8 @@ const Widget = ({ config, error }: Props) => {
               }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = evoya.chainlitConfig.style.bgcolorHover}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = evoya.chainlitConfig.style.bgcolor}
+              title="Evoya Chat"
+              aria-label="Evoya Chat"
             >
               <div className="relative w-full h-full flex items-center justify-center">
                 {evoya?.chainlitConfig.button?.imageUrl ? (
