@@ -1,11 +1,13 @@
+import { Send } from 'lucide-react';
 import { useContext } from 'react';
+
+import { WidgetContext } from '@chainlit/copilot/src/context';
 import {
   useChatData,
   useChatInteract,
   useChatMessages
 } from '@chainlit/react-client';
 
-import { Send } from 'lucide-react';
 import { Stop } from '@/components/icons/Stop';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,24 +18,41 @@ import {
 } from '@/components/ui/tooltip';
 import { Translator } from 'components/i18n';
 
-import { WidgetContext } from '@chainlit/copilot/src/context';
+import VoiceButton from './VoiceButton';
+
 interface SubmitButtonProps {
   disabled?: boolean;
+  value?: string;
   onSubmit: () => void;
 }
 
 export default function SubmitButton({
   disabled,
-  onSubmit
+  onSubmit,
+  value
 }: SubmitButtonProps) {
   const { evoya } = useContext(WidgetContext);
   const { loading } = useChatData();
   const { firstInteraction } = useChatMessages();
   const { stopTask } = useChatInteract();
 
+  const isValueEmpty = (val: string | undefined): boolean => {
+    if (!val) return true;
+    const cleanedValue = val
+      .replace(/\s/g, '') // Remove all whitespace
+      .replace(/\u200B/g, '') // Remove zero-width space
+      .replace(/\u200C/g, '') // Remove zero-width non-joiner
+      .replace(/\u200D/g, '') // Remove zero-width joiner
+      .replace(/\uFEFF/g, ''); // Remove byte order mark
+    return cleanedValue === '';
+  };
   return (
     <TooltipProvider>
-      {loading && firstInteraction ? (
+      {!loading &&
+      isValueEmpty(value) &&
+      ((evoya && evoya?.speechToText == true) || evoya == undefined) ? (
+        <VoiceButton disabled={disabled} />
+      ) : loading && firstInteraction ? (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

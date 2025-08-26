@@ -46,7 +46,6 @@ export function EvoyaCreatorButton({ message }: Props) {
   const { showEvoyaCreatorButton } = useContext(MessageContext);
 
   const handleClick = () => {
-    console.log(message.output);
     // @ts-expect-error custom property
     window.openEvoyaCreator({...message, output: escapeBrackets(message.output)}, { type: 'markdown' });
   };
