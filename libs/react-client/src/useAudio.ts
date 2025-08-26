@@ -20,6 +20,7 @@ const useAudio = () => {
   const { startAudioStream, endAudioStream,passAudioType } = useChatInteract();
 
   const startConversation = useCallback(async (type) => {
+    
     await passAudioType(type)
     setAudioConnection('connecting');
     await startAudioStream();

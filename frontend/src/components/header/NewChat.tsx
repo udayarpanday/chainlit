@@ -1,6 +1,7 @@
+import { Plus } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { useChatInteract } from '@chainlit/react-client';
+import { useAudio, useChatInteract } from '@chainlit/react-client';
 
 import { Translator } from '@/components/i18n';
 import { Button } from '@/components/ui/button';
@@ -11,8 +12,6 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip';
 
-import { Plus } from "lucide-react";
-
 interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   navigate?: (to: string) => void;
 }
@@ -20,10 +19,14 @@ interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 const NewChatButton = ({ navigate, ...buttonProps }: Props) => {
   const [open, setOpen] = useState(false);
   const { clear } = useChatInteract();
-
+  const {  endConversation, audioConnection } = useAudio();
+  const isAudioOn = audioConnection === 'on';
   const handleClickOpen = () => {
-    clear()
+    clear();
     window.dispatchEvent(new CustomEvent('copilot-new-session'));
+    if (isAudioOn) {
+      endConversation();
+    }
   };
 
   return (
@@ -35,11 +38,11 @@ const NewChatButton = ({ navigate, ...buttonProps }: Props) => {
               variant="outline"
               id="new-chat-button"
               onClick={handleClickOpen}
-              className='text-primary hover:text-primary border border-primary'
+              className="text-primary hover:text-primary border border-primary"
               {...buttonProps}
             >
-               <Plus className="w-4 h-4" />
-               <Translator path="components.molecules.newChatButton.newChatSession" />
+              <Plus className="w-4 h-4" />
+              <Translator path="components.molecules.newChatButton.newChatSession" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>

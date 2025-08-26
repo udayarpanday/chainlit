@@ -141,7 +141,7 @@ export const CommandButton = ({
         align={isMobile ? 'center' : 'start'}
         side={isMobile ? 'top' : undefined}
         sideOffset={isMobile ? 5 : 12}
-        className="focus:outline-none w-[52vw] min-w-[320px] w-md-[820px] w-lg-[950px] p-0"
+        className="focus:outline-none w-[57vw] min-w-[320px] w-md-[820px] w-lg-[950px] p-0"
         style={{
           position: isMobile ? 'fixed' : 'relative',
           bottom: isMobile ? '-82vh' : '42px',
@@ -165,7 +165,7 @@ export const CommandButton = ({
             <CommandList className="max-h-[60vh] md:max-h-[300px] !overflow-hidden">
               <CommandEmpty>No results found.</CommandEmpty>
               <div className="flex flex-col md:flex-row">
-                <CommandGroup className="w-full md:w-[250px] p-2 h-[280px] overflow-auto">
+                <CommandGroup className="w-full md:w-[500px] p-2 h-[280px] overflow-auto">
                   {searchResults.map((command) => (
                     <CommandItem
                       key={command.id}
