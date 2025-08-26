@@ -71,10 +71,15 @@ const Widget = ({ config, error }: Props) => {
   }, []);
 
   useEffect(() => {
-    if (evoya?.autoOpen?.enabled) {
-      console.log(evoya.autoOpen);
+    if (evoya?.autoOpen?.enabledDesktop || evoya?.autoOpen?.enabledMobile) {
+      
+      if(isTabletOrMobile&& !evoya?.autoOpen?.enabledMobile){
+        return
+      }
+      
       // const autoOpenDone = sessionStorage.getItem(autoOpenLS);
       const autoOpenDone = getCookie(autoOpenLS);
+      console.log(autoOpenDone,'OPEN')
       if (autoOpenDone !== '1') {
         if (evoya.autoOpen.delay > 0) {
           setTimeout(() => window.toggleChainlitCopilot(), evoya.autoOpen.delay);

@@ -483,7 +483,7 @@ const Input = forwardRef<InputMethods, Props>(
           </button>
         )} */}
         {showCommands && filteredCommands.length ? (
-          <div className="absolute z-50 -top-4 -left-[15px] -translate-y-full w-md-[820px] w-lg-[950px] w-[52vw]">
+          <div className="absolute z-50 -top-4 -left-[15px] -translate-y-full w-md-[820px] w-lg-[950px] w-[57vw]">
             <div className="w-full">
               <Command className="rounded-lg border shadow-none">
                 <div className="flex items-center pb-0">
@@ -496,7 +496,7 @@ const Input = forwardRef<InputMethods, Props>(
                 <CommandList className="max-h-[60vh] md:max-h-[300px] !overflow-hidden">
                   <CommandEmpty>No results found.</CommandEmpty>
                   <div className="flex flex-col md:flex-row">
-                    <CommandGroup className="w-full md:w-[250px] p-2 h-[280px] overflow-auto">
+                    <CommandGroup className="w-full md:w-[500px] p-2 h-[280px] overflow-auto">
                       {filteredCommands.map((command, index) => (
                         <CommandItem
                           key={command.id}

@@ -15,10 +15,12 @@ export interface EvoyaConfig {
   evoyaCreator?: EvoyaCreatorConfig;
   autoOpen?: EvoyaAutoOpenConfig;
   overlay?: boolean;
+  speechToText:boolean;
 }
 
 export type EvoyaAutoOpenConfig = {
-  enabled: boolean;
+  enabledDesktop: boolean;
+  enabledMobile: boolean;
   delay: number;
 }
 

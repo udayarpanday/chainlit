@@ -216,7 +216,7 @@ export default function MessageComposer({
               <Settings className="!size-6" />
             </Button>
           )}
-          {evoya && evoya?.type == 'dashboard' && (
+          {evoya && evoya?.speechToText == true && (
             <VoiceButton disabled={disabled} />
           )}
         </div>
