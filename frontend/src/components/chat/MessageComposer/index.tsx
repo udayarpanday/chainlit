@@ -24,7 +24,6 @@ import CommandButton from './CommandButton';
 import Input, { InputMethods } from './Input';
 import SubmitButton from './SubmitButton';
 import UploadButton from './UploadButton';
-import VoiceButton from './VoiceButton';
 
 interface Props {
   fileSpec: FileSpec;
@@ -186,7 +185,7 @@ export default function MessageComposer({
           onEnter={submit}
           onPaste={onPaste}
           submitProxy={submitProxy}
-          placeholder={t('chat.input.placeholder', 'Type your message here...')}
+          placeholder={t('chat.input.placeholder', 'Your input...')}
         />
       )}
       <div className="flex items-center justify-between">
@@ -216,9 +215,7 @@ export default function MessageComposer({
               <Settings className="!size-6" />
             </Button>
           )}
-          {evoya && evoya?.speechToText == true && (
-            <VoiceButton disabled={disabled} />
-          )}
+         
         </div>
         {evoya && evoya?.type != 'dashboard' && (
           <Input
@@ -233,13 +230,13 @@ export default function MessageComposer({
             submitProxy={submitProxy}
             placeholder={t(
               'chat.input.placeholder',
-              'Type your message here...'
+              'Your input...'
             )}
             className={'min-h-0'}
           />
         )}
         <div className="flex items-center gap-1">
-          <SubmitButton onSubmit={submit} disabled={disabled} />
+          <SubmitButton onSubmit={submit} disabled={disabled} value={value} />
         </div>
       </div>
     </div>

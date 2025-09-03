@@ -194,7 +194,7 @@
                 },
                 "inputBox": {
                     "input": {
-                        "placeholder": "Type your message here..."
+                        "placeholder": "Your input..."
                     },
                     "speechButton": {
                         "start": "Start recording",
@@ -361,7 +361,7 @@
     },
     "chat": {
         "input": {
-            "placeholder": "Type your message here...",
+            "placeholder": "Your input...",
             "actions": {
                 "send": "Send message",
                 "stop": "Stop Task",

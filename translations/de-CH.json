@@ -361,7 +361,7 @@
     },
     "chat": {
         "input": {
-            "placeholder": "Schreibe deine Nachricht...",
+            "placeholder": "Ihre Eingabe...",
             "actions": {
                 "send": "Nachricht senden",
                 "stop": "Aufgabe stoppen",

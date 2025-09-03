@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
-import { CircleCheck, CircleX, Clock, Mic } from 'lucide-react';
-import { useState,useEffect,useContext } from 'react';
 import { WidgetContext } from 'context';
+import { Check, X, Clock, Mic } from 'lucide-react';
+import { useContext, useEffect, useState } from 'react';
 
 import { useAudio, useConfig } from '@chainlit/react-client';
 
@@ -108,12 +108,16 @@ const VoiceButton = ({ disabled }: Props) => {
               'bg-muted/50 border',
               getTimerColor(timeRemaining),
               timeRemaining < 60 &&
-              'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800/30'
+                'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800/30'
             )}
           >
             <Clock className="size-3 mr-1" />
             <span>{formatTime(timeRemaining)}</span>
           </div>
+        </>
+      )}
+      {isAudioOn ? (
+        <>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -122,44 +126,44 @@ const VoiceButton = ({ disabled }: Props) => {
                   variant="ghost"
                   size="icon"
                   className="hover:bg-muted"
-                  onClick={endConversation}
+                  onClick={() => endConversation(!(modalityType === 'speech'))}
                 >
-                  <CircleCheck className="!size-5" />
+                  <X className="!size-6" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
                 <p>
-                  <Translator path={'chat.speech.submit'} />
+                  <Translator path={'chat.speech.stop'} />
                 </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          {modalityType === 'speech' && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    disabled={disabled}
+                    variant="ghost"
+                    size="icon"
+                    className="hover:bg-muted"
+                    onClick={endConversation}
+                  >
+                    <Check className="!size-6" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    <Translator path={'chat.speech.submit'} />
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </>
-      )}
-      {isAudioOn ? (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                disabled={disabled}
-                variant="ghost"
-                size="icon"
-                className="hover:bg-muted"
-                onClick={() => endConversation(!(modalityType === 'speech'))}
-              >
-                <CircleX className="!size-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                <Translator path={'chat.speech.stop'} />
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
       ) : (
         <>
-          {evoya && evoya.type == 'dashboard' ? (
+          {/* {evoya && evoya.type == 'dashboard' ? (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -189,7 +193,7 @@ const VoiceButton = ({ disabled }: Props) => {
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          ) : null}
+          ) : null} */}
 
           {/* Speech Mode Button */}
           {isAudioOff && (

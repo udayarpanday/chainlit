@@ -79,7 +79,6 @@ const Widget = ({ config, error }: Props) => {
       
       // const autoOpenDone = sessionStorage.getItem(autoOpenLS);
       const autoOpenDone = getCookie(autoOpenLS);
-      console.log(autoOpenDone,'OPEN')
       if (autoOpenDone !== '1') {
         if (evoya.autoOpen.delay > 0) {
           setTimeout(() => window.toggleChainlitCopilot(), evoya.autoOpen.delay);
