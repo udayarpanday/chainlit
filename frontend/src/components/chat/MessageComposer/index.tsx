@@ -217,7 +217,6 @@ export default function MessageComposer({
           )}
          
         </div>
-        {console.log(value,'Value')}
         {evoya && evoya?.type != 'dashboard' && (
           <Input
             ref={inputRef}
