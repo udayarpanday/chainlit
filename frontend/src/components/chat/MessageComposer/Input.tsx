@@ -10,8 +10,6 @@ import React, {
 import { useRecoilValue } from 'recoil';
 
 import { ICommand, commandsState } from '@chainlit/react-client';
-
-import Icon from '@/components/Icon';
 import {
   Command,
   CommandEmpty,
@@ -72,9 +70,7 @@ const Input = forwardRef<InputMethods, Props>(
     const lastCommandSpanRef = useRef<HTMLElement | null>(null);
     const mutationObserverRef = useRef<MutationObserver | null>(null);
     const isUpdatingRef = useRef(false);
-    const [searchResults, setSearchResults] = useState<ICommand[]>([]);
-    const [hoveredCommand, setHoveredCommand] = useState<ICommand | null>(null);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [isCommandExpanded, setIsCommandExpanded] = useState(false);
     const isMobile = useIsMobile();
 
     const getContentWithoutCommand = () => {
@@ -106,6 +102,7 @@ const Input = forwardRef<InputMethods, Props>(
       setSelectedCommand(undefined);
       setSelectedIndex(0);
       setCommandInput('');
+      setIsCommandExpanded(false);
       if (contentEditableRef.current) {
         contentEditableRef.current.innerHTML = '';
       }
@@ -154,6 +151,33 @@ const Input = forwardRef<InputMethods, Props>(
       };
     }, []);
 
+    // Monitor input changes to detect when expanded content is completely removed
+    useEffect(() => {
+      if (!selectedCommand || !isCommandExpanded) return;
+
+      const content = contentEditableRef.current;
+      if (!content) return;
+
+      const handleContentChange = () => {
+        if (isUpdatingRef.current) return;
+        
+        const currentText = content.textContent || '';
+        
+        // Only reset if the content is completely empty or just whitespace
+        // This prevents interference with normal editing/backspacing
+        if (!currentText.trim()) {
+          setSelectedCommand(undefined);
+          setIsCommandExpanded(false);
+        }
+      };
+
+      content.addEventListener('input', handleContentChange);
+      
+      return () => {
+        content.removeEventListener('input', handleContentChange);
+      };
+    }, [selectedCommand, isCommandExpanded]);
+
     // Handle selectedCommand prop changes
     useEffect(() => {
       const content = contentEditableRef.current;
@@ -166,68 +190,138 @@ const Input = forwardRef<InputMethods, Props>(
         const existingCommandSpan = content.querySelector('.command-span');
 
         if (selectedCommand) {
-          // Create new command block
-          const newCommandBlock = document.createElement('div');
-          newCommandBlock.className =
-            'command-span font-bold inline-flex text-[#08f] items-center mr-1';
-          newCommandBlock.contentEditable = 'false';
-          newCommandBlock.innerHTML = `<span>${selectedCommand.id}</span>`;
-
-          // Store reference to the command span
-          lastCommandSpanRef.current = newCommandBlock;
-
-          if (existingCommandSpan) {
-            existingCommandSpan.replaceWith(newCommandBlock);
-          } else {
-            // Add new command span at the start
-            if (content.firstChild) {
-              content.insertBefore(newCommandBlock, content.firstChild);
-            } else {
-              content.appendChild(newCommandBlock);
+          if (isCommandExpanded) {
+            // When expanded, replace the command with editable text content
+            const promptContent = selectedCommand.prompt_content || selectedCommand.id;
+            
+            // Remove any existing command span
+            if (existingCommandSpan) {
+              existingCommandSpan.remove();
             }
-          }
+            
+            // Create a div to hold the formatted content
+            const contentDiv = document.createElement('div');
+            contentDiv.style.display = 'inline';
+            contentDiv.contentEditable = 'true';
+            
+            // Convert newlines to <br> tags and preserve other formatting
+            const formattedContent = promptContent
+              .replace(/\n/g, '<br>')
+              .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;'); // Convert tabs to spaces
+            
+            contentDiv.innerHTML = formattedContent + ' ';
+            
+            // Insert the formatted content at the beginning
+            if (content.firstChild) {
+              content.insertBefore(contentDiv, content.firstChild);
+            } else {
+              content.appendChild(contentDiv);
+            }
+            
+            lastCommandSpanRef.current = null; // No reference needed for expanded state
 
-          // Ensure there's a text node after the command block for cursor positioning
-          let textNode = newCommandBlock.nextSibling;
-          if (!textNode || textNode.nodeType !== Node.TEXT_NODE) {
-            textNode = document.createTextNode('\u200B'); // Zero-width space
-            content.appendChild(textNode);
-          }
+            // For expanded state, set cursor after the inserted content
+            content.focus();
+            
+            // Move cursor to end of content
+            const selection = window.getSelection();
+            const range = document.createRange();
+            range.selectNodeContents(content);
+            range.collapse(false);
+            
+            selection?.removeAllRanges();
+            selection?.addRange(range);
+            
+            onChange(getContentWithoutCommand());
+          } else {
+            // When collapsed, show as command span with expand button
 
-          // Create and set the selection range
-          const selection = window.getSelection();
-          selection.removeAllRanges();
-          const range = document.createRange();
+            const newCommandBlock = document.createElement('div');
+            newCommandBlock.className =
+              'command-span font-bold inline-flex text-[#08f] items-center mr-1';
+            newCommandBlock.contentEditable = 'false';
+            
+            const commandContent = `
+              <div class="command-clickable flex items-center gap-1 cursor-pointer hover:bg-blue-50 rounded px-1 transition-colors">
+                <button class="command-toggle-btn flex-shrink-0 pointer-events-none" type="button">
+                  <svg class="w-3 h-3 transition-transform rotate-[-90deg]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
+                <span class="truncate max-w-[200px] pointer-events-none">${selectedCommand.id}</span>
+              </div>
+            `;
+            
+            newCommandBlock.innerHTML = commandContent;
 
-          // Set cursor position at the beginning of the text node
-          range.setStart(textNode, 0);
-          range.collapse(true);
+            // Store reference to the command span
+            lastCommandSpanRef.current = newCommandBlock;
 
-          // Apply the selection
-          selection.addRange(range);
+            // Add click event listener for the entire command area
+            const clickableArea = newCommandBlock.querySelector('.command-clickable');
+            if (clickableArea) {
+              clickableArea.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsCommandExpanded(true);
+              });
+            }
 
-          // Force focus with delay to ensure it happens after any button close events
-          content.focus();
+            if (existingCommandSpan) {
+              existingCommandSpan.replaceWith(newCommandBlock);
+            } else {
+              // Add new command span at the start
+              if (content.firstChild) {
+                content.insertBefore(newCommandBlock, content.firstChild);
+              } else {
+                content.appendChild(newCommandBlock);
+              }
+            }
 
-          // Double-focus technique - helps in some browsers/situations
-          setTimeout(() => {
-            // Make sure caret is visible
-            content.style.caretColor = 'black';
+            // Ensure there's a text node after the command block for cursor positioning
+            let textNode = newCommandBlock.nextSibling;
+            if (!textNode || textNode.nodeType !== Node.TEXT_NODE) {
+              textNode = document.createTextNode('\u200B'); // Zero-width space
+              content.appendChild(textNode);
+            }
 
-            // Re-focus and set cursor position again
+            // Create and set the selection range
+            const selection = window.getSelection();
+            selection?.removeAllRanges();
+            const range = document.createRange();
+
+            // Set cursor position at the beginning of the text node
+            range.setStart(textNode, 0);
+            range.collapse(true);
+
+            // Apply the selection
+            selection?.addRange(range);
+
+            // Force focus with delay to ensure it happens after any button close events
             content.focus();
 
-            if (selection.rangeCount > 0) {
-              selection.removeAllRanges();
-              selection.addRange(range);
-            }
+            // Double-focus technique - helps in some browsers/situations
+            setTimeout(() => {
+              // Make sure caret is visible
+              content.style.caretColor = 'black';
 
-            // Trigger onChange with content excluding command
-            onChange(getContentWithoutCommand());
-          }, 10);
-        } else if (existingCommandSpan) {
+              // Re-focus and set cursor position again
+              content.focus();
+
+              if (selection?.rangeCount && selection.rangeCount > 0) {
+                selection.removeAllRanges();
+                selection.addRange(range);
+              }
+
+              // Trigger onChange with content excluding command
+              onChange(getContentWithoutCommand());
+            }, 10);
+          }
+        } else {
           // Remove existing command span
-          existingCommandSpan.remove();
+          if (existingCommandSpan) {
+            existingCommandSpan.remove();
+          }
           lastCommandSpanRef.current = null;
 
           // Ensure cursor is placed at start
@@ -236,8 +330,8 @@ const Input = forwardRef<InputMethods, Props>(
           range.collapse(true);
 
           const selection = window.getSelection();
-          selection.removeAllRanges();
-          selection.addRange(range);
+          selection?.removeAllRanges();
+          selection?.addRange(range);
 
           content.focus();
           onChange(getContentWithoutCommand());
@@ -248,7 +342,7 @@ const Input = forwardRef<InputMethods, Props>(
           isUpdatingRef.current = false;
         }, 20);
       }
-    }, [selectedCommand, onChange]);
+    }, [selectedCommand, onChange, isCommandExpanded]);
 
     const normalizedInput = commandInput.toLowerCase().slice(1);
 
@@ -273,7 +367,7 @@ const Input = forwardRef<InputMethods, Props>(
         const textData = event.clipboardData?.getData('text/plain');
         
         // Process the text - convert newlines to <br> tags and escape HTML
-        const escapedText = escapeHtml(textData);
+        const escapedText = escapeHtml(textData || '');
         const textWithNewLines = escapedText.replace(/\n/g, '<br>');
         
         // Handle insertion into the DOM
@@ -301,7 +395,7 @@ const Input = forwardRef<InputMethods, Props>(
       // Helper function to insert text at cursor position
       const insertTextAtCursor = (html: string) => {
         const selection = window.getSelection();
-        if (!selection.rangeCount) return;
+        if (!selection?.rangeCount) return;
         
         const range = selection.getRangeAt(0);
         range.deleteContents();
@@ -321,8 +415,8 @@ const Input = forwardRef<InputMethods, Props>(
         
         // Move cursor to end of inserted content
         range.collapse(false);
-        selection.removeAllRanges();
-        selection.addRange(range);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
       };
 
       textarea.addEventListener('paste', handlePaste);
@@ -396,9 +490,15 @@ const Input = forwardRef<InputMethods, Props>(
 
     const handleCommandSelect = (command?: ICommand) => {
       setShowCommands(false);
+      setIsCommandExpanded(false); // Reset expansion state when selecting a new command
 
       // Set a small timeout to ensure state updates are processed
       setTimeout(() => {
+        // If there's an existing command and we're selecting a new one, clear the content first
+        if (selectedCommand && command && contentEditableRef.current) {
+          contentEditableRef.current.innerHTML = '';
+        }
+        
         setSelectedCommand(command);
 
         // Clean up the command input from contentEditable
@@ -413,29 +513,8 @@ const Input = forwardRef<InputMethods, Props>(
       }, 0);
     };
 
-    // Initialize search results with all commands
-    useEffect(() => {
-      setSearchResults(commands);
-    }, [commands]);
 
-    // Handle search input changes
-    const handleSearch = (value: string) => {
-      setSearchTerm(value);
-      if (!value.trim()) {
-        setSearchResults(commands);
-        return;
-      }
-
-      const filtered = commands.filter(
-        (command) =>
-          command.id.toLowerCase().includes(value.toLowerCase()) ||
-          command.description?.toLowerCase().includes(value.toLowerCase()) ||
-          command.prompt_content?.toLowerCase().includes(value.toLowerCase())
-      );
-      setSearchResults(filtered);
-    };
-
-    const handleMouseEnter = (index) => {
+    const handleMouseEnter = (index: number) => {
       // Small delay before changing the displayed command
       setTimeout(() => {
         setSelectedIndex(index);
@@ -490,7 +569,6 @@ const Input = forwardRef<InputMethods, Props>(
                   <CommandInput
                     placeholder="Search prompts..."
                     className="h-12"
-                    onValueChange={handleSearch}
                   />
                 </div>
                 <CommandList className="max-h-[60vh] md:max-h-[300px] !overflow-hidden">
@@ -530,7 +608,7 @@ const Input = forwardRef<InputMethods, Props>(
                           <div className="bg-gray-50 rounded-md p-4 relative">
                             <p className="text-sm text-gray-700 whitespace-pre-wrap font-sans">
                               {filteredCommands[selectedIndex]
-                                ?.prompt_content ||
+                                ?.description ||
                                 'Select a command to view its content'}
                             </p>
                           </div>
