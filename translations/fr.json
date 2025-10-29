@@ -24,20 +24,22 @@
                 "label": "Ouvrir le Créateur"
             },
             "shareSession": {
-                "openButton": "Partager le Chat",
+                "openButton": "Partager le chat",
+                "inactiveButton": "Actif une fois le chat commencé",
                 "closeButton": "Fermer",
-                "copyButton": "Créer et copier le lien",
+                "copyButton": "Copier",
+                "copyCreateButton": "Créer et copier le lien",
                 "copyUpdateButton": "Mettre à jour et copier le lien",
                 "revokeLinkButton": "Révoquer le lien",
                 "types": {
-                    "static": "Partager une copie de l'historique de chat actuel.",
-                    "dynamic": "Donner un accès en lecture seule continu à cet historique de chat."
+                    "static": "Partager une copie de ce chat. Le lien expire après :",
+                    "dynamic": "Permet un accès en lecture seule continu aux futurs messages."
                 },
                 "messages": {
                     "success": "Lien copié",
                     "successRemove": "Lien révoqué",
-                    "created": "Vous avez créé un <shareLink>Lien</shareLink> vers cette session de chat qui expire <expires />.",
-                    "error": "Une erreur s'est produite"
+                    "created": "Vous avez créé un lien vers cette session de chat qui expire dans :",
+                    "error": "Une erreur est survenue"
                 },
                 "expire": {
                     "expiresIn": "Expire",

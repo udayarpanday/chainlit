@@ -24,19 +24,21 @@
                 "label": "Apri Creatore"
             },
             "shareSession": {
-                "openButton": "Condividi Chat",
+                "openButton": "Condividi chat",
+                "inactiveButton": "Attivo una volta avviata la chat",
                 "closeButton": "Chiudi",
-                "copyButton": "Crea e copia link",
+                "copyButton": "Copia",
+                "copyCreateButton": "Crea e copia link",
                 "copyUpdateButton": "Aggiorna e copia link",
                 "revokeLinkButton": "Revoca link",
                 "types": {
-                    "static": "Condividi una copia della cronologia chat attuale.",
-                    "dynamic": "Fornisci accesso continuo in sola lettura a questa cronologia chat."
+                    "static": "Condividi una copia di questa chat. Il link scade dopo:",
+                    "dynamic": "Consenti accesso in sola lettura continuo ai messaggi futuri."
                 },
                 "messages": {
                     "success": "Link copiato",
                     "successRemove": "Link revocato",
-                    "created": "Hai creato un <shareLink>Link</shareLink> a questa sessione di chat che scade <expires />.",
+                    "created": "Hai creato un link a questa sessione di chat che scade tra:",
                     "error": "Si è verificato un errore"
                 },
                 "expire": {

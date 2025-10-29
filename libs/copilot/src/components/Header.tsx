@@ -110,7 +110,7 @@ const Header = ({ expanded, setExpanded, isPopup }: Props): JSX.Element => {
           />
         ) : null}
 
-        {(evoya?.type === 'dashboard' && sessionUuid) && (
+        {(evoya?.type === 'dashboard') && (
           <>
             <FavoriteSessionButton sessionUuid={sessionUuid} />
             <ShareSessionButton sessionUuid={sessionUuid} />
