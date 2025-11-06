@@ -74,7 +74,6 @@ const FavoriteSessionButton = ({ sessionUuid }: Props): JSX.Element => {
       }
     }
   };
-  console.log(sessionUuid)
   return (
     <div>
       <TooltipProvider delayDuration={100}>

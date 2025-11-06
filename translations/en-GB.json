@@ -28,7 +28,7 @@
                 "inactiveButton": "Active once the chat started",
                 "closeButton": "Close",
                 "copyButton": "Copy",
-                "copyCreateButton": "Create & Copy Link",
+                "copyCreateButton": "Create Link",
                 "copyUpdateButton": "Update and copy link",
                 "revokeLinkButton": "Revoke link",
                 "types": {
@@ -39,15 +39,18 @@
                     "success": "Link copied",
                     "successRemove": "Link revoked",
                     "created": "You have created a link to this chat session that expires in",
+                    "neverExpires": "You have created a link to this chat session that",
                     "error": "An Error occurred"
                 },
                 "expire": {
                     "expiresIn": "Expire",
+                    "expires": "expires",
                     "1day": "in one day",
                     "7days": "in 7 days",
                     "30days": "in 30 days",
                     "xDays": "in <days/> days",
-                    "never": "never"
+                    "never": "never",
+                    "days": "days"
                 }
             },
             "favoriteSession": {
@@ -373,10 +376,10 @@
         "speech": {
             "start": "Start recording",
             "stop": "Cancel",
-            "submit":"Submit recording",
+            "submit": "Submit recording",
             "connecting": "Connecting",
-            "voiceMode":"Use Voice Mode",
-            "speechText":"Use Speech to Text Mode"
+            "voiceMode": "Use Voice Mode",
+            "speechText": "Use Speech to Text Mode"
         },
         "fileUpload": {
             "dragDrop": "Drag and drop files here",

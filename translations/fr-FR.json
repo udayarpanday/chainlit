@@ -28,7 +28,7 @@
                 "inactiveButton": "Actif une fois le chat commencé",
                 "closeButton": "Fermer",
                 "copyButton": "Copier",
-                "copyCreateButton": "Créer et copier le lien",
+                "copyCreateButton": "Créer un lien",
                 "copyUpdateButton": "Mettre à jour et copier le lien",
                 "revokeLinkButton": "Révoquer le lien",
                 "types": {
@@ -38,16 +38,19 @@
                 "messages": {
                     "success": "Lien copié",
                     "successRemove": "Lien révoqué",
-                    "created": "Vous avez créé un lien vers cette session de chat qui expire dans :",
+                    "created": "Vous avez créé un lien vers cette session de chat qui expire dans",
+                    "neverExpires": "Vous avez créé un lien vers cette session de chat qui",
                     "error": "Une erreur est survenue"
                 },
                 "expire": {
                     "expiresIn": "Expire",
+                    "expires": "expire",
                     "1day": "dans un jour",
                     "7days": "dans 7 jours",
                     "30days": "dans 30 jours",
                     "xDays": "dans <days/> jours",
-                    "never": "jamais"
+                    "never": "jamais",
+                    "days": "jours"
                 }
             },
             "favoriteSession": {

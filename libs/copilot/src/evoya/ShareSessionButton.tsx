@@ -3,16 +3,15 @@ import { Share2 } from 'lucide-react';
 import { ChevronDown, Loader2 } from 'lucide-react';
 import { useContext, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { MdContentCopy } from 'react-icons/md';
 import { toast } from 'sonner';
 import { useCopyToClipboard } from 'usehooks-ts';
 
-import { Alert } from '@chainlit/app/src/components/Alert';
 import { Translator } from '@chainlit/app/src/components/i18n';
 import { Button } from '@chainlit/app/src/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle
 } from '@chainlit/app/src/components/ui/dialog';
@@ -51,9 +50,15 @@ export const Select = ({
   const handleIconClick = () => {
     if (selectRef.current) {
       selectRef.current.focus();
-      selectRef.current.dispatchEvent(
-        new MouseEvent('mousedown', { bubbles: true })
-      );
+      // Try to open the dropdown using showPicker if available (modern browsers)
+      if ('showPicker' in selectRef.current) {
+        (
+          selectRef.current as HTMLSelectElement & { showPicker: () => void }
+        ).showPicker();
+      } else {
+        // Fallback: simulate a click event
+        selectRef.current.click();
+      }
     }
   };
   return (
@@ -75,7 +80,7 @@ export const Select = ({
       </select>
       <div
         onClick={handleIconClick}
-        className="absolute right-3 top-3 h-4 w-4 cursor-pointer"
+        className="absolute right-5 top-2 h-4 w-4 cursor-pointer"
       >
         <ChevronDown className="opacity-50" />
       </div>
@@ -285,20 +290,7 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
             </div>
           ) : (
             <>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="allowOngoingAccess"
-                    checked={allowOngoingAccess}
-                    onChange={(e) => setAllowOngoingAccess(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 text-primary "
-                  />
-                  <Label htmlFor="allowOngoingAccess">
-                    <Translator path="components.molecules.shareSession.types.dynamic" />
-                  </Label>
-                </div>
-
+              <div className="space-y-4 pb-3">
                 <div className="flex items-center justify-between flex-wrap">
                   <div className="flex items-center gap-2">
                     <Translator path="components.molecules.shareSession.types.static" />
@@ -321,57 +313,80 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
                     <Translator path="components.molecules.shareSession.copyCreateButton" />
                   </Button>
                 </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="allowOngoingAccess"
+                    checked={allowOngoingAccess}
+                    onChange={(e) => setAllowOngoingAccess(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-primary "
+                  />
+                  <Label htmlFor="allowOngoingAccess">
+                    <Translator path="components.molecules.shareSession.types.dynamic" />
+                  </Label>
+                </div>
               </div>
 
               {shareLink.url && (
-                <div>
-                  <Alert>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Translator path="components.molecules.shareSession.messages.created" />{" "}
-                        {shareLink.expire === 0
-                          ? 'never'
-                          : `${shareLink.expire} days`}
-                        .{' '}
+                <div className="bg-gray-100 rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="mb-2 text-sm text-gray-600">
+                        {shareLink.expire === 0 ? (
+                          <>
+                            <Translator path="components.molecules.shareSession.messages.neverExpires" />{' '}
+                            <Translator
+                              className={'italic'}
+                              path="components.molecules.shareSession.expire.never"
+                            />{' '}
+                            <Translator path="components.molecules.shareSession.expire.expires" />
+                          </>
+                        ) : (
+                          <>
+                            <Translator path="components.molecules.shareSession.messages.created" />{' '}
+                            <span className="italic font-medium">
+                              {shareLink.expire} {" "} <Translator path="components.molecules.shareSession.expire.days" />
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
                         <a
                           href={shareLink.url}
                           target="_blank"
-                          className="underline"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 underline text-sm break-all"
                         >
                           {shareLink.url}
                         </a>
-                      </div>
-                      <div className="flex gap-2 ml-2">
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
-                          className="p-1 px-3"
-                          onClick={() =>
-                            shareLink.url && copyToClipboard(shareLink.url)
-                          }
+                          className="px-2 h-8 w-8"
+                          onClick={() => {
+                            if (shareLink.url) copyToClipboard(shareLink.url);
+                            toast.success(
+                              <Translator path="components.molecules.shareSession.messages.success" />
+                            );
+                          }}
                         >
-                          <Translator path="components.molecules.shareSession.copyButton" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="p-1 px-2 text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
-                          onClick={() => handleRevokeShareLink(shareLink)}
-                        >
-                          <Translator path="components.molecules.shareSession.revokeLinkButton" />
+                          <MdContentCopy className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
-                  </Alert>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="ml-4 px-3 py-1 text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
+                      onClick={() => handleRevokeShareLink(shareLink)}
+                    >
+                      <Translator path="components.molecules.shareSession.revokeLinkButton" />
+                    </Button>
+                  </div>
                 </div>
               )}
             </>
           )}
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={handleClose}>
-              <Translator path="components.molecules.shareSession.closeButton" />
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

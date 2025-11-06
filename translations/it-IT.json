@@ -23,12 +23,12 @@
             "evoyaCreatorButton": {
                 "label": "Apri Creatore"
             },
-           "shareSession": {
+            "shareSession": {
                 "openButton": "Condividi chat",
                 "inactiveButton": "Attivo una volta avviata la chat",
                 "closeButton": "Chiudi",
                 "copyButton": "Copia",
-                "copyCreateButton": "Crea e copia link",
+                "copyCreateButton": "Crea link",
                 "copyUpdateButton": "Aggiorna e copia link",
                 "revokeLinkButton": "Revoca link",
                 "types": {
@@ -38,16 +38,19 @@
                 "messages": {
                     "success": "Link copiato",
                     "successRemove": "Link revocato",
-                    "created": "Hai creato un link a questa sessione di chat che scade tra:",
+                    "created": "Hai creato un link a questa sessione di chat che scade tra",
+                    "neverExpires": "Hai creato un link a questa sessione di chat che",
                     "error": "Si è verificato un errore"
                 },
                 "expire": {
                     "expiresIn": "Scade",
+                    "expires": "scade",
                     "1day": "in un giorno",
                     "7days": "in 7 giorni",
                     "30days": "in 30 giorni",
                     "xDays": "in <days/> giorni",
-                    "never": "mai"
+                    "never": "mai",
+                    "days": "giorni"
                 }
             },
             "favoriteSession": {

@@ -28,7 +28,7 @@
                 "inactiveButton": "Aktiv, sobald der Chat gestartet wurde",
                 "closeButton": "Schließen",
                 "copyButton": "Kopieren",
-                "copyCreateButton": "Erstellen & Link kopieren",
+                "copyCreateButton": "Link erstellen",
                 "copyUpdateButton": "Aktualisieren und Link kopieren",
                 "revokeLinkButton": "Link widerrufen",
                 "types": {
@@ -38,16 +38,19 @@
                 "messages": {
                     "success": "Link kopiert",
                     "successRemove": "Link widerrufen",
-                    "created": "Du hast einen Link zu dieser Chat-Sitzung erstellt, der abläuft in:",
+                    "created": "Du hast einen Link zu dieser Chat-Sitzung erstellt, der abläuft in",
+                    "neverExpires": "Du hast einen Link zu dieser Chat-Sitzung erstellt, der",
                     "error": "Ein Fehler ist aufgetreten"
                 },
                 "expire": {
                     "expiresIn": "Läuft ab",
+                    "expires": "läuft ab",
                     "1day": "in einem Tag",
                     "7days": "in 7 Tagen",
                     "30days": "in 30 Tagen",
                     "xDays": "in <days/> Tagen",
-                    "never": "nie"
+                    "never": "nie",
+                    "days": "Tage"
                 }
             },
             "favoriteSession": {
@@ -373,7 +376,7 @@
         "speech": {
             "start": "Aufnahme starten",
             "stop": "Abbrechen",
-            "submit":"Aufnahme übermitteln",
+            "submit": "Aufnahme übermitteln",
             "connecting": "Verbinde...",
             "voiceMode": "Sprachmodus verwenden",
             "speechText": "Sprache-zu-Text-Modus verwenden"
