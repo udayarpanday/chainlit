@@ -25,27 +25,32 @@
             },
             "shareSession": {
                 "openButton": "Share Chat",
+                "inactiveButton": "Active once the chat started",
                 "closeButton": "Close",
-                "copyButton": "Create and copy link",
+                "copyButton": "Copy",
+                "copyCreateButton": "Create Link",
                 "copyUpdateButton": "Update and copy link",
                 "revokeLinkButton": "Revoke link",
                 "types": {
-                    "static": "Share a copy of the current chat history.",
-                    "dynamic": "Give continues ready only access to this chat history."
+                    "static": "Share a copy of this chat. The link expires after:",
+                    "dynamic": "Allow ongoing read-only access to future messages."
                 },
                 "messages": {
                     "success": "Link copied",
                     "successRemove": "Link revoked",
-                    "created": "You have created a <shareLink>Link</shareLink> to this chat session that expires <expires />.",
+                    "created": "You have created a link to this chat session that expires in",
+                    "neverExpires": "You have created a link to this chat session that",
                     "error": "An Error occurred"
                 },
                 "expire": {
                     "expiresIn": "Expire",
+                    "expires": "expires",
                     "1day": "in one day",
                     "7days": "in 7 days",
                     "30days": "in 30 days",
                     "xDays": "in <days/> days",
-                    "never": "never"
+                    "never": "never",
+                    "days": "days"
                 }
             },
             "favoriteSession": {
@@ -371,10 +376,10 @@
         "speech": {
             "start": "Start recording",
             "stop": "Cancel",
-            "submit":"Submit recording",
+            "submit": "Submit recording",
             "connecting": "Connecting",
-            "voiceMode":"Use Voice Mode",
-            "speechText":"Use Speech to Text Mode"
+            "voiceMode": "Use Voice Mode",
+            "speechText": "Use Speech to Text Mode"
         },
         "fileUpload": {
             "dragDrop": "Drag and drop files here",

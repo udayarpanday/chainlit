@@ -76,28 +76,34 @@ const FavoriteSessionButton = ({ sessionUuid }: Props): JSX.Element => {
   };
   return (
     <div>
-      <Button
-        id="favorite-session-button"
-        size="icon"
-        variant="ghost"
-        onClick={handleClick}
-      >
-
-        <TooltipProvider delayDuration={100}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              {
-                isFavorite ? <Star fill='#facc15' className="!size-5 text-yellow-400" /> : <Star className="!size-5" />
-              }
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                <Translator path="components.molecules.favoriteSessionButton.favoriteSession" />
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </Button>
+      <TooltipProvider delayDuration={100}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="inline-block">
+              <Button
+                id="favorite-session-button"
+                size="icon"
+                variant="ghost"
+                onClick={handleClick}
+                disabled={sessionUuid==''}
+              >
+                {
+                  isFavorite ? <Star fill='#facc15' className="!size-5 text-yellow-400" /> : <Star className="!size-5" />
+                }
+              </Button>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>
+              {sessionUuid === '' ? (
+                <Translator path="components.molecules.shareSession.inactiveButton" />
+              ) : (
+                <Translator path="components.molecules.favoriteSession.favoriteButton" />
+              )}
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 }

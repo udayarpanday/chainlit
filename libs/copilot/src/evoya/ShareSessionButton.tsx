@@ -1,68 +1,40 @@
-import { MdContentCopy } from "react-icons/md";
-// import Language from '@mui/icons-material/Language';
+import { WidgetContext } from '@/context';
+import { Share2 } from 'lucide-react';
+import { ChevronDown, Loader2 } from 'lucide-react';
+import { useContext, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { MdContentCopy } from 'react-icons/md';
 import { toast } from 'sonner';
 import { useCopyToClipboard } from 'usehooks-ts';
-import { useTranslation, Trans } from 'react-i18next';
+
+import { Translator } from '@chainlit/app/src/components/i18n';
+import { Button } from '@chainlit/app/src/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
-  DialogDescription,
   DialogTitle
 } from '@chainlit/app/src/components/ui/dialog';
+import { Label } from '@chainlit/app/src/components/ui/label';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger
 } from '@chainlit/app/src/components/ui/tooltip';
-import LoadingButton from '@mui/lab/LoadingButton';
-import { Translator } from '@chainlit/app/src/components/i18n';
+
 import { EvoyaShareLink } from './types';
-import { useContext, useState, useRef } from 'react';
-
-import { Share2 } from 'lucide-react';
-
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from '@chainlit/app/src/components/ui/tooltip';
-
-import { Button } from '@chainlit/app/src/components/ui/button';
-import { Loader2, ChevronDown } from "lucide-react"
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@chainlit/app/src/components/Alert"
-import { ChainlitContext } from '@chainlit/react-client';
-import { WidgetContext } from "@/context";
-
-
-const ShareLink = (props: any) => <a href={props.url} target='_blank' className='underline'>{props.children}</a>;
-
-const shareLinkExpires = (expires) => {
-  switch (expires) {
-    case 0:
-      return <Trans i18nKey={`components.molecules.shareSession.expire.never`} />;
-    case 1:
-      return <Trans i18nKey="components.molecules.shareSession.expire.1Day" />;
-    default:
-      // return <Translator path="components.molecules.shareSession.expire.xDays" />;
-      return <Trans
-        i18nKey="components.molecules.shareSession.expire.xDays"
-        components={{
-          days: expires.toString()
-        }}
-      />
-  }
-}
 
 interface Props {
   sessionUuid: string;
+}
+
+interface SelectProps {
+  value: string | number;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  options: Array<{ value: string; label: string }>;
+  label?: string;
+  className?: string;
 }
 
 export const Select = ({
@@ -70,15 +42,23 @@ export const Select = ({
   onChange,
   options,
   label,
-  className = "",
+  className = '',
   ...props
-}) => {
-  const selectRef = useRef(null);
+}: SelectProps) => {
+  const selectRef = useRef<HTMLSelectElement>(null);
 
   const handleIconClick = () => {
     if (selectRef.current) {
       selectRef.current.focus();
-      selectRef.current.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+      // Try to open the dropdown using showPicker if available (modern browsers)
+      if ('showPicker' in selectRef.current) {
+        (
+          selectRef.current as HTMLSelectElement & { showPicker: () => void }
+        ).showPicker();
+      } else {
+        // Fallback: simulate a click event
+        selectRef.current.click();
+      }
     }
   };
   return (
@@ -100,7 +80,7 @@ export const Select = ({
       </select>
       <div
         onClick={handleIconClick}
-        className="absolute right-3 top-3 h-4 w-4 cursor-pointer"
+        className="absolute right-5 top-2 h-4 w-4 cursor-pointer"
       >
         <ChevronDown className="opacity-50" />
       </div>
@@ -110,36 +90,36 @@ export const Select = ({
 
 export default function ShareSessionButton({ sessionUuid }: Props) {
   const { t } = useTranslation();
-  const [expireTime, setExpireTime] = useState(7); // 7days, 30days, never
-  const [expireTimeDynamic, setExpireTimeDynamic] = useState(7);
+  const [expireTime, setExpireTime] = useState(0); // 0=never, 7=7days, 31=31days
+  const [allowOngoingAccess, setAllowOngoingAccess] = useState(false);
   const [shareLink, setShareLink] = useState<EvoyaShareLink>({});
   const [open, setOpen] = useState(false);
   const [_, copyToClipboard] = useCopyToClipboard();
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isCreatingStatic, setIsCreatingStatic] = useState<boolean>(false);
-  const [isCreatingDynamic, setIsCreatingDynamic] = useState<boolean>(false);
-  const [isOverlayError, setIsOverlayError] = useState<boolean>(false);
+  const [isCreating, setIsCreating] = useState<boolean>(false);
   const { accessToken, evoya } = useContext(WidgetContext);
 
   const options = [
-    { value: "7", label: "7 days" },
-    { value: "31", label: "31 days" },
-    { value: "0", label: "Never" }
+    { value: '0', label: 'Never' },
+    { value: '7', label: '7 days' },
+    { value: '31', label: '31 days' }
   ];
-
 
   const handleClickOpen = async () => {
     setOpen(true);
     setIsLoading(true);
     if (evoya?.api) {
       try {
-        const shareDataResponse = await fetch(evoya.api.share.check.replace('{{uuid}}', sessionUuid), {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json'
-          },
-          credentials: 'same-origin'
-        });
+        const shareDataResponse = await fetch(
+          evoya.api.share.check.replace('{{uuid}}', sessionUuid),
+          {
+            method: 'GET',
+            headers: {
+              Accept: 'application/json'
+            },
+            credentials: 'same-origin'
+          }
+        );
         if (!shareDataResponse.ok) {
           throw new Error(shareDataResponse.statusText);
         }
@@ -150,7 +130,9 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
           let dateDiff = 0;
           if (shareData.data.expires_at) {
             const expiresAt = new Date(shareData.data.expires_at);
-            dateDiff = Math.round(Math.abs(new Date() - expiresAt) / 86400000);
+            dateDiff = Math.round(
+              Math.abs(new Date().getTime() - expiresAt.getTime()) / 86400000
+            );
           }
           const shareConfig: EvoyaShareLink = {
             expire: dateDiff,
@@ -159,8 +141,8 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
           };
           setShareLink(shareConfig);
         }
-      } catch (e) {
-        setIsOverlayError(true);
+      } catch (_e) {
+        // Error handling - could set error state if needed
       } finally {
         setIsLoading(false);
       }
@@ -171,56 +153,62 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
     setOpen(false);
   };
 
-  const handleRevokeShareLink = async (shareLinkConfig: EvoyaShareLink) => {
+  const handleRevokeShareLink = async (_shareLinkConfig: EvoyaShareLink) => {
     if (evoya?.api?.share && accessToken) {
       try {
-        const shareResponse = await fetch(evoya.api.share.remove.replace('{{uuid}}', sessionUuid), {
-          method: 'DELETE',
-          headers: {
-            'Accept': 'application/json',
-            'X-CSRFTOKEN': evoya.api.csrf_token,
-          },
-          credentials: 'same-origin'
-        });
+        const shareResponse = await fetch(
+          evoya.api.share.remove.replace('{{uuid}}', sessionUuid),
+          {
+            method: 'DELETE',
+            headers: {
+              Accept: 'application/json',
+              'X-CSRFTOKEN': evoya.api.csrf_token
+            },
+            credentials: 'same-origin'
+          }
+        );
         if (!shareResponse.ok) {
           throw new Error(shareResponse.statusText);
         }
         await shareResponse.json();
-        toast.success(<Translator path="components.molecules.shareSession.messages.successRemove" />);
+        toast.success(
+          <Translator path="components.molecules.shareSession.messages.successRemove" />
+        );
         setShareLink({});
       } catch (e) {
         console.error(e);
-        toast.error(<Translator path="components.molecules.shareSession.messages.error" />);
+        toast.error(
+          <Translator path="components.molecules.shareSession.messages.error" />
+        );
       }
     }
-  }
+  };
 
-  const handleCopyShareLink = async (type: string, expireTime: number) => {
+  const handleCopyShareLink = async () => {
+    const type = allowOngoingAccess ? 'DYNAMIC' : 'STATIC';
     const shareConfig: EvoyaShareLink = {
       expire: expireTime,
       type
     };
     if (evoya?.api?.share && accessToken) {
-      if (type === 'STATIC') {
-        setIsCreatingStatic(true);
-      } else {
-        setIsCreatingDynamic(true);
-      }
+      setIsCreating(true);
       try {
-        const shareResponse = await fetch(evoya.api.share.add.replace('{{uuid}}', sessionUuid), {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'X-CSRFTOKEN': evoya.api.csrf_token,
-          },
-          // body: formData,
-          body: JSON.stringify({
-            ...(expireTime > 0 ? { expires_in: expireTime } : {}),
-            share_type: type
-          }),
-          credentials: 'same-origin'
-        });
+        const shareResponse = await fetch(
+          evoya.api.share.add.replace('{{uuid}}', sessionUuid),
+          {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+              'X-CSRFTOKEN': evoya.api.csrf_token
+            },
+            body: JSON.stringify({
+              ...(expireTime > 0 ? { expires_in: expireTime } : {}),
+              share_type: type
+            }),
+            credentials: 'same-origin'
+          }
+        );
 
         if (!shareResponse.ok) {
           throw new Error(shareResponse.statusText);
@@ -231,46 +219,65 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
           const shareUrl = shareData.data.link;
 
           await copyToClipboard(shareUrl);
-          toast.success(<Translator path="components.molecules.shareSession.messages.success" />);
+          toast.success(
+            <Translator path="components.molecules.shareSession.messages.success" />
+          );
           shareConfig.url = shareUrl;
           setShareLink(shareConfig);
-
         } else {
-          toast.error(<Translator path="components.molecules.shareSession.messages.error" />);
+          toast.error(
+            <Translator path="components.molecules.shareSession.messages.error" />
+          );
         }
       } catch (e) {
         console.error(e);
-        toast.error(<Translator path="components.molecules.shareSession.messages.error" />);
-
+        toast.error(
+          <Translator path="components.molecules.shareSession.messages.error" />
+        );
       } finally {
-        setIsCreatingStatic(false);
-        setIsCreatingDynamic(false);
+        setIsCreating(false);
       }
     }
   };
 
   return (
     <div>
-      <Button
-        id="share-session-button"
-        size="icon"
-        variant="ghost"
-        onClick={handleClickOpen}
-      >
-        <TooltipProvider delayDuration={100}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Share2 fill='#5c5c5c' className="!size-5 " strokeWidth={1.25} />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
+      <TooltipProvider delayDuration={100}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="inline-block">
+              <Button
+                id="share-session-button"
+                size="icon"
+                variant="ghost"
+                onClick={handleClickOpen}
+                disabled={sessionUuid == ''}
+              >
+                <Share2
+                  fill="#5c5c5c"
+                  className="!size-5 "
+                  strokeWidth={1.25}
+                />
+              </Button>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>
+              {sessionUuid === '' ? (
+                <Translator path="components.molecules.shareSession.inactiveButton" />
+              ) : (
                 <Translator path="components.molecules.shareSession.openButton" />
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </Button>
-      <Dialog open={open} onOpenChange={handleClose} aria-labelledby="share-alert-dialog-title" aria-describedby="share-alert-dialog-description">
+              )}
+            </p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <Dialog
+        open={open}
+        onOpenChange={handleClose}
+        aria-labelledby="share-alert-dialog-title"
+        aria-describedby="share-alert-dialog-description"
+      >
         <DialogContent className="z-[9999] sm:max-w-[425px] lg:max-w-[960px]">
           <DialogHeader>
             <DialogTitle id="share-alert-dialog-title">
@@ -278,83 +285,108 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
             </DialogTitle>
           </DialogHeader>
           {isLoading ? (
-            <div className='flex justify-center'>
-              <Loader2 className='animate-spin text-primary' />
+            <div className="flex justify-center">
+              <Loader2 className="animate-spin text-primary" />
             </div>
           ) : (
             <>
-              <div className='flex items-center justify-between flex-wrap'>
-                <div className='flex gap-3'>
-                  <MdContentCopy className="!size-5  " />
-                  <Translator path="components.molecules.shareSession.types.static" />
-                </div>
-                <div className='flex gap-3'>
-                  <Select
-                    value={expireTime}
-                    onChange={(e) => setExpireTime(parseInt(e.target.value))}
-                    options={options}
-                    label={t('components.molecules.shareSession.expire.expiresIn')}
-                    className="w-[min(200px)]"
-                  />
-                  {shareLink.type === 'STATIC' ? (
-                    <Button variant="default" disabled={isCreatingStatic} onClick={() => handleCopyShareLink('STATIC', expireTime)}>
-                      {isCreatingStatic && <Loader2 className="animate-spin" />}
-                      <Translator path="components.molecules.shareSession.copyUpdateButton" />
-                    </Button>
-                  ) : (
-                    <Button variant="default" disabled={isCreatingStatic} onClick={() => handleCopyShareLink('STATIC', expireTime)}>
-                      {isCreatingStatic && <Loader2 className="animate-spin" />}
-                      <Translator path="components.molecules.shareSession.copyButton" />
-                    </Button>
-                  )}
-                </div>
-
-              </div>
-              <div className='flex items-center justify-between flex-wrap' >
-                <div className='flex gap-3'>
-                  <MdContentCopy className="!size-5  " />
-                  <Translator path="components.molecules.shareSession.types.dynamic" />
-                </div>
-                <div className='flex gap-3'>
-                  <Select
-                    value={expireTimeDynamic}
-                    onChange={(e) => setExpireTimeDynamic(parseInt(e.target.value))}
-                    options={options}
-                    label={t('components.molecules.shareSession.expire.expiresIn')}
-                    className="w-[min(200px)]"
-                  />
-                  <Button variant="default" onClick={() => handleCopyShareLink('DYNAMIC', expireTimeDynamic)}>
-                    {isCreatingDynamic && <Loader2 className="animate-spin" />}
-                    <Translator path="components.molecules.shareSession.copyButton" />
+              <div className="space-y-4 pb-3">
+                <div className="flex items-center justify-between flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Translator path="components.molecules.shareSession.types.static" />
+                    <Select
+                      value={expireTime}
+                      onChange={(e) => setExpireTime(parseInt(e.target.value))}
+                      options={options}
+                      label={t(
+                        'components.molecules.shareSession.expire.expiresIn'
+                      )}
+                      className="w-[min(120px)]"
+                    />
+                  </div>
+                  <Button
+                    variant="default"
+                    disabled={isCreating}
+                    onClick={handleCopyShareLink}
+                  >
+                    {isCreating && <Loader2 className="animate-spin mr-2" />}
+                    <Translator path="components.molecules.shareSession.copyCreateButton" />
                   </Button>
                 </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="allowOngoingAccess"
+                    checked={allowOngoingAccess}
+                    onChange={(e) => setAllowOngoingAccess(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-primary "
+                  />
+                  <Label htmlFor="allowOngoingAccess">
+                    <Translator path="components.molecules.shareSession.types.dynamic" />
+                  </Label>
+                </div>
               </div>
+
               {shareLink.url && (
-                <div>
-                  <Alert
-                    severity="info"
-                  >
-                    <Trans
-                      i18nKey="components.molecules.shareSession.messages.created"
-                      components={{
-                        shareLink: <ShareLink url={shareLink.url} />,
-                        expires: shareLinkExpires(shareLink.expire),
-                        // expires: <>{t(`components.molecules.shareSession.expire.${shareLink.expire}`)}</>
-                      }}
-                    />
-                    <Button variant="outline" size="small" className='ml-2 p-1 px-2 text-red-500 border-red-500 hover:bg-red-500 hover:text-white' onClick={() => handleRevokeShareLink(shareLink)}>
+                <div className="bg-gray-100 rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="mb-2 text-sm text-gray-600">
+                        {shareLink.expire === 0 ? (
+                          <>
+                            <Translator path="components.molecules.shareSession.messages.neverExpires" />{' '}
+                            <Translator
+                              className={'italic'}
+                              path="components.molecules.shareSession.expire.never"
+                            />{' '}
+                            <Translator path="components.molecules.shareSession.expire.expires" />
+                          </>
+                        ) : (
+                          <>
+                            <Translator path="components.molecules.shareSession.messages.created" />{' '}
+                            <span className="italic font-medium">
+                              {shareLink.expire} {" "} <Translator path="components.molecules.shareSession.expire.days" />
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={shareLink.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 underline text-sm break-all"
+                        >
+                          {shareLink.url}
+                        </a>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="px-2 h-8 w-8"
+                          onClick={() => {
+                            if (shareLink.url) copyToClipboard(shareLink.url);
+                            toast.success(
+                              <Translator path="components.molecules.shareSession.messages.success" />
+                            );
+                          }}
+                        >
+                          <MdContentCopy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="ml-4 px-3 py-1 text-red-500 border-red-500 hover:bg-red-500 hover:text-white"
+                      onClick={() => handleRevokeShareLink(shareLink)}
+                    >
                       <Translator path="components.molecules.shareSession.revokeLinkButton" />
                     </Button>
-                  </Alert>
+                  </div>
                 </div>
               )}
             </>
           )}
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outlined" onClick={handleClose}>
-              <Translator path="components.molecules.shareSession.closeButton" />
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
