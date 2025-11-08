@@ -74,7 +74,7 @@ export const Select = ({
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
-            {option.label}
+            <Translator path={option.label} />
           </option>
         ))}
       </select>
@@ -100,9 +100,9 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
   const { accessToken, evoya } = useContext(WidgetContext);
 
   const options = [
-    { value: '0', label: 'Never' },
-    { value: '7', label: '7 days' },
-    { value: '31', label: '31 days' }
+    { value: '0', label: 'components.molecules.shareSession.expire.no_expiry' },
+    { value: '7', label: 'components.molecules.shareSession.expire.7days' },
+    { value: '31', label: 'components.molecules.shareSession.expire.1month' }
   ];
 
   const handleClickOpen = async () => {
@@ -332,23 +332,7 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="mb-2 text-sm text-gray-600">
-                        {shareLink.expire === 0 ? (
-                          <>
-                            <Translator path="components.molecules.shareSession.messages.neverExpires" />{' '}
-                            <Translator
-                              className={'italic'}
-                              path="components.molecules.shareSession.expire.never"
-                            />{' '}
-                            <Translator path="components.molecules.shareSession.expire.expires" />
-                          </>
-                        ) : (
-                          <>
-                            <Translator path="components.molecules.shareSession.messages.created" />{' '}
-                            <span className="italic font-medium">
-                              {shareLink.expire} {" "} <Translator path="components.molecules.shareSession.expire.days" />
-                            </span>
-                          </>
-                        )}
+                        <Translator path="components.molecules.shareSession.messages.created" />{' '}
                       </div>
                       <div className="flex items-center gap-2">
                         <a

@@ -32,13 +32,13 @@
                 "copyUpdateButton": "Update and copy link",
                 "revokeLinkButton": "Revoke link",
                 "types": {
-                    "static": "Share a copy of this chat. The link expires after:",
+                    "static": "Create a link to share a copy of this chat. The link is valid for:",
                     "dynamic": "Allow ongoing read-only access to future messages."
                 },
                 "messages": {
                     "success": "Link copied",
                     "successRemove": "Link revoked",
-                    "created": "You have created a link to this chat session that expires in",
+                    "created": "Here is your shareable link:",
                     "neverExpires": "You have created a link to this chat session that",
                     "error": "An Error occurred"
                 },
@@ -46,10 +46,12 @@
                     "expiresIn": "Expire",
                     "expires": "expires",
                     "1day": "in one day",
-                    "7days": "in 7 days",
+                    "7days": "7 days",
+                    "1month": "1 month",
                     "30days": "in 30 days",
                     "xDays": "in <days/> days",
                     "never": "never",
+                    "no_expiry": "No expiry",
                     "days": "days"
                 }
             },
@@ -376,10 +378,10 @@
         "speech": {
             "start": "Start recording",
             "stop": "Cancel",
-            "submit": "Submit recording",
+            "submit":"Submit recording",
             "connecting": "Connecting",
-            "voiceMode": "Use Voice Mode",
-            "speechText": "Use Speech to Text Mode"
+            "voiceMode":"Use Voice Mode",
+            "speechText":"Use Speech to Text Mode"
         },
         "fileUpload": {
             "dragDrop": "Drag and drop files here",
