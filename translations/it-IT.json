@@ -29,27 +29,29 @@
                 "closeButton": "Chiudi",
                 "copyButton": "Copia",
                 "copyCreateButton": "Crea link",
-                "copyUpdateButton": "Aggiorna e copia link",
+                "copyUpdateButton": "Aggiorna e copia il link",
                 "revokeLinkButton": "Revoca link",
                 "types": {
-                    "static": "Condividi una copia di questa chat. Il link scade dopo:",
-                    "dynamic": "Consenti accesso in sola lettura continuo ai messaggi futuri."
+                    "static": "Crea un link per condividere una copia di questa chat. Il link è valido per:",
+                    "dynamic": "Consente accesso in sola lettura ai messaggi futuri."
                 },
                 "messages": {
                     "success": "Link copiato",
                     "successRemove": "Link revocato",
-                    "created": "Hai creato un link a questa sessione di chat che scade tra",
+                    "created": "Ecco il tuo link condivisibile:",
                     "neverExpires": "Hai creato un link a questa sessione di chat che",
                     "error": "Si è verificato un errore"
                 },
                 "expire": {
-                    "expiresIn": "Scade",
+                    "expiresIn": "Scadenza",
                     "expires": "scade",
                     "1day": "in un giorno",
                     "7days": "in 7 giorni",
+                    "1month": "in 1 mese",
                     "30days": "in 30 giorni",
                     "xDays": "in <days/> giorni",
                     "never": "mai",
+                    "no_expiry": "Nessuna scadenza",
                     "days": "giorni"
                 }
             },

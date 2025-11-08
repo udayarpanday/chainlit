@@ -25,31 +25,33 @@
             },
             "shareSession": {
                 "openButton": "Partager le chat",
-                "inactiveButton": "Actif une fois le chat commencé",
+                "inactiveButton": "Actif une fois que le chat a commencé",
                 "closeButton": "Fermer",
                 "copyButton": "Copier",
                 "copyCreateButton": "Créer un lien",
                 "copyUpdateButton": "Mettre à jour et copier le lien",
                 "revokeLinkButton": "Révoquer le lien",
                 "types": {
-                    "static": "Partager une copie de ce chat. Le lien expire après :",
-                    "dynamic": "Permet un accès en lecture seule continu aux futurs messages."
+                    "static": "Créer un lien pour partager une copie de ce chat. Le lien est valide pendant :",
+                    "dynamic": "Permet un accès en lecture seule aux futurs messages."
                 },
                 "messages": {
                     "success": "Lien copié",
                     "successRemove": "Lien révoqué",
-                    "created": "Vous avez créé un lien vers cette session de chat qui expire dans",
+                    "created": "Voici votre lien partageable :",
                     "neverExpires": "Vous avez créé un lien vers cette session de chat qui",
-                    "error": "Une erreur est survenue"
+                    "error": "Une erreur s'est produite"
                 },
                 "expire": {
-                    "expiresIn": "Expire",
+                    "expiresIn": "Expiration",
                     "expires": "expire",
                     "1day": "dans un jour",
                     "7days": "dans 7 jours",
+                    "1month": "dans 1 mois",
                     "30days": "dans 30 jours",
                     "xDays": "dans <days/> jours",
                     "never": "jamais",
+                    "no_expiry": "Pas d’expiration",
                     "days": "jours"
                 }
             },

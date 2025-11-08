@@ -32,24 +32,26 @@
                 "copyUpdateButton": "Aktualisieren und Link kopieren",
                 "revokeLinkButton": "Link widerrufen",
                 "types": {
-                    "static": "Teile eine Kopie dieses Chats. Der Link läuft ab nach:",
-                    "dynamic": "Ermöglicht fortlaufenden Lesezugriff auf zukünftige Nachrichten."
+                    "static": "Erstellen Sie einen Link, um eine Kopie dieses Chats zu teilen. Der Link ist gültig für:",
+                    "dynamic": "Ermöglicht laufenden Nur-Lesen-Zugriff auf zukünftige Nachrichten."
                 },
                 "messages": {
                     "success": "Link kopiert",
                     "successRemove": "Link widerrufen",
-                    "created": "Du hast einen Link zu dieser Chat-Sitzung erstellt, der abläuft in",
-                    "neverExpires": "Du hast einen Link zu dieser Chat-Sitzung erstellt, der",
+                    "created": "Hier ist Ihr teilbarer Link:",
+                    "neverExpires": "Sie haben einen Link zu dieser Chat-Sitzung erstellt, der",
                     "error": "Ein Fehler ist aufgetreten"
                 },
                 "expire": {
-                    "expiresIn": "Läuft ab",
+                    "expiresIn": "Ablauf",
                     "expires": "läuft ab",
                     "1day": "in einem Tag",
                     "7days": "in 7 Tagen",
+                    "1month": "in 1 Monat",
                     "30days": "in 30 Tagen",
                     "xDays": "in <days/> Tagen",
                     "never": "nie",
+                    "no_expiry": "Kein Ablaufdatum",
                     "days": "Tage"
                 }
             },
