@@ -373,15 +373,16 @@
                 "send": "Send message",
                 "stop": "Stop Task",
                 "attachFiles": "Attach files"
-            }
+            },
+            "no_results": "No results found"
         },
         "speech": {
             "start": "Start recording",
             "stop": "Cancel",
-            "submit":"Submit recording",
+            "submit": "Submit recording",
             "connecting": "Connecting",
-            "voiceMode":"Use Voice Mode",
-            "speechText":"Use Speech to Text Mode"
+            "voiceMode": "Use Voice Mode",
+            "speechText": "Use Speech to Text Mode"
         },
         "fileUpload": {
             "dragDrop": "Drag and drop files here",

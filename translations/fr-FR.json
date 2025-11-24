@@ -373,7 +373,8 @@
                 "send": "Envoyer le message",
                 "stop": "Arrêter la tâche",
                 "attachFiles": "Joindre des fichiers"
-            }
+            },
+            "no_results": "Aucun résultat trouvé"
         },
         "speech": {
             "start": "Commencer l'enregistrement",

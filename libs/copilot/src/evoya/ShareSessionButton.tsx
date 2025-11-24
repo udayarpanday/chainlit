@@ -301,7 +301,7 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
                       label={t(
                         'components.molecules.shareSession.expire.expiresIn'
                       )}
-                      className="w-[min(120px)]"
+                      className="w-[min(165px)]"
                     />
                   </div>
                   <Button

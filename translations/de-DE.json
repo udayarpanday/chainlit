@@ -46,8 +46,8 @@
                     "expiresIn": "Ablauf",
                     "expires": "läuft ab",
                     "1day": "in einem Tag",
-                    "7days": "in 7 Tagen",
-                    "1month": "in 1 Monat",
+                    "7days": "7 Tage",
+                    "1month": "1 Monat",
                     "30days": "in 30 Tagen",
                     "xDays": "in <days/> Tagen",
                     "never": "nie",
@@ -373,7 +373,8 @@
                 "send": "Nachricht senden",
                 "stop": "Aufgabe stoppen",
                 "attachFiles": "Dateien anhängen"
-            }
+            },
+            "no_results": "Keine Ergebnisse gefunden"
         },
         "speech": {
             "start": "Aufnahme starten",

@@ -608,7 +608,7 @@ const Input = forwardRef<InputMethods, Props>(
                           <div className="bg-gray-50 rounded-md p-4 relative">
                             <p className="text-sm text-gray-700 whitespace-pre-wrap font-sans">
                               {filteredCommands[selectedIndex]
-                                ?.description ||
+                                ?.prompt_content ||
                                 'Select a command to view its content'}
                             </p>
                           </div>

@@ -373,7 +373,8 @@
                 "send": "Invia messaggio",
                 "stop": "Ferma Attività",
                 "attachFiles": "Allega file"
-            }
+            },
+            "no_results": "Nessun risultato trovato"
         },
         "speech": {
             "start": "Inizia registrazione",

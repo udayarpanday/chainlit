@@ -44,6 +44,7 @@ const Chat = () => {
   const { error, disabled, callFn } = useChatData();
   const { uploadFile } = useChatInteract();
   const uploadFileRef = useRef(uploadFile);
+  const autoScrollRef = useRef(true);
 
   const fileSpec = useMemo(
     () => ({
@@ -197,8 +198,8 @@ const Chat = () => {
         <ChatSettingsModal />
         <ErrorBoundary>
           <ScrollContainer
-            autoScroll={autoScroll}
-            setAutoScroll={setAutoScroll}
+            autoScrollUserMessage={true}
+            autoScrollRef={autoScrollRef}
           >
             <div
               className="flex flex-col mx-auto w-full flex-grow px-4 pt-4"

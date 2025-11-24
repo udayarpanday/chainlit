@@ -35,9 +35,11 @@ const Chat = () => {
   const setAttachments = useSetRecoilState(attachmentsState);
   const setThreads = useSetRecoilState(threadHistoryState);
 
+  const autoScrollRef = useRef(true);
   const [autoScroll, setAutoScroll] = useState(true);
+
   const { error, disabled } = useChatData();
-  const { uploadFile, clear, message } = useChatInteract();
+  const { uploadFile } = useChatInteract();
   const uploadFileRef = useRef(uploadFile);
   const navigate = useNavigate();
 
@@ -200,7 +202,10 @@ const Chat = () => {
         </div>
       ) : null}
       <ErrorBoundary>
-        <ScrollContainer autoScroll={autoScroll} setAutoScroll={setAutoScroll}>
+        <ScrollContainer
+          autoScrollUserMessage={true}
+          autoScrollRef={autoScrollRef}
+        >
           <div
             className="flex flex-col mx-auto w-full flex-grow p-4"
             style={{
@@ -227,6 +232,7 @@ const Chat = () => {
             fileSpec={fileSpec}
             onFileUpload={onFileUpload}
             onFileUploadError={onFileUploadError}
+            autoScrollRef={autoScrollRef}
             setAutoScroll={setAutoScroll}
             autoScroll={autoScroll}
           />
