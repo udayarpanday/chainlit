@@ -90,8 +90,10 @@ export default function MessageComposer({
       const fileReferences = attachments
         ?.filter((a) => !!a.serverId)
         .map((a) => ({ id: a.serverId! }));
-
-      setAutoScroll(true);
+        
+        if(setAutoScroll){
+          setAutoScroll(true);
+        }
 
       // @ts-expect-error is not a valid prop
       if (window.sendCreatorMessage && window.evoyaCreatorEnabled) {
