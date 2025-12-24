@@ -18,7 +18,7 @@ const PrivacyShieldToggle = (): JSX.Element => {
     usePrivacyShield();
   
   return (
-    <div className="flex items-center -ml-2">
+    <div className="flex items-center">
       <TooltipProvider delayDuration={100}>
         <Tooltip>
           <TooltipContent className="w-[350px]">
@@ -29,6 +29,7 @@ const PrivacyShieldToggle = (): JSX.Element => {
               <Button
                 variant="ghost"
                 size="icon"
+                className="hover:bg-muted"
                 onClick={() => setEnabled(!enabled)}
               >
                 {enabled ? (
@@ -61,6 +62,7 @@ const PrivacyShieldToggle = (): JSX.Element => {
             <Button
               variant="ghost"
               size="icon"
+              className="hover:bg-muted"
               onClick={() => setEnabledVisual(!enabledVisual)}
               disabled={sections.length === 0}
             >

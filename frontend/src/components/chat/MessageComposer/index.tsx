@@ -24,6 +24,8 @@ import CommandButton from './CommandButton';
 import Input, { InputMethods } from './Input';
 import SubmitButton from './SubmitButton';
 import UploadButton from './UploadButton';
+import EvoyaCreatorButton from '@chainlit/copilot/src/evoya/EvoyaCreatorButton';
+import PrivacyShieldToggle from '@chainlit/copilot/src/evoya/privacyShield/PrivacyShieldToggle';
 
 interface Props {
   fileSpec: FileSpec;
@@ -205,6 +207,12 @@ export default function MessageComposer({
               onCommandSelect={setSelectedCommand}
             />
           )}
+           {evoya?.evoyaCreator?.enabled && (
+              <EvoyaCreatorButton />
+            )}
+            {evoya?.api?.privacyShield?.enabled && (
+              <PrivacyShieldToggle />
+            )}
           {chatSettingsInputs.length > 0 && (
             <Button
               id="chat-settings-open-modal"

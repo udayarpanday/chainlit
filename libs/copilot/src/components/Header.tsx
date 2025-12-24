@@ -78,9 +78,7 @@ const Header = ({ expanded, setExpanded, isPopup }: Props): JSX.Element => {
           ? { backgroundColor: evoya.chainlitConfig.style.bgcolor }
           : {}
       }
-      className={`flex align-center justify-between p-4 border-b border-[#f4f4f4] ${
-        !isTabletOrMobile ? 'rounded-t-xl' : ''
-      }`}
+      className={`flex align-center justify-between p-4 border-b border-[#f4f4f4]`}
     >
       <div className="flex items-center gap-3">
         {hasChatProfiles ? <ChatProfiles /> : ''}
@@ -93,10 +91,6 @@ const Header = ({ expanded, setExpanded, isPopup }: Props): JSX.Element => {
             {!creatorEnabled && (
               <>
                 <NewChatButton />
-                {evoya?.evoyaCreator?.enabled && !isTabletOrMobile && (
-                  <EvoyaCreatorButton />
-                )}
-                <PrivacyShieldToggle />
               </>
             )}
           </>

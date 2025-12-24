@@ -3,7 +3,7 @@ import {
   PopoverContent,
   PopoverTrigger
 } from '@radix-ui/react-popover';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, FileText } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useRecoilValue } from 'recoil';
 
@@ -128,7 +128,7 @@ export const CommandButton = ({
                 className="hover:bg-muted"
                 disabled={disabled}
               >
-                <ToolBox className="!size-6" />
+                <FileText className="!size-6" />
               </Button>
             </PopoverTrigger>
           </TooltipTrigger>

@@ -78,9 +78,9 @@ const EvoyaCreatorButton = (): JSX.Element => {
               size="icon"
               variant="ghost"
               onClick={handleClick}
-              className={hasContent ? 'text-primary' : ''}
+              className={`hover:bg-muted ${hasContent ? 'text-primary' : ''}`}
             >
-              <FilePlus className="!size-5" />
+              <FilePlus className="!size-6" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
