@@ -33,23 +33,23 @@ const CreateSection = ({
   const options = [
     { 
       value: "name", 
-      label: <Translator path="components.organisms.privacyShield.createSection.typefield.options.name" />
+      label: "components.organisms.privacyShield.createSection.typefield.options.name"
     },
     { 
       value: "location", 
-      label: <Translator path="components.organisms.privacyShield.createSection.typefield.options.location" />
+      label: "components.organisms.privacyShield.createSection.typefield.options.location"
     },
     { 
       value: "phone", 
-      label: <Translator path="components.organisms.privacyShield.createSection.typefield.options.phone" />
+      label: "components.organisms.privacyShield.createSection.typefield.options.phone"
     },
     { 
       value: "email", 
-      label: <Translator path="components.organisms.privacyShield.createSection.typefield.options.email" />
+      label: "components.organisms.privacyShield.createSection.typefield.options.email"
     },
     { 
       value: "other", 
-      label: <Translator path="components.organisms.privacyShield.createSection.typefield.options.other" />
+      label: "components.organisms.privacyShield.createSection.typefield.options.other"
     }
   ];
 
