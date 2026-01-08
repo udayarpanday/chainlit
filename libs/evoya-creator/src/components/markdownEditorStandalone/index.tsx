@@ -56,8 +56,11 @@ export default function MDXEditorWrapper({ content, onChange }: { content: strin
       ref={containerRef}
       sx={{
         overflow: 'auto',
-        height: '100%'
+        height: '100%',
+        cursor: 'text',
+        minHeight: '300px',
       }}
+      onClick={() => mdxEditorRef.current?.focus()}
     >
       <style type="text/css">
         {mdxCss}
@@ -69,6 +72,7 @@ export default function MDXEditorWrapper({ content, onChange }: { content: strin
         markdown={content}
         iconComponentFor={getSvgIcon}
         autoFocus
+        suppressHtmlProcessing
         plugins={[
           ...MDX_PLUGINS,
           evoyaMathPlugin(),
@@ -87,7 +91,6 @@ export default function MDXEditorWrapper({ content, onChange }: { content: strin
 export const MDX_PLUGINS = [
   toolbarPlugin({ toolbarContents: () => <EditorToolbar /> }),
   listsPlugin(),
-  quotePlugin(),
   headingsPlugin(),
   linkPlugin(),
   linkDialogPlugin(),

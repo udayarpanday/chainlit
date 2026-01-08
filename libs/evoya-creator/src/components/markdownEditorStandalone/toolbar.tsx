@@ -32,10 +32,6 @@ export default function Toolbar() {
                   <ListsToggle />
                   <Separator />
                   <BlockTypeSelect />
-                  <Separator />
-                  <CreateLink />
-                  <Separator />
-                  <InsertTable />
               </>
             )
           }
