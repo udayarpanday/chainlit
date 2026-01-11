@@ -168,7 +168,8 @@ const usePrivacyShield = () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Api-Key ${apiKey}`
+        Authorization: `Api-Key ${apiKey}`,
+        'X-CSRFTOKEN': evoya?.api?.csrf_token
       },
       body: JSON.stringify({
         text: text,
