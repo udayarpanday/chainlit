@@ -429,7 +429,12 @@
         "settings": {
             "title": "Settings panel"
         },
-        "watermark": "Built with"
+        "watermark": "Built with",
+        "context":{
+            "title":"CTX",
+            "modal_title_tip":"View Context",
+            "modal_title":"Chat Context"
+        }
     },
     "threadHistory": {
         "sidebar": {

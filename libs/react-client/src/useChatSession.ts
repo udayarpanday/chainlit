@@ -23,6 +23,7 @@ import {
   isAiSpeakingState,
   loadingState,
   messagesState,
+  promptState,
   resumeThreadErrorState,
   sessionIdState,
   sessionState,
@@ -71,6 +72,7 @@ const useChatSession = () => {
   const setAskUser = useSetRecoilState(askUserState);
   const setCallFn = useSetRecoilState(callFnState);
   const setCommands = useSetRecoilState(commandsState);
+  const setContextPrompt = useSetRecoilState(promptState);
   const setSideView = useSetRecoilState(sideViewState);
   const setElements = useSetRecoilState(elementState);
   const setTasklists = useSetRecoilState(tasklistState);
@@ -330,6 +332,12 @@ const useChatSession = () => {
         setSideView((prev) => {
           return { title, elements: prev?.elements || [] };
         });
+      });
+      
+      socket.on('context_prompt', (context: {context_prompt:string,is_superuser:boolean | undefined}) => {
+        if(context){
+          setContextPrompt(context)
+        }
       });
 
       socket.on('set_sidebar_elements', (elements: IMessageElement[]) => {

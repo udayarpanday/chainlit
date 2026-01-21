@@ -25,6 +25,7 @@ import {
   useChatData,
   useConfig
 } from '@chainlit/react-client';
+import ViewContext from '@/evoya/ViewContext';
 
 const sessionTokenKey = 'session_token';
 interface Props {
@@ -123,9 +124,9 @@ const Header = ({ expanded, setExpanded, isPopup }: Props): JSX.Element => {
             barSpacing={2}
           />
         ) : null}
-
         {evoya?.type === 'dashboard' && (
           <>
+            <ViewContext/>
             <FavoriteSessionButton sessionUuid={sessionUuid} />
             <ShareSessionButton sessionUuid={sessionUuid} />
           </>

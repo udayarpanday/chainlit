@@ -74,6 +74,11 @@ export const commandsState = atom<ICommand[]>({
   default: []
 });
 
+export const promptState = atom<{context_prompt:string,is_superuser:boolean | undefined} | undefined>({
+  key: 'Context',
+  default: undefined
+});
+
 export const tokenCountState = atom<number>({
   key: 'TokenCount',
   default: 0
