@@ -429,6 +429,11 @@
         "settings": {
             "title": "Einstellungen"
         },
-        "watermark": "Erstellt mit"
+        "watermark": "Erstellt mit",
+        "context": {
+            "title": "CTX",
+            "modal_title_tip": "Kontext anzeigen",
+            "modal_title": "Chat-Kontext"
+        }
     }
 }

@@ -429,7 +429,12 @@
         "settings": {
             "title": "Panneau de paramètres"
         },
-        "watermark": "Construit avec"
+        "watermark": "Construit avec",
+        "context": {
+            "title": "CTX",
+            "modal_title_tip": "Afficher le contexte",
+            "modal_title": "Contexte de la discussion"
+        }
     },
     "threadHistory": {
         "sidebar": {
