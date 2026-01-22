@@ -1,5 +1,6 @@
 import { prepareContent } from '@/lib/message';
 import { memo, useMemo } from 'react';
+import { isEqual } from 'lodash';
 
 import type { IMessageElement, IStep } from '@chainlit/react-client';
 
@@ -16,6 +17,16 @@ export interface Props {
   allowHtml?: boolean;
   latex?: boolean;
 }
+
+const getMessageRenderProps = (message: IStep) => ({
+  id: message.id,
+  output: message.output,
+  input: message.input,
+  language: message.language,
+  streaming: message.streaming,
+  showInput: message.showInput,
+  type: message.type
+});
 
 const MessageContent = memo(
   ({ message, elements, allowHtml, latex }: Props) => {
@@ -110,6 +121,21 @@ const MessageContent = memo(
         {!!inputMarkdown || output ? markdownContent : null}
         <InlinedElements elements={outputInlinedElements} />
       </div>
+    );
+  },
+  (prevProps, nextProps) => {
+    return (
+      prevProps.allowHtml === nextProps.allowHtml &&
+      prevProps.latex === nextProps.latex &&
+      prevProps.elements === nextProps.elements &&
+      // isEqual(
+      //   prevProps.sections ?? ['input', 'output'],
+      //   nextProps.sections ?? ['input', 'output']
+      // ) &&
+      isEqual(
+        getMessageRenderProps(prevProps.message),
+        getMessageRenderProps(nextProps.message)
+      )
     );
   }
 );

@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { MessageContext } from 'contexts/MessageContext';
-import { memo, useContext } from 'react';
+import { memo, useContext, useMemo } from 'react';
 
 import {
   type IAction,
@@ -29,6 +29,8 @@ interface Props {
   scorableRun?: IStep;
 }
 
+const EMPTY_ELEMENTS: IMessageElement[] = [];
+
 const Message = memo(
   ({
     message,
@@ -52,6 +54,18 @@ const Message = memo(
     const hiddenSkip = isStep && cot === 'hidden';
 
     const skip = toolCallSkip || hiddenSkip;
+
+    const userMessageContent = useMemo(
+      () => (
+        <MessageContent
+          elements={EMPTY_ELEMENTS}
+          message={message}
+          allowHtml={allowHtml}
+          latex={latex}
+        />
+      ),
+      [message, allowHtml, latex]
+    );
 
     if (skip) {
       if (!message.steps) {
@@ -86,12 +100,7 @@ const Message = memo(
               {isUserMessage ? (
                 <div className="flex flex-col flex-grow max-w-full">
                   <UserMessage message={message} elements={elements}>
-                    <MessageContent
-                      elements={[]}
-                      message={message}
-                      allowHtml={allowHtml}
-                      latex={latex}
-                    />
+                    {userMessageContent}
                   </UserMessage>
                 </div>
               ) : (
