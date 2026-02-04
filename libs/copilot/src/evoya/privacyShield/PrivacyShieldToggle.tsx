@@ -1,5 +1,5 @@
 import { Eye, EyeOff, Lock, LockOpen } from 'lucide-react';
-import { useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useMediaQuery } from 'react-responsive';
 
 import { Translator } from '@chainlit/app/src/components/i18n';
@@ -13,10 +13,16 @@ import {
 
 import { usePrivacyShield } from './usePrivacyShield';
 
-const PrivacyShieldToggle = (): JSX.Element => {
+const PrivacyShieldToggle = ({evoya}): JSX.Element => {
   const { enabled, setEnabled, enabledVisual, setEnabledVisual, sections } =
     usePrivacyShield();
-  
+
+  useEffect(() => {
+    if (evoya?.api?.privacyShield?.autoEnable) {
+      setEnabled(true);
+    }
+  }, []);
+
   return (
     <div className="flex items-center">
       <TooltipProvider delayDuration={100}>

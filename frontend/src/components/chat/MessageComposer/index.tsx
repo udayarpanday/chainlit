@@ -4,6 +4,8 @@ import { useRecoilState, useSetRecoilState } from 'recoil';
 import { v4 as uuidv4 } from 'uuid';
 
 import { WidgetContext } from '@chainlit/copilot/src/context';
+import EvoyaCreatorButton from '@chainlit/copilot/src/evoya/EvoyaCreatorButton';
+import PrivacyShieldToggle from '@chainlit/copilot/src/evoya/privacyShield/PrivacyShieldToggle';
 import {
   FileSpec,
   ICommand,
@@ -24,8 +26,6 @@ import CommandButton from './CommandButton';
 import Input, { InputMethods } from './Input';
 import SubmitButton from './SubmitButton';
 import UploadButton from './UploadButton';
-import EvoyaCreatorButton from '@chainlit/copilot/src/evoya/EvoyaCreatorButton';
-import PrivacyShieldToggle from '@chainlit/copilot/src/evoya/privacyShield/PrivacyShieldToggle';
 
 interface Props {
   fileSpec: FileSpec;
@@ -92,10 +92,10 @@ export default function MessageComposer({
       const fileReferences = attachments
         ?.filter((a) => !!a.serverId)
         .map((a) => ({ id: a.serverId! }));
-        
-        if(setAutoScroll){
-          setAutoScroll(true);
-        }
+
+      if (setAutoScroll) {
+        setAutoScroll(true);
+      }
 
       // @ts-expect-error is not a valid prop
       if (window.sendCreatorMessage && window.evoyaCreatorEnabled) {
@@ -207,12 +207,10 @@ export default function MessageComposer({
               onCommandSelect={setSelectedCommand}
             />
           )}
-           {evoya?.evoyaCreator?.enabled && (
-              <EvoyaCreatorButton />
-            )}
-            {evoya?.api?.privacyShield?.enabled && (
-              <PrivacyShieldToggle />
-            )}
+          {evoya?.evoyaCreator?.enabled && <EvoyaCreatorButton />}
+          {evoya?.api?.privacyShield?.enabled && (
+            <PrivacyShieldToggle evoya={evoya} />
+          )}
           {chatSettingsInputs.length > 0 && (
             <Button
               id="chat-settings-open-modal"
@@ -225,7 +223,6 @@ export default function MessageComposer({
               <Settings className="!size-6" />
             </Button>
           )}
-         
         </div>
         {evoya && evoya?.type != 'dashboard' && (
           <Input
@@ -238,10 +235,7 @@ export default function MessageComposer({
             onEnter={submit}
             onPaste={onPaste}
             submitProxy={submitProxy}
-            placeholder={t(
-              'chat.input.placeholder',
-              'Your input...'
-            )}
+            placeholder={t('chat.input.placeholder', 'Your input...')}
             className={'min-h-0'}
           />
         )}

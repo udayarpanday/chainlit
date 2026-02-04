@@ -3,7 +3,6 @@ import DashboardSidebarButton from '@/evoya/DashboardSidebarButton';
 import EvoyaCreatorButton from '@/evoya/EvoyaCreatorButton';
 import FavoriteSessionButton from '@/evoya/FavoriteSessionButton';
 import ShareSessionButton from '@/evoya/ShareSessionButton';
-import PrivacyShieldToggle from '@/evoya/privacyShield/PrivacyShieldToggle';
 import { Maximize2, Minimize, X } from 'lucide-react';
 import { useContext, useEffect, useState } from 'react';
 import { useMediaQuery } from 'react-responsive';
