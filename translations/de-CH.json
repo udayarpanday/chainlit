@@ -219,6 +219,9 @@
                     },
                     "additionalInfo": {
                         "text": "All information provided without warranty. Please verify the accuracy of the information provided."
+                    },
+                     "view_agent_details": {
+                        "text": "Wählen Sie einen Agenten aus, um dessen Details anzuzeigen."
                     }
                 },
                 "Messages": {

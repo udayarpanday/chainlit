@@ -19,6 +19,7 @@ import {
 } from './types';
 import { groupByDate } from './utils/group';
 import { WavRecorder, WavStreamPlayer } from './wavtools';
+import { IAgents } from './types/agents';
 
 export interface ISession {
   socket: Socket;
@@ -77,6 +78,11 @@ export const commandsState = atom<ICommand[]>({
 export const promptState = atom<{context_prompt:string,is_superuser:boolean | undefined} | undefined>({
   key: 'Context',
   default: undefined
+});
+
+export const agentState = atom<IAgents[]>({
+  key: 'Agent',
+  default: []
 });
 
 export const tokenCountState = atom<number>({

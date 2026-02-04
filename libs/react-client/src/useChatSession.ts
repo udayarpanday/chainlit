@@ -10,6 +10,7 @@ import io from 'socket.io-client';
 import { toast } from 'sonner';
 import {
   actionState,
+  agentState,
   askUserState,
   audioConnectionState,
   callFnState,
@@ -55,6 +56,7 @@ import { OutputAudioChunk } from './types/audio';
 
 import { ChainlitContext } from './context';
 import type { IToken } from './useChatData';
+import { IAgents } from './types/agents';
 
 const useChatSession = () => {
   const client = useContext(ChainlitContext);
@@ -73,6 +75,7 @@ const useChatSession = () => {
   const setCallFn = useSetRecoilState(callFnState);
   const setCommands = useSetRecoilState(commandsState);
   const setContextPrompt = useSetRecoilState(promptState);
+  const setAgents = useSetRecoilState(agentState);
   const setSideView = useSetRecoilState(sideViewState);
   const setElements = useSetRecoilState(elementState);
   const setTasklists = useSetRecoilState(tasklistState);
@@ -119,7 +122,7 @@ const useChatSession = () => {
           sessionId,
           threadId: idToResume || '',
           userEnv: JSON.stringify(userEnv),
-          Authorization:token,
+          Authorization: token,
           chatProfile: chatProfile ? encodeURIComponent(chatProfile) : ''
         },
         extraHeaders: {
@@ -247,7 +250,7 @@ const useChatSession = () => {
           }
 
           // console.log('feedback', newOutput);
-          return addMessage(oldMessages, {...message, output: newOutput});
+          return addMessage(oldMessages, { ...message, output: newOutput });
           // return addMessage(oldMessages, message);
         });
       });
@@ -328,14 +331,19 @@ const useChatSession = () => {
         setCommands(commands);
       });
 
+      socket.on('agents', (agents: IAgents[]) => {
+        console.log("Received agents prompt:", agents);
+        setAgents(agents);
+      });
+
       socket.on('set_sidebar_title', (title: string) => {
         setSideView((prev) => {
           return { title, elements: prev?.elements || [] };
         });
       });
-      
-      socket.on('context_prompt', (context: {context_prompt:string,is_superuser:boolean | undefined}) => {
-        if(context){
+
+      socket.on('context_prompt', (context: { context_prompt: string, is_superuser: boolean | undefined }) => {
+        if (context) {
           setContextPrompt(context)
         }
       });

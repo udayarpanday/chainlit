@@ -252,7 +252,16 @@ const Markdown = ({
           return <span {...omit(props, ['node'])} className="italic" />;
         },
         strong(props) {
-          return <span {...omit(props, ['node'])} className="font-bold" />;
+          // Check if the strong text contains an agent mention (starts with @)
+          const text = typeof props.children === 'string' ? props.children : '';
+          const isAgentMention = text.trim().startsWith('@');
+          
+          return (
+            <span
+              {...omit(props, ['node'])}
+              className={isAgentMention ? 'font-bold text-[#f00]' : 'font-bold'}
+            />
+          );
         },
         hr() {
           return <Separator />;

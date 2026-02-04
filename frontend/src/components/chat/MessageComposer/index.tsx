@@ -46,6 +46,7 @@ export default function MessageComposer({
   const inputRef = useRef<InputMethods>(null);
   const [value, setValue] = useState('');
   const [selectedCommand, setSelectedCommand] = useState<ICommand>();
+  const [selectedAgents, setSelectedAgents] = useState<any[]>([]);
   const setChatSettingsOpen = useSetRecoilState(chatSettingsOpenState);
   const [attachments, setAttachments] = useRecoilState(attachmentsState);
   const { t } = useTranslation();
@@ -76,11 +77,13 @@ export default function MessageComposer({
     async (
       msg: string,
       attachments?: IAttachment[],
-      selectedCommand?: string
+      selectedCommand?: string,
+      selectedAgents?: string[]
     ) => {
       const message: IStep = {
         threadId: '',
         command: selectedCommand,
+        agents: selectedAgents,
         id: uuidv4(),
         name: user?.identifier || 'User',
         type: 'user_message',
@@ -147,12 +150,17 @@ export default function MessageComposer({
     if (disabled || (value === '' && attachments.length === 0)) {
       return;
     }
+    
+    // Get full content including agents
+    const fullContent = inputRef.current?.getFullContent?.() || value;
+    
     if (askUser) {
-      onReply(value);
+      onReply(fullContent);
     } else {
-      onSubmit(value, attachments, selectedCommand?.id);
+      onSubmit(fullContent, attachments, selectedCommand?.id, selectedAgents);
     }
     setAttachments([]);
+    setSelectedAgents([]);
     inputRef.current?.reset();
   }, [
     value,
@@ -161,7 +169,9 @@ export default function MessageComposer({
     askUser,
     attachments,
     selectedCommand,
+    selectedAgents,
     setAttachments,
+    setSelectedAgents,
     onSubmit
   ]);
 
@@ -190,6 +200,8 @@ export default function MessageComposer({
           onPaste={onPaste}
           submitProxy={submitProxy}
           placeholder={t('chat.input.placeholder', 'Your input...')}
+          selectedAgents={selectedAgents}
+          setSelectedAgents={setSelectedAgents}
         />
       )}
       <div className="flex items-center justify-between">
@@ -237,6 +249,8 @@ export default function MessageComposer({
             submitProxy={submitProxy}
             placeholder={t('chat.input.placeholder', 'Your input...')}
             className={'min-h-0'}
+            selectedAgents={selectedAgents}
+            setSelectedAgents={setSelectedAgents}
           />
         )}
         <div className="flex items-center gap-1">
