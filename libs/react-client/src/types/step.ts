@@ -34,4 +34,5 @@ export interface IStep {
   metadata?: Record<string, any>;
   //legacy
   indent?: number;
+  generation?: any;
 }

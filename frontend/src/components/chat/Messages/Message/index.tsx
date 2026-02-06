@@ -18,9 +18,12 @@ import { MessageButtons } from './Buttons';
 import { MessageContent } from './Content';
 import Step from './Step';
 import UserMessage from './UserMessage';
+import ToolStepInfo from './ToolStepInfo';
 
 interface Props {
   message: IStep;
+  toolCalls?: IStep[] | null;
+  evoyaMode?: string;
   elements: IMessageElement[];
   actions: IAction[];
   indent: number;
@@ -31,9 +34,13 @@ interface Props {
 
 const EMPTY_ELEMENTS: IMessageElement[] = [];
 
+const langGraphExclude = ['default', 'dashboard', 'container'];
+
 const Message = memo(
   ({
     message,
+    toolCalls,
+    evoyaMode,
     elements,
     actions,
     isRunning,
@@ -83,6 +90,10 @@ const Message = memo(
       );
     }
 
+    if (isStep && message.name === 'Reinforcement') return null;
+    if (isStep && message.type === 'tool' && message.name.includes('DocumentProcessor')) return null;
+    if (isStep && message.name === 'LangGraph' && (langGraphExclude.includes(evoyaMode ?? '') || isRunning)) return null;
+
     return (
       <>
         <div className="step my-2">
@@ -107,9 +118,10 @@ const Message = memo(
                 <div className="ai-message flex gap-4 w-full">
                   {!isStep || !indent ? (
                     <>
-                      <MessageAvatar author={message.name} content={message.output} />
+                      <MessageAvatar author={message.name} content={message.output} hide={message.name === 'LangGraph'} />
                     </>
                   ) : null}
+                  {(toolCalls && toolCalls.length > 0 && !message.output && evoyaMode !== 'default') && <ToolStepInfo toolCalls={toolCalls} />}
                   {/* Display the step and its children */}
                   {isStep ? (
                     <Step step={message} isRunning={isRunning}>

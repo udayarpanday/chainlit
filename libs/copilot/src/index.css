@@ -114,7 +114,7 @@
   text-fill-color: transparent;
   -webkit-text-fill-color: transparent;
   animation-delay: 0s;
-  animation-duration: 4s;
+  animation-duration: 2s;
   animation-iteration-count: infinite;
   animation-name: loading-shimmer;
   background: hsl(var(--muted))

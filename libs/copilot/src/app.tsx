@@ -49,14 +49,14 @@ export default function App({ widgetConfig }: Props) {
   }, [evoya]);
 
   useEffect(() => {
-    if (config && config?.ui && config?.ui?.cot !== 'hidden') {
+    if (config && config?.ui && config?.ui?.cot !== 'full') {
       setConfig({
         ...config,
         showEvoyaCreatorButton: evoya?.evoyaCreator?.enabled,
         ...{
           ui: {
             ...config?.ui,
-            cot: 'hidden'
+            cot: 'full'
           }
         }
       });

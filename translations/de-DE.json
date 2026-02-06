@@ -437,6 +437,13 @@
             "title": "CTX",
             "modal_title_tip": "Kontext anzeigen",
             "modal_title": "Chat-Kontext"
+        },
+        "evoya": {
+            "cot": {
+                "thinking": "Denken",
+                "using_tool": "Verwendet",
+                "processing_document": "Dokument wird verarbeitet"
+            }
         }
     }
 }

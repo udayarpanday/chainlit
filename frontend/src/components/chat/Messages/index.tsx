@@ -121,9 +121,21 @@ const Messages = memo(
             const isScorable =
               isRunLastAssistantMessage || isLastAssistantMessage;
 
+            const toolCalls = [];
+
+            if (indent === 0 && m.type === 'assistant_message') {
+              const documentProcessor = messages.find((m) => m.name.includes('DocumentProcessor') && m.type === 'tool');
+              if (documentProcessor) toolCalls.push(documentProcessor);
+
+              const langGraph = messages.find((m) => m.name === 'LangGraph' && m.type === 'run');
+              toolCalls.push(...(langGraph?.steps ?? []));
+            }
+
             return (
               <Message
                 message={m}
+                toolCalls={toolCalls}
+                evoyaMode={evoya?.type}
                 elements={elements}
                 actions={actions}
                 key={m.id}
