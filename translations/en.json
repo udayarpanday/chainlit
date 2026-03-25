@@ -158,7 +158,7 @@
             "privacyShield": {
                 "showPrivacyTable": "Show anonymized words table",
                 "hidePrivacyTable": "Hide anonymized words table",
-                "info": "With the Privacy Shield, you can anonymize sensitive data before sending it to an external language model. First, activate the Privacy Shield, enter your text, and press Enter. Then, select words or phrases (e.g., 'John Doe') and tag them using the pop-up categories like 'Name.' Once anonymized, the model will only see generic terms (e.g., 'Person') instead of the original details, ensuring your data privacy.",
+                "info": "Privacy Shield anonymizes sensitive details (e.g. names) before text is sent to the AI. It works only for text, not for uploaded documents.",
                 "actions": {
                     "cancel": "Cancel",
                     "submit": "Submit",
@@ -377,7 +377,8 @@
                 "stop": "Stop Task",
                 "attachFiles": "Attach files"
             },
-            "no_results": "No results found"
+            "no_results": "No results found",
+            "commands": "Browse and insert saved prompts; you can also search them with the / command in the chat input."
         },
         "speech": {
             "start": "Start recording",
@@ -433,10 +434,10 @@
             "title": "Settings panel"
         },
         "watermark": "Built with",
-        "context":{
-            "title":"CTX",
-            "modal_title_tip":"View Context",
-            "modal_title":"Chat Context"
+        "context": {
+            "title": "CTX",
+            "modal_title_tip": "View Context",
+            "modal_title": "Chat Context"
         },
         "evoya": {
             "cot": {
@@ -495,7 +496,10 @@
     "navigation": {
         "header": {
             "chat": "Chat",
-            "readme": "Readme"
+            "readme": "Readme",
+            "session": {
+                "description": "Show or hide chat sessions"
+            }
         },
         "newChat": {
             "button": "New Chat",

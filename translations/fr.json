@@ -158,7 +158,7 @@
             "privacyShield": {
                 "showPrivacyTable": "Afficher le tableau des mots anonymisés",
                 "hidePrivacyTable": "Cacher le tableau des mots anonymisés",
-                "info": "Avec le Privacy Shield, vous pouvez anonymiser les données sensibles avant de les envoyer à un modèle de langage externe. Tout d'abord, activez le Privacy Shield, entrez votre texte, et appuyez sur Entrée. Ensuite, sélectionnez des mots ou des phrases (par exemple, 'John Doe') et étiquetez-les en utilisant les catégories contextuelles comme 'Nom'. Une fois anonymisé, le modèle ne verra que des termes génériques (par exemple, 'Personne') au lieu des détails originaux, garantissant la confidentialité de vos données.",
+                "info": "Privacy Shield anonymise les informations sensibles (par ex. les noms) avant que le texte ne soit envoyé à l’IA. Il fonctionne uniquement pour le texte, pas pour les documents téléversés.",
                 "actions": {
                     "cancel": "Annuler",
                     "submit": "Soumettre",
@@ -374,7 +374,8 @@
                 "stop": "Arrêter la tâche",
                 "attachFiles": "Joindre des fichiers"
             },
-            "no_results": "Aucun résultat trouvé"
+            "no_results": "Aucun résultat trouvé",
+            "commands": "Parcourez et insérez des invites enregistrées ; vous pouvez également les rechercher avec la commande / dans le champ de saisie du chat."
         },
         "speech": {
             "start": "Commencer l'enregistrement",
@@ -485,7 +486,10 @@
     "navigation": {
         "header": {
             "chat": "Chat",
-            "readme": "Lisez-moi"
+            "readme": "Lisez-moi",
+            "session": {
+                "description": "Afficher ou masquer les sessions de discussion"
+            }
         },
         "newChat": {
             "button": "Nouveau Chat",

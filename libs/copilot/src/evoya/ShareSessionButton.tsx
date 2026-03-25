@@ -1,5 +1,5 @@
 import { WidgetContext } from '@/context';
-import { Share2 } from 'lucide-react';
+import { Share } from 'lucide-react';
 import { ChevronDown, Loader2 } from 'lucide-react';
 import { useContext, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -253,10 +253,8 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
                 onClick={handleClickOpen}
                 disabled={sessionUuid == ''}
               >
-                <Share2
-                  fill="#5c5c5c"
+                <Share
                   className="!size-5 "
-                  strokeWidth={1.25}
                 />
               </Button>
             </div>

@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { MdOutlineStar } from "react-icons/md";
 import { Star } from 'lucide-react';
-import { FilePlus  } from 'lucide-react';
+import { PencilLine  } from 'lucide-react';
 import { Translator } from '@chainlit/app/src/components/i18n';
 import {
   Tooltip,
@@ -80,7 +80,7 @@ const EvoyaCreatorButton = (): JSX.Element => {
               onClick={handleClick}
               className={`hover:bg-muted ${hasContent ? 'text-primary' : ''}`}
             >
-              <FilePlus className="!size-6" />
+              <PencilLine className="!size-5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>

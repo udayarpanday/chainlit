@@ -3,12 +3,13 @@ import {
   PopoverContent,
   PopoverTrigger
 } from '@radix-ui/react-popover';
-import { ChevronDown, FileText } from 'lucide-react';
+import { ChevronDown, StickyNote    } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useRecoilValue } from 'recoil';
 
 import { ICommand, commandsState } from '@chainlit/react-client';
 
+import { Translator } from '@/components/i18n';
 import { ToolBox } from '@/components/icons/ToolBox';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,7 +36,7 @@ interface Props {
 export const CommandButton = ({
   disabled = false,
   onCommandSelect,
-  selectedCommand,
+  selectedCommand
 }: Props) => {
   const commands = useRecoilValue(commandsState);
   const [open, setOpen] = useState(false);
@@ -128,12 +129,12 @@ export const CommandButton = ({
                 className="hover:bg-muted"
                 disabled={disabled}
               >
-                <FileText className="!size-6" />
+                <StickyNote className="!size-5" />
               </Button>
             </PopoverTrigger>
           </TooltipTrigger>
-          <TooltipContent>
-            <p>Commands</p>
+          <TooltipContent className="w-[200px]">
+            <Translator path={'chat.input.commands'} />
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -193,7 +194,7 @@ export const CommandButton = ({
                     </CommandItem>
                   ))}
                 </CommandGroup>
-                {searchResults.length > 0 && !isMobile &&(
+                {searchResults.length > 0 && !isMobile && (
                   <div className="border-t-2 md:border-t-0 md:border-l w-full h-[280px] overflow-auto">
                     <div className="flex-1 p-2 md:p-2">
                       <div className="bg-gray-50 rounded-md p-4 relative">

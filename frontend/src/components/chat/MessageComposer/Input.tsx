@@ -666,14 +666,14 @@ const Input = forwardRef<InputMethods, Props>(
                 return (
                   <div
                     key={agent.uuid}
-                    className="inline-flex items-center gap-2 px-3 py-1 bg-red-400 text-white rounded-full text-sm font-medium"
+                    className="inline-flex items-center gap-2 px-3 py-1 bg-gray-400 text-white rounded-full text-sm font-medium"
                   >
                     <span className="truncate max-w-[150px]">
                       @{agent.name}
                     </span>
                     <button
                       onClick={() => handleRemoveAgent(agent.uuid)}
-                      className="ml-1 hover:bg-red-500 rounded-full p-0.5 transition-colors"
+                      className="ml-1 hover:bg-gray-500 rounded-full p-0.5 transition-colors"
                       type="button"
                       aria-label={`Remove ${agent.name}`}
                     >

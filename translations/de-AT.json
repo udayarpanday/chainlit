@@ -158,7 +158,7 @@
             "privacyShield": {
                 "showPrivacyTable": "Anonymisierte Wörter einblenden",
                 "hidePrivacyTable": "Anonymisierte Wörter ausblenden",
-                "info": "Mit dem Privacy Shield können Sie sensible Daten anonymisieren, bevor sie an ein externes Sprachmodell gesendet werden. Aktivieren Sie zuerst den Privacy Shield, geben Sie Ihren Text ein und drücken Sie Enter. Wählen Sie dann Wörter oder Phrasen aus (z. B. 'Max Mustermann') und markieren Sie diese mithilfe des Pop-ups mit Kategorien wie 'Name'. Nach der Anonymisierung sieht das Modell nur generische Begriffe (z. B. 'Person') anstelle der ursprünglichen Details, wodurch Ihre Daten geschützt bleiben.",
+                "info": "Privacy Shield anonymisiert sensible Details (z. B. Namen), bevor der Text an die KI gesendet wird. Es funktioniert nur für Text, nicht für hochgeladene Dokumente.",
                 "actions": {
                     "cancel": "Abbrechen",
                     "submit": "Senden",
@@ -220,7 +220,7 @@
                     "additionalInfo": {
                         "text": "All information provided without warranty. Please verify the accuracy of the information provided."
                     },
-                     "view_agent_details": {
+                    "view_agent_details": {
                         "text": "Wählen Sie einen Agenten aus, um dessen Details anzuzeigen."
                     }
                 },
@@ -377,7 +377,8 @@
                 "stop": "Aufgabe stoppen",
                 "attachFiles": "Dateien anhängen"
             },
-            "no_results": "Keine Ergebnisse gefunden"
+            "no_results": "Keine Ergebnisse gefunden",
+            "commands": "Gespeicherte Prompts durchsuchen und einfügen; Sie können sie auch mit dem /-Befehl im Chat-Eingabefeld suchen."
         },
         "speech": {
             "start": "Aufnahme starten",
@@ -437,6 +438,91 @@
             "title": "CTX",
             "modal_title_tip": "Kontext anzeigen",
             "modal_title": "Chat-Kontext"
+        },
+        "evoya": {
+            "cot": {
+                "thinking": "Denken",
+                "using_tool": "Verwendet",
+                "processing_document": "Dokument wird verarbeitet"
+            }
+        }
+    },
+    "threadHistory": {
+        "sidebar": {
+            "title": "Frühere Chats",
+            "filters": {
+                "search": "Suchen"
+            },
+            "timeframes": {
+                "today": "Heute",
+                "yesterday": "Gestern",
+                "previous7days": "Letzte 7 Tage",
+                "previous30days": "Letzte 30 Tage"
+            },
+            "empty": "Keine Unterhaltungen gefunden",
+            "actions": {
+                "close": "Seitenleiste schließen",
+                "open": "Seitenleiste öffnen"
+            }
+        },
+        "thread": {
+            "untitled": "Unbenannte Unterhaltung",
+            "menu": {
+                "rename": "Umbenennen",
+                "delete": "Löschen"
+            },
+            "actions": {
+                "delete": {
+                    "title": "Löschen bestätigen",
+                    "description": "Dadurch werden der Chat sowie alle Nachrichten und Elemente gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+                    "success": "Chat gelöscht",
+                    "inProgress": "Chat wird gelöscht"
+                },
+                "rename": {
+                    "title": "Unterhaltung umbenennen",
+                    "description": "Geben Sie einen neuen Namen für diese Unterhaltung ein",
+                    "form": {
+                        "name": {
+                            "label": "Name",
+                            "placeholder": "Neuen Namen eingeben"
+                        }
+                    },
+                    "success": "Unterhaltung umbenannt!",
+                    "inProgress": "Unterhaltung wird umbenannt"
+                }
+            }
+        }
+    },
+    "navigation": {
+        "header": {
+            "chat": "Chat",
+            "readme": "Readme",
+            "session": {
+                "description": "Chatsitzungen anzeigen oder ausblenden"
+            }
+        },
+        "newChat": {
+            "button": "Neuer Chat",
+            "dialog": {
+                "title": "Neuen Chat erstellen",
+                "description": "Dadurch wird Ihr aktueller Chatverlauf gelöscht. Möchten Sie wirklich fortfahren?",
+                "tooltip": "Neuer Chat"
+            }
+        },
+        "user": {
+            "menu": {
+                "settings": "Einstellungen",
+                "settingsKey": "S",
+                "apiKeys": "API-Schlüssel",
+                "logout": "Abmelden"
+            }
+        }
+    },
+    "apiKeys": {
+        "title": "Erforderliche API-Schlüssel",
+        "description": "Um diese App zu verwenden, sind die folgenden API-Schlüssel erforderlich. Die Schlüssel werden im lokalen Speicher Ihres Geräts gespeichert.",
+        "success": {
+            "saved": "Erfolgreich gespeichert"
         }
     }
 }

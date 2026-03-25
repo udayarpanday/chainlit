@@ -199,7 +199,7 @@ export default function MessageComposer({
           onEnter={submit}
           onPaste={onPaste}
           submitProxy={submitProxy}
-          placeholder={t('chat.input.placeholder', 'Your input...')}
+          placeholder={t('chat.input.placeholder')}
           selectedAgents={selectedAgents}
           setSelectedAgents={setSelectedAgents}
         />
@@ -232,7 +232,7 @@ export default function MessageComposer({
               variant="ghost"
               size="icon"
             >
-              <Settings className="!size-6" />
+              <Settings className="!size-5" />
             </Button>
           )}
         </div>
@@ -247,7 +247,7 @@ export default function MessageComposer({
             onEnter={submit}
             onPaste={onPaste}
             submitProxy={submitProxy}
-            placeholder={t('chat.input.placeholder', 'Your input...')}
+            placeholder={t('chat.input.placeholder')}
             className={'min-h-0'}
             selectedAgents={selectedAgents}
             setSelectedAgents={setSelectedAgents}

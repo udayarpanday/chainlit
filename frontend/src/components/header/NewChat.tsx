@@ -19,7 +19,7 @@ interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 const NewChatButton = ({ navigate, ...buttonProps }: Props) => {
   const [open, setOpen] = useState(false);
   const { clear } = useChatInteract();
-  const {  endConversation, audioConnection } = useAudio();
+  const { endConversation, audioConnection } = useAudio();
   const isAudioOn = audioConnection === 'on';
   const handleClickOpen = () => {
     clear();
@@ -31,25 +31,16 @@ const NewChatButton = ({ navigate, ...buttonProps }: Props) => {
 
   return (
     <div>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              id="new-chat-button"
-              onClick={handleClickOpen}
-              className="text-primary hover:text-primary border border-primary"
-              {...buttonProps}
-            >
-              <Plus className="w-4 h-4" />
-              <Translator path="components.molecules.newChatButton.newChatSession" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <Translator path="navigation.newChat.dialog.tooltip" />
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Button
+        variant="outline"
+        id="new-chat-button"
+        onClick={handleClickOpen}
+        className="text-primary hover:text-primary border border-primary"
+        {...buttonProps}
+      >
+        <Plus className="w-4 h-4" />
+        <Translator path="components.molecules.newChatButton.newChat" />
+      </Button>
     </div>
   );
 };
