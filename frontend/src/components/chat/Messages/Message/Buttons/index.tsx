@@ -12,6 +12,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import MessageActions from './Actions';
 import { DebugButton } from './DebugButton';
 import { EvoyaCreatorButton } from './EvoyaCreatorButton';
+import { EvoyaDiffSourceSelectButton } from './EvoyaDiffSourceSelectButton';
 import { FeedbackButtons } from './FeedbackButtons';
 
 interface Props {
@@ -45,6 +46,7 @@ const MessageButtons = ({ message, actions, run }: Props) => {
     <div className="-ml-1.5 flex items-center flex-wrap">
       {showCopyButton ? <CopyButton content={message.output} /> : null}
       {!isMobile ? <EvoyaCreatorButton message={message} /> : null}
+      <EvoyaDiffSourceSelectButton message={message} />
       {run ? <FeedbackButtons message={run} /> : null}
       {messageActions.length ? (
         <MessageActions actions={messageActions} />

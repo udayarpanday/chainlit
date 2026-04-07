@@ -5,7 +5,8 @@ import { memo, useContext, useMemo } from 'react';
 import {
   type IAction,
   type IMessageElement,
-  type IStep
+  type IStep,
+  evoyaDiffSourceEnabledState,
 } from '@chainlit/react-client';
 
 import { useLayoutMaxWidth } from 'hooks/useLayoutMaxWidth';
@@ -19,6 +20,7 @@ import { MessageContent } from './Content';
 import Step from './Step';
 import UserMessage from './UserMessage';
 import ToolStepInfo from './ToolStepInfo';
+import { useRecoilValue } from 'recoil';
 
 interface Props {
   message: IStep;
@@ -61,6 +63,8 @@ const Message = memo(
     const hiddenSkip = isStep && cot === 'hidden';
 
     const skip = toolCallSkip || hiddenSkip;
+
+    const isDiffEnabled = useRecoilValue(evoyaDiffSourceEnabledState);
 
     const userMessageContent = useMemo(
       () => (
@@ -141,6 +145,8 @@ const Message = memo(
                         message={message}
                         allowHtml={allowHtml}
                         latex={latex}
+                        isRunning={isRunning}
+                        diffEnabled={isDiffEnabled}
                       />
                       <MessageButtons message={message} actions={actions} />
                     </Step>
@@ -152,6 +158,8 @@ const Message = memo(
                         message={message}
                         allowHtml={allowHtml}
                         latex={latex}
+                        isRunning={isRunning}
+                        diffEnabled={isDiffEnabled}
                       />
                       {!isRunning && isAsk ? (
                         <>

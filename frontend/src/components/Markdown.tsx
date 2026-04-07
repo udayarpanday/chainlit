@@ -160,6 +160,12 @@ const Markdown = ({
                 sectionId={props.node?.properties.dataPrivacyComponent.toString()}
               />
             );
+          } else if (props.node?.properties.dataDiffState) {
+            if (props.node?.properties.dataDiffState === 'added') {
+              return <span className="rounded-xs px-1.5 py-0.5 bg-green-200 text-green-800">{children}</span>
+            } else if (props.node?.properties.dataDiffState === 'removed') {
+              return <span className="rounded-xs px-1.5 py-0.5 bg-red-200 text-red-800">{children}</span>
+            }
           }
           return <span {...omit(props, ['node'])}>{children}</span>;
         },

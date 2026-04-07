@@ -2,7 +2,7 @@ import { prepareContent } from '@/lib/message';
 import { memo, useMemo } from 'react';
 import { isEqual } from 'lodash';
 
-import type { IMessageElement, IStep } from '@chainlit/react-client';
+import { IMessageElement, IStep, evoyaDiffSourceContentState, evoyaDiffSourceEnabledState } from '@chainlit/react-client';
 
 import { CURSOR_PLACEHOLDER } from '@/components/BlinkingCursor';
 import Markdown from '@/components/Markdown';
@@ -11,11 +11,16 @@ import { InlinedElements } from './InlinedElements';
 
 import { usePrivacyShield } from '@chainlit/copilot/src/evoya/privacyShield/usePrivacyShield';
 
+import { diffChars, diffLines, diffWords } from "diff";
+import { useRecoilState, useRecoilValue } from 'recoil';
+
 export interface Props {
   elements: IMessageElement[];
   message: IStep;
   allowHtml?: boolean;
   latex?: boolean;
+  isRunning?: boolean;
+  diffEnabled?: boolean;
 }
 
 const getMessageRenderProps = (message: IStep) => ({
@@ -29,7 +34,7 @@ const getMessageRenderProps = (message: IStep) => ({
 });
 
 const MessageContent = memo(
-  ({ message, elements, allowHtml, latex }: Props) => {
+  ({ message, elements, allowHtml, latex, isRunning, diffEnabled }: Props) => {
     const outputContent =
       message.streaming && message.output
         ? message.output + CURSOR_PLACEHOLDER
@@ -39,9 +44,32 @@ const MessageContent = memo(
       transformOutput,
     } = usePrivacyShield();
 
+    const isUserMessage = message.type === 'user_message';
+
+    const diffSource = useRecoilValue(evoyaDiffSourceContentState);
+    // const isDiffEnabled = useRecoilValue(evoyaDiffSourceEnabledState);
+    console.log(isUserMessage, diffEnabled, isRunning);
+    const messageTransDiff = useMemo<string>(() => {
+      if (isUserMessage || !diffEnabled || isRunning) {
+        return outputContent;
+      }
+
+      return diffWords(diffSource, outputContent).map((part) => {
+        if (part.added) {
+          // return `<span data-diff-state="added">${part.value}</span>`;
+          return part.value.split('\n').map(split => `<span data-diff-state="added">${split}</span>`).join('\n');
+        }
+        if (part.removed) {
+          // return `<span data-diff-state="removed">${part.value}</span>`;
+          return part.value.split('\n').map(split => `<span data-diff-state="removed">${split}</span>`).join('\n');
+        }
+        return part.value;
+      }).join('');
+    }, [diffSource, outputContent, isUserMessage, diffEnabled, isRunning]);
+
     const messageTrans = useMemo<string>(() => {
-      return transformOutput(outputContent);
-    }, [message])
+      return transformOutput(messageTransDiff);
+    }, [messageTransDiff])
 
     const {
       preparedContent: output,
@@ -128,6 +156,8 @@ const MessageContent = memo(
       prevProps.allowHtml === nextProps.allowHtml &&
       prevProps.latex === nextProps.latex &&
       prevProps.elements === nextProps.elements &&
+      prevProps.isRunning === nextProps.isRunning &&
+      prevProps.diffEnabled === nextProps.diffEnabled &&
       // isEqual(
       //   prevProps.sections ?? ['input', 'output'],
       //   nextProps.sections ?? ['input', 'output']

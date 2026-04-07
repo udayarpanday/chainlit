@@ -8,7 +8,8 @@ import {
   IStep,
   messagesState,
   useChatInteract,
-  useConfig
+  useConfig,
+  evoyaDiffSourceContentState,
 } from '@chainlit/react-client';
 
 import AutoResizeTextarea from '@/components/AutoResizeTextarea';
@@ -17,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Translator } from 'components/i18n';
 
 import { InlinedElements } from './Content/InlinedElements';
+import { DiffIcon } from 'lucide-react';
 
 interface Props {
   message: IStep;
@@ -32,6 +34,7 @@ const UserMessage = memo(function UserMessage({
   const { askUser, loading } = useContext(MessageContext);
   const { editMessage } = useChatInteract();
   const setMessages = useSetRecoilState(messagesState);
+  const setDiffSourceContent = useSetRecoilState(evoyaDiffSourceContentState);
   const disabled = loading || !!askUser;
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState('');
@@ -65,20 +68,32 @@ const UserMessage = memo(function UserMessage({
       <InlinedElements elements={inlineElements} className="items-end" />
 
       <div className="flex flex-row items-center gap-1 w-full group">
-        {!isEditing && isEditable && (
+        <div className="ml-auto">
+          {!isEditing && isEditable && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="edit-message ml-auto invisible group-hover:visible"
+              onClick={() => {
+                setEditValue(message.output);
+                setIsEditing(true);
+              }}
+              disabled={disabled}
+            >
+              <Pencil />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
             className="edit-message ml-auto invisible group-hover:visible"
             onClick={() => {
-              setEditValue(message.output);
-              setIsEditing(true);
+              setDiffSourceContent(message.output);
             }}
-            disabled={disabled}
           >
-            <Pencil />
+            <DiffIcon />
           </Button>
-        )}
+        </div>
         <div
           className={cn(
             'px-5 py-2.5 relative bg-accent rounded-3xl',
