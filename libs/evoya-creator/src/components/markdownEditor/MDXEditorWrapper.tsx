@@ -100,6 +100,7 @@ export default function MDXEditorWrapper() {
     setCreatorContent,
   } = useEvoyaCreator();
   const [mdContent, setMdContent] = useState(creatorContent);
+  const [mdDiffContent, setMdDiffContent] = useState(creatorContent);
   const [editorSelectionContext, setEditorSelectionContext] = useState<SelectionContext | null>(null);
   const [editorSelectionMessageContext, setEditorSelectionMessageContext] = useState<SelectionContext | null>(null);
   const [mdxRealm, setMdxRealm] = useState<Realm|null>(null);
@@ -268,6 +269,7 @@ export default function MDXEditorWrapper() {
         markdown={creatorContent}
         iconComponentFor={getSvgIcon}
         plugins={[
+          toolbarPlugin({ toolbarContents: () => <MDXEditorToolbar setMdDiffContent={setMdDiffContent} /> }),
           ...MDX_PLUGINS,
           imagePlugin({
             EditImageToolbar: EditImageToolbar
@@ -283,7 +285,7 @@ export default function MDXEditorWrapper() {
           }),
           evoyaMathPlugin(),
           evoyaMathDialogPlugin(),
-          diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: creatorContent }),
+          diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: mdDiffContent }),
         ]}
         onChange={(md) => {
           setMdContent(md);
@@ -299,7 +301,6 @@ export default function MDXEditorWrapper() {
 }
 
 export const MDX_PLUGINS = [
-  toolbarPlugin({ toolbarContents: () => <MDXEditorToolbar /> }),
   listsPlugin(),
   quotePlugin(),
   headingsPlugin(),

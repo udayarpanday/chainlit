@@ -7,9 +7,13 @@ import {
 import {
   ResetDocument,
 } from './ResetDocument';
+import {
+  SetDiffSource,
+} from './SetDiffSource';
 
 export {
   SelectDocument,
   ExportContent,
   ResetDocument,
+  SetDiffSource
 };

@@ -1,5 +1,3 @@
-import Box from '@mui/material/Box';
-
 import {
   Separator,
   UndoRedo,
@@ -21,9 +19,10 @@ import {
   SelectDocument,
   ExportContent,
   ResetDocument,
+  SetDiffSource,
 } from './plugins/toolbar/components';
 
-export default function MDXEditorToolbar() {
+export default function MDXEditorToolbar({ setMdDiffContent }: { setMdDiffContent: (md: string) => void }) {
   return (
     <DiffSourceToggleWrapper>
       <ConditionalContents
@@ -55,6 +54,8 @@ export default function MDXEditorToolbar() {
                   <SelectDocument />
                   <Separator />
                   <ExportContent />
+                  <Separator />
+                  <SetDiffSource setMdDiffContent={setMdDiffContent} />
                   <Separator />
               </>
             )
