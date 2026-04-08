@@ -1,5 +1,5 @@
 import { debounce } from 'lodash';
-import { useCallback, useContext, useEffect } from 'react';
+import { useCallback, useContext, useEffect, useRef } from 'react';
 import {
   useRecoilState,
   useRecoilValue,
@@ -61,6 +61,7 @@ import { IAgents } from './types/agents';
 const useChatSession = () => {
   const client = useContext(ChainlitContext);
   const sessionId = useRecoilValue(sessionIdState);
+  const stickyCookieCalledRef = useRef(false);
 
   const [session, setSession] = useRecoilState(sessionState);
   const setIsAiSpeaking = useSetRecoilState(isAiSpeakingState);
@@ -113,10 +114,13 @@ const useChatSession = () => {
           ? `${pathname}/ws/socket.io`
           : '/ws/socket.io';
 
-      try {
-        await client.stickyCookie(sessionId);
-      } catch (err) {
-        console.error(`Failed to set sticky session cookie: ${err}`);
+      if (!stickyCookieCalledRef.current) {
+        stickyCookieCalledRef.current = true;
+        try {
+          await client.stickyCookie(sessionId);
+        } catch (err) {
+          console.error(`Failed to set sticky session cookie: ${err}`);
+        }
       }
       
       const socket = io(uri, {
