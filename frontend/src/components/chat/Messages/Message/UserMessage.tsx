@@ -59,7 +59,6 @@ const UserMessage = memo(function UserMessage({
       editMessage({ ...message, output: editValue });
     }
   };
-  console.log(message);
   return (
     <div className="flex flex-col w-full gap-1">
       <InlinedElements elements={inlineElements} className="items-end" />

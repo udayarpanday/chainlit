@@ -1,32 +1,53 @@
-import { Plus } from 'lucide-react';
-import React, { useState } from 'react';
 
-import { useAudio, useChatInteract } from '@chainlit/react-client';
+import { Plus } from 'lucide-react';
+import React, { useContext } from 'react';
+
+import { useAudio, useChatInteract, useChatSession } from '@chainlit/react-client';
 
 import { Translator } from '@/components/i18n';
 import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from '@/components/ui/tooltip';
+import { WidgetContext } from 'context';
 
 interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  navigate?: (to: string) => void;
+  newSession?: (sessionUuid?: string) => void;
 }
 
-const NewChatButton = ({ navigate, ...buttonProps }: Props) => {
-  const [open, setOpen] = useState(false);
+const NewChatButton = ({ newSession }: Props) => {
   const { clear } = useChatInteract();
+  const { evoya, setAccessToken } = useContext(WidgetContext);
+
   const { endConversation, audioConnection } = useAudio();
   const isAudioOn = audioConnection === 'on';
-  const handleClickOpen = () => {
-    clear();
+
+  const handleClickOpen = async () => {
+    localStorage.removeItem('session_token');
+    document.cookie =
+      'session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     window.dispatchEvent(new CustomEvent('copilot-new-session'));
+    
     if (isAudioOn) {
       endConversation();
     }
+    
+    clear();
+    
+    if (evoya?.reset) {
+      return;
+    }
+
+    if (evoya?.getEvoyaAccessToken && evoya?.chat_uuid) {
+      try {
+        const newAccessToken = await evoya.getEvoyaAccessToken(evoya.chat_uuid, undefined, {});
+        if (newAccessToken) {
+          localStorage.setItem('chainlit_token', newAccessToken);
+          setAccessToken(newAccessToken);
+        }
+      } catch (error) {
+        console.error('Failed to get new access token:', error);
+      }
+    }
+
+    newSession?.('');
   };
 
   return (
@@ -36,7 +57,6 @@ const NewChatButton = ({ navigate, ...buttonProps }: Props) => {
         id="new-chat-button"
         onClick={handleClickOpen}
         className="text-primary hover:text-primary border border-primary"
-        {...buttonProps}
       >
         <Plus className="w-4 h-4" />
         <Translator path="components.molecules.newChatButton.newChat" />

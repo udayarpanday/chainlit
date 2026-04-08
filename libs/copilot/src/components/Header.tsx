@@ -49,6 +49,7 @@ const Header = ({ expanded, setExpanded, isPopup }: Props): JSX.Element => {
   const hasChatProfiles = !!config?.chatProfiles?.length;
 
   const [sessionUuid, setSessionUuid] = useState(evoya?.session_uuid ?? '');
+
   const getSessionUuid = async () => {
     try {
       const sessionResponse = await apiClient.get(
@@ -111,7 +112,7 @@ const Header = ({ expanded, setExpanded, isPopup }: Props): JSX.Element => {
             <img src={evoya.logo} style={{ height: '25px', width: 'auto' }} />
           )
         )}
-        {evoya?.headerConfig?.showSessionButton && <NewChatButton />}
+        {evoya?.headerConfig?.showSessionButton && <NewChatButton newSession={(sessionUuid) => setSessionUuid(sessionUuid ?? '')}/>}
       </div>
       <div className="flex items-center">
         {audioConnection === 'on' ? (
