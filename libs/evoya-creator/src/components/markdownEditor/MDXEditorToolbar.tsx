@@ -25,43 +25,46 @@ import {
 export default function MDXEditorToolbar({ setMdDiffContent }: { setMdDiffContent: (md: string) => void }) {
   return (
     <DiffSourceToggleWrapper>
-      <ConditionalContents
-        options={[
-          { when: (editor) => editor?.editorType === 'codeblock', contents: () => <ChangeCodeMirrorLanguage /> },
-          {
-            fallback: () => (
-              <>
-                  <ResetDocument />
-                  <UndoRedo />
-                  <Separator />
-                  <BoldItalicUnderlineToggles />
-                  <CodeToggle />
-                  <Separator />
-                  {/* <StrikeThroughSupSubToggles /> */}
-                  {/* <Separator /> */}
-                  <ListsToggle />
-                  <Separator />
-                  <BlockTypeSelect />
-                  <Separator />
-                  <CreateLink />
-                  <Separator />
-                  <InsertImage />
-                  <Separator />
-                  <InsertTable />
-                  <Separator />
-                  <InsertCodeBlock />
-                  <Separator />
-                  <SelectDocument />
-                  <Separator />
-                  <ExportContent />
-                  <Separator />
-                  <SetDiffSource setMdDiffContent={setMdDiffContent} />
-                  <Separator />
-              </>
-            )
-          }
-        ]}
-      />
+      <div style={{ flexGrow: 1 }}>
+        <ConditionalContents
+          options={[
+            { when: (editor) => editor?.editorType === 'codeblock', contents: () => <ChangeCodeMirrorLanguage /> },
+            {
+              fallback: () => (
+                <>
+                    <UndoRedo />
+                    <Separator />
+                    <BoldItalicUnderlineToggles />
+                    <CodeToggle />
+                    <Separator />
+                    {/* <StrikeThroughSupSubToggles /> */}
+                    {/* <Separator /> */}
+                    <ListsToggle />
+                    <Separator />
+                    <BlockTypeSelect />
+                    <Separator />
+                    <CreateLink />
+                    <Separator />
+                    <InsertImage />
+                    <Separator />
+                    <InsertTable />
+                    <Separator />
+                    <InsertCodeBlock />
+                    <Separator />
+                    <div style={{ flexGrow: 1 }}></div>
+                    <Separator />
+                    <SelectDocument />
+                    <SetDiffSource setMdDiffContent={setMdDiffContent} />
+                    <ResetDocument />
+                    <ExportContent />
+                    <Separator />
+                    <div style={{ flexGrow: 1 }}></div>
+                </>
+              )
+            }
+          ]}
+        />
+      </div>
     </DiffSourceToggleWrapper>
   )
 }
