@@ -288,6 +288,9 @@ export default function MDXEditorWrapper() {
           diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: mdDiffContent }),
         ]}
         onChange={(md) => {
+          if (!mdContent) {
+            setMdDiffContent(md);
+          }
           setMdContent(md);
           localStorage.setItem('evoya-creator', JSON.stringify({
             content: md,
