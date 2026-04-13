@@ -1,12 +1,17 @@
-
+import { WidgetContext } from 'context';
 import { Plus } from 'lucide-react';
 import React, { useContext } from 'react';
 
-import { useAudio, useChatInteract, useChatSession } from '@chainlit/react-client';
+import {
+  useAudio,
+  useChatInteract,
+  useChatSession
+} from '@chainlit/react-client';
 
 import { Translator } from '@/components/i18n';
 import { Button } from '@/components/ui/button';
-import { WidgetContext } from 'context';
+
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   newSession?: (sessionUuid?: string) => void;
@@ -18,26 +23,31 @@ const NewChatButton = ({ newSession }: Props) => {
 
   const { endConversation, audioConnection } = useAudio();
   const isAudioOn = audioConnection === 'on';
+  const isMobile = useIsMobile();
 
   const handleClickOpen = async () => {
     localStorage.removeItem('session_token');
     document.cookie =
       'session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     window.dispatchEvent(new CustomEvent('copilot-new-session'));
-    
+
     if (isAudioOn) {
       endConversation();
     }
-    
+
     clear();
-    
+
     if (evoya?.reset) {
       return;
     }
 
     if (evoya?.getEvoyaAccessToken && evoya?.chat_uuid) {
       try {
-        const newAccessToken = await evoya.getEvoyaAccessToken(evoya.chat_uuid, undefined, {});
+        const newAccessToken = await evoya.getEvoyaAccessToken(
+          evoya.chat_uuid,
+          undefined,
+          {}
+        );
         if (newAccessToken) {
           localStorage.setItem('chainlit_token', newAccessToken);
           setAccessToken(newAccessToken);
@@ -56,10 +66,14 @@ const NewChatButton = ({ newSession }: Props) => {
         variant="outline"
         id="new-chat-button"
         onClick={handleClickOpen}
-        className="text-primary hover:text-primary border border-primary"
+        className="text-[#7b809a] border-[#7b809a] hover:bg-[#7b809a]/10"
       >
         <Plus className="w-4 h-4" />
-        <Translator path="components.molecules.newChatButton.newChat" />
+        {isMobile ? (
+          <Translator path="components.molecules.newChatButton.newChat" />
+        ) : (
+          <Translator path="navigation.newChat.button" />
+        )}
       </Button>
     </div>
   );

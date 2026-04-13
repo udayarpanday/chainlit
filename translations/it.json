@@ -14,7 +14,7 @@
         },
         "molecules": {
             "newChatButton": {
-                "newChat": "Nuova Chat",
+                "newChat": "Nuova",
                 "newChatSession": "Sessione"
             },
             "maximizeChatButton": {
@@ -509,5 +509,18 @@
         "success": {
             "saved": "Salvato con successo"
         }
+    },
+    "agentList": {
+        "title": "Elenco agenti",
+        "default": "Predefinito",
+        "edit_agent": "Modifica agente",
+        "set_default_agent": "Imposta come agente predefinito",
+        "remove_agent": "Rimuovi agente predefinito",
+        "open_test_chat": "Apri chat di test",
+        "all_agents": "Tutti gli agenti",
+        "no_agents": "Nessun agente trovato",
+        "recent": "Agenti recenti",
+        "no_recent": "Nessun agente recente trovato",
+        "search": "Cerca agenti..."
     }
 }
