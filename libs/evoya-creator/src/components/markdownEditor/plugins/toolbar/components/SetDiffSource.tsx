@@ -23,7 +23,7 @@ export const SetDiffSource: React.FC<{ setMdDiffContent: (md: string) => void }>
         setDiffSource();
       }}
     >
-      {iconComponentFor('difference')}
+      {iconComponentFor('arrow-right-from-line')}
     </ButtonWithTooltip>
   )
 }
