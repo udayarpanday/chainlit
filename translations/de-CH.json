@@ -14,7 +14,7 @@
         },
         "molecules": {
             "newChatButton": {
-                "newChat": "Neuer Chat",
+                "newChat": "Neu",
                 "newChatSession": "Sitzung"
             },
             "maximizeChatButton": {
@@ -502,7 +502,7 @@
             }
         },
         "newChat": {
-            "button": "Neuer Chat",
+            "button": "Neuer",
             "dialog": {
                 "title": "Neuen Chat erstellen",
                 "description": "Dadurch wird Ihr aktueller Chatverlauf gelöscht. Möchten Sie wirklich fortfahren?",
@@ -524,5 +524,18 @@
         "success": {
             "saved": "Erfolgreich gespeichert"
         }
+    },
+    "agentList": {
+        "title": "Agentenliste",
+        "default": "Standard",
+        "edit_agent": "Agent bearbeiten",
+        "set_default_agent": "Als Standard-Agent festlegen",
+        "remove_agent": "Standard-Agent entfernen",
+        "open_test_chat": "Test-Chat öffnen",
+        "all_agents": "Alle Agenten",
+        "no_agents": "Keine Agenten gefunden",
+        "recent": "Zuletzt verwendete Agenten",
+        "no_recent": "Keine zuletzt verwendeten Agenten gefunden",
+        "search": "Agenten suchen..."
     }
 }
