@@ -79,7 +79,6 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
   const firstInteraction = useRecoilValue(firstUserInteraction);
 
   const hasChatProfiles = !!config?.chatProfiles?.length;
-
   const [sessionUuid, setSessionUuid] = useState(evoya?.session_uuid ?? '');
   const [agents, setAgents] = useState<AgentListItem[]>([]);
   const [recentAgents, setRecentAgents] = useState<AgentListItem[]>([]);
