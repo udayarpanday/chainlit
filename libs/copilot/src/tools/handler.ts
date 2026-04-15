@@ -26,19 +26,11 @@ async function registerFrontendToolHandler(apiClient: ChainlitAPI, tools: ToolRe
       tool.handler
     );
   });
-
-  const specs = registry.getSpecs();
-
-  try {
-    await apiClient.post('/tools/register/', {specs});
-
-    window.addEventListener("chainlit-call-fn", (e) => {
-      const { name, args, callback } = e.detail;
-      toolHandler(name, args, callback);
-    });
-  } catch(_e) {
-    toast.error('Failed to register frontend tools');
-  }
+  
+  window.addEventListener("chainlit-call-fn", (e) => {
+    const { name, args, callback } = e.detail;
+    toolHandler(name, args, callback);
+  });
 }
 
 export default registerFrontendToolHandler;
