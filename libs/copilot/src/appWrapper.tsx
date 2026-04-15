@@ -2,13 +2,14 @@ import { makeApiClient } from 'api';
 import { useEffect, useState } from 'react';
 import { RecoilRoot } from 'recoil';
 import { IWidgetConfig } from 'types';
-import { EvoyaConfig } from './src/evoya/types';
+import { EvoyaConfig } from './evoya/types';
 
 import { i18nSetupLocalization } from '@chainlit/app/src/i18n';
 import { ChainlitContext } from '@chainlit/react-client';
 import { WidgetContext } from './context';
 
 import App from './app';
+import registerFrontendToolHandler from './tools/handler';
 
 i18nSetupLocalization();
 interface Props {
@@ -33,6 +34,7 @@ export default function AppWrapper({ widgetConfig, evoya }: Props) {
       window.cl_shadowRootElement.getRootNode().appendChild(linkEl);
     }
     setCustomThemeLoaded(true);
+    registerFrontendToolHandler(apiClient, evoya.frontendTools);
   }
 
   useEffect(() => {

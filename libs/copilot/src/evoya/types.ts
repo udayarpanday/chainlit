@@ -16,6 +16,7 @@ export interface EvoyaConfig {
   autoOpen?: EvoyaAutoOpenConfig;
   overlay?: boolean;
   speechToText:boolean;
+  frontendTools: ToolRegisterObj[];
 }
 
 export type EvoyaAutoOpenConfig = {
@@ -115,4 +116,34 @@ export interface SectionItem {
   isLocked: boolean;
 }
 
+export interface ToolRegistryInterface {
+  _tools: Map<string, ToolSpecBase>;
+}
+
+export type ToolSpecBase = {
+  spec: ToolSpec;
+  fn: (args: any) => any
+}
+
+export type ToolSpec = {
+  name: string;
+  description: string;
+  parameters: ToolSpecParameters;
+}
+
+export type ToolSpecParameters = {
+  type: string;
+  properties: Record<string, ToolSpecProperty>;
+  required: string[]
+}
+
+export type ToolSpecProperty = {
+  type: string;
+  description: string;
+  default?: any;
+}
+
+export type ToolRegisterObj = ToolSpec & {
+  handler: (args: any) => any
+}
 
