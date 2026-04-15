@@ -4,6 +4,7 @@ import {
   Clock3,
   EllipsisVertical,
   Search,
+  X,
   UserRound
 } from 'lucide-react';
 
@@ -203,19 +204,25 @@ export default function AgentList({
     setIsOpen(false);
   };
 
+  const closeAgentList = () => setIsOpen(false);
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <div className={cn('flex items-center gap-1.5', className)}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className="text-[#7b809a] border-[#7b809a] hover:bg-[#7b809a]/10"
+            className="border-primary text-primary hover:text-primary"
+            onClick={(event) => {
+              event.preventDefault();
+              setIsOpen((open) => !open);
+            }}
           >
             <UserRound className="h-4 w-4 text-primary" />
             <span className="md:max-w-[170px] max-w-0 md:block hidden truncate">
               {selectedAgent?.name ? truncateAgentName(selectedAgent.name,20) : ''}
             </span>
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            <ChevronDown className="h-4 w-4 text-primary" />
           </Button>
         </PopoverTrigger>
       </div>
@@ -224,33 +231,76 @@ export default function AgentList({
         side="bottom"
         align="start"
         sideOffset={8}
-        className="p-0 w-[850px] max-w-[95vw] border rounded-2xl overflow-visible z-[9999] max-md:fixed max-md:inset-0 max-md:w-screen max-md:max-w-none max-md:h-[100dvh] max-md:rounded-none"
+        className="z-[9999] w-[850px] max-w-[95vw] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-0 shadow-[0_20px_60px_rgba(15,23,42,0.16)] max-md:fixed max-md:inset-0 max-md:h-[100dvh] max-md:w-screen max-md:max-w-none max-md:rounded-none"
         onOpenAutoFocus={(event) => {
           event.preventDefault();
           searchInputRef.current?.focus();
         }}
       >
-        <div className="border-b p-2.5">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              ref={searchInputRef}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t('agentList.search')}
-              className="pl-9 h-10 rounded-xl"
-              autoFocus
-            />
+        <div className="border-b border-slate-200 bg-slate-50 px-3 py-2.5">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                ref={searchInputRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t('agentList.search')}
+                className="h-10 rounded-xl border-transparent bg-white/55 pl-9 pr-3 shadow-sm focus-visible:ring-1 focus-visible:ring-primary/20 focus-visible:border-transparent"
+                autoFocus
+              />
+            </div>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={closeAgentList}
+              className="hidden h-10 w-10 rounded-xl border-none bg-transparent text-black shadow-none hover:bg-transparent hover:text-black max-md:inline-flex"
+              aria-label={t('threadHistory.sidebar.actions.close')}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-[1.75fr_1fr] max-h-[560px] overflow-y-auto max-md:max-h-[calc(100dvh-62px)]">
-          <div className="p-3 space-y-4 md:border-r">
-            <div className="space-y-1">
-              <div className={cn(sectionTitleClassName, 'px-1')}>
-                <Translator path="agentList.all_agents" />
+        <div className="max-h-[560px] overflow-x-hidden overflow-y-auto max-md:max-h-[calc(100dvh-62px)] [scrollbar-color:rgba(148,163,184,0.8)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-0 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-slate-50 [&::-webkit-scrollbar-thumb]:bg-slate-300">
+          <div className="grid min-w-0 grid-cols-1 md:grid-cols-[1.75fr_1fr]">
+            <div className="space-y-4 p-3 md:border-r md:border-slate-200">
+              <div className="space-y-1">
+                <div className={cn(sectionTitleClassName, 'px-1')}>
+                  <Translator path="agentList.all_agents" />
+                </div>
+                {allAgents.map((agent) => (
+                  <AgentRow
+                    key={agent.id}
+                    agent={agent}
+                    selected={agent.id === selectedAgent?.id}
+                    showDefaultBadge
+                    onEditAgent={onEditAgent}
+                    onSetDefaultAgent={onSetDefaultAgent}
+                    onOpenTestChat={onOpenTestChat}
+                    onClick={() => handleSelect(agent)}
+                  />
+                ))}
+                {!allAgents.length ? (
+                  <p className="px-2 py-4 text-sm text-muted-foreground">
+                    <Translator path="agentList.no_agents" />
+                  </p>
+                ) : null}
               </div>
-              {allAgents.map((agent) => (
+            </div>
+
+            <div className="space-y-1 p-3">
+              <div
+                className={cn(
+                  sectionTitleClassName,
+                  'flex items-center gap-2 px-1'
+                )}
+              >
+                <Clock3 className="h-3.5 w-3.5" />
+                <Translator path="agentList.recent" />
+              </div>
+              {recentList.map((agent) => (
                 <AgentRow
                   key={agent.id}
                   agent={agent}
@@ -262,36 +312,12 @@ export default function AgentList({
                   onClick={() => handleSelect(agent)}
                 />
               ))}
-              {!allAgents.length ? (
+              {!recentList.length ? (
                 <p className="px-2 py-4 text-sm text-muted-foreground">
-                  <Translator path="agentList.no_agents" />
+                  <Translator path="agentList.no_recent" />
                 </p>
               ) : null}
             </div>
-          </div>
-
-          <div className="p-3 space-y-1">
-            <div className={cn(sectionTitleClassName, 'flex items-center gap-2 px-1')}>
-              <Clock3 className="h-3.5 w-3.5" />
-              <Translator path="agentList.recent" />
-            </div>
-            {recentList.map((agent) => (
-              <AgentRow
-                key={agent.id}
-                agent={agent}
-                selected={agent.id === selectedAgent?.id}
-                showDefaultBadge
-                onEditAgent={onEditAgent}
-                onSetDefaultAgent={onSetDefaultAgent}
-                onOpenTestChat={onOpenTestChat}
-                onClick={() => handleSelect(agent)}
-              />
-            ))}
-            {!recentList.length ? (
-              <p className="px-2 py-4 text-sm text-muted-foreground">
-                <Translator path="agentList.no_recent" />
-              </p>
-            ) : null}
           </div>
         </div>
       </PopoverContent>
