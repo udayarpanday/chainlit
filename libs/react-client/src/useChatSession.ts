@@ -248,7 +248,6 @@ const useChatSession = () => {
           let newOutput = message.output;
           // @ts-expect-error is not a valid prop
           if (message.type === 'assistant_message' && message.output !== "" && window.evoyaCreatorEnabled) {
-            console.log(oldMessages);
             const directParent = findMessageById(oldMessages, message.parentId || '');
             let messageParent = directParent;
             if (directParent?.parentId) {
