@@ -525,6 +525,49 @@
             "saved": "Saved successfully"
         }
     },
+    "evoyaFiles": {
+        "actions": {
+            "attachments": {
+                "label": "Cloud Storage",
+                "description": "Platform, OneDrive, etc.",
+                "title": "Attach Files"
+            },
+            "upload": {
+                "label": "Upload from Computer",
+                "description": "Browse local files"
+            },
+            "clear": {
+                "label": "Clear"
+            },
+            "download": {
+                "label": "Download"
+            },
+            "rename": {
+                "label": "Rename",
+                "title": "Rename File",
+                "description": "New Name"
+            },
+            "move": {
+                "label": "Move to",
+                "title": "Move File",
+                "description": "Select destination"
+            },
+            "delete": {
+                "label": "Delete",
+                "title": "Delete File",
+                "description": "Are you sure you want to delete this file?"
+            }
+        },
+        "common": {
+            "selected": "selected"
+        },
+        "headers": {
+            "name": "Name",
+            "owner": "Owner",
+            "modified": "Modified",
+            "size": "Size"
+        }
+    },
     "agentList": {
         "title": "Agent List",
         "default": "Default",

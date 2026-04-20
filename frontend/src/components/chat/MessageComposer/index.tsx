@@ -20,12 +20,14 @@ import { Button } from '@/components/ui/button';
 
 import { chatSettingsOpenState } from '@/state/project';
 import { IAttachment, attachmentsState } from 'state/chat';
+import { evoyaAttachmentsState, EvoyaAttachment } from '@/state/evoya';
 
 import { Attachments } from './Attachments';
 import CommandButton from './CommandButton';
 import Input, { InputMethods } from './Input';
 import SubmitButton from './SubmitButton';
 import UploadButton from './UploadButton';
+import UploadButtonDropdown from './UploadButtonDropdown';
 
 interface Props {
   fileSpec: FileSpec;
@@ -49,6 +51,7 @@ export default function MessageComposer({
   const [selectedAgents, setSelectedAgents] = useState<any[]>([]);
   const setChatSettingsOpen = useSetRecoilState(chatSettingsOpenState);
   const [attachments, setAttachments] = useRecoilState(attachmentsState);
+  const [evoyaAttachments, setEvoyaAttachments] = useRecoilState(evoyaAttachmentsState);
   const { t } = useTranslation();
 
   const { user } = useAuth();
@@ -77,6 +80,7 @@ export default function MessageComposer({
     async (
       msg: string,
       attachments?: IAttachment[],
+      evoyaAttachments?: EvoyaAttachment[],
       selectedCommand?: string,
       selectedAgents?: string[]
     ) => {
@@ -96,6 +100,9 @@ export default function MessageComposer({
         ?.filter((a) => !!a.serverId)
         .map((a) => ({ id: a.serverId! }));
 
+      const evoyaReferences = evoyaAttachments
+        ?.map((a) => ({ path: a.path }));
+
       if (setAutoScroll) {
         setAutoScroll(true);
       }
@@ -105,7 +112,7 @@ export default function MessageComposer({
         // @ts-expect-error is not a valid prop
         window.sendCreatorMessage(message);
       } else {
-        sendMessage(message, fileReferences);
+        sendMessage(message, fileReferences, evoyaReferences);
       }
     },
     [user, sendMessage]
@@ -135,7 +142,7 @@ export default function MessageComposer({
         if (askUser) {
           onReply(text);
         } else {
-          onSubmit(text, attachments);
+          onSubmit(text, attachments, evoyaAttachments);
         }
         setAttachments([]);
         setValue('');
@@ -147,7 +154,7 @@ export default function MessageComposer({
   };
 
   const submitMessage = useCallback(() => {
-    if (disabled || (value === '' && attachments.length === 0)) {
+    if (disabled || (value === '' && attachments.length === 0 && evoyaAttachments.length === 0)) {
       return;
     }
     
@@ -157,9 +164,10 @@ export default function MessageComposer({
     if (askUser) {
       onReply(fullContent);
     } else {
-      onSubmit(fullContent, attachments, selectedCommand?.id, selectedAgents);
+      onSubmit(fullContent, attachments, evoyaAttachments, selectedCommand?.id, selectedAgents);
     }
     setAttachments([]);
+    setEvoyaAttachments([]);
     setSelectedAgents([]);
     inputRef.current?.reset();
   }, [
@@ -168,6 +176,7 @@ export default function MessageComposer({
     setValue,
     askUser,
     attachments,
+    evoyaAttachments,
     selectedCommand,
     selectedAgents,
     setAttachments,
@@ -183,7 +192,7 @@ export default function MessageComposer({
           : 'rounded-full'
       } flex flex-col`}
     >
-      {attachments.length > 0 ? (
+      {(attachments.length > 0 || evoyaAttachments.length > 0) ? (
         <div className="mb-1">
           <Attachments />
         </div>
@@ -206,12 +215,22 @@ export default function MessageComposer({
       )}
       <div className="flex items-center justify-between">
         <div className="flex items-center -ml-1.5">
-          <UploadButton
-            disabled={disabled}
-            fileSpec={fileSpec}
-            onFileUploadError={onFileUploadError}
-            onFileUpload={onFileUpload}
-          />
+          {(evoya && evoya?.type != 'dashboard') && (
+            <UploadButton
+              disabled={disabled}
+              fileSpec={fileSpec}
+              onFileUploadError={onFileUploadError}
+              onFileUpload={onFileUpload}
+            />
+          )}
+          {(evoya && evoya?.type == 'dashboard') && (
+            <UploadButtonDropdown
+              disabled={disabled}
+              fileSpec={fileSpec}
+              onFileUploadError={onFileUploadError}
+              onFileUpload={onFileUpload}
+            />
+          )}
           {evoya && evoya?.type == 'dashboard' && (
             <CommandButton
               disabled={disabled}

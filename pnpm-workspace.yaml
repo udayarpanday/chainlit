@@ -3,4 +3,5 @@ packages:
   - libs/react-components/
   - libs/react-client/
   - 'libs/evoya-creator/'
+  - libs/evoya-files/
   - libs/copilot/

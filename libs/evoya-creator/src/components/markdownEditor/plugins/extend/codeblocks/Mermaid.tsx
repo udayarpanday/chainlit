@@ -100,3 +100,40 @@ export const MermaidCodeEditorDescriptor: CodeBlockEditorDescriptor = {
     );
   }
 }
+
+export const SimpleMermaidCodeEditorDescriptor: CodeBlockEditorDescriptor = {
+  match: (language, _meta) => {
+    return language === 'mermaid' || language == 'mmd'
+  },
+  priority: 0,
+  Editor: (props) => {
+    const iconComponentFor = useCellValue(iconComponentFor$);
+    const [previewMode, setPerviewMode] = useState(true);
+
+    return (
+      <div
+        onKeyDown={(e) => {
+          e.nativeEvent.stopImmediatePropagation()
+        }}
+      >
+        <div className="mermaidBlockWrapper">
+          <div className="mermaidBlockAction" onClick={() => setPerviewMode(!previewMode)}>
+            {previewMode ? iconComponentFor('code') : iconComponentFor('eye')}
+          </div>
+          {!previewMode &&
+            <div className="mermaidEditorWrapper">
+              <CodeMirrorEditor {...props} />
+            </div>
+          }
+          {previewMode &&
+            <div className="mermaidPreviewWrapper">
+              <div>
+                <MermaidPreview code={props.code} />
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    );
+  }
+}

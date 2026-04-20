@@ -2,7 +2,7 @@
 const px = (num) => `${num * 4}px`;
 export default {
     darkMode: ["class"],
-    content: ["./src/**/*.{ts,tsx,js,jsx}", "../../frontend/src/**/*.{ts,tsx,js,jsx}", "../evoya-files/src/**/*.{ts,tsx,js,jsx}"],
+    content: ["./src/**/*.{ts,tsx,js,jsx}", "../../frontend/src/**/*.{ts,tsx,js,jsx}"],
   	theme: {
 		spacing: {
 			...Object.fromEntries(Array.from({ length: 20 }, (_, i) => [`${i}`, px(i)])), // Basic spacing from 0 to 19

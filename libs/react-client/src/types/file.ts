@@ -14,6 +14,9 @@ export interface ActionSpec {
 export interface IFileRef {
   id: string;
 }
+export interface IEvoyaFileRef {
+  path: string;
+}
 
 export interface IAsk {
   callback: (payload: IStep | IFileRef[] | IAction) => void;
