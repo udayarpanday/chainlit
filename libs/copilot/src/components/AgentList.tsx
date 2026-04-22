@@ -38,6 +38,8 @@ export interface AgentListItem {
   isPinned?: boolean;
   isRecent?: boolean;
   isDefault?: boolean;
+  sessionUuid?: string;
+  isFavorite?: boolean;
 }
 
 interface AgentListProps {
@@ -178,8 +180,11 @@ export default function AgentList({
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const selectedAgent = useMemo(
-    () => agents.find((agent) => agent.id === selectedAgentId) ?? agents[0],
-    [agents, selectedAgentId]
+    () =>
+      agents.find((agent) => agent.id === selectedAgentId) ??
+      recentAgents?.find((agent) => agent.id === selectedAgentId) ??
+      agents[0],
+    [agents, recentAgents, selectedAgentId]
   );
 
   const normalizedQuery = query.trim().toLowerCase();

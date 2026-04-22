@@ -3,6 +3,7 @@ import { DefaultValue, atom, selector } from 'recoil';
 import { Socket } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 
+import { IAgents } from './types/agents';
 import { ICommand } from './types/command';
 
 import {
@@ -19,7 +20,6 @@ import {
 } from './types';
 import { groupByDate } from './utils/group';
 import { WavRecorder, WavStreamPlayer } from './wavtools';
-import { IAgents } from './types/agents';
 
 export interface ISession {
   socket: Socket;
@@ -75,7 +75,14 @@ export const commandsState = atom<ICommand[]>({
   default: []
 });
 
-export const promptState = atom<{context_prompt:string,is_superuser:boolean | undefined} | undefined>({
+export const promptState = atom<
+  | {
+      context_prompt: string;
+      context_prompt_exact_sent_to_llm?: unknown;
+      is_superuser: boolean | undefined;
+    }
+  | undefined
+>({
   key: 'Context',
   default: undefined
 });

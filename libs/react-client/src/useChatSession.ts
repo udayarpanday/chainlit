@@ -47,16 +47,16 @@ import {
 import {
   addMessage,
   deleteMessageById,
-  updateMessageById,
-  updateMessageContentById,
   findMessageById,
+  updateMessageById,
+  updateMessageContentById
 } from 'src/utils/message';
 
+import { IAgents } from './types/agents';
 import { OutputAudioChunk } from './types/audio';
 
 import { ChainlitContext } from './context';
 import type { IToken } from './useChatData';
-import { IAgents } from './types/agents';
 
 const useChatSession = () => {
   const client = useContext(ChainlitContext);
@@ -122,7 +122,7 @@ const useChatSession = () => {
           console.error(`Failed to set sticky session cookie: ${err}`);
         }
       }
-      
+
       const socket = io(uri, {
         path,
         withCredentials: true,
@@ -341,7 +341,6 @@ const useChatSession = () => {
       });
 
       socket.on('agents', (agents: IAgents[]) => {
-        console.log("Received agents prompt:", agents);
         setAgents(agents);
       });
 
@@ -351,11 +350,18 @@ const useChatSession = () => {
         });
       });
 
-      socket.on('context_prompt', (context: { context_prompt: string, is_superuser: boolean | undefined }) => {
-        if (context) {
-          setContextPrompt(context)
+      socket.on(
+        'context_prompt',
+        (context: {
+          context_prompt: string;
+          context_prompt_exact_sent_to_llm?: unknown;
+          is_superuser: boolean | undefined;
+        }) => {
+          if (context) {
+            setContextPrompt(context);
+          }
         }
-      });
+      );
 
       socket.on('set_sidebar_elements', (elements: IMessageElement[]) => {
         if (!elements.length) {
