@@ -31,6 +31,26 @@
                 "copyCreateButton": "Link erstellen",
                 "copyUpdateButton": "Aktualisieren und Link kopieren",
                 "revokeLinkButton": "Link widerrufen",
+                "generateShareableLinkButton": "Teilbaren Link erstellen",
+                "dialog": {
+                    "title": "Diesen Chat teilen",
+                    "description": "Legen Sie fest, wer auf diese Unterhaltung zugreifen kann und wie."
+                },
+                "access": {
+                    "title": "Wer kann auf diesen Link zugreifen?",
+                    "public": "Öffentlich",
+                    "organization": "Organisation",
+                    "publicDescription": "Jeder mit dem Link kann auf diesen Chat zugreifen.",
+                    "organizationDescription": "Nur Mitglieder Ihrer Organisation mit dem Link können auf diesen Chat zugreifen."
+                },
+                "continuation": {
+                    "title": "Fortsetzung erlauben",
+                    "description": "Empfänger können diese Unterhaltung kopieren und mit ihrem eigenen Agenten fortsetzen"
+                },
+                "includeNewMessages": {
+                    "title": "Neue Nachrichten einschließen",
+                    "description": "Zukünftige Nachrichten in diesem Chat werden eingeschlossen, wenn der Empfänger den Link öffnet"
+                },
                 "types": {
                     "static": "Erstellen Sie einen Link, um eine Kopie dieses Chats zu teilen. Der Link ist gültig für:",
                     "dynamic": "Ermöglicht laufenden Nur-Lesen-Zugriff auf zukünftige Nachrichten."
@@ -44,6 +64,7 @@
                 },
                 "expire": {
                     "expiresIn": "Ablauf",
+                    "expiresAfter": "Link läuft ab nach",
                     "expires": "läuft ab",
                     "1day": "in einem Tag",
                     "7days": "7 Tage",
