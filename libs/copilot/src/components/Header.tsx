@@ -256,7 +256,7 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
       window.removeEventListener('reload-chat-sidebar', onReload);
       window.removeEventListener('agent-changed', onAgentChanged as EventListener);
     };
-  }, [evoya?.type, agents, optimisticDefaultAgentId]);
+  }, [evoya?.type, optimisticDefaultAgentId]);
 
   const handleAgentSelect = (agent: AgentListItem) => {
     setSelectedAgentId(agent.id);

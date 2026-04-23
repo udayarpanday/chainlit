@@ -11,30 +11,7 @@ import { firstUserInteraction, evoyaCreatorEnabledState } from '@chainlit/react-
 export default function WidgetEmbedded() {
   const { evoya } = useContext(WidgetContext)
   const [expanded, setExpanded] = useState(evoya?.overlay ?? false);
-  const [visualViewportHeight, setVisualViewportHeight] = useState(window.innerHeight);
-  const [visualViewportOffsetTop, setVisualViewportOffsetTop] = useState(0);
   const setCreatorEnabled = useSetRecoilState(evoyaCreatorEnabledState);
-
-  const viewportHandler = () => {
-    if (window.visualViewport) {
-      setVisualViewportHeight(window.visualViewport.height);
-      setVisualViewportOffsetTop(window.visualViewport.offsetTop);
-    }
-  };
-
-  useEffect(() => {
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", viewportHandler);
-      window.visualViewport.addEventListener("scroll", viewportHandler);
-    }
-
-    return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener("resize", viewportHandler);
-        window.visualViewport.removeEventListener("scroll", viewportHandler);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (evoya?.type === 'dashboard') {
