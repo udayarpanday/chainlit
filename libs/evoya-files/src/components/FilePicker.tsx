@@ -29,11 +29,12 @@ type Props = {
   initialPath: string;
   showActions?: boolean;
   handleItemClick?: (item: FilePickerItemType) => void;
-  selectedItemsChange: (items: FilePickerItemType[]) => void;
+  selectedItemsChange?: (items: FilePickerItemType[]) => void;
   hasUpload?: boolean;
   multiselect?: boolean;
   attachmentMode?: boolean;
   destinationMode?: boolean;
+  singleMode?: boolean;
 }
 const dummyPathItems: PathItem[] = [
   {
@@ -94,7 +95,7 @@ const dummyItems: FilePickerItemType[] = [
     modified: new Date(),
     created: new Date(),
     showActions: true,
-    path: '/path/to/file/README.md',
+    path: '/static/test-docs/README.md',
     size: 2048,
     mime: 'text/markdown'
   },
@@ -151,8 +152,9 @@ export default function FilePicker({
   multiselect = false,
   attachmentMode = false,
   destinationMode = false,
+  singleMode = false,
   handleItemClick = () => {},
-  selectedItemsChange,
+  selectedItemsChange = () => {},
 }: Props) {
   const { apiBaseUrl } = useContext(FilePickerContext);
   const [currentPath, setCurrentPath] = useState(initialPath);
@@ -259,11 +261,13 @@ export default function FilePicker({
       </div>
       <div className={cn("rounded-lg border bg-white py-2 px-4", isDragActive && hasUpload ? 'bg-primary/20' : '')} {...(hasUpload ? getRootProps() : {})}>
         {hasUpload && <input {...getInputProps()} />}
-        <div className={cn("grid", showActions ? 'grid-cols-[max-content_auto_max-content_max-content_max-content_max-content]' : 'grid-cols-[max-content_auto_max-content_max-content_max-content]')}>
+        <div className={cn("grid", showActions ? 'grid-cols-[max-content_auto_max-content_max-content_max-content_max-content]' : (singleMode ? 'grid-cols-[auto_max-content_max-content_max-content]' : 'grid-cols-[max-content_auto_max-content_max-content_max-content]'))}>
           <div className="contents text-xs">
-            <div className="flex items-center p-2">
-              {multiselect && <Checkbox checked={selectedElements.length === pathData.items.length} onCheckedChange={onCheckedChange} />}
-            </div>
+            {!singleMode && 
+              <div className="flex items-center p-2">
+                {multiselect && <Checkbox checked={selectedElements.length === pathData.items.length} onCheckedChange={onCheckedChange} />}
+              </div>
+            }
             <div className="p-2 flex items-center text-gray-400 font-semibold">
               <Translator path="evoyaFiles.headers.name" />
             </div>
@@ -285,11 +289,12 @@ export default function FilePicker({
               setSelectedState={(value) => setItemSelected(item.id, value)}
               onClick={() => itemClick(item)}
               showActions={showActions}
+              singleMode={singleMode}
             />
           ))}
         </div>
       </div>
-      {(selectedElements.length > 0 || attachmentMode) && !destinationMode && (
+      {(selectedElements.length > 0 || attachmentMode) && !destinationMode && !singleMode && (
         <div className="rounded-lg border bg-white flex justify-between items-center mt-4 pl-4 pr-1 py-1">
           <div className="text-sm">{selectedElements.length} <Translator path="evoyaFiles.common.selected" /></div>
           <div className="flex items-center gap-1">

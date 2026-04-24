@@ -532,6 +532,9 @@
                 "description": "Platform, OneDrive, etc.",
                 "title": "Attach Files"
             },
+            "open": {
+                "title": "Open file"
+            },
             "upload": {
                 "label": "Upload from Computer",
                 "description": "Browse local files"

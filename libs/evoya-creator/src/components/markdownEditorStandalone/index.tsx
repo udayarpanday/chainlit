@@ -3,8 +3,6 @@ import {
   useRef,
 } from 'react';
 
-import Box from '@mui/material/Box';
-
 import {
   MDXEditor,
   diffSourcePlugin,
@@ -49,16 +47,15 @@ import EditorToolbar from './toolbar';
 export default function MDXEditorWrapper({ content, onChange }: { content: string; onChange: (value: string) => void; }) {
   const [mdContent, setMdContent] = useState(content);
   const mdxEditorRef = useRef<MDXEditorMethods>(null);
-  const containerRef = useRef<HTMLElement>(null);
 
   return (
-    <Box
-      ref={containerRef}
-      sx={{
+    <div
+      style={{
         overflow: 'auto',
         height: '100%',
         cursor: 'text',
         minHeight: '300px',
+        maxHeight: '600px',
       }}
       onClick={() => mdxEditorRef.current?.focus()}
     >
@@ -84,7 +81,7 @@ export default function MDXEditorWrapper({ content, onChange }: { content: strin
           onChange(md);
         }}
       />
-    </Box>
+    </div>
   );
 }
 

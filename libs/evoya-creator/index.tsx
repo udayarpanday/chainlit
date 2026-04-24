@@ -1,5 +1,3 @@
-import createCache from '@emotion/cache';
-import { CacheProvider } from '@emotion/react';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
@@ -9,14 +7,23 @@ import {
   SelectionContext,
 } from './src/types';
 
+import sonnercss from '../copilot/sonner.css?inline';
+import tailwindcss from '../copilot/src/index.css?inline';
+
 import type { IStep } from 'client-types/';
+
+import themejson from '../evoya-files/theme.json';
 
 const id = 'evoya-md-editor';
 let root: ReactDOM.Root | null = null;
 
 declare global {
   interface Window {
-    // cl_shadowRootElement: HTMLDivElement;
+    mdx_shadowRootElement: HTMLDivElement;
+    theme?: {
+      light: Record<string, string>;
+      dark: Record<string, string>;
+    };
     mountEvoyaCreatorWidget: (config: EvoyaCreatorConfig) => void;
     unmountEvoyaCreatorWidget: () => void;
     openEvoyaCreator: (message: IStep, config: any) => void;
@@ -33,18 +40,22 @@ window.mountEvoyaCreatorWidget = (config: EvoyaCreatorConfig) => {
   config.container.appendChild(container);
   container.style.height = '100%';
 
-  const cache = createCache({
-    key: 'css',
-    prepend: true,
-    container: container
-  });
+  window.mdx_shadowRootElement = container;
+  
+  window.theme = themejson.variables;
+
+  const tailwindStyles = document.createElement('style');
+  tailwindStyles.textContent = tailwindcss.toString();
+  config.container.appendChild(tailwindStyles);
+
+  const sonnerStyles = document.createElement('style');
+  sonnerStyles.textContent = sonnercss.toString();
+  config.container.appendChild(sonnerStyles);
 
   root = ReactDOM.createRoot(container);
   root.render(
     <React.StrictMode>
-      <CacheProvider value={cache}>
-        <AppWrapper config={config} />
-      </CacheProvider>
+      <AppWrapper config={config} />
     </React.StrictMode>
   );
 };

@@ -16,7 +16,7 @@
 }
 
 @layer base {
-  #shadow-root-container {
+  #shadow-root-container, #evoya-creator-container {
     --font-sans: 'Inter', sans-serif;
     --font-mono: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
     --background: 0 0% 100%;

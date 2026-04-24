@@ -7,13 +7,14 @@ import {
 export interface EvoyaCreatorConfig {
   enabled: boolean;
   container: HTMLElement;
+  theme?: 'light' | 'dark';
+  apiBaseUrl?: string;
 }
 
 export type SelectionContext = {
   lexical: RangeSelection | NodeSelection | null;
   markdown: string | null;
   selectionType: 'range' | 'node' | 'caret' | 'document' | 'codeblock' | null;
-  insertType: 'after' | 'before' | 'replace' | null;
   rectangles?: Array<DOMRect>;
   rect?: any;
   scrollOffset?: number;
@@ -32,7 +33,6 @@ export const selectionContextDefaultData: SelectionContext = {
   lexical: null,
   markdown: null,
   selectionType: null,
-  insertType: null
 }
 
 export interface ImportPoint {

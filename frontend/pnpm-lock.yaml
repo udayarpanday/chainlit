@@ -30,6 +30,9 @@ importers:
       '@chainlit/react-client':
         specifier: workspace:^
         version: link:../libs/react-client
+      '@evoya/file-picker':
+        specifier: workspace:^
+        version: link:../libs/evoya-files
       '@hookform/resolvers':
         specifier: ^3.9.1
         version: 3.9.1(react-hook-form@7.54.2(react@18.3.1))

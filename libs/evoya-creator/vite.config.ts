@@ -4,6 +4,9 @@ import { defineConfig } from 'vite';
 import svgr from 'vite-plugin-svgr';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import { sentryVitePlugin } from "@sentry/vite-plugin";
+import tailwindcss from 'tailwindcss';
+import autoprefixer from 'autoprefixer';
+import pps from 'postcss-prefix-selector';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -22,6 +25,21 @@ export default defineConfig({
     //   authToken: process.env.REACT_APP_SOURCE_MAP_AUTH
     // }),
   ],
+  css: {
+    postcss: {
+      plugins: [
+        tailwindcss({
+          config: '../copilot/tailwind.config.js'
+        }),
+        autoprefixer(),
+        pps({
+          prefix: '#evoya-creator-container',
+          ignoreFiles: ['markdownEditor/custom.css', 'editor/style.css', '@mdxeditor/editor/dist/style.css'],
+          exclude: ['*', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'strong', 'b', 'ul', 'ol', 'li', 'button'],
+        }),
+      ]
+    }
+  },
   build: {
     sourcemap: true,
     rollupOptions: {
@@ -41,7 +59,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      react: path.resolve(__dirname, './node_modules/react'),
       "@mdxeditor/editor/dist/styles/ui.module.css.js": path.resolve(__dirname, "./node_modules/@mdxeditor/editor/dist/styles/ui.module.css.js"),
       "./TableEditor.js": path.resolve(__dirname, "./src/components/markdownEditor/plugins/extend/table/TableEditorWrapper.tsx"),
       "SourceTableEditor": path.resolve(__dirname, "./node_modules/@mdxeditor/editor/dist/plugins/table/TableEditor.js"),

@@ -3,25 +3,25 @@ import {
   useMemo,
 } from 'react';
 
-import Box from '@mui/material/Box';
-
 import useEvoyaCreator from '@/hooks/useEvoyaCreator';
 import MarkdownEditor from './markdownEditor';
 
 import CreatorHeader from './CreatorHeader';
-import { Height } from '@mui/icons-material';
 
 export default function CreatorFrame() {
   const {
     active,
     creatorType,
-    openCreatorWithContent
+    openCreatorWithContent,
+    openCreatorWithFile,
   } = useEvoyaCreator();
 
   useEffect(() => {
     // @ts-expect-error is not a valid prop
     window.openEvoyaCreator = openCreatorWithContent;
-  }, [openCreatorWithContent]);
+    // @ts-expect-error is not a valid prop
+    window.openEvoyaCreatorWithFile = openCreatorWithFile;
+  }, [openCreatorWithContent, openCreatorWithFile]);
 
   const CreatorRenderer = useMemo(() => {
     switch(creatorType.toLowerCase()) {
@@ -38,16 +38,9 @@ export default function CreatorFrame() {
   }
 
   return (
-    <Box
-      sx={{
-        overflow: 'hidden',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column'
-      }}
-    >
+    <div className="overflow-hidden h-full flex flex-col">
       <CreatorHeader />
       {CreatorRenderer}
-    </Box>
+    </div>
   );
 }

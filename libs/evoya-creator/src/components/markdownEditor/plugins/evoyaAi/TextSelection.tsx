@@ -29,12 +29,9 @@ export const TextSelection = () => {
   const [scrollComp, setScrollComp] = useState(0);
 
   useEffect(() => {
-    console.log(editorContainerRef);
     if (editorContainerRef) {
       const updateScrollOffset = () => {
         if (editorContainerRef) {
-          console.log(editorContainerRef.current?.scrollTop);
-          // realm.pub(scrollOffset$, editorContainerRef.current?.scrollTop);
           setScrollComp(editorContainerRef.current?.scrollTop ?? 0);
         }
       }
@@ -45,7 +42,6 @@ export const TextSelection = () => {
   }, []);
 
   console.log('evoyaAiState', evoyaAiState);
-  console.log('isFocus', isFocus);
   if (isFocus) return null;
   if (!evoyaAiState) return null;
 
@@ -56,19 +52,6 @@ export const TextSelection = () => {
 
   return (
     <>
-      {/* {(evoyaAiState.rectangles ?? []).map((rect) => (
-        <div
-          style={{
-            position: 'fixed',
-            backgroundColor: 'red',
-            zIndex: '-1',
-            top: `${rect?.top ?? 0}px`,
-            left: `${rect?.left ?? 0}px`,
-            width: `${rect?.width ?? 0}px`,
-            height: `${rect?.height ?? 0}px`
-          }}
-        ></div>
-      ))} */}
       {(evoyaAiState.rectangles ?? []).map((rect: DOMRect) => (
         <div
           style={{

@@ -55,6 +55,7 @@ type Props = {
   onClick?: () => void;
   showActions?: boolean;
   hasUpload?: boolean;
+  singleMode?: boolean;
 }
 
 export default function FilePickerItem({
@@ -64,6 +65,7 @@ export default function FilePickerItem({
   setSelectedState,
   onClick = () => {},
   hasUpload = false,
+  singleMode = false,
 }: Props) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -139,9 +141,11 @@ export default function FilePickerItem({
   return (
     <div className="contents text-sm group" {...(!isFile && hasUpload ? getRootProps() : {})}>
       {!isFile && hasUpload && <input {...getInputProps()} />}
-      <div className="p-2 border-t flex items-center group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20">
-        <Checkbox checked={selected} onCheckedChange={(val: boolean) => setSelectedState(val)} />
-      </div>
+      {!singleMode &&
+        <div className="p-2 border-t flex items-center group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20">
+          <Checkbox checked={selected} onCheckedChange={(val: boolean) => setSelectedState(val)} />
+        </div>
+      }
       <div
         className={cn(
           "p-2 border-t flex items-center group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20 cursor-pointer overflow-hidden",

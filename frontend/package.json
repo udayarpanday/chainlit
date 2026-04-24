@@ -123,6 +123,7 @@
     }
   },
   "peerDependencies": {
-    "@chainlit/copilot": "workspace:^"
+    "@chainlit/copilot": "workspace:^",
+    "@evoya/file-picker": "workspace:^"
   }
 }

@@ -5,12 +5,6 @@ import {
   useCallback,
 } from 'react';
 import { createPortal } from 'react-dom';
-import createCache from "@emotion/cache";
-import { CacheProvider } from '@emotion/react';
-
-import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
-import Avatar from '@mui/material/Avatar';
 
 import {
   Realm,
@@ -80,7 +74,6 @@ import {
   evoyaCodePlugin,
 } from './plugins/extend/codeblocks';
 
-import EvoyaLogo from '@/svg/EvoyaLogo';
 import HandPointer from '@/svg/HandPointer';
 import { IStep } from 'client-types/*';
 
@@ -93,13 +86,18 @@ import {
   getSvgIcon,
 } from './utils/icons';
 
+import { Badge } from '@chainlit/app/src/components/ui/badge';
+import { Button } from '@chainlit/app/src/components/ui/button';
+import { X } from 'lucide-react';
+
 export default function MDXEditorWrapper() {
   const {
     creatorType,
     creatorContent,
     setCreatorContent,
   } = useEvoyaCreator();
-  const [mdContent, setMdContent] = useState(creatorContent);
+  // const [mdContent, setMdContent] = useState(creatorContent);
+  const [isReadOnly, setIsReadOnly] = useState(false);
   const [mdDiffContent, setMdDiffContent] = useState(creatorContent);
   const [editorSelectionContext, setEditorSelectionContext] = useState<SelectionContext | null>(null);
   const [editorSelectionMessageContext, setEditorSelectionMessageContext] = useState<SelectionContext | null>(null);
@@ -108,17 +106,10 @@ export default function MDXEditorWrapper() {
   const containerRef = useRef<HTMLElement>(null);
 
   const handleRemoveContext = useCallback(() => {
-    // setEditorSelectionContext({
-    //   lexical: null,
-    //   markdown: null,
-    //   selectionType: 'document',
-    //   insertType: 'replace'
-    // });
     setEditorSelectionContext({
       lexical: null,
       markdown: null,
       selectionType: null,
-      insertType: null
     });
     mdxRealm?.pub(evoyaAiState$, null);
   }, [mdxRealm]);
@@ -126,7 +117,6 @@ export default function MDXEditorWrapper() {
   useEffect(() => {
     // @ts-expect-error is not a valid prop
     window.getEvoyaCreatorContent = mdxEditorRef.current.getMarkdown;
-    console.log(mdxEditorRef.current);
 
     return () => {
       // @ts-expect-error is not a valid prop
@@ -137,63 +127,27 @@ export default function MDXEditorWrapper() {
   useEffect(() => {
     // @ts-expect-error is not a valid prop
     window.sendCreatorMessage = (message) => {
-      // const creatorMessage = {
-      //   ...message,
-      //   metadata: {
-      //     canvas: {
-      //       content: mdContent,
-      //       selection: editorSelectionMessageContext?.markdown
-      //     }
-      //   }
-      // }
-
-      const newMsg = messageBuilder(editorSelectionContext, message, mdContent);
+      const newMsg = messageBuilder(editorSelectionContext, message, creatorContent);
 
       // @ts-expect-error is not a valid prop
       window.sendChainlitMessage(newMsg);
-      // window.sendChainlitMessage({
-      //   ...message,
-      //   output: newMsg
-      // });
 
       console.log('context', editorSelectionContext);
       setEditorSelectionMessageContext(editorSelectionContext);
     }
-
-    // @ts-expect-error is not a valid prop
-    window.testCreatorUpdate = (message) => {
-      const parsedMessage = messageParser(message.output);
-      // mdxRealm?.pub(replaceSelectionContent$, {message: message.output, context: editorSelectionContext});
-      mdxRealm?.pub(replaceSelectionContent$, {message: parsedMessage, context: editorSelectionContext});
-    }
-
-  }, [mdxRealm, mdContent, editorSelectionContext]);
-
-  /*useEffect(() => {
-    // @ts-expect-error is not a valid prop
-    window.highlightSelection = () => {
-      // mdxRealm?.pub(highlightSelectionContent$, editorSelectionContext);
-    }
-  }, [mdxRealm, editorSelectionContext]);*/
+  }, [creatorContent, editorSelectionContext]);
 
   useEffect(() => {
     // @ts-expect-error is not a valid prop
-    window.updateEvoyaCreator = (message: IStep, parent: any) => {
-      console.log(message, parent);
-      console.log(message.output);
-      console.log(editorSelectionMessageContext);
-      const parsedMessage = messageParser(message.output);
-      console.log(parsedMessage);
-      mdxRealm?.pub(replaceSelectionContent$, {message: parsedMessage, context: editorSelectionMessageContext});
-
-      return parsedMessage.feedback;
+    window.disableEvoyaCreatorLock = () => {
+      // mdxRealm?.pub(replaceSelectionContent$, {message: parsedMessage, context: editorSelectionMessageContext});
+      setIsReadOnly(false);
     };
-  }, [mdxRealm, editorSelectionMessageContext]);
-
-  const stylesCache = createCache({
-    key: "creator-portal", // <style data-emotion="your-key">...
-    container: document.getElementById('chainlit-copilot')?.shadowRoot?.getElementById('evoya-creator-context-ref'),
-  });
+    // @ts-expect-error is not a valid prop
+    window.enableEvoyaCreatorLock = () => {
+      setIsReadOnly(true);
+    };
+  }, [setIsReadOnly]);
 
   return (
     <>
@@ -208,63 +162,61 @@ export default function MDXEditorWrapper() {
           margin: '0 -1rem'
         }}
       >
-        <CacheProvider value={stylesCache}>
-          {(editorSelectionContext?.selectionType === "range" || editorSelectionContext?.selectionType === "node") && (
-            <Chip
-              sx={{ fontWeight: 'bold' }}
-              label="Partial"
-              variant="outlined"
-              onDelete={handleRemoveContext}
-              avatar={
-                <Avatar sx={{ bgcolor: '#eeeeee' }}>
-                  <HandPointer color='#FF2E4E' />
-                </Avatar>
-              }
-            />
-          )}
-          {editorSelectionContext?.selectionType === "document" && (
-            <Chip
-              sx={{ fontWeight: 'bold' }}
-              label="Everything"
-              variant="outlined"
-              onDelete={handleRemoveContext}
-              avatar={
-                <Avatar sx={{ bgcolor: '#eeeeee' }}>
-                  <HandPointer color='#FF2E4E' />
-                </Avatar>
-              }
-            />
-          )}
-          {editorSelectionContext?.selectionType === "codeblock" && (
-            <Chip
-              sx={{ fontWeight: 'bold' }}
-              label={editorSelectionContext.selectedCode ? "Code Selection" : "Code Block"}
-              variant="outlined"
-              onDelete={handleRemoveContext}
-              avatar={
-                <Avatar sx={{ bgcolor: '#eeeeee' }}>
-                  <HandPointer color='#FF2E4E' />
-                </Avatar>
-              }
-            />
-          )}
-        </CacheProvider>
+        {(editorSelectionContext?.selectionType === "range" || editorSelectionContext?.selectionType === "node") && (
+          <Badge
+            className="font-bold p-0.5"
+            variant="outline"
+          >
+            <div className="bg-gray-100 rounded-full p-1">
+              <HandPointer color='#FF2E4E' />
+            </div>
+            <div className="px-2">Partial</div>
+            <Button onClick={handleRemoveContext} variant="ghost" size="xs" className="rounded-full">
+              <X />
+            </Button>
+          </Badge>
+        )}
+        {editorSelectionContext?.selectionType === "document" && (
+          <Badge
+            className="font-bold p-0.5"
+            variant="outline"
+          >
+            <div className="bg-gray-100 rounded-full p-1">
+              <HandPointer color='#FF2E4E' />
+            </div>
+            <div className="px-2">Everything</div>
+            <Button onClick={handleRemoveContext} variant="ghost" size="xs" className="rounded-full">
+              <X />
+            </Button>
+          </Badge>
+        )}
+        {editorSelectionContext?.selectionType === "codeblock" && (
+          <Badge
+            className="font-bold p-0.5"
+            variant="outline"
+          >
+            <div className="bg-gray-100 rounded-full p-1">
+              <HandPointer color='#FF2E4E' />
+            </div>
+            <div className="px-2">{editorSelectionContext.selectedCode ? "Code Selection" : "Code Block"}</div>
+            <Button onClick={handleRemoveContext} variant="ghost" size="xs" className="rounded-full">
+              <X />
+            </Button>
+          </Badge>
+        )}
       </div>,
       document.getElementById('chainlit-copilot')?.shadowRoot?.getElementById('evoya-creator-context-ref')
     )}
-    <Box
-      ref={containerRef}
-      sx={{
-        overflow: 'auto',
-        height: '100%'
-      }}
-    >
+    <div ref={containerRef} className="overflow-auto h-full">
       <style type="text/css">
         {mdxCss}
+      </style>
+      <style type="text/css">
         {mdxCustomCss}
       </style>
       <MDXEditor
         className="evoya-creator-editor"
+        readOnly={isReadOnly}
         ref={mdxEditorRef}
         markdown={creatorContent}
         iconComponentFor={getSvgIcon}
@@ -288,17 +240,17 @@ export default function MDXEditorWrapper() {
           diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: mdDiffContent }),
         ]}
         onChange={(md) => {
-          if (!mdContent) {
+          if (!creatorContent) {
             setMdDiffContent(md);
           }
-          setMdContent(md);
+          setCreatorContent(md);
           localStorage.setItem('evoya-creator', JSON.stringify({
             content: md,
             type: 'markdown'
           }));
         }}
       />
-    </Box>
+    </div>
     </>
   );
 }

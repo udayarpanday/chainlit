@@ -87,21 +87,6 @@ export default function Widget({ initialPath, apiBaseUrl }: Props) {
             </div>
           </div>
         )}
-        {openFile && (
-          <div className="flex items-center mb-4">
-            <div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setOpenFile(null)}
-                className="hover:bg-gray-200 rounded-full"
-              >
-                <ArrowLeft />
-              </Button>
-            </div>
-            <div className="font-bold text-xl ml-4">{openFile.name}</div>
-          </div>
-        )}
         {!openFile && (
           <FilePicker
             initialPath={initialPath}
@@ -112,7 +97,7 @@ export default function Widget({ initialPath, apiBaseUrl }: Props) {
           />
         )}
         {openFile && (
-          <ViewerWrapper file={openFile} />
+          <ViewerWrapper file={openFile} setOpenFile={setOpenFile} />
         )}
       </div>
     </FilePickerContext.Provider>

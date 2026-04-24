@@ -5,23 +5,7 @@ import {
   CreatorMessage,
 } from "types";
 
-const promptInstructions = `You are a helpful tool that works on text additions or replacements in an editor. You do help the user edit the text, but you answer in a structured way. Depending on the user's request, you can mark (using square brackets) your text in exactly one of the following ways:
-[replace]...[/replace]: Your created text should replace the text the user sent
-[above] ...[/above]: Your created text section should be placed above the currently selected section
-[below]...[/below]: Your created text should be placed below the currently selected section
-Make sure only one text command, [replace] / [above] / [below] is  used!
-
-In addition, you also must add a short user feedback in [feedback]...[/feedback] tags.`;
-
-const promptInstructions2 = `You are a helpful tool that works on text additions or replacements in an editor. You do help the user edit the text, but you answer in a structured way. Depending on the user's request, you can mark (using square brackets) your text in exactly one of the following ways:
-[replace]...[/replace]: Your created text should replace the text the user sent
-[above] ...[/above]: Your created text section should be placed above the currently selected section
-[below]...[/below]: Your created text should be placed below the currently selected section
-
-In addition, you also must add a short user feedback in [feedback]...[/feedback] tags.`;
-
 export const messageBuilder = (context: SelectionContext, message: IStep, mdContent: string) => {
-  let newMessage = message.output;
   let additional = {
     metadata: {
       full_text: mdContent,
@@ -29,131 +13,36 @@ export const messageBuilder = (context: SelectionContext, message: IStep, mdCont
   };
   if (context) {
     if (context.selectionType === 'range' || context.selectionType === 'node') {
-    /*newMessage = 
-`
-full text:
-${mdContent}
-
-selection:
-${context?.markdown}
-
-use markdown formatting. dont use latex. your answer should only include the new text.
-only rewrite selection with following instructions:
-
-${message.output}
-`*/
-    /*newMessage = 
-`${promptInstructions2}
-
-full text:
-${mdContent}
-
-selection:
-${context?.markdown}
-
-task:
-${message.output}`;*/
-  newMessage = 
-`
-${promptInstructions}
-
-
-full text:
-${mdContent}
-
-
-selection:
-${context?.markdown}
-
-
-task:
-${message.output}`;
-
-additional = {
-  metadata: {
-    chat_mode: 'creator',
-    full_text: mdContent,
-    selection: context?.markdown
-  },
-}
-
+      additional = {
+        metadata: {
+          chat_mode: 'creator',
+          full_text: mdContent,
+          selection: context?.markdown
+        },
+      }
     } else if (context.selectionType === 'document' || context.selectionType === 'caret') {
-//     newMessage = 
-// `
-// full text:
-// ${mdContent}
-
-// use markdown formatting. dont use latex. your answer should only include the new text.
-// rewrite full text with following instructions:
-
-// ${message.output}
-// `;
-    newMessage = 
-`
-${promptInstructions}
-
-
-full text:
-${mdContent}
-
-
-task:
-${message.output}
-`;
-
-additional = {
-  metadata: {
-    chat_mode: 'creator',
-    full_text: mdContent,
-  },
-}
+      additional = {
+        metadata: {
+          chat_mode: 'creator',
+          full_text: mdContent,
+        },
+      }
     } else if (context.selectionType === 'codeblock') {
       if (context.selectedCode) {
-      newMessage = `
-${promptInstructions}
-
-
-full code:
-\`\`\`${context.language}
-${context.code}
-\`\`\`
-
-selection:
-\`\`\`${context.language}
-${context.selectedCode}
-\`\`\`
-
-
-task:
-${message.output}`;
-
-additional = {
-  metadata: {
-    chat_mode: 'creator',
-    full_text: context.code,
-    selection: context.selectedCode
-  },
-}
+        additional = {
+          metadata: {
+            chat_mode: 'creator',
+            full_text: context.code,
+            selection: context.selectedCode
+          },
+        }
       } else {
-      newMessage = `
-${promptInstructions}
-
-
-full code:
-\`\`\`${context.language}
-${context.code}
-\`\`\`
-
-
-task:
-${message.output}`;
-
-additional = {
-  metadata: {
-    chat_mode: 'creator',
-    full_text: context.code,
-  },
-}
+        additional = {
+          metadata: {
+            chat_mode: 'creator',
+            full_text: context.code,
+          },
+        }
       }
     }
   }

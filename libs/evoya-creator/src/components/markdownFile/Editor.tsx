@@ -1,9 +1,8 @@
 import {
   useState,
   useRef,
+  useEffect,
 } from 'react';
-
-import Box from '@mui/material/Box';
 
 import {
   MDXEditor,
@@ -52,14 +51,14 @@ import {
   getSvgIcon,
 } from '../markdownEditor/utils/icons';
 
-export default function Editor({ content }: { content: string; }) {
+export default function Editor({ content, setContent }: { content: string; setContent: (val: string) => void; }) {
   const [mdContent, setMdContent] = useState(content);
-  const [mdDiffContent, setMdDiffContent] = useState(content);
+  const [mdDiffContent, setMdDiffContent] = useState('');
   const mdxEditorRef = useRef<MDXEditorMethods>(null);
 
   return (
-    <Box
-      sx={{
+    <div
+      style={{
         overflow: 'auto',
         height: '100%'
       }}
@@ -71,7 +70,7 @@ export default function Editor({ content }: { content: string; }) {
       <MDXEditor
         className="evoya-creator-editor"
         ref={mdxEditorRef}
-        markdown={content}
+        markdown={mdContent}
         iconComponentFor={getSvgIcon}
         plugins={[
           toolbarPlugin({ toolbarContents: () => <Toolbar /> }),
@@ -83,9 +82,10 @@ export default function Editor({ content }: { content: string; }) {
         ]}
         onChange={(md) => {
           setMdContent(md);
+          setContent(md);
         }}
       />
-    </Box>
+    </div>
   );
 }
 

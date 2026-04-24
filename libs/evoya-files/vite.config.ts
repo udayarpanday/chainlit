@@ -3,6 +3,8 @@ import path from 'path';
 import { defineConfig } from 'vite';
 import svgr from 'vite-plugin-svgr';
 import tsconfigPaths from 'vite-tsconfig-paths';
+import tailwindcss from 'tailwindcss';
+import autoprefixer from 'autoprefixer';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -16,6 +18,16 @@ export default defineConfig({
       }
     }),
   ],
+  css: {
+    postcss: {
+      plugins: [
+        tailwindcss({
+          config: '../copilot/tailwind.config.js'
+        }),
+        autoprefixer()
+      ]
+    }
+  },
   build: {
     sourcemap: true,
     rollupOptions: {

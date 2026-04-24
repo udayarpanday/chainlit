@@ -12,6 +12,11 @@ export const creatorContentState = atom<string>({
   default: ''
 });
 
+export const creatorFileState = atom<{ path: string; name: string} | null>({
+  key: 'CreatorFile',
+  default: null
+});
+
 export const creatorTypeState = atom<string>({
   key: 'CreatorType',
   default: ''
