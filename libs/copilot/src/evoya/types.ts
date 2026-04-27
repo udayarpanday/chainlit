@@ -4,25 +4,28 @@ export interface EvoyaConfig {
   chat_uuid: string;
   session_uuid?: string;
   type: string; // options: 'default' | 'container' | 'dashboard'
-  getEvoyaAccessToken: (chat_uuid: string, session_uuid: string | undefined) => string | undefined;
+  getEvoyaAccessToken: (
+    chat_uuid: string,
+    session_uuid: string | undefined
+  ) => string | undefined;
   api?: EvoyaApiConfig;
   logo?: string | null;
   hideWaterMark?: boolean;
   additionalInfo?: EvoyaAdditionalInfo;
-  chatBubbleConfig?:EvoyaChatBubble;
-  headerConfig?:EvoyaHeaderConfig;
-  chainlitConfig?:EvoyaChainlitConfig;
+  chatBubbleConfig?: EvoyaChatBubble;
+  headerConfig?: EvoyaHeaderConfig;
+  chainlitConfig?: EvoyaChainlitConfig;
   evoyaCreator?: EvoyaCreatorConfig;
   autoOpen?: EvoyaAutoOpenConfig;
   overlay?: boolean;
-  speechToText:boolean;
+  speechToText: boolean;
 }
 
 export type EvoyaAutoOpenConfig = {
   enabledDesktop: boolean;
   enabledMobile: boolean;
   delay: number;
-}
+};
 
 export interface EvoyaCreatorConfig {
   enabled?: boolean;
@@ -30,11 +33,11 @@ export interface EvoyaCreatorConfig {
 
 export interface EvoyaChainlitConfig {
   imageUrl?: string;
-  style:{
+  style: {
     bgcolor?: string;
     color?: string;
     bgcolorHover?: string;
-  }
+  };
 }
 
 export interface EvoyaAdditionalInfo {
@@ -43,25 +46,24 @@ export interface EvoyaAdditionalInfo {
   linkText?: string;
 }
 
-export interface EvoyaChatBubble{
+export interface EvoyaChatBubble {
   width?: string;
   height?: string;
-  size?:string
+  size?: string;
 }
 
-export interface EvoyaHeaderConfig{
-  hideHeaderBar?:boolean;
-  showSessionButton?:boolean;
-  text_header?:EvoyaTextHeader
+export interface EvoyaHeaderConfig {
+  hideHeaderBar?: boolean;
+  showSessionButton?: boolean;
+  text_header?: EvoyaTextHeader;
 }
 
-export interface EvoyaTextHeader{
-  title?:string;
-  font?:string;
-  size?:string;
-  color?:string;
+export interface EvoyaTextHeader {
+  title?: string;
+  font?: string;
+  size?: string;
+  color?: string;
 }
-
 
 export interface PrivacyCategories {
   [key: string]: TextSection[];
@@ -116,5 +118,3 @@ export interface SectionItem {
   isAnon: boolean;
   isLocked: boolean;
 }
-
-
