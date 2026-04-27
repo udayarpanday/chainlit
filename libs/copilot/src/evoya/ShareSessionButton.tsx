@@ -101,7 +101,6 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
   const [accessScope, setAccessScope] = useState<'public' | 'organization'>(
     'public'
   );
-  const [allowContinuation, setAllowContinuation] = useState(false);
   const [includeNewMessages, setIncludeNewMessages] = useState(false);
   const [shareLink, setShareLink] = useState<EvoyaShareLink>({});
   const [open, setOpen] = useState(false);
@@ -109,6 +108,15 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const { accessToken, evoya } = useContext(WidgetContext);
+  const shareRequestIdRef = useRef(0);
+  const shareType = includeNewMessages ? 'DYNAMIC' : 'STATIC';
+  const hasShareLink = Boolean(shareLink.url);
+  const isShareLinkCurrent =
+    hasShareLink &&
+    shareLink.expire === expireTime &&
+    shareLink.type === shareType &&
+    shareLink.accessScope === accessScope &&
+    shareLink.allowContinuation === true;
 
   const options = [
     { value: '0', label: 'components.molecules.shareSession.expire.no_expiry' },
@@ -143,7 +151,6 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
         setShareLink({});
         setExpireTime(0);
         setAccessScope('public');
-        setAllowContinuation(false);
         setIncludeNewMessages(false);
       } else if (shareData.success) {
         let dateDiff = 0;
@@ -156,16 +163,16 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
         const shareConfig: EvoyaShareLink = {
           expire: dateDiff,
           type: shareData.data.share_type,
+          accessScope:
+            shareData.data.access_scope === 'ORGANISATION'
+              ? 'organization'
+              : 'public',
+          allowContinuation: !!shareData.data.allow_continuation,
           url: shareData.data.link
         };
         setShareLink(shareConfig);
         setExpireTime(dateDiff);
-        setAccessScope(
-          shareData.data.access_scope === 'ORGANISATION'
-            ? 'organization'
-            : 'public'
-        );
-        setAllowContinuation(!!shareData.data.allow_continuation);
+        setAccessScope(shareConfig.accessScope || 'public');
         setIncludeNewMessages(shareData.data.share_type === 'DYNAMIC');
       }
     } catch (_e) {
@@ -179,7 +186,7 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
     setOpen(false);
   };
 
-  const handleRevokeShareLink = async (_shareLinkConfig: EvoyaShareLink) => {
+  const handleRevokeShareLink = async () => {
     if (evoya?.api?.share && accessToken) {
       try {
         const shareResponse = await fetch(
@@ -210,13 +217,19 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
     }
   };
 
-  const handleCopyShareLink = async () => {
-    const type = includeNewMessages ? 'DYNAMIC' : 'STATIC';
+  const syncShareLink = async (nextConfig: {
+    accessScope: 'public' | 'organization';
+    expireTime: number;
+    includeNewMessages: boolean;
+  }) => {
     const shareConfig: EvoyaShareLink = {
-      expire: expireTime,
-      type
+      expire: nextConfig.expireTime,
+      type: nextConfig.includeNewMessages ? 'DYNAMIC' : 'STATIC',
+      accessScope: nextConfig.accessScope,
+      allowContinuation: true
     };
     if (evoya?.api?.share && accessToken) {
+      const requestId = ++shareRequestIdRef.current;
       setIsCreating(true);
       try {
         const shareResponse = await fetch(
@@ -230,10 +243,13 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
             },
             body: JSON.stringify({
               access_scope:
-                accessScope === 'organization' ? 'ORGANISATION' : 'PUBLIC',
-              allow_continuation: allowContinuation,
-              expires_in: expireTime > 0 ? expireTime : null,
-              share_type: type
+                nextConfig.accessScope === 'organization'
+                  ? 'ORGANISATION'
+                  : 'PUBLIC',
+              allow_continuation: true,
+              expires_in:
+                nextConfig.expireTime > 0 ? nextConfig.expireTime : null,
+              share_type: shareConfig.type
             }),
             credentials: 'same-origin'
           }
@@ -246,11 +262,9 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
 
         if (shareData.success) {
           const shareUrl = shareData.data.link;
-
-          await copyToClipboard(shareUrl);
-          toast.success(
-            <Translator path="components.molecules.shareSession.messages.success" />
-          );
+          if (requestId !== shareRequestIdRef.current) {
+            return;
+          }
           shareConfig.url = shareUrl;
           setShareLink(shareConfig);
         } else {
@@ -264,9 +278,69 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
           <Translator path="components.molecules.shareSession.messages.error" />
         );
       } finally {
-        setIsCreating(false);
+        if (requestId === shareRequestIdRef.current) {
+          setIsCreating(false);
+        }
       }
     }
+  };
+
+  const handleAccessScopeChange = async (
+    nextAccessScope: 'public' | 'organization'
+  ) => {
+    if (nextAccessScope === accessScope) {
+      return;
+    }
+
+    setAccessScope(nextAccessScope);
+    if (hasShareLink) {
+      await syncShareLink({
+        accessScope: nextAccessScope,
+        expireTime,
+        includeNewMessages
+      });
+    }
+  };
+
+  const handleExpireTimeChange = async (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const nextExpireTime = parseInt(e.target.value, 10);
+    if (nextExpireTime === expireTime) {
+      return;
+    }
+
+    setExpireTime(nextExpireTime);
+    if (hasShareLink) {
+      await syncShareLink({
+        accessScope,
+        expireTime: nextExpireTime,
+        includeNewMessages
+      });
+    }
+  };
+
+  const handleIncludeNewMessagesChange = async (nextValue: boolean) => {
+    if (nextValue === includeNewMessages) {
+      return;
+    }
+
+    setIncludeNewMessages(nextValue);
+    if (hasShareLink) {
+      await syncShareLink({
+        accessScope,
+        expireTime,
+        includeNewMessages: nextValue
+      });
+    }
+  };
+
+  const handleGenerateShareLink = async () => {
+    await syncShareLink({
+      accessScope,
+      expireTime,
+      includeNewMessages
+    });
   };
 
   const displayedLink = shareLink.url
@@ -333,11 +407,11 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
             </DialogDescription>
           </DialogHeader>
           {isLoading ? (
-            <div className="flex min-h-[520px] items-center justify-center py-12">
+            <div className="flex min-h-[400px] items-center justify-center py-12">
               <Loader2 className="animate-spin text-primary" />
             </div>
           ) : (
-            <div className="min-h-[520px] md:w-[463px] w-[386px] space-y-6 pt-0">
+            <div className="min-h-[400px] md:w-[463px] w-[386px] space-y-6 pt-0">
               <section className="space-y-3">
                 <h3 className="text-[15px] font-semibold text-slate-900">
                   {t('components.molecules.shareSession.access.title')}
@@ -346,7 +420,7 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
                   <div className="grid grid-cols-2 gap-1">
                     <button
                       type="button"
-                      onClick={() => setAccessScope('public')}
+                      onClick={() => handleAccessScopeChange('public')}
                       className={cn(
                         'flex h-9 items-center justify-center gap-2 rounded-md text-base transition-colors',
                         accessScope === 'public'
@@ -361,7 +435,7 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setAccessScope('organization')}
+                      onClick={() => handleAccessScopeChange('organization')}
                       className={cn(
                         'flex h-9 items-center justify-center gap-2 rounded-md text-base transition-colors',
                         accessScope === 'organization'
@@ -395,7 +469,7 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
                 </h3>
                 <Select
                   value={expireTime}
-                  onChange={(e) => setExpireTime(parseInt(e.target.value))}
+                  onChange={handleExpireTimeChange}
                   options={options}
                   label={t(
                     'components.molecules.shareSession.expire.expiresIn'
@@ -404,27 +478,6 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
               </section>
 
               <section className="space-y-3">
-                <div className="rounded-[18px] border border-slate-200 bg-white p-5">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <h4 className="text-[15px] font-semibold text-slate-900">
-                        {t(
-                          'components.molecules.shareSession.continuation.title'
-                        )}
-                      </h4>
-                      <p className="max-w-[370px] text-[14px] leading-6 text-slate-500">
-                        {t(
-                          'components.molecules.shareSession.continuation.description'
-                        )}
-                      </p>
-                    </div>
-                    <Switch
-                      checked={allowContinuation}
-                      onCheckedChange={setAllowContinuation}
-                    />
-                  </div>
-                </div>
-
                 <div className="rounded-[18px] border border-slate-200 bg-white p-5">
                   <div className="flex items-center justify-between gap-4">
                     <div className="space-y-1">
@@ -441,13 +494,19 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
                     </div>
                     <Switch
                       checked={includeNewMessages}
-                      onCheckedChange={setIncludeNewMessages}
+                      onCheckedChange={handleIncludeNewMessagesChange}
                     />
                   </div>
                 </div>
               </section>
 
-              {shareLink.url ? (
+              {isCreating ? (
+                <section className="rounded-[18px] border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-center justify-center py-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  </div>
+                </section>
+              ) : isShareLinkCurrent ? (
                 <>
                   <section className="rounded-[18px] border border-slate-200 bg-slate-50 p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -478,7 +537,7 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
                   <button
                     type="button"
                     className="w-full text-center text-[15px] font-semibold text-red-500 transition-colors hover:text-red-600"
-                    onClick={() => handleRevokeShareLink(shareLink)}
+                    onClick={handleRevokeShareLink}
                   >
                     {t('components.molecules.shareSession.revokeLinkButton')}
                   </button>
@@ -486,15 +545,10 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
               ) : (
                 <Button
                   variant="default"
-                  disabled={isCreating}
-                  onClick={handleCopyShareLink}
+                  onClick={handleGenerateShareLink}
                   className="w-full"
                 >
-                  {isCreating ? (
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  ) : (
-                    <Link2 className="mr-2 h-5 w-5" />
-                  )}
+                  <Link2 className="mr-2 h-5 w-5" />
                   {t(
                     'components.molecules.shareSession.generateShareableLinkButton'
                   )}
