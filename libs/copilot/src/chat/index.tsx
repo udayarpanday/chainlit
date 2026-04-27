@@ -1,9 +1,9 @@
+import { WidgetContext } from '@/context';
 import { useContext, useEffect } from 'react';
 
 import { useChatInteract, useChatSession } from '@chainlit/react-client';
 
 import ChatBody from './body';
-import { WidgetContext } from '@/context';
 
 export default function ChatWrapper() {
   const { accessToken, evoya } = useContext(WidgetContext);

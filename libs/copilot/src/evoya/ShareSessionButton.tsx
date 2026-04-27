@@ -1,5 +1,4 @@
 import { WidgetContext } from '@/context';
-import { cn } from '@chainlit/app/src/lib/utils';
 import {
   Building2,
   ChevronDown,
@@ -13,6 +12,7 @@ import { toast } from 'sonner';
 import { useCopyToClipboard } from 'usehooks-ts';
 
 import { Translator } from '@chainlit/app/src/components/i18n';
+import { useTranslation } from '@chainlit/app/src/components/i18n/Translator';
 import { Button } from '@chainlit/app/src/components/ui/button';
 import {
   Dialog,
@@ -28,9 +28,9 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from '@chainlit/app/src/components/ui/tooltip';
+import { cn } from '@chainlit/app/src/lib/utils';
 
 import { EvoyaShareLink } from './types';
-import { useTranslation } from '@chainlit/app/src/components/i18n/Translator';
 
 interface Props {
   sessionUuid: string;
@@ -367,9 +367,7 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
                 onClick={handleClickOpen}
                 disabled={sessionUuid == ''}
               >
-                <Share
-                  className="!size-5 "
-                />
+                <Share className="!size-5 " />
               </Button>
             </div>
           </TooltipTrigger>
