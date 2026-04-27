@@ -276,28 +276,14 @@ const useChatSession = () => {
         setMessages((oldMessages) => {
           let newOutput = message.output;
           // @ts-expect-error is not a valid prop
-          if (
-            message.type === 'assistant_message' &&
-            message.output !== '' &&
-            window.evoyaCreatorEnabled
-          ) {
-            const directParent = findMessageById(
-              oldMessages,
-              message.parentId || ''
-            );
+          if (message.type === 'assistant_message' && message.output !== "" && window.evoyaCreatorEnabled) {
+            const directParent = findMessageById(oldMessages, message.parentId || '');
             let messageParent = directParent;
             if (directParent?.parentId) {
-              messageParent = findMessageById(
-                oldMessages,
-                directParent.parentId
-              );
+              messageParent = findMessageById(oldMessages, directParent.parentId);
             }
             // @ts-expect-error is not a valid prop
-            newOutput =
-              window.updateEvoyaCreator(
-                message,
-                findMessageById(oldMessages, message.parentId)
-              ) || message.output;
+            newOutput = window.updateEvoyaCreator(message, findMessageById(oldMessages, message.parentId)) || message.output;
             // window.updateEvoyaCreator(message.output);
           }
 
