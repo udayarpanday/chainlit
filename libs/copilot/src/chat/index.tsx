@@ -1,24 +1,31 @@
-import { useEffect,useContext } from 'react';
+import { WidgetContext } from '@/context';
+import { useContext, useEffect } from 'react';
 
 import { useChatInteract, useChatSession } from '@chainlit/react-client';
 
 import ChatBody from './body';
-import { WidgetContext } from '@/context';
 
 export default function ChatWrapper() {
-  const { accessToken } = useContext(WidgetContext);
+  const { accessToken, evoya } = useContext(WidgetContext);
   const { connect, session } = useChatSession();
   const { sendMessage } = useChatInteract();
-  
+
+  useEffect(() => {
+    if (evoya?.session_uuid) {
+      localStorage.setItem('session_token', evoya.session_uuid);
+    }
+  }, [evoya?.session_uuid]);
+
   useEffect(() => {
     if (session?.socket?.connected) return;
     connect({
       // @ts-expect-error window typing
       transports: window.transports,
       userEnv: {},
-      accessToken: `Bearer ${accessToken}`
+      accessToken: `Bearer ${accessToken}`,
+      evoya
     });
-  }, [connect]);
+  }, [accessToken, connect, evoya, evoya?.session_uuid]);
 
   useEffect(() => {
     // @ts-expect-error is not a valid prop

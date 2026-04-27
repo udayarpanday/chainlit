@@ -39,6 +39,9 @@ interface DashboardBridgeAgent {
   title?: string;
   agent_uuid?: string;
   uuid?: string;
+  session_uuid?: string;
+  chat_session_uuid?: string;
+  is_favorite?: boolean | string;
   user_can_edit?: boolean | string;
   show_agent_menu?: boolean | string;
   show_edit_agent_option?: boolean | string;
@@ -79,7 +82,6 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
   const firstInteraction = useRecoilValue(firstUserInteraction);
 
   const hasChatProfiles = !!config?.chatProfiles?.length;
-
   const [sessionUuid, setSessionUuid] = useState(evoya?.session_uuid ?? '');
   const [agents, setAgents] = useState<AgentListItem[]>([]);
   const [recentAgents, setRecentAgents] = useState<AgentListItem[]>([]);
@@ -90,9 +92,13 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
     const toBoolean = (value: boolean | string | undefined) =>
       value === true || value === 'true';
 
-    const agentUuid =
-      agent.agent_uuid || agent.uuid || agent.chat__uuid || agent.chat_uuid;
-    const numericId = agent.id ?? agent.chat__id;
+    const chatUuid = agent.chat__uuid || agent.chat_uuid;
+    const agentUuid = agent.agent_uuid || chatUuid || agent.uuid;
+    const numericId = agent.chat__id ?? agent.id;
+    const sessionUuid =
+      agent.session_uuid ||
+      agent.chat_session_uuid ||
+      (chatUuid && agent.uuid !== chatUuid ? agent.uuid : undefined);
     const label = agent.name || agent.title || agent.chat__name || 'Untitled Agent';
     if (!agentUuid && !numericId) return null;
     const id = String(agentUuid || numericId);
@@ -102,6 +108,8 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
       agentUuid,
       numericId,
       userCanEdit: toBoolean(agent.user_can_edit),
+      sessionUuid,
+      isFavorite: toBoolean(agent.is_favorite),
       showAgentMenu:
         agent.show_agent_menu === undefined
           ? true
@@ -136,14 +144,18 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
 
     const recentCandidate = (data.recent_agents ?? [])
       .map(mapBridgeAgentToItem)
-      .filter((agent): agent is AgentListItem => !!agent);
+      .filter((agent): agent is AgentListItem => !!agent)
+      .map((agent) => ({ ...agent, isRecent: true }));
 
     let recent = recentCandidate.map((recentAgent) => {
       if (recentAgent.agentUuid && chatAgentsByUuid.has(recentAgent.agentUuid)) {
         const canonicalAgent = chatAgentsByUuid.get(recentAgent.agentUuid)!;
         return {
           ...canonicalAgent,
-          isDefault: canonicalAgent.isDefault || recentAgent.isDefault
+          isDefault: canonicalAgent.isDefault || recentAgent.isDefault,
+          isRecent: true,
+          sessionUuid: recentAgent.sessionUuid,
+          isFavorite: recentAgent.isFavorite
         };
       }
       return recentAgent;
@@ -258,15 +270,35 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
     };
   }, [evoya?.type, optimisticDefaultAgentId]);
 
+  const getCanonicalAgent = (agent: AgentListItem) =>
+    agents.find((item) => {
+      if (agent.agentUuid && item.agentUuid) {
+        return item.agentUuid === agent.agentUuid;
+      }
+      if (agent.numericId !== undefined && item.numericId !== undefined) {
+        return String(item.numericId) === String(agent.numericId);
+      }
+      return item.id === agent.id;
+    });
+
+  const getAgentUuid = (agent: AgentListItem) =>
+    agent.agentUuid || getCanonicalAgent(agent)?.agentUuid;
+
   const handleAgentSelect = (agent: AgentListItem) => {
-    setSelectedAgentId(agent.id);
+    const canonicalAgent = getCanonicalAgent(agent);
+    const agentUuid = agent.agentUuid || canonicalAgent?.agentUuid;
+
+    if (!agentUuid) return;
+
+    setSelectedAgentId(canonicalAgent?.id ?? agent.id);
+
     window.dispatchEvent(
       new CustomEvent('agent-changed', {
         detail: {
-          agent_uuid: agent.agentUuid || agent.id,
+          agent_uuid: agentUuid,
           agent: {
-            uuid: agent.agentUuid || agent.id,
-            agent_uuid: agent.agentUuid || agent.id
+            uuid: agentUuid,
+            agent_uuid: agentUuid
           }
         }
       })
@@ -279,11 +311,15 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
   };
 
   const handleOpenTestChat = (agent: AgentListItem) => {
-    const agentUuid = agent.agentUuid || agent.id;
+    const agentUuid = getAgentUuid(agent);
+    if (!agentUuid) return;
     window.open(`${location.origin}/chat/authorize-chat/${agentUuid}/`, '_blank');
   };
 
   const handleSetDefaultAgent = (agent: AgentListItem) => {
+    const agentUuid = getAgentUuid(agent);
+    if (!agentUuid) return;
+
     setOptimisticDefaultAgentId(agent.id);
 
     const matches = (item: AgentListItem) => {
@@ -312,7 +348,7 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
     window.dispatchEvent(
       new CustomEvent('agent-set-default-requested', {
         detail: {
-          agent_uuid: agent.agentUuid || agent.id
+          agent_uuid: agentUuid
         }
       })
     );

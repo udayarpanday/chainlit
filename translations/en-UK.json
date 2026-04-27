@@ -31,6 +31,26 @@
                 "copyCreateButton": "Create Link",
                 "copyUpdateButton": "Update and copy link",
                 "revokeLinkButton": "Revoke link",
+                "generateShareableLinkButton": "Generate shareable link",
+                "dialog": {
+                    "title": "Share this chat",
+                    "description": "Configure who can access this conversation and how."
+                },
+                "access": {
+                    "title": "Who can access this link?",
+                    "public": "Public",
+                    "organization": "Organisation",
+                    "publicDescription": "Anyone with the link can access this chat.",
+                    "organizationDescription": "Only members of your organisation who have the link can access this chat."
+                },
+                "continuation": {
+                    "title": "Allow continuation",
+                    "description": "Recipient can copy this conversation and continue it with their own agent"
+                },
+                "includeNewMessages": {
+                    "title": "Include new messages",
+                    "description": "Future messages in this chat will be included when the recipient opens the link"
+                },
                 "types": {
                     "static": "Create a link to share a copy of this chat. The link is valid for:",
                     "dynamic": "Allow ongoing read-only access to future messages."
@@ -44,6 +64,7 @@
                 },
                 "expire": {
                     "expiresIn": "Expire",
+                    "expiresAfter": "Link expires after",
                     "expires": "expires",
                     "1day": "in one day",
                     "7days": "7 days",
