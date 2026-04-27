@@ -105,6 +105,8 @@ export interface EvoyaShareLink {
   url?: string;
   type?: string; // static | global
   expire?: number;
+  accessScope?: 'public' | 'organization';
+  allowContinuation?: boolean;
 }
 
 export interface SectionItem {

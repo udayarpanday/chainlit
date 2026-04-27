@@ -21,9 +21,9 @@ export default function AppWrapper({ widgetConfig, evoya }: Props) {
   const apiClient = makeApiClient(widgetConfig.chainlitServer);
   const [customThemeLoaded, setCustomThemeLoaded] = useState(false);
 
-  // useEffect(() => {
-  //   localStorage.setItem('chainlit_token', accessToken || '');
-  // }, [accessToken]);
+  useEffect(() => {
+    localStorage.setItem('chainlit_token', accessToken || '');
+  }, [accessToken]);
 
   function completeInitialization() {
     if (widgetConfig.customCssUrl) {
@@ -75,8 +75,7 @@ export default function AppWrapper({ widgetConfig, evoya }: Props) {
   }, []);
 
   if (!customThemeLoaded) return null;
-
-  return (
+  return (  
     <ChainlitContext.Provider value={apiClient}>
       <WidgetContext.Provider
         value={{
