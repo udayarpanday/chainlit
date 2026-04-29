@@ -1,18 +1,12 @@
 import {
   ButtonWithTooltip,
-  activeEditor$,
   iconComponentFor$,
   useTranslation,
   markdownSourceEditorValue$,
 } from '@mdxeditor/editor';
 import React, { useCallback } from 'react';
-import { Cell, Action, map, useCellValue, usePublisher, withLatestFrom } from '@mdxeditor/gurx';
+import { useCellValue } from '@mdxeditor/gurx';
 import {
-  $selectAll,
-} from 'lexical';
-import EvoyaLogo from '@/svg/EvoyaLogo';
-import {
-  selectDocument$,
   creatorType$,
 } from '../../evoyaAi';
 import fileDownload from 'js-file-download';
@@ -50,9 +44,6 @@ export const ExportContent: React.FC = () => {
   const t = useTranslation();
 
   const exportDocument = useCallback(() => {
-    // const exportFile = new Blob([markdownContent], {
-    //   type: getMimeType()
-    // });
     const exportFile = new Blob([markdownContent]);
     const fileInfo = getNewFileInfo(creatorType);
 

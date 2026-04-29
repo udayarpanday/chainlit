@@ -571,6 +571,54 @@
             "size": "Size"
         }
     },
+    "evoyaCreator": {
+        "toolbar": {
+            "newDocument": {
+                "label": "Start a new Document",
+                "description": "Clear the editor and begin fresh"
+            },
+            "selectAll": {
+                "label": "Select all text",
+                "description": "AI will edit the entire document, not just a part"
+            },
+            "downloadText": {
+                "label": "Download as Text (.txt)",
+                "description": "Plain text, no formatting"
+            },
+            "downloadMd": {
+                "label": "Download as Markdown (.md)",
+                "description": "Text with Markdown formatting"
+            },
+            "diffSource": {
+                "label": "Save as compare baseline",
+                "description": "Saves the current content from Edit view as the reference version. Future edits are compared to it in Compare view."
+            },
+            "editMode": {
+                "label": "Edit",
+                "description": "Write and format your document"
+            },
+            "compareMode": {
+                "label": "Compare",
+                "description": "See changes vs. saved baseline"
+            },
+            "sourceMode": {
+                "label": "Source view",
+                "description": "Advanced — view raw Markdown"
+            },
+            "advancedView": {
+                "label": "Advanced View"
+            },
+            "detailedView": {
+                "label": "Detailed"
+            },
+            "save": {
+                "label": "Speichern"
+            },
+            "open": {
+                "label": "Open file..."
+            }
+        }
+    },
     "agentList": {
         "title": "Agentenliste",
         "default": "Standard",

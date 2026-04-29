@@ -89,6 +89,8 @@ import {
 import { Badge } from '@chainlit/app/src/components/ui/badge';
 import { Button } from '@chainlit/app/src/components/ui/button';
 import { X } from 'lucide-react';
+import { getTranslations } from './utils/translations';
+import { useTranslation } from '@chainlit/app/src/components/i18n/Translator';
 
 export default function MDXEditorWrapper() {
   const {
@@ -97,6 +99,7 @@ export default function MDXEditorWrapper() {
     setCreatorContent,
   } = useEvoyaCreator();
   // const [mdContent, setMdContent] = useState(creatorContent);
+  const { t } = useTranslation();
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [mdDiffContent, setMdDiffContent] = useState(creatorContent);
   const [editorSelectionContext, setEditorSelectionContext] = useState<SelectionContext | null>(null);
@@ -220,6 +223,7 @@ export default function MDXEditorWrapper() {
         ref={mdxEditorRef}
         markdown={creatorContent}
         iconComponentFor={getSvgIcon}
+        translation={(key, defaultValue, interpolations) => getTranslations(key, defaultValue, interpolations, t)}
         plugins={[
           toolbarPlugin({ toolbarContents: () => <MDXEditorToolbar setMdDiffContent={setMdDiffContent} /> }),
           ...MDX_PLUGINS,
@@ -286,22 +290,5 @@ export const MDX_PLUGINS = [
       '': 'Unspecified'
     }
   }),
-  evoyaRootPlugin(),
-  // sandpackPlugin({ sandpackConfig: virtuosoSampleSandpackConfig }),
-  // codeMirrorPlugin({
-  //   codeBlockLanguages: {
-  //     js: 'JavaScript',
-  //     json: 'JSON',
-  //     vega: 'Vega',
-  //     mermaid: 'Mermaid',
-  //     mmd: 'Mermaid',
-  //     markdown: 'Markdown',
-  //     css: 'CSS',
-  //     txt: 'Plain Text',
-  //     plaintext: 'Plain Text',
-  //     tsx: 'TypeScript',
-  //     '': 'Unspecified'
-  //   }
-  // }),
   markdownShortcutPlugin(),
 ];

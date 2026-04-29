@@ -4,67 +4,52 @@ import {
   CreateLink,
   ListsToggle,
   BoldItalicUnderlineToggles,
-  // StrikeThroughSupSubToggles,
-  CodeToggle,
-  BlockTypeSelect,
-  InsertTable,
-  InsertCodeBlock,
   ConditionalContents,
   ChangeCodeMirrorLanguage,
-  InsertImage,
-  DiffSourceToggleWrapper,
 } from '@mdxeditor/editor';
 
 import {
-  SelectDocument,
-  ExportContent,
-  ResetDocument,
-  SetDiffSource,
+  OpenFile,
+  SaveContent,
+  EvoyaDiffSourceToggleWrapper,
+  EvoyaDropdown,
+  EvoyaAdvanced,
+  EvoyaAdvancedToggle,
+  EvoyaBlockTypeSelect,
 } from './plugins/toolbar/components';
 
 export default function MDXEditorToolbar({ setMdDiffContent }: { setMdDiffContent: (md: string) => void }) {
   return (
-    <DiffSourceToggleWrapper>
-      <div style={{ flexGrow: 1 }}>
+    <EvoyaDiffSourceToggleWrapper>
+      <div style={{ flexGrow: 1 }} className="[&>div]:items-center">
         <ConditionalContents
           options={[
             { when: (editor) => editor?.editorType === 'codeblock', contents: () => <ChangeCodeMirrorLanguage /> },
             {
               fallback: () => (
                 <>
-                    <UndoRedo />
-                    <Separator />
-                    <BoldItalicUnderlineToggles />
-                    <CodeToggle />
-                    <Separator />
-                    {/* <StrikeThroughSupSubToggles /> */}
-                    {/* <Separator /> */}
-                    <ListsToggle />
-                    <Separator />
-                    <BlockTypeSelect />
-                    <Separator />
-                    <CreateLink />
-                    <Separator />
-                    <InsertImage />
-                    <Separator />
-                    <InsertTable />
-                    <Separator />
-                    <InsertCodeBlock />
-                    <Separator />
-                    <div style={{ flexGrow: 1 }}></div>
-                    <Separator />
-                    <SelectDocument />
-                    <SetDiffSource setMdDiffContent={setMdDiffContent} />
-                    <ResetDocument />
-                    <ExportContent />
-                    <Separator />
-                    <div style={{ flexGrow: 1 }}></div>
+                  <UndoRedo />
+                  <Separator />
+                  <BoldItalicUnderlineToggles />
+                  <Separator />
+                  <ListsToggle options={['bullet', 'number']} />
+                  <Separator />
+                  <EvoyaBlockTypeSelect />
+                  <Separator />
+                  <CreateLink />
+                  <Separator />
+                  <EvoyaAdvanced />
+                  <EvoyaDropdown setMdDiffContent={setMdDiffContent} />
+                  <SaveContent />
+                  <OpenFile />
+                  <div style={{ flexGrow: 1 }}></div>
+                  <EvoyaAdvancedToggle />
                 </>
               )
             }
           ]}
         />
       </div>
-    </DiffSourceToggleWrapper>
+    </EvoyaDiffSourceToggleWrapper>
   )
 }
