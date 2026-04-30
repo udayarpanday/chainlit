@@ -41,7 +41,7 @@ export const TextSelection = () => {
     }
   }, []);
 
-  console.log('evoyaAiState', evoyaAiState);
+  // console.log('evoyaAiState', evoyaAiState);
   if (isFocus) return null;
   if (!evoyaAiState) return null;
 
@@ -49,6 +49,9 @@ export const TextSelection = () => {
   // const scrollCompensation = (evoyaAiState.scrollOffset ?? 0) - scrollOffset;
   const scrollCompensation = (evoyaAiState.scrollOffset ?? 0) - scrollComp;
   const theRect = evoyaAiState.rect;
+
+  // const containerOffset = editorContainerRef?.current?.getBoundingClientRect().top;
+  // const containerHeight = editorContainerRef?.current?.getBoundingClientRect().height;
 
   return (
     <>

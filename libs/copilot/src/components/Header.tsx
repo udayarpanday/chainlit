@@ -331,7 +331,7 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
         {hasChatProfiles ? <ChatProfiles /> : ''}
         {evoya?.type === 'dashboard' ? (
           <>
-            <DashboardSidebarButton/>
+            {!creatorEnabled && <DashboardSidebarButton/>}
             {creatorEnabled && (
               <div className="h-9 flex items-center font-bold">Chat</div>
             )}
@@ -382,8 +382,12 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
         {evoya?.type === 'dashboard' && (
           <>
             <ViewContext/>
-            <FavoriteSessionButton sessionUuid={sessionUuid} />
-            <ShareSessionButton sessionUuid={sessionUuid} />
+            {!creatorEnabled && (
+              <>
+                <FavoriteSessionButton sessionUuid={sessionUuid} />
+                <ShareSessionButton sessionUuid={sessionUuid} />
+              </>
+            )}
           </>
         )}
         {!creatorEnabled && (

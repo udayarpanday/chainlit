@@ -1,9 +1,4 @@
-// import { useTranslation } from '@chainlit/app/src/components/i18n/Translator';
-
 export const getTranslations = (key: string, defaultValue: string, interpolations = {}, t: (path: string | string[]) => string) => {
-  // const { t } = useTranslation();
-
-  console.log('evoyaCreator.' + key, t('evoyaCreator.' + key))
 
   const trans = t('evoyaCreator.' + key);
 
