@@ -76,7 +76,12 @@ export default function App({ widgetConfig }: Props) {
       i18n.changeLanguage(lang);
     } catch (error) {
       console.error(`Could not load translations for ${lang}:`, error);
-      loadTranslations('en-US');
+      const splitLang = lang.split('-');
+      if (splitLang.length === 2 && lang !== 'en-US') {
+        loadTranslations(splitLang[0]);
+      } else {
+        loadTranslations('en-US');
+      }
     }
   };
 
