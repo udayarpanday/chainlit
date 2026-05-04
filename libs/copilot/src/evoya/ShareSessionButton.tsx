@@ -7,7 +7,7 @@ import {
   Loader2,
   Share
 } from 'lucide-react';
-import { useContext, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useCopyToClipboard } from 'usehooks-ts';
 
@@ -34,6 +34,7 @@ import { EvoyaShareLink } from './types';
 
 interface Props {
   sessionUuid: string;
+  restrictSharedSessionsToOrg?: boolean;
 }
 
 interface SelectProps {
@@ -95,11 +96,14 @@ export const Select = ({
   );
 };
 
-export default function ShareSessionButton({ sessionUuid }: Props) {
+export default function ShareSessionButton({
+  sessionUuid,
+  restrictSharedSessionsToOrg = false
+}: Props) {
   const { t } = useTranslation();
   const [expireTime, setExpireTime] = useState(0); // 0=never, 7=7days, 31=31days
   const [accessScope, setAccessScope] = useState<'public' | 'organization'>(
-    'public'
+    restrictSharedSessionsToOrg ? 'organization' : 'public'
   );
   const [includeNewMessages, setIncludeNewMessages] = useState(false);
   const [shareLink, setShareLink] = useState<EvoyaShareLink>({});
@@ -110,6 +114,9 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
   const { accessToken, evoya } = useContext(WidgetContext);
   const shareRequestIdRef = useRef(0);
   const shareType = includeNewMessages ? 'DYNAMIC' : 'STATIC';
+  const defaultAccessScope = restrictSharedSessionsToOrg
+    ? 'organization'
+    : 'public';
   const hasShareLink = Boolean(shareLink.url);
   const isShareLinkCurrent =
     hasShareLink &&
@@ -123,6 +130,12 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
     { value: '7', label: 'components.molecules.shareSession.expire.7days' },
     { value: '31', label: 'components.molecules.shareSession.expire.1month' }
   ];
+
+  useEffect(() => {
+    if (restrictSharedSessionsToOrg) {
+      setAccessScope('organization');
+    }
+  }, [restrictSharedSessionsToOrg]);
 
   const handleClickOpen = async () => {
     setOpen(true);
@@ -150,7 +163,7 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
       if (shareData.error) {
         setShareLink({});
         setExpireTime(0);
-        setAccessScope('public');
+        setAccessScope(defaultAccessScope);
         setIncludeNewMessages(false);
       } else if (shareData.success) {
         let dateDiff = 0;
@@ -172,7 +185,11 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
         };
         setShareLink(shareConfig);
         setExpireTime(dateDiff);
-        setAccessScope(shareConfig.accessScope || 'public');
+        setAccessScope(
+          restrictSharedSessionsToOrg
+            ? 'organization'
+            : shareConfig.accessScope || 'public'
+        );
         setIncludeNewMessages(shareData.data.share_type === 'DYNAMIC');
       }
     } catch (_e) {
@@ -409,57 +426,59 @@ export default function ShareSessionButton({ sessionUuid }: Props) {
               <Loader2 className="animate-spin text-primary" />
             </div>
           ) : (
-            <div className="min-h-[400px] md:w-[463px] w-[386px] space-y-6 pt-0">
-              <section className="space-y-3">
-                <h3 className="text-[15px] font-semibold text-slate-900">
-                  {t('components.molecules.shareSession.access.title')}
-                </h3>
-                <div className="rounded-lg border border-slate-200 bg-slate-100 p-1.5">
-                  <div className="grid grid-cols-2 gap-1">
-                    <button
-                      type="button"
-                      onClick={() => handleAccessScopeChange('public')}
-                      className={cn(
-                        'flex h-9 items-center justify-center gap-2 rounded-md text-base transition-colors',
-                        accessScope === 'public'
-                          ? 'bg-white text-slate-900 shadow-sm'
-                          : 'text-slate-500 hover:text-slate-700'
-                      )}
-                    >
-                      <Globe className="h-4 w-4" />
-                      <span>
-                        {t('components.molecules.shareSession.access.public')}
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleAccessScopeChange('organization')}
-                      className={cn(
-                        'flex h-9 items-center justify-center gap-2 rounded-md text-base transition-colors',
-                        accessScope === 'organization'
-                          ? 'bg-white text-slate-900 shadow-sm'
-                          : 'text-slate-500 hover:text-slate-700'
-                      )}
-                    >
-                      <Building2 className="h-4 w-4" />
-                      <span>
-                        {t(
-                          'components.molecules.shareSession.access.organization'
+            <div className="md:w-[463px] w-[386px] space-y-6 pt-0">
+              {!restrictSharedSessionsToOrg ? (
+                <section className="space-y-3">
+                  <h3 className="text-[15px] font-semibold text-slate-900">
+                    {t('components.molecules.shareSession.access.title')}
+                  </h3>
+                  <div className="rounded-lg border border-slate-200 bg-slate-100 p-1.5">
+                    <div className="grid grid-cols-2 gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleAccessScopeChange('public')}
+                        className={cn(
+                          'flex h-9 items-center justify-center gap-2 rounded-md text-base transition-colors',
+                          accessScope === 'public'
+                            ? 'bg-white text-slate-900 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-700'
                         )}
-                      </span>
-                    </button>
+                      >
+                        <Globe className="h-4 w-4" />
+                        <span>
+                          {t('components.molecules.shareSession.access.public')}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleAccessScopeChange('organization')}
+                        className={cn(
+                          'flex h-9 items-center justify-center gap-2 rounded-md text-base transition-colors',
+                          accessScope === 'organization'
+                            ? 'bg-white text-slate-900 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-700'
+                        )}
+                      >
+                        <Building2 className="h-4 w-4" />
+                        <span>
+                          {t(
+                            'components.molecules.shareSession.access.organization'
+                          )}
+                        </span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <p className="text-[14px] leading-6 text-slate-500">
-                  {accessScope === 'public'
-                    ? t(
-                        'components.molecules.shareSession.access.publicDescription'
-                      )
-                    : t(
-                        'components.molecules.shareSession.access.organizationDescription'
-                      )}
-                </p>
-              </section>
+                  <p className="text-[14px] leading-6 text-slate-500">
+                    {accessScope === 'public'
+                      ? t(
+                          'components.molecules.shareSession.access.publicDescription'
+                        )
+                      : t(
+                          'components.molecules.shareSession.access.organizationDescription'
+                        )}
+                  </p>
+                </section>
+              ) : null}
 
               <section className="space-y-3">
                 <h3 className="text-[15px] font-semibold text-slate-900">

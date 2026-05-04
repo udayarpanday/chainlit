@@ -1,16 +1,13 @@
 import { WidgetContext } from '@/context';
 import DashboardSidebarButton from '@/evoya/DashboardSidebarButton';
-import EvoyaCreatorButton from '@/evoya/EvoyaCreatorButton';
 import FavoriteSessionButton from '@/evoya/FavoriteSessionButton';
 import ShareSessionButton from '@/evoya/ShareSessionButton';
 import AgentList, { AgentListItem } from './AgentList';
-import { Maximize2, Minimize, X } from 'lucide-react';
+import { Maximize2, X } from 'lucide-react';
 import { useContext, useEffect, useState } from 'react';
-import { useMediaQuery } from 'react-responsive';
 import { useRecoilValue } from 'recoil';
 
 import AudioPresence from '@chainlit/app/src/components/AudioPresence';
-import { Logo } from '@chainlit/app/src/components/Logo';
 import ChatProfiles from '@chainlit/app/src/components/header/ChatProfiles';
 import NewChatButton from '@chainlit/app/src/components/header/NewChat';
 import { Button } from '@chainlit/app/src/components/ui/button';
@@ -53,6 +50,7 @@ interface DashboardBridgeAgent {
 interface DashboardBridgeData {
   chatAgents?: DashboardBridgeAgent[];
   recent_agents?: DashboardBridgeAgent[];
+  restrictSharedSessionsToOrg?: boolean;
   resumeChat?: (agentUuid: string, sessionUuid?: string | null, isFavorite?: boolean) => void;
 }
 
@@ -72,7 +70,6 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
   const { loading } = useChatData();
   const { config } = useConfig();
   const { audioConnection } = useAudio();
-  const isTabletOrMobile = useMediaQuery({ query: '(max-width: 768px)' });
 
   const creatorEnabled = useRecoilValue(evoyaCreatorEnabledState);
 
@@ -87,6 +84,8 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
   const [recentAgents, setRecentAgents] = useState<AgentListItem[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState<string>();
   const [optimisticDefaultAgentId, setOptimisticDefaultAgentId] = useState<string>();
+  const [restrictSharedSessionsToOrg, setRestrictSharedSessionsToOrg] =
+    useState(false);
 
   const mapBridgeAgentToItem = (agent: DashboardBridgeAgent): AgentListItem | null => {
     const toBoolean = (value: boolean | string | undefined) =>
@@ -128,9 +127,12 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
   };
 
   const syncDashboardBridgeData = () => {
-    if (evoya?.type !== 'dashboard' || !window.dashboardDataForModal) return;
+    if (evoya?.type !== 'dashboard' || !window.dashboardDataForModal) {
+      setRestrictSharedSessionsToOrg(false);
+      return;
+    }
     const data = window.dashboardDataForModal();
-    
+    setRestrictSharedSessionsToOrg(Boolean(data.restrictSharedSessionsToOrg));
     let chatAgents = (data.chatAgents ?? [])
       .map(mapBridgeAgentToItem)
       .filter((agent): agent is AgentListItem => !!agent);
@@ -226,7 +228,7 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
       setSessionUuid(sessionJson.session_uuid);
       localStorage.setItem(sessionTokenKey, sessionJson.session_uuid);
       document.cookie = `${sessionTokenKey}=${sessionJson.session_uuid};path=/`;
-    } catch (e) {
+    } catch (_e) {
       return;
     }
   };
@@ -419,7 +421,10 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
           <>
             <ViewContext/>
             <FavoriteSessionButton sessionUuid={sessionUuid} />
-            <ShareSessionButton sessionUuid={sessionUuid} />
+            <ShareSessionButton
+              sessionUuid={sessionUuid}
+              restrictSharedSessionsToOrg={restrictSharedSessionsToOrg}
+            />
           </>
         )}
         {!creatorEnabled && (
