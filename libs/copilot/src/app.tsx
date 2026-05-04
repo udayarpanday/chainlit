@@ -37,7 +37,7 @@ export default function App({ widgetConfig }: Props) {
   const { evoya } = useContext(WidgetContext);
   const apiClient = useContext(ChainlitContext);
   const { i18n } = useTranslation();
-  const languageInUse = navigator.language || 'en-US';
+  const browserLanguage = navigator.language || 'en-US';
   const [authError, setAuthError] = useState<string>();
   const [fetchError, setFetchError] = useState<string>();
   const { clear } = useChatInteract();
@@ -64,18 +64,19 @@ export default function App({ widgetConfig }: Props) {
   }, [config]);
 
   useEffect(() => {
-    loadTranslations();
+    loadTranslations(evoya?.locale ?? browserLanguage);
   }, []);
 
-  const loadTranslations = async () => {
+  const loadTranslations = async (lang: string) => {
     try {
       const translations = await import(
-        `../../../translations/${languageInUse}.json`
+        `../../../translations/${lang}.json`
       );
-      i18n.addResourceBundle(languageInUse, 'translation', translations);
-      i18n.changeLanguage(languageInUse);
+      i18n.addResourceBundle(lang, 'translation', translations);
+      i18n.changeLanguage(lang);
     } catch (error) {
-      console.error(`Could not load translations for ${languageInUse}:`, error);
+      console.error(`Could not load translations for ${lang}:`, error);
+      loadTranslations('en-US');
     }
   };
 
