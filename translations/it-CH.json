@@ -34,7 +34,7 @@
                 "generateShareableLinkButton": "Genera link condivisibile",
                 "dialog": {
                     "title": "Condividi questa chat",
-                    "description": "Configura chi può accedere a questa conversazione e in che modo."
+                    "description": "Crea un link condivisibile per questa conversazione."
                 },
                 "access": {
                     "title": "Chi può accedere a questo link?",

@@ -33,8 +33,8 @@
                 "revokeLinkButton": "Révoquer le lien",
                 "generateShareableLinkButton": "Générer un lien partageable",
                 "dialog": {
-                    "title": "Partager ce chat",
-                    "description": "Configurez qui peut accéder à cette conversation et comment."
+                    "title": "Partager cette conversation",
+                    "description": "Créez un lien partageable pour cette conversation."
                 },
                 "access": {
                     "title": "Qui peut accéder à ce lien ?",
