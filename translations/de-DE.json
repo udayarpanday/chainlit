@@ -34,7 +34,7 @@
                 "generateShareableLinkButton": "Teilbaren Link erstellen",
                 "dialog": {
                     "title": "Diesen Chat teilen",
-                    "description": "Legen Sie fest, wer auf diese Unterhaltung zugreifen kann und wie."
+                    "description": "Erstelle einen teilbaren Link für diese Unterhaltung."
                 },
                 "access": {
                     "title": "Wer kann auf diesen Link zugreifen?",

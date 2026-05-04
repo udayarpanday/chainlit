@@ -34,7 +34,7 @@
                 "generateShareableLinkButton": "Generate shareable link",
                 "dialog": {
                     "title": "Share this chat",
-                    "description": "Configure who can access this conversation and how."
+                    "description": "Create a shareable link for this conversation."
                 },
                 "access": {
                     "title": "Who can access this link?",
