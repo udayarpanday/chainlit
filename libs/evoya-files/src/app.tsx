@@ -1,8 +1,7 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Toaster } from 'sonner';
 import { useTranslation } from '@chainlit/app/src/components/i18n/Translator';
 import { i18nSetupLocalization } from '@chainlit/app/src/i18n';
-import FilePicker from './components/FilePicker';
 
 import { ThemeProvider } from '../../copilot/src/ThemeProvider';
 import Widget from './widget';
@@ -11,9 +10,10 @@ i18nSetupLocalization();
 interface Props {
   initialPath: string;
   apiBaseUrl: string;
+  csrfToken: string;
 }
 
-export default function App({ initialPath, apiBaseUrl }: Props) {
+export default function App({ initialPath, apiBaseUrl, csrfToken }: Props) {
   const { i18n } = useTranslation();
   const languageInUse = navigator.language || 'en-US';
 
@@ -37,18 +37,7 @@ export default function App({ initialPath, apiBaseUrl }: Props) {
     <ThemeProvider storageKey="vite-ui-theme" defaultTheme={'light'}>
       <Toaster richColors className="toast" position="top-right" />
       {/* <FilePicker apiBaseUrl={apiBaseUrl} initialPath={initialPath} /> */}
-      <Widget apiBaseUrl={apiBaseUrl} initialPath={initialPath} />
+      <Widget apiBaseUrl={apiBaseUrl} initialPath={initialPath} csrfToken={csrfToken} />
     </ThemeProvider>
   );
-
-  // return (
-  //   <ThemeProvider storageKey="vite-ui-theme" defaultTheme={defaultTheme}>
-  //     <Toaster richColors className="toast" position="top-right" />
-  //     {evoya.type === 'default' ? (
-  //       <Widget config={widgetConfig} error={fetchError || authError} />
-  //     ) : (
-  //       <WidgetEmbedded />
-  //     )}
-  //   </ThemeProvider>
-  // );
 }

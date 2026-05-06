@@ -15,6 +15,7 @@ type EvoyaFilesConfig = {
   initialPath: string;
   container: HTMLElement;
   apiBaseUrl: string;
+  csrfToken: string;
 }
 
 declare global {
@@ -74,7 +75,7 @@ window.mountEvoyaFilesWidget = (config: EvoyaFilesConfig) => {
   root = ReactDOM.createRoot(shadowRootElement);
   root.render(
     <React.StrictMode>
-      <App initialPath={config.initialPath} apiBaseUrl={config.apiBaseUrl} />
+      <App initialPath={config.initialPath} apiBaseUrl={config.apiBaseUrl} csrfToken={config.csrfToken} />
     </React.StrictMode>
   );
 };

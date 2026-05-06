@@ -37,6 +37,7 @@ import { useState } from 'react';
 import { useRecoilState, useSetRecoilState } from 'recoil';
 import { EvoyaAttachment, evoyaAttachmentsState } from 'state/evoya';
 import { v4 as uuidv4 } from 'uuid';
+import { FilePickerContext } from '@evoya/file-picker/src/context/file-context';
 
 interface UploadButtonProps {
   disabled?: boolean;
@@ -156,12 +157,17 @@ export const UploadButton = ({
               </DialogTitle>
             </DialogHeader>
             <div>
-              <FilePicker 
-                initialPath='/'
-                selectedItemsChange={(items) => setCloudAttachments(items)}
-                multiselect
-                attachmentMode
-              />
+              <FilePickerContext.Provider value={{
+                apiBaseUrl: window.location.origin,
+                csrfToken: ''
+              }}>
+                <FilePicker 
+                  initialPath='/'
+                  selectedItemsChange={(items) => setCloudAttachments(items)}
+                  multiselect
+                  attachmentMode
+                />
+              </FilePickerContext.Provider>
             </div>
             <DialogFooter>
               <Button variant="secondary" onClick={() => setFilesOpen(false)}>

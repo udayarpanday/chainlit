@@ -1,7 +1,5 @@
-import { EvoyaDirectory, EvoyaFile, FilePickerData, FilePickerItem as FilePickerItemType } from '@/types';
+import { FilePickerItem as FilePickerItemType } from '@/types';
 import {
-  useEffect,
-  useMemo,
   useState,
 } from 'react';
 
@@ -46,7 +44,6 @@ import {
 import { useUpload } from '@chainlit/app/src/hooks/useUpload';
 import FilePicker from './FilePicker';
 
-
 type Props = {
   item: FilePickerItemType;
   isSelectable?: boolean;
@@ -56,6 +53,11 @@ type Props = {
   showActions?: boolean;
   hasUpload?: boolean;
   singleMode?: boolean;
+  onFileUpload?: (file: File) => void;
+  deleteItems?: (items: FilePickerItemType[]) => Promise<void>;
+  moveItem?: (item: FilePickerItemType, destination: string) => Promise<void>;
+  renameItem?: (item: FilePickerItemType, newName: string) => Promise<void>;
+  downloadItems?: (items: FilePickerItemType[]) => void;
 }
 
 export default function FilePickerItem({
@@ -66,6 +68,11 @@ export default function FilePickerItem({
   onClick = () => {},
   hasUpload = false,
   singleMode = false,
+  onFileUpload = () => {},
+  deleteItems = async () => {},
+  moveItem = async () => {},
+  renameItem = async () => {},
+  downloadItems = async () => {},
 }: Props) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -99,17 +106,20 @@ export default function FilePickerItem({
     return <FolderOpen className="h-4" />
   }
 
-  const downloadItem = () => {}
-  const renameItem = () => {
+  const renameItemHandler = () => {
     setRenameOpen(false);
+    renameItem(item, renameValue)
   }
-  const moveItem = () => {
-    console.log(moveDestination[0]);
+  const moveItemHandler = () => {
     setMoveOpen(false);
+    moveItem(item, moveDestination[0].path)
   }
-  const deleteItem = () => {
+
+  const deleteItemHandler = () => {
     setDeleteOpen(false);
+    deleteItems([item])
   }
+
   const clickItem = () => {
     onClick();
     if (isFile && !showActions) {
@@ -117,11 +127,6 @@ export default function FilePickerItem({
     }
   }
 
-  const [isUploading, setIsUploading] = useState(false);
-  const onFileUpload = (payloads: File[]) => {
-    console.log('sub dir', payloads);
-    setIsUploading(true);
-  }
   const onFileUploadError = () => {}
 
   const fileSpec = {
@@ -132,7 +137,7 @@ export default function FilePickerItem({
 
   const upload = useUpload({
     spec: fileSpec,
-    onResolved: (payloads: File[]) => hasUpload && onFileUpload(payloads),
+    onResolved: (payloads: File[]) => hasUpload && onFileUpload(payloads[0]),
     onError: onFileUploadError,
     options: { noDrag: false, noClick: true, noDragEventsBubbling: true, }
   });
@@ -157,7 +162,7 @@ export default function FilePickerItem({
         <span className="ml-1 overflow-hidden overflow-ellipsis whitespace-nowrap">{item.name}</span>
       </div>
       <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20" onClick={clickItem}>{item.owner}</div>
-      <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20" onClick={clickItem}>{getDateDisplay(item.modified)}</div>
+      <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20" onClick={clickItem}>{item.modified ? getDateDisplay(item.modified) : ''}</div>
       <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20" onClick={clickItem}>{"size" in item ? getSizeDisplay(item.size) : '--'}</div>
       {showActions && (
         <div className="p-2 border-t flex items-center gap-1 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20">
@@ -167,7 +172,7 @@ export default function FilePickerItem({
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7 -my-2 rounded-full text-gray-400"
-                 onClick={downloadItem}
+                onClick={() => downloadItems([item])}
               >
                 <Download />
               </Button>
@@ -220,7 +225,7 @@ export default function FilePickerItem({
                     <Button variant="secondary" onClick={() => setMoveOpen(false)}>
                       <Translator path="common.actions.cancel" />
                     </Button>
-                    <Button onClick={moveItem}>
+                    <Button onClick={moveItemHandler}>
                       <Translator path="common.actions.confirm" />
                     </Button>
                   </DialogFooter>
@@ -243,7 +248,7 @@ export default function FilePickerItem({
                     <Button variant="secondary" onClick={() => setRenameOpen(false)}>
                       <Translator path="common.actions.cancel" />
                     </Button>
-                    <Button onClick={renameItem}>
+                    <Button onClick={renameItemHandler}>
                       <Translator path="common.actions.confirm" />
                     </Button>
                   </DialogFooter>
@@ -266,7 +271,7 @@ export default function FilePickerItem({
                     <Button variant="secondary" onClick={() => setDeleteOpen(false)}>
                       <Translator path="common.actions.cancel" />
                     </Button>
-                    <Button variant="destructive" onClick={deleteItem}>
+                    <Button variant="destructive" onClick={deleteItemHandler}>
                       <Translator path="common.actions.confirm" />
                     </Button>
                   </DialogFooter>

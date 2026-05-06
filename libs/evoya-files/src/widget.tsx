@@ -1,16 +1,16 @@
-import { useContext, useEffect, useState } from 'react';
-import { useTranslation } from '@chainlit/app/src/components/i18n/Translator';
+import { useState } from 'react';
 import FilePicker from './components/FilePicker';
 import { FilePickerContext } from './context/file-context';
 import { Button } from '@chainlit/app/src/components/ui/button';
 import { useUpload } from '@chainlit/app/src/hooks/useUpload';
-import { ArrowLeft, Upload } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { FilePickerItem, EvoyaFile } from './types';
 import { ViewerWrapper } from './components/viewer';
 
 interface Props {
   initialPath: string;
   apiBaseUrl: string;
+  csrfToken: string;
 }
 
 const customFileRenderer = [
@@ -26,7 +26,8 @@ const customFileRenderer = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ]
 
-export default function Widget({ initialPath, apiBaseUrl }: Props) {
+export default function Widget({ initialPath, apiBaseUrl, csrfToken }: Props) {
+  const [selectedPath, setSelectedPath] = useState(initialPath);
   const [isUploading, setIsUploading] = useState(false);
   const [openFile, setOpenFile] = useState<EvoyaFile | null>(null);
   const handleItemClick = (item: FilePickerItem) => {
@@ -34,18 +35,42 @@ export default function Widget({ initialPath, apiBaseUrl }: Props) {
     const isFile = "size" in item;
     if (isFile) {
       if (customFileRenderer.some((renderer) => item.mime.includes(renderer))) {
-        console.log("set as file");
         setOpenFile(item as EvoyaFile);
       } else {
-        // open file in new tab
+        // open file in new tab or download
       }
     }
   }
-  const selectedItemsChange = () => {}
-  const onFileUpload = (payloads: File[]) => {
-    console.log(payloads);
-    setIsUploading(true);
+
+  const setSelectedPathHandler = (value: string) => {
+    setSelectedPath(value);
+    window.history.replaceState({}, '', `${window.location.origin}${window.location.pathname}?path=${value}`)
   }
+
+  const selectedItemsChange = () => {}
+
+  const onFileUpload = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const data = new FormData();
+      data.append('file', file)
+      data.append('path', selectedPath)
+      const response = await fetch(`${apiBaseUrl}/api/files/upload/`, {
+        method: 'POST',
+        body: data,
+        headers: {
+          'X-CSRFToken': csrfToken,
+        },
+      });
+      const json = await response.json();
+      console.log(json);
+    } catch(err) {
+      console.error(err);
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
   const onFileUploadError = () => {}
 
   const fileSpec = {
@@ -56,15 +81,16 @@ export default function Widget({ initialPath, apiBaseUrl }: Props) {
 
   const upload = useUpload({
     spec: fileSpec,
-    onResolved: (payloads: File[]) => onFileUpload(payloads),
+    onResolved: (payloads: File[]) => onFileUpload(payloads[0]),
     onError: onFileUploadError,
-    options: { noDrag: false }
+    options: { noDrag: false, multiple: false }
   });
   const { getRootProps, getInputProps } = upload ?? {};
 
   return (
     <FilePickerContext.Provider value={{
-      apiBaseUrl
+      apiBaseUrl,
+      csrfToken
     }}>
       <div>
         {!openFile && (
@@ -89,11 +115,13 @@ export default function Widget({ initialPath, apiBaseUrl }: Props) {
         )}
         {!openFile && (
           <FilePicker
-            initialPath={initialPath}
+            initialPath={selectedPath}
             handleItemClick={handleItemClick}
             selectedItemsChange={selectedItemsChange}
+            setSelectedPath={setSelectedPathHandler}
             showActions
             multiselect
+            hasUpload
           />
         )}
         {openFile && (

@@ -9,6 +9,7 @@ import { Translator } from '@/components/i18n';
 import { Button } from './ui/button';
 import FilePicker from '@evoya/file-picker/src/components/FilePicker';
 import { EvoyaFile } from '@evoya/file-picker/src/types';
+import { FilePickerContext } from '@evoya/file-picker/src/context/file-context';
 
 interface Props {
   open: boolean;
@@ -29,11 +30,16 @@ const FilePickerDialog = ({ open, setOpen, selectFile }: Props): JSX.Element => 
           </DialogTitle>
         </DialogHeader>
         <div>
-          <FilePicker 
-            initialPath='/'
-            handleItemClick={(item) => selectFile(item)}
-            singleMode
-          />
+          <FilePickerContext.Provider value={{
+            apiBaseUrl: window.location.origin,
+            csrfToken: ''
+          }}>
+            <FilePicker 
+              initialPath='/'
+              handleItemClick={(item) => selectFile(item)}
+              singleMode
+            />
+          </FilePickerContext.Provider>
         </div>
         <DialogFooter>
           <Button variant="secondary" onClick={() => setOpen(false)}>

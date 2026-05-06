@@ -7,33 +7,52 @@ import { FilePickerContext } from '@/context/file-context';
 import { useContext, useEffect, useState } from "react";
 import { PdfViewer } from "./pdf";
 import { TextViewer } from "./text";
-import { toast } from 'sonner';
+import { toast } from '@/utils/evoya-toast';
 import { Button } from '@chainlit/app/src/components/ui/button';
 import { ArrowLeft, Save } from 'lucide-react';
 
 
 export function ViewerWrapper({ file, setOpenFile }: { file: EvoyaFile; setOpenFile: (file: EvoyaFile | null) => void }) {
-  const { apiBaseUrl } = useContext(FilePickerContext);  
+  const { apiBaseUrl, csrfToken } = useContext(FilePickerContext);  
   const [content, setContent] = useState('');
   const [fileLoaded, setFileLoaded] = useState(false);
 
   useEffect(() => {
-    fetch(`${apiBaseUrl}${file.path}`).then(async (response) => {
+    fetch(`${apiBaseUrl}/api/files/download/?path=${file.path}`).then(async (response) => {
       const text = await response.text();
       setContent(text);
       setFileLoaded(true);
     })
   }, []);
 
-  const saveFile = () => {
-    fetch(`${apiBaseUrl}${file.path}`, {
-      method: 'POST',
-      body: JSON.stringify({ content: content })
-    }).then((response) => {
-      toast.success('File saved!')
-    }).catch((err) => {
+  const saveFile = async () => {
+    const blob = new Blob([content], {
+      type: file.mime,
+    });
+    const newFile = new File([blob as BlobPart], file.name);
+    try {
+      const data = new FormData();
+      const filePath = file.path.split('/');
+      filePath.pop();
+      data.append('file', newFile)
+      data.append('path', filePath.join('/') + "/")
+      const response = await fetch(`${apiBaseUrl}/api/files/upload/`, {
+        method: 'POST',
+        body: data,
+        headers: {
+          'X-CSRFToken': csrfToken,
+        },
+      });
+      const json = await response.json();
+      if (json.success) {
+        toast.success('File saved!');
+      } else {
+        toast.error('Failed to save file!');
+      }
+    } catch(err) {
+      console.error(err);
       toast.error('Failed to save file!')
-    })
+    }
   }
 
   if (!fileLoaded) {

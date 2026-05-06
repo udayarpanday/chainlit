@@ -1,24 +1,27 @@
-import { EvoyaDirectory, EvoyaFile, FilePickerData, FilePickerItem as FilePickerItemType, PathItem } from '@/types';
+import {
+  FilePickerData,
+  FilePickerItem as FilePickerItemType,
+} from '@/types';
 import {
   useContext,
   useEffect,
-  useMemo,
   useState,
 } from 'react';
 
 import { Checkbox } from '@chainlit/app/src/components/ui/checkbox';
-import { getSizeDisplay } from '@/utils/file';
 import { Translator } from '@chainlit/app/src/components/i18n';
 import { Button } from '@chainlit/app/src/components/ui/button';
 
 import FilePickerItem from './FilePickerItem'
 import { v4 as uuidv4 } from 'uuid';
+import { toast } from '@/utils/evoya-toast';
 
 import {
   Home,
   ChevronRight,
   Download,
   Trash2,
+  LoaderCircle,
 } from 'lucide-react';
 import { cn } from '@chainlit/app/src/lib/utils';
 import { FilePickerContext } from '@/context/file-context';
@@ -30,120 +33,13 @@ type Props = {
   showActions?: boolean;
   handleItemClick?: (item: FilePickerItemType) => void;
   selectedItemsChange?: (items: FilePickerItemType[]) => void;
+  setSelectedPath?: (path: string) => void;
   hasUpload?: boolean;
   multiselect?: boolean;
   attachmentMode?: boolean;
   destinationMode?: boolean;
   singleMode?: boolean;
 }
-const dummyPathItems: PathItem[] = [
-  {
-    name: 'Home',
-    path: '/',
-    canOpen: true
-  },
-  {
-    name: 'Documents',
-    path: '/documents/',
-    canOpen: true
-  }
-];
-
-const dummyItems: FilePickerItemType[] = [
-  {
-    id: uuidv4(),
-    name: 'Marketing',
-    owner: 'You',
-    modified: new Date(),
-    created: new Date(),
-    showActions: true,
-    path: 'Marketing/'
-  },
-  {
-    id: uuidv4(),
-    name: 'Notes',
-    owner: 'You',
-    modified: new Date(),
-    created: new Date(),
-    showActions: true,
-    path: 'Notes/'
-  },
-  {
-    id: uuidv4(),
-    name: 'Product',
-    owner: 'Sarah K.',
-    modified: new Date(),
-    created: new Date(),
-    showActions: false,
-    path: 'Product/'
-  },
-  {
-    id: uuidv4(),
-    name: 'astra-2012.pdf',
-    owner: 'You',
-    modified: new Date(),
-    created: new Date(),
-    showActions: true,
-    path: '/static/test-docs/astra-2012.pdf',
-    size: 1572864,
-    mime: 'application/pdf'
-  },
-  {
-    id: uuidv4(),
-    name: 'README.md',
-    owner: 'You',
-    modified: new Date(),
-    created: new Date(),
-    showActions: true,
-    path: '/static/test-docs/README.md',
-    size: 2048,
-    mime: 'text/markdown'
-  },
-  {
-    id: uuidv4(),
-    name: 'room_data.json',
-    owner: 'You',
-    modified: new Date(),
-    created: new Date(),
-    showActions: true,
-    path: '/static/test-docs/room_data.json',
-    size: 2048,
-    mime: 'application/json'
-  },
-  {
-    id: uuidv4(),
-    name: 'manual-doc.docx',
-    owner: 'You',
-    modified: new Date(),
-    created: new Date(),
-    showActions: true,
-    path: '/static/test-docs/manual-doc.docx',
-    size: 2048,
-    mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-  },
-  {
-    id: uuidv4(),
-    name: 'themen.pptx',
-    owner: 'You',
-    modified: new Date(),
-    created: new Date(),
-    showActions: true,
-    path: '/static/test-docs/themen.pptx',
-    size: 2048,
-    mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-  },
-  // {
-  //   id: uuidv4(),
-  //   name: 'test-data.csv',
-  //   owner: 'You',
-  //   modified: new Date(),
-  //   created: new Date(),
-  //   showActions: true,
-  //   path: '/static/test-docs/test-data.csv',
-  //   size: 2048,
-  //   mime: 'application/json'
-  // },
-]
 
 export default function FilePicker({
   initialPath,
@@ -155,22 +51,50 @@ export default function FilePicker({
   singleMode = false,
   handleItemClick = () => {},
   selectedItemsChange = () => {},
+  setSelectedPath = () => {},
 }: Props) {
-  const { apiBaseUrl } = useContext(FilePickerContext);
+  const { apiBaseUrl, csrfToken } = useContext(FilePickerContext);
   const [currentPath, setCurrentPath] = useState(initialPath);
-  const [pathData, setPathData] = useState<FilePickerData | null>(null);
+  const [pathData, setPathData] = useState<FilePickerData>({ path: [], items: []});
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchDirectory = async (path: string) => {
-    // fetch('http://localhost:8000/chat/list-chat/');
+    setSelectedPath(path)
+    setIsLoading(true);
+    const response = await fetch(`${apiBaseUrl}/api/files?path=${path}`);
+    const json = await response.json()
     setCurrentPath(path);
     setSelectedElements([]);
     selectedItemsChange([]);
     setPathData({
-      path: dummyPathItems,
-      items: dummyItems.filter((item) => !destinationMode || !("size" in item))
+      // path: dummyPathItems,
+      path: [
+        {
+          name: 'Home',
+          path: '/',
+          canOpen: true
+        },
+        ...json.breadcrumbs
+      ],
+      // items: dummyItems.filter((item) => !destinationMode || !("size" in item))
+      items: [
+        ...json.folders.map((folder) => ({
+          ...folder,
+          created: folder.created ? new Date(folder.created) : null,
+          modified: folder.modified ? new Date(folder.modified) : null,
+          id: uuidv4(),
+        })),
+        ...(destinationMode ? [] : json.documents).map((document) => ({
+          ...document,
+          created: document.created ? new Date(document.created) : null,
+          modified: document.modified ? new Date(document.modified) : null,
+          id: uuidv4(),
+        }))
+      ]
     });
+    setIsLoading(false);
   }
 
   const itemClick = (item: FilePickerItemType) => {
@@ -182,8 +106,12 @@ export default function FilePicker({
   }
 
   useEffect(() => {
-    fetchDirectory(currentPath);
+    loadCurrentPath()
   }, []);
+
+  const loadCurrentPath = () => {
+    fetchDirectory(currentPath);
+  }
 
   const setItemSelected = (id: string, value: boolean) => {
     let newItems: string[] = [];
@@ -215,10 +143,178 @@ export default function FilePicker({
       selectedItemsChange([]);
     }
   }
+  
+  const moveItem = async (item: FilePickerItemType, destinationPath: string) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/files/move/`, {
+        method: 'POST',
+        body: JSON.stringify({
+          path: item.path,
+          destination: destinationPath
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+        },
+      });
+      const json = await response.json();
+      if (json.success) {
+        toast.success('File moved!');
+        loadCurrentPath();
+      } else {
+        toast.error('Failed to move file!');
+      }
+    } catch(err) {
+      console.error(err);
+      toast.error('Failed to move file!');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+  
+  const renameItem = async (item: FilePickerItemType, newName: string) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/files/rename/`, {
+        method: 'POST',
+        body: JSON.stringify({
+          path: item.path,
+          new_name: newName
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+        },
+      });
+      const json = await response.json();
+      if (json.success) {
+        toast.success('File renamed!');
+        loadCurrentPath();
+      } else {
+        toast.error('Failed to rename file!');
+      }
+    } catch(err) {
+      console.error(err);
+      toast.error('Failed to rename file!');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+  
+  const deleteItems = async (items: FilePickerItemType[]) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/files/delete/`, {
+        method: 'POST',
+        body: JSON.stringify({
+          paths: items.map((item) => item.path)
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+        },
+      });
+      const json = await response.json();
+      if (json.success) {
+        toast.success('File deleted!');
+        loadCurrentPath();
+      } else {
+        toast.error('Failed to delete file!');
+      }
+    } catch(err) {
+      console.error(err);
+      toast.error('Failed to delete file!');
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
-  const onFileUpload = (payloads: File[]) => {
-    console.log('view dir', payloads);
+  const downloadItems = (items: FilePickerItemType[]) => {
+    if (items.length === 1 && "size" in items[0]) {
+      fetch(`${apiBaseUrl}/api/files/download/?path=${items[0].path}`)
+        .then((response) => response.blob())
+        .then((blob) => {
+          // Create blob link to download
+          const url = window.URL.createObjectURL(blob);
+
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute(
+            'download',
+            `${items[0].name}`,
+          );
+
+          // Append to html link element page
+          document.body.appendChild(link);
+
+          // Start download
+          link.click();
+
+          // Clean up and remove the link
+          link.parentNode.removeChild(link);
+        });
+    } else {
+      fetch(`${apiBaseUrl}/api/files/download/bulk/`, {
+        method: "POST",
+        body: JSON.stringify({
+          paths: items.map((item) => item.path)
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+        },
+      })
+        .then((response) => response.blob())
+        .then((blob) => {
+          // Create blob link to download
+          const url = window.URL.createObjectURL(blob);
+
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute(
+            'download',
+            `${items[0].name}`,
+          );
+
+          // Append to html link element page
+          document.body.appendChild(link);
+
+          // Start download
+          link.click();
+
+          // Clean up and remove the link
+          link.parentNode.removeChild(link);
+        });
+    }
+  }
+
+  const onFileUpload = async (file: File) => {
     setIsUploading(true);
+    try {
+      const data = new FormData();
+      data.append('file', file)
+      data.append('path', currentPath)
+      const response = await fetch(`${apiBaseUrl}/api/files/upload/`, {
+        method: 'POST',
+        body: data,
+        headers: {
+          'X-CSRFToken': csrfToken,
+        },
+      });
+      const json = await response.json();
+      if (json.success) {
+        toast.success('File saved!');
+        loadCurrentPath();
+      } else {
+        toast.error('Failed to save file!');
+      }
+    } catch(err) {
+      console.error(err);
+      toast.error('Failed to save file!');
+    } finally {
+      setIsUploading(false);
+    }
   }
   const onFileUploadError = () => {}
 
@@ -230,26 +326,20 @@ export default function FilePicker({
 
   const upload = useUpload({
     spec: fileSpec,
-    onResolved: (payloads: File[]) => hasUpload && onFileUpload(payloads),
+    onResolved: (payloads: File[]) => hasUpload && onFileUpload(payloads[0]),
     onError: onFileUploadError,
-    options: { noDrag: false, noClick: true, }
+    options: { noDrag: false, noClick: true, multiple: false }
   });
   const { getRootProps, getInputProps, isDragActive } = upload ?? {};
 
-  if (!pathData) {
-    return (
-      <div>Loading</div>
-    );
-  }
-
   return (
-    <div>
+    <div className='relative'>
       <div className={cn("flex items-center mb-4", (attachmentMode || destinationMode) ? 'text-xs' : 'text-sm')}>
         {pathData.path.length > 0 && pathData.path.map((item, index) => (
           <>
             {index > 0 && (
               <div className={(attachmentMode || destinationMode) ? 'px-1' : 'px-2'}>
-                <ChevronRight className={(attachmentMode || destinationMode) ? 'h-3 w-3' : 'h-4 w-4'} />
+                <ChevronRight className={cn((attachmentMode || destinationMode) ? 'h-3 w-3' : 'h-4 w-4', 'text-gray-400')} />
               </div>
             )}
             <div className={cn('flex items-center', item.path ? 'hover:text-foreground transition-colors cursor-pointer' : '', index < pathData.path.length - 1 ? 'text-gray-400' : '')} onClick={() => item.path && fetchDirectory(item.path)}>
@@ -258,9 +348,35 @@ export default function FilePicker({
             </div>
           </>
         ))}
+        {(pathData.path.length === 0) && (
+          <>
+            <div className={cn('flex items-center','hover:text-foreground transition-colors cursor-pointer', 'text-gray-400')}>
+              <Home className={(attachmentMode || destinationMode) ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'} />
+              <span>Home</span>
+            </div>
+            {/* <div className={(attachmentMode || destinationMode) ? 'px-1' : 'px-2'}>
+              <ChevronRight className={cn((attachmentMode || destinationMode) ? 'h-3 w-3' : 'h-4 w-4', 'text-gray-400')} />
+            </div>
+            <div className={cn('flex items-center')}>
+              <LoaderCircle className={cn("animate-spin", (attachmentMode || destinationMode) ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2')} />
+            </div> */}
+          </>
+        )}
+        {isLoading && (
+          <>
+            <div className={cn('flex items-center ml-4')}>
+              <LoaderCircle className={cn("animate-spin", (attachmentMode || destinationMode) ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2')} />
+            </div>
+          </>
+        )}
       </div>
-      <div className={cn("rounded-lg border bg-white py-2 px-4", isDragActive && hasUpload ? 'bg-primary/20' : '')} {...(hasUpload ? getRootProps() : {})}>
+      <div className={cn("rounded-lg border bg-white py-2 px-4 min-h-24 relative", isDragActive && hasUpload ? 'bg-primary/20' : '')} {...(hasUpload ? getRootProps() : {})}>
         {hasUpload && <input {...getInputProps()} />}
+        {(isLoading || isUploading) && (
+          <div className='absolute rounded-lg top-0 right-0 bottom-0 left-0 bg-white/50 flex items-center justify-center z-10'>
+            <LoaderCircle className='animate-spin' />
+          </div>
+        )}
         <div className={cn("grid", showActions ? 'grid-cols-[max-content_auto_max-content_max-content_max-content_max-content]' : (singleMode ? 'grid-cols-[auto_max-content_max-content_max-content]' : 'grid-cols-[max-content_auto_max-content_max-content_max-content]'))}>
           <div className="contents text-xs">
             {!singleMode && 
@@ -290,8 +406,19 @@ export default function FilePicker({
               onClick={() => itemClick(item)}
               showActions={showActions}
               singleMode={singleMode}
+              onFileUpload={onFileUpload}
+              hasUpload={hasUpload}
+              deleteItems={deleteItems}
+              moveItem={moveItem}
+              renameItem={renameItem}
+              downloadItems={downloadItems}
             />
           ))}
+          {(pathData.items.length === 0 && !isLoading) && (
+            <div className='col-span-full p-2 flex justify-center text-sm text-gray-400'>
+              No Entries
+            </div>
+          )}
         </div>
       </div>
       {(selectedElements.length > 0 || attachmentMode) && !destinationMode && !singleMode && (
@@ -303,12 +430,14 @@ export default function FilePicker({
                 <Button
                   variant="ghost"
                   className="text-gray-400"
+                  onClick={() => downloadItems(pathData.items.filter((item) => selectedElements.includes(item.id)))}
                 >
                   <Download />
                   <Translator path="evoyaFiles.actions.download.label" />
                 </Button>
                 <Button
                   variant="ghost-destructive"
+                  onClick={() => deleteItems(pathData.items.filter((item) => selectedElements.includes(item.id)))}
                 >
                   <Trash2 />
                   <Translator path="evoyaFiles.actions.delete.label" />
