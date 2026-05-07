@@ -10,13 +10,21 @@ import {
   FilePickerDialog
 } from '@chainlit/app/src/components/FilePickerDialog';
 import { EvoyaFile } from '@evoya/file-picker/src/types';
+import useEvoyaCreator from '@/hooks/useEvoyaCreator';
 
 export const OpenFile: React.FC = () => {
   const iconComponentFor = useCellValue(iconComponentFor$);
   const [fileDialogOpen, setFileDialogOpen] = useState(false);
   const t = useTranslation();
+  const {
+    openCreatorWithFile
+  } = useEvoyaCreator();
 
   const openDocument = (file: EvoyaFile) => {
+    if (file.mime) {
+      setFileDialogOpen(false);
+      openCreatorWithFile(file, { type: file.mime.indexOf('markdown') > -1 ? 'markdown' : 'text' });
+    }
   };
 
   return (

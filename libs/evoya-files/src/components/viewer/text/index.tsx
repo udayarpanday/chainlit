@@ -1,41 +1,40 @@
 import { createPortal } from 'react-dom';
 import { EvoyaFile } from "@/types";
-import CodeMirror from '@uiw/react-codemirror';
-import { useContext, useEffect, useMemo, useState } from "react";
+import CodeMirror, { EditorView } from '@uiw/react-codemirror';
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { FilePickerContext } from '@/context/file-context';
 import { javascript } from '@codemirror/lang-javascript';
 import { python } from '@codemirror/lang-python';
 import { json } from '@codemirror/lang-json';
 
-export function TextViewer({ file, isEditable = true }: { file: EvoyaFile; isEditable?: boolean; }) {
-  const [content, setContent] = useState('');
-  const { apiBaseUrl } = useContext(FilePickerContext);
+export function TextViewer({ mime, content = "", setContent, isEditable = true }: { mime: string; content: string; setContent?: (value: string) => void; isEditable?: boolean; }) {
+  // const [content, setContent] = useState('');
+  // const { apiBaseUrl } = useContext(FilePickerContext);
 
-  useEffect(() => {
-    fetch(`${apiBaseUrl}${file.path}`).then(async (response) => {
-      const text = await response.text();
-      setContent(text);
-    })
-  }, []);
+  // useEffect(() => {
+  //   fetch(`${apiBaseUrl}${file.path}`).then(async (response) => {
+  //     const text = await response.text();
+  //     setContent(text);
+  //   })
+  // }, []);
 
   const extensions = useMemo(() => {
-    switch (file.mime) {
+    const defaultExtensions = [EditorView.lineWrapping];
+    switch (mime) {
       case 'application/json':
-        return [json()];
+        return [json(), ...defaultExtensions];
       case 'text/javascript':
-        return [javascript()];
+        return [javascript(), ...defaultExtensions];
       case 'text/x-python':
-        return [python()];
+        return [python(), ...defaultExtensions];
     }
-  }, [file]);
-
-  if (!content) return null;
+  }, [mime]);
 
   return (
     <>
       {createPortal(
         <div style={{ height: '100%', overflow: 'auto' }}>
-          <CodeMirror value={content} height='100%' extensions={extensions} />
+          <CodeMirror value={content} height="100%" extensions={extensions} onChange={(value: string) => (setContent && isEditable) && setContent(value)} editable={isEditable} />
         </div>,
         document.getElementById('fileviewer-root')
       )}

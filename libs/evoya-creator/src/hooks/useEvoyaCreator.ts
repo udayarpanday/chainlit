@@ -1,11 +1,8 @@
 import {
-  useMemo,
-  useCallback,
   useContext,
 } from 'react';
 import {
   useRecoilValue,
-  useResetRecoilState,
   useSetRecoilState
 } from 'recoil';
 
@@ -17,7 +14,6 @@ import {
   creatorFileState,
 } from '@/state';
 
-// import { EvoyaConfig } from 'evoya/types';
 import { WidgetContext } from '@/context';
 
 import type { IStep } from 'client-types/';
@@ -48,15 +44,19 @@ export default function useEvoyaCreator() {
     window.evoyaCreatorEnabled = true;
   }
   
-  const openCreatorWithFile = (file: { path: string; name: string; }, openConfig: any) => {
+  const openCreatorWithFile = (file: { path: string; name: string; mime: string; }, openConfig: any) => {
     window.dispatchEvent(new CustomEvent('open-evoya-creator', { detail: { config: openConfig }}));
     setCreatorType(openConfig.type ?? 'markdown');
     setFileInfo(file);
 
-    fetch(`${config.apiBaseUrl}${file.path}`).then(async (response) => {
+    fetch(`${config.apiBaseUrl}/api/files/download/?path=${file.path}`).then(async (response) => {
       const text = await response.text();
-    
       setCreatorContent(text);
+      // @ts-expect-error is not a valid prop
+      if (window.setEvoyaCreatorContent) {
+        // @ts-expect-error is not a valid prop
+        window.setEvoyaCreatorContent(text)
+      }
       window.dispatchEvent(new CustomEvent('enable-creator-mode'));
       setActive(true);
       // @ts-expect-error is not a valid prop
@@ -64,15 +64,35 @@ export default function useEvoyaCreator() {
     })
   }
 
-  const saveCreatorContent = () => {
-    fetch(`${config.apiBaseUrl}${fileInfo.path}`, {
-      method: 'POST',
-      body: JSON.stringify({ content: creatorContent })
-    }).then((response) => {
-      toast.success('File saved!')
-    }).catch((err) => {
+  const saveCreatorContent = async () => {
+    if (!fileInfo || !config) return;
+    const blob = new Blob([creatorContent], {
+      type: fileInfo?.mime,
+    });
+    const newFile = new File([blob as BlobPart], fileInfo?.name ?? 'file');
+    try {
+      const data = new FormData();
+      const filePath = fileInfo.path.split('/');
+      filePath.pop();
+      data.append('file', newFile)
+      data.append('path', filePath.join('/') + "/")
+      const response = await fetch(`${config.apiBaseUrl}/api/files/upload/`, {
+        method: 'POST',
+        body: data,
+        headers: {
+          'X-CSRFToken': config.csrfToken,
+        },
+      });
+      const json = await response.json();
+      if (json.success) {
+        toast.success('File saved!');
+      } else {
+        toast.error('Failed to save file!');
+      }
+    } catch(err) {
+      console.error(err);
       toast.error('Failed to save file!')
-    })
+    }
   }
 
   const closeCreatorOverlay = () => {
@@ -84,6 +104,7 @@ export default function useEvoyaCreator() {
   
   return {
     enabled: config?.enabled ?? false,
+    fileInfo,
     creatorType,
     active,
     setActive,

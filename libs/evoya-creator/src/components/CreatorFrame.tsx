@@ -8,9 +8,21 @@ import MarkdownEditor from './markdownEditor';
 
 import CreatorHeader from './CreatorHeader';
 
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@chainlit/app/src/components/ui/resizable";
+import {
+  Dialog,
+  DialogContent,
+} from '@chainlit/app/src/components/ui/dialog';
+import CreatorChat from './CreatorChat';
+
 export default function CreatorFrame() {
   const {
     active,
+    closeCreatorOverlay,
     creatorType,
     openCreatorWithContent,
     openCreatorWithFile,
@@ -33,9 +45,37 @@ export default function CreatorFrame() {
     }
   }, [creatorType]);
 
-  if (!active) {
-    return null;
-  }
+  return (
+    <Dialog
+      open={active}
+      onOpenChange={() => closeCreatorOverlay()}
+    >
+      <DialogContent
+        className="z-[9999] h-full p-0 overflow-hidden border-0"
+        style={{
+          maxHeight: 'calc(100% - 2rem)',
+          maxWidth: 'calc(100% - 2rem)',
+        }}
+        // @ts-expect-error is not a valid prop
+        container={window.mdx_shadowRootElement}
+      >
+        <ResizablePanelGroup
+          direction="horizontal"
+        >
+          <ResizablePanel defaultValue="50%">
+            <CreatorChat />
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultValue="50%">
+            <div className="overflow-hidden h-full flex flex-col">
+              <CreatorHeader />
+              {CreatorRenderer}
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </DialogContent>
+    </Dialog>
+  )
 
   return (
     <div className="overflow-hidden h-full flex flex-col">

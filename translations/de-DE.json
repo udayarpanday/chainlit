@@ -536,8 +536,12 @@
                 "title": "Open file"
             },
             "upload": {
+                "title": "Upload",
                 "label": "Upload from Computer",
                 "description": "Browse local files"
+            },
+            "create_folder": {
+                "title": "Create Folder"
             },
             "clear": {
                 "label": "Clear"

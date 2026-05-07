@@ -9,6 +9,8 @@ export interface EvoyaCreatorConfig {
   container: HTMLElement;
   theme?: 'light' | 'dark';
   apiBaseUrl?: string;
+  csrfToken?: string;
+  workspaceId?: string;
 }
 
 export type SelectionContext = {

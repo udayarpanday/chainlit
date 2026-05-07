@@ -120,6 +120,8 @@ export default function MDXEditorWrapper() {
   useEffect(() => {
     // @ts-expect-error is not a valid prop
     window.getEvoyaCreatorContent = mdxEditorRef.current.getMarkdown;
+    // @ts-expect-error is not a valid prop
+    window.setEvoyaCreatorContent = mdxEditorRef.current.setMarkdown;
 
     return () => {
       // @ts-expect-error is not a valid prop
@@ -154,7 +156,7 @@ export default function MDXEditorWrapper() {
 
   return (
     <>
-    {createPortal(
+    {document.getElementById('chainlit-copilot')?.shadowRoot?.getElementById('evoya-creator-context-ref') && createPortal(
       <div
         style={{
           backgroundColor: 'white',

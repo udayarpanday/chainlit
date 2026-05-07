@@ -26,6 +26,7 @@ export type EvoyaAutoOpenConfig = {
 
 export interface EvoyaCreatorConfig {
   enabled?: boolean;
+  initialEnabled?: boolean;
 }
 
 export interface EvoyaChainlitConfig {

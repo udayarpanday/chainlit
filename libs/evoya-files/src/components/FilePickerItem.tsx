@@ -14,6 +14,7 @@ import {
   FolderInput,
   Trash2,
   FileImage,
+  PencilLine,
 } from 'lucide-react';
 
 import { cn } from '@chainlit/app/src/lib/utils';
@@ -40,6 +41,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@chainlit/app/src/components/ui/dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from '@chainlit/app/src/components/ui/tooltip';
 
 import { useUpload } from '@chainlit/app/src/hooks/useUpload';
 import FilePicker from './FilePicker';
@@ -106,6 +113,11 @@ export default function FilePickerItem({
     return <FolderOpen className="h-4" />
   }
 
+  const openCreator = () => {
+    // @ts-expect-error is not a valid prop
+    window.openEvoyaCreatorWithFile(item, { type: item.mime.indexOf('markdown') > -1 ? 'markdown' : 'text' });
+  }
+
   const renameItemHandler = () => {
     setRenameOpen(false);
     renameItem(item, renameValue)
@@ -168,14 +180,44 @@ export default function FilePickerItem({
         <div className="p-2 border-t flex items-center gap-1 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20">
           {item.showActions && (
             <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 -my-2 rounded-full text-gray-400"
-                onClick={() => downloadItems([item])}
-              >
-                <Download />
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 -my-2 rounded-full text-gray-400"
+                      onClick={openCreator}
+                    >
+                      <PencilLine />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      <Translator path="components.molecules.evoyaCreatorButton.label" />
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 -my-2 rounded-full text-gray-400"
+                      onClick={() => downloadItems([item])}
+                    >
+                      <Download />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      <Translator path="evoyaFiles.actions.download.label" />
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button

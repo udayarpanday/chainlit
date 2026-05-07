@@ -211,7 +211,7 @@
     min-height: calc(100vh - 145px);
 }
 
-#evoya-creator-container .evoya-creator-editor {
+#evoya-creator-container .evoya-creator-editor, #evoya-files-container #fileviewer-root {
     h1, h2, h3, h4, h5, h6 {
         font-weight: bold;
         margin-bottom: .5rem;

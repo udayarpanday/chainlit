@@ -1,29 +1,37 @@
 import { EvoyaFile } from "@/types";
 import { MarkdownViewer } from "./markdown";
-import DocViewer, {
-  DocViewerRenderers,
-} from "react-doc-viewer";
 import { FilePickerContext } from '@/context/file-context';
 import { useContext, useEffect, useState } from "react";
 import { PdfViewer } from "./pdf";
 import { TextViewer } from "./text";
 import { toast } from '@/utils/evoya-toast';
 import { Button } from '@chainlit/app/src/components/ui/button';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, LoaderCircle, Save } from 'lucide-react';
 
 
 export function ViewerWrapper({ file, setOpenFile }: { file: EvoyaFile; setOpenFile: (file: EvoyaFile | null) => void }) {
   const { apiBaseUrl, csrfToken } = useContext(FilePickerContext);  
   const [content, setContent] = useState('');
+  const [blobUrl, setBlobUrl] = useState('');
   const [fileLoaded, setFileLoaded] = useState(false);
 
   useEffect(() => {
-    fetch(`${apiBaseUrl}/api/files/download/?path=${file.path}`).then(async (response) => {
-      const text = await response.text();
-      setContent(text);
-      setFileLoaded(true);
-    })
-  }, []);
+    // if (
+    //   file.mime.includes('text/')
+    //   || file.mime.includes('application/json')
+    // ) {
+      setFileLoaded(false);
+      fetch(`${apiBaseUrl}/api/files/download/?path=${file.path}`).then(async (response) => {
+        const blob = await response.blob();
+        setBlobUrl(URL.createObjectURL(blob));
+        const text = await blob.text();
+        setContent(text);
+        setFileLoaded(true);
+      })
+    // } else {
+    //   setFileLoaded(true);
+    // }
+  }, [file]);
 
   const saveFile = async () => {
     const blob = new Blob([content], {
@@ -55,32 +63,18 @@ export function ViewerWrapper({ file, setOpenFile }: { file: EvoyaFile; setOpenF
     }
   }
 
-  if (!fileLoaded) {
-    return (
-      <div
-        style={{
-          overflow: 'auto',
-          height: '100%'
-        }}
-      >
-        Loading
-      </div>
-    )
-  }
-
   const fileRenderer = () => {
     if (file.mime === 'application/pdf') {
-      return <PdfViewer path={file.path} />
+      return <PdfViewer path={blobUrl} />
     } else if (file.mime.includes('text/markdown') || file.mime.includes('text/x-markdown')) {
       return <MarkdownViewer content={content} isEditable={true} setContent={setContent} />
     } else if (file.mime.includes('application/json')) { // Code file types
-      return <TextViewer file={file} isEditable={true} />
+      return <TextViewer mime={file.mime} content={content} isEditable={true} setContent={setContent} />
     } else if (file.mime.includes('text/')) { // Text file type fallback
-      return <TextViewer file={file} isEditable={true} />
+      return <TextViewer mime={file.mime} content={content} isEditable={true} setContent={setContent} />
     }
   }
 
-  // needs access to file, so doesnt properly work
   return (
     <>
       <div className="flex items-center mb-4">
@@ -95,14 +89,21 @@ export function ViewerWrapper({ file, setOpenFile }: { file: EvoyaFile; setOpenF
           </Button>
         </div>
         <div className="font-bold text-xl ml-4">{file.name}</div>
-        <div className="ml-auto">
-          <Button onClick={saveFile}>
-            <Save />
-            <span>Save</span>
-          </Button>
-        </div>
+        {fileLoaded && (
+          <div className="ml-auto">
+            <Button onClick={saveFile}>
+              <Save />
+              <span>Save</span>
+            </Button>
+          </div>
+        )}
       </div>
-      {fileRenderer()}
+      {!fileLoaded && (
+        <div className="flex items-center mb-4">
+          <LoaderCircle className="animation-spin" />
+        </div>
+      )}
+      {fileLoaded && fileRenderer()}
     </>
   );
 }

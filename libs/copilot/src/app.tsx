@@ -8,6 +8,7 @@ import { useTranslation } from '@chainlit/app/src/components/i18n/Translator';
 import {
   ChainlitContext,
   configState,
+  evoyaCreatorEnabledState,
   useAuth,
   useChatInteract
 } from '@chainlit/react-client';
@@ -34,6 +35,7 @@ declare global {
 export default function App({ widgetConfig }: Props) {
   const { isAuthenticated, data, user, setUser } = useAuth();
   const [config, setConfig] = useRecoilState(configState);
+  const [creatorEnabled, setCreatorEnabled] = useRecoilState(evoyaCreatorEnabledState);
   const { evoya } = useContext(WidgetContext);
   const apiClient = useContext(ChainlitContext);
   const { i18n } = useTranslation();
@@ -65,6 +67,7 @@ export default function App({ widgetConfig }: Props) {
 
   useEffect(() => {
     loadTranslations();
+    setCreatorEnabled(evoya?.evoyaCreator?.initialEnabled ?? false)
   }, []);
 
   const loadTranslations = async () => {

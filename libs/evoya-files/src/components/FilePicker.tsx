@@ -17,8 +17,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { toast } from '@/utils/evoya-toast';
 
 import {
-  Home,
-  ChevronRight,
   Download,
   Trash2,
   LoaderCircle,
@@ -27,6 +25,8 @@ import { cn } from '@chainlit/app/src/lib/utils';
 import { FilePickerContext } from '@/context/file-context';
 
 import { useUpload } from '@chainlit/app/src/hooks/useUpload';
+import Uploader from './Uploader';
+import FolderBreadcrumbs from './FolderBreadcrumbs';
 
 type Props = {
   initialPath: string;
@@ -304,18 +304,19 @@ export default function FilePicker({
       });
       const json = await response.json();
       if (json.success) {
-        toast.success('File saved!');
+        toast.success('File uploaded!');
         loadCurrentPath();
       } else {
-        toast.error('Failed to save file!');
+        toast.error('Failed to upload file!');
       }
     } catch(err) {
       console.error(err);
-      toast.error('Failed to save file!');
+      toast.error('Failed to upload file!');
     } finally {
       setIsUploading(false);
     }
   }
+
   const onFileUploadError = () => {}
 
   const fileSpec = {
@@ -333,43 +334,24 @@ export default function FilePicker({
   const { getRootProps, getInputProps, isDragActive } = upload ?? {};
 
   return (
+    <>
+    {showActions && hasUpload && (
+      <Uploader
+        setIsLoading={setIsLoading}
+        isLoading={isLoading}
+        onFileUpload={onFileUpload}
+        currentPath={currentPath}
+        loadCurrentPath={loadCurrentPath}
+      />
+    )}
     <div className='relative'>
-      <div className={cn("flex items-center mb-4", (attachmentMode || destinationMode) ? 'text-xs' : 'text-sm')}>
-        {pathData.path.length > 0 && pathData.path.map((item, index) => (
-          <>
-            {index > 0 && (
-              <div className={(attachmentMode || destinationMode) ? 'px-1' : 'px-2'}>
-                <ChevronRight className={cn((attachmentMode || destinationMode) ? 'h-3 w-3' : 'h-4 w-4', 'text-gray-400')} />
-              </div>
-            )}
-            <div className={cn('flex items-center', item.path ? 'hover:text-foreground transition-colors cursor-pointer' : '', index < pathData.path.length - 1 ? 'text-gray-400' : '')} onClick={() => item.path && fetchDirectory(item.path)}>
-              {index === 0 && <Home className={(attachmentMode || destinationMode) ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'} />}
-              <span>{item.name}</span>
-            </div>
-          </>
-        ))}
-        {(pathData.path.length === 0) && (
-          <>
-            <div className={cn('flex items-center','hover:text-foreground transition-colors cursor-pointer', 'text-gray-400')}>
-              <Home className={(attachmentMode || destinationMode) ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'} />
-              <span>Home</span>
-            </div>
-            {/* <div className={(attachmentMode || destinationMode) ? 'px-1' : 'px-2'}>
-              <ChevronRight className={cn((attachmentMode || destinationMode) ? 'h-3 w-3' : 'h-4 w-4', 'text-gray-400')} />
-            </div>
-            <div className={cn('flex items-center')}>
-              <LoaderCircle className={cn("animate-spin", (attachmentMode || destinationMode) ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2')} />
-            </div> */}
-          </>
-        )}
-        {isLoading && (
-          <>
-            <div className={cn('flex items-center ml-4')}>
-              <LoaderCircle className={cn("animate-spin", (attachmentMode || destinationMode) ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2')} />
-            </div>
-          </>
-        )}
-      </div>
+      <FolderBreadcrumbs
+        pathData={pathData}
+        fetchDirectory={fetchDirectory}
+        isLoading={isLoading}
+        attachmentMode={attachmentMode}
+        destinationMode={destinationMode}
+      />
       <div className={cn("rounded-lg border bg-white py-2 px-4 min-h-24 relative", isDragActive && hasUpload ? 'bg-primary/20' : '')} {...(hasUpload ? getRootProps() : {})}>
         {hasUpload && <input {...getInputProps()} />}
         {(isLoading || isUploading) && (
@@ -456,5 +438,6 @@ export default function FilePicker({
         </div>
       )}
     </div>
+    </>
   );
 }
