@@ -6,31 +6,37 @@ import { PdfViewer } from "./pdf";
 import { TextViewer } from "./text";
 import { toast } from '@/utils/evoya-toast';
 import { Button } from '@chainlit/app/src/components/ui/button';
-import { ArrowLeft, LoaderCircle, Save } from 'lucide-react';
-
+import { ArrowLeft, Download, LoaderCircle, Save } from 'lucide-react';
+import { ImageViewer } from "./image";
+import { Translator } from '@chainlit/app/src/components/i18n';
+import { downloadBlobFromUrl } from "@/utils/file";
+import { AudioPlayer } from "./audio";
 
 export function ViewerWrapper({ file, setOpenFile }: { file: EvoyaFile; setOpenFile: (file: EvoyaFile | null) => void }) {
   const { apiBaseUrl, csrfToken } = useContext(FilePickerContext);  
   const [content, setContent] = useState('');
   const [blobUrl, setBlobUrl] = useState('');
   const [fileLoaded, setFileLoaded] = useState(false);
+  const [canSave, setCanSave] = useState(false);
 
   useEffect(() => {
-    // if (
-    //   file.mime.includes('text/')
-    //   || file.mime.includes('application/json')
-    // ) {
-      setFileLoaded(false);
-      fetch(`${apiBaseUrl}/api/files/download/?path=${file.path}`).then(async (response) => {
-        const blob = await response.blob();
-        setBlobUrl(URL.createObjectURL(blob));
-        const text = await blob.text();
-        setContent(text);
-        setFileLoaded(true);
-      })
-    // } else {
-    //   setFileLoaded(true);
-    // }
+    if (
+      file.mime.includes('text/')
+      || file.mime.includes('application/json')
+    ) {
+      setCanSave(true);
+    } else {
+      setCanSave(false);
+    }
+
+    setFileLoaded(false);
+    fetch(`${apiBaseUrl}/api/files/download/?path=${file.path}`).then(async (response) => {
+      const blob = await response.blob();
+      setBlobUrl(URL.createObjectURL(blob));
+      const text = await blob.text();
+      setContent(text);
+      setFileLoaded(true);
+    })
   }, [file]);
 
   const saveFile = async () => {
@@ -72,6 +78,10 @@ export function ViewerWrapper({ file, setOpenFile }: { file: EvoyaFile; setOpenF
       return <TextViewer mime={file.mime} content={content} isEditable={true} setContent={setContent} />
     } else if (file.mime.includes('text/')) { // Text file type fallback
       return <TextViewer mime={file.mime} content={content} isEditable={true} setContent={setContent} />
+    } else if (file.mime.includes('image/')) { // Text file type fallback
+      return <ImageViewer path={blobUrl} />
+    } else if (file.mime.includes('audio/') || file.mime === 'video/webm') { // Text file type fallback
+      return <AudioPlayer path={blobUrl} />
     }
   }
 
@@ -90,11 +100,17 @@ export function ViewerWrapper({ file, setOpenFile }: { file: EvoyaFile; setOpenF
         </div>
         <div className="font-bold text-xl ml-4">{file.name}</div>
         {fileLoaded && (
-          <div className="ml-auto">
-            <Button onClick={saveFile}>
-              <Save />
-              <span>Save</span>
+          <div className="ml-auto flex gap-2">
+            <Button onClick={() => downloadBlobFromUrl(blobUrl, file.name)}>
+              <Download />
+              <Translator path="evoyaFiles.actions.download.label" />
             </Button>
+            {canSave && (
+              <Button onClick={saveFile}>
+                <Save />
+                <span>Save</span>
+              </Button>
+            )}
           </div>
         )}
       </div>

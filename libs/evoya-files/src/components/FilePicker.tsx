@@ -27,6 +27,7 @@ import { FilePickerContext } from '@/context/file-context';
 import { useUpload } from '@chainlit/app/src/hooks/useUpload';
 import Uploader from './Uploader';
 import FolderBreadcrumbs from './FolderBreadcrumbs';
+import { downloadBlob } from '@/utils/file';
 
 type Props = {
   initialPath: string;
@@ -58,7 +59,7 @@ export default function FilePicker({
   const [pathData, setPathData] = useState<FilePickerData>({ path: [], items: []});
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchDirectory = async (path: string) => {
     setSelectedPath(path)
@@ -235,24 +236,7 @@ export default function FilePicker({
       fetch(`${apiBaseUrl}/api/files/download/?path=${items[0].path}`)
         .then((response) => response.blob())
         .then((blob) => {
-          // Create blob link to download
-          const url = window.URL.createObjectURL(blob);
-
-          const link = document.createElement('a');
-          link.href = url;
-          link.setAttribute(
-            'download',
-            `${items[0].name}`,
-          );
-
-          // Append to html link element page
-          document.body.appendChild(link);
-
-          // Start download
-          link.click();
-
-          // Clean up and remove the link
-          link.parentNode.removeChild(link);
+          downloadBlob(blob, items[0].name);
         });
     } else {
       fetch(`${apiBaseUrl}/api/files/download/bulk/`, {
@@ -267,24 +251,7 @@ export default function FilePicker({
       })
         .then((response) => response.blob())
         .then((blob) => {
-          // Create blob link to download
-          const url = window.URL.createObjectURL(blob);
-
-          const link = document.createElement('a');
-          link.href = url;
-          link.setAttribute(
-            'download',
-            `${items[0].name}`,
-          );
-
-          // Append to html link element page
-          document.body.appendChild(link);
-
-          // Start download
-          link.click();
-
-          // Clean up and remove the link
-          link.parentNode.removeChild(link);
+          downloadBlob(blob, items[0].name);
         });
     }
   }
@@ -363,7 +330,7 @@ export default function FilePicker({
           <div className="contents text-xs">
             {!singleMode && 
               <div className="flex items-center p-2">
-                {multiselect && <Checkbox checked={selectedElements.length === pathData.items.length} onCheckedChange={onCheckedChange} />}
+                {multiselect && <Checkbox checked={!isLoading && selectedElements.length === pathData.items.length} onCheckedChange={onCheckedChange} />}
               </div>
             }
             <div className="p-2 flex items-center text-gray-400 font-semibold">

@@ -3,6 +3,7 @@ import FilePicker from './components/FilePicker';
 import { FilePickerContext } from './context/file-context';
 import { FilePickerItem, EvoyaFile } from './types';
 import { ViewerWrapper } from './components/viewer';
+import { downloadBlob } from './utils/file';
 
 interface Props {
   initialPath: string;
@@ -13,15 +14,11 @@ interface Props {
 const customFileRenderer = [
   'text/',
   'image/',
+  'audio/',
+  'video/webm',
   'application/json',
   'application/pdf',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-]
+];
 
 export default function Widget({ initialPath, apiBaseUrl, csrfToken }: Props) {
   const [selectedPath, setSelectedPath] = useState(initialPath);
@@ -32,7 +29,11 @@ export default function Widget({ initialPath, apiBaseUrl, csrfToken }: Props) {
       if (customFileRenderer.some((renderer) => item.mime.includes(renderer))) {
         setOpenFile(item as EvoyaFile);
       } else {
-        // open file in new tab or download
+        fetch(`${apiBaseUrl}/api/files/download/?path=${item.path}`)
+          .then((response) => response.blob())
+          .then((blob) => {
+            downloadBlob(blob, item.name);
+          });
       }
     }
   }
