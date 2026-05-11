@@ -67,3 +67,10 @@ export interface IChainlitConfig {
   translation: object;
   showEvoyaCreatorButton?: boolean;
 }
+
+export type ChatInputSocketPayload =
+  | string
+  | {
+      text?: string;
+      mode?: 'append' | 'replace';
+    };

@@ -40,6 +40,8 @@ interface Props {
 export interface InputMethods {
   reset: () => void;
   getFullContent: () => string;
+  setContent: (value: string) => void;
+  appendContent: (value: string) => void;
 }
 
 const escapeHtml = (unsafe: string) => {
@@ -49,6 +51,12 @@ const escapeHtml = (unsafe: string) => {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+};
+
+const formatContent = (value: string) => {
+  return escapeHtml(value)
+    .replace(/\n/g, '<br>')
+    .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
 };
 
 const Input = forwardRef<InputMethods, Props>(
@@ -151,9 +159,39 @@ const Input = forwardRef<InputMethods, Props>(
       onChange('');
     };
 
+    const placeCursorAtEnd = (element: HTMLDivElement) => {
+      const selection = window.getSelection();
+      const range = document.createRange();
+
+      range.selectNodeContents(element);
+      range.collapse(false);
+
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+      element.focus();
+    };
+
+    const syncContent = (value: string, mode: 'replace' | 'append') => {
+      const content = contentEditableRef.current;
+      if (!content) return;
+
+      if (mode === 'replace') {
+        reset();
+      }
+
+      const baseContent =
+        mode === 'append' ? getContentWithoutCommand() + value : value;
+
+      content.innerHTML = formatContent(baseContent);
+      onChange(baseContent);
+      placeCursorAtEnd(content);
+    };
+
     useImperativeHandle(ref, () => ({
       reset,
-      getFullContent
+      getFullContent,
+      setContent: (value: string) => syncContent(value, 'replace'),
+      appendContent: (value: string) => syncContent(value, 'append')
     }));
 
     // Set up mutation observer to detect command span removal
@@ -258,9 +296,7 @@ const Input = forwardRef<InputMethods, Props>(
             contentDiv.contentEditable = 'true';
 
             // Convert newlines to <br> tags and preserve other formatting
-            const formattedContent = promptContent
-              .replace(/\n/g, '<br>')
-              .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;'); // Convert tabs to spaces
+            const formattedContent = formatContent(promptContent);
 
             contentDiv.innerHTML = formattedContent + ' ';
 
