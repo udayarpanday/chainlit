@@ -87,6 +87,19 @@ export const promptState = atom<
   default: undefined
 });
 
+export type InitialTranscriptMode = 'append' | 'replace';
+
+export interface InitialTranscriptStateValue {
+  text: string;
+  mode: InitialTranscriptMode;
+  receivedAt: number;
+}
+
+export const initialTranscriptState = atom<InitialTranscriptStateValue | null>({
+  key: 'InitialTranscript',
+  default: null
+});
+
 export const agentState = atom<IAgents[]>({
   key: 'Agent',
   default: []

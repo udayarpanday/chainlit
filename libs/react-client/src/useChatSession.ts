@@ -21,6 +21,7 @@ import {
   currentThreadIdState,
   elementState,
   firstUserInteraction,
+  initialTranscriptState,
   isAiSpeakingState,
   loadingState,
   messagesState,
@@ -36,6 +37,7 @@ import {
   wavStreamPlayerState
 } from 'src/state';
 import {
+  ChatInputSocketPayload,
   IAction,
   ICommand,
   IElement,
@@ -57,6 +59,7 @@ import { OutputAudioChunk } from './types/audio';
 
 import { ChainlitContext } from './context';
 import type { IToken } from './useChatData';
+
 
 const useChatSession = () => {
   const client = useContext(ChainlitContext);
@@ -86,6 +89,7 @@ const useChatSession = () => {
   const [chatProfile, setChatProfile] = useRecoilState(chatProfileState);
   const idToResume = useRecoilValue(threadIdToResumeState);
   const setThreadResumeError = useSetRecoilState(resumeThreadErrorState);
+  const setInitialTranscript = useSetRecoilState(initialTranscriptState);
 
   const token = localStorage.getItem('chainlit_token') || '';
 
@@ -417,6 +421,20 @@ const useChatSession = () => {
           }
         }
       );
+      
+      socket.on('initial_transcript', (payload: ChatInputSocketPayload) => {
+        const text = typeof payload === 'string' ? payload : payload?.text;
+
+        if (typeof text !== 'string') {
+          return;
+        }
+
+        setInitialTranscript({
+          text,
+          mode: typeof payload === 'string' ? 'replace' : payload.mode || 'replace',
+          receivedAt: Date.now()
+        });
+      });
 
       socket.on('set_sidebar_elements', (elements: IMessageElement[]) => {
         if (!elements.length) {

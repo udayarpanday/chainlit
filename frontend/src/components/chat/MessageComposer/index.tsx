@@ -1,6 +1,11 @@
-import { useCallback, useContext, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRecoilState, useSetRecoilState } from 'recoil';
+import {
+  useRecoilState,
+  useResetRecoilState,
+  useRecoilValue,
+  useSetRecoilState
+} from 'recoil';
 import { v4 as uuidv4 } from 'uuid';
 
 import { WidgetContext } from '@chainlit/copilot/src/context';
@@ -10,6 +15,7 @@ import {
   FileSpec,
   ICommand,
   IStep,
+  initialTranscriptState,
   useAuth,
   useChatData,
   useChatInteract
@@ -52,6 +58,8 @@ export default function MessageComposer({
   const setChatSettingsOpen = useSetRecoilState(chatSettingsOpenState);
   const [attachments, setAttachments] = useRecoilState(attachmentsState);
   const [evoyaAttachments, setEvoyaAttachments] = useRecoilState(evoyaAttachmentsState);
+  const initialTranscript = useRecoilValue(initialTranscriptState);
+  const resetInitialTranscript = useResetRecoilState(initialTranscriptState);
   const { t } = useTranslation();
 
   const { user } = useAuth();
@@ -59,6 +67,18 @@ export default function MessageComposer({
   const { askUser, chatSettingsInputs, disabled: _disabled } = useChatData();
 
   const disabled = _disabled || !!attachments.find((a) => !a.uploaded);
+
+  useEffect(() => {
+    if (!initialTranscript || !inputRef.current) return;
+
+    if (initialTranscript.mode === 'append') {
+      inputRef.current.appendContent(initialTranscript.text);
+    } else {
+      inputRef.current.setContent(initialTranscript.text);
+    }
+
+    resetInitialTranscript();
+  }, [initialTranscript, resetInitialTranscript]);
 
   const onPaste = useCallback((event: ClipboardEvent) => {
     if (event.clipboardData && event.clipboardData.items) {
