@@ -109,29 +109,31 @@ export default function Uploader({
     <>
       <div className="flex justify-between items-center mb-4">
         <div className="font-bold text-2xl">Files</div>
-        <div className="flex gap-2">
-          <input
-            id="upload-button-input"
-            className="hidden"
-            {...upload2.getInputProps()}
-          />
-          <Button
-            id='upload-button'
-            disabled={isLoading}
-            {...upload2.getRootProps()}
-          >
-            <Upload className="h-5" />
-            <Translator path="evoyaFiles.actions.upload.title" />
-          </Button>
-          <Button
-            id='create-folder-button'
-            disabled={isLoading}
-            onClick={() => setNewFolderOpen(true)}
-          >
-            <FolderPlus className="h-5" />
-            <Translator path="evoyaFiles.actions.create_folder.title" />
-          </Button>
-        </div>
+        {currentPath !== '/' && (
+          <div className="flex gap-2">
+            <input
+              id="upload-button-input"
+              className="hidden"
+              {...upload2.getInputProps()}
+            />
+            <Button
+              id='upload-button'
+              disabled={isLoading}
+              {...upload2.getRootProps()}
+            >
+              <Upload className="h-5" />
+              <Translator path="evoyaFiles.actions.upload.title" />
+            </Button>
+            <Button
+              id='create-folder-button'
+              disabled={isLoading}
+              onClick={() => setNewFolderOpen(true)}
+            >
+              <FolderPlus className="h-5" />
+              <Translator path="evoyaFiles.actions.create_folder.title" />
+            </Button>
+          </div>
+        )}
       </div>
       <Dialog
         open={newFolderOpen}

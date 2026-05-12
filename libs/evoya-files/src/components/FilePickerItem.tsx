@@ -177,47 +177,49 @@ export default function FilePickerItem({
       <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20" onClick={clickItem}>{item.modified ? getDateDisplay(item.modified) : ''}</div>
       <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20" onClick={clickItem}>{"size" in item ? getSizeDisplay(item.size) : '--'}</div>
       {showActions && (
-        <div className="p-2 border-t flex items-center gap-1 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20">
+        <div className="p-2 border-t flex items-center justify-end gap-1 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 -my-2 rounded-full text-gray-400"
+                  onClick={() => downloadItems([item])}
+                >
+                  <Download />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  <Translator path="evoyaFiles.actions.download.label" />
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           {item.showActions && (
             <>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 -my-2 rounded-full text-gray-400"
-                      onClick={openCreator}
-                    >
-                      <PencilLine />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      <Translator path="components.molecules.evoyaCreatorButton.label" />
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 -my-2 rounded-full text-gray-400"
-                      onClick={() => downloadItems([item])}
-                    >
-                      <Download />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      <Translator path="evoyaFiles.actions.download.label" />
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              {(item.mime ?? '').includes('markdown') && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 -my-2 rounded-full text-gray-400"
+                        onClick={openCreator}
+                      >
+                        <PencilLine />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        <Translator path="components.molecules.evoyaCreatorButton.label" />
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
