@@ -44,6 +44,11 @@ import {
 
 import EditorToolbar from './toolbar';
 
+import {
+  SimpleMermaidCodeEditorDescriptor,
+  SimpleVegaLiteCodeEditorDescriptor,
+} from '../markdownEditor/plugins/extend/codeblocks';
+
 export default function MDXEditorWrapper({ content, onChange }: { content: string; onChange: (value: string) => void; }) {
   const [mdContent, setMdContent] = useState(content);
   const mdxEditorRef = useRef<MDXEditorMethods>(null);
@@ -71,11 +76,19 @@ export default function MDXEditorWrapper({ content, onChange }: { content: strin
         autoFocus
         suppressHtmlProcessing
         plugins={[
-          ...MDX_PLUGINS,
-          evoyaMathPlugin(),
-          evoyaMathDialogPlugin(),
-          diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: content }),
+            toolbarPlugin({ toolbarContents: () => <EditorToolbar /> }),
+            ...MDX_PLUGINS,
+            imagePlugin(),
+            evoyaMathPlugin(),
+            evoyaMathDialogPlugin(),
+            diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: content }),
         ]}
+        // plugins={[
+        //   ...MDX_PLUGINS,
+        //   evoyaMathPlugin(),
+        //   evoyaMathDialogPlugin(),
+        //   diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: content }),
+        // ]}
         onChange={(md) => {
           setMdContent(md);
           onChange(md);
@@ -86,13 +99,47 @@ export default function MDXEditorWrapper({ content, onChange }: { content: strin
 }
 
 export const MDX_PLUGINS = [
-  toolbarPlugin({ toolbarContents: () => <EditorToolbar /> }),
   listsPlugin(),
+  quotePlugin(),
   headingsPlugin(),
   linkPlugin(),
   linkDialogPlugin(),
   tablePlugin(),
   thematicBreakPlugin(),
   // frontmatterPlugin(),
+  codeBlockPlugin({
+    codeBlockEditorDescriptors: [
+      SimpleMermaidCodeEditorDescriptor,
+      SimpleVegaLiteCodeEditorDescriptor,
+      { priority: -10, match: (_) => true, Editor: CodeMirrorEditor }
+    ]
+  }),
+  // sandpackPlugin({ sandpackConfig: virtuosoSampleSandpackConfig }),
+  codeMirrorPlugin({
+    codeBlockLanguages: {
+      js: 'JavaScript',
+      json: 'JSON',
+      vega: 'Vega',
+      mermaid: 'Mermaid',
+      mmd: 'Mermaid',
+      markdown: 'Markdown',
+      css: 'CSS',
+      txt: 'Plain Text',
+      plaintext: 'Plain Text',
+      tsx: 'TypeScript',
+      '': 'Unspecified'
+    }
+  }),
   markdownShortcutPlugin(),
 ];
+// export const MDX_PLUGINS = [
+//   toolbarPlugin({ toolbarContents: () => <EditorToolbar /> }),
+//   listsPlugin(),
+//   headingsPlugin(),
+//   linkPlugin(),
+//   linkDialogPlugin(),
+//   tablePlugin(),
+//   thematicBreakPlugin(),
+//   // frontmatterPlugin(),
+//   markdownShortcutPlugin(),
+// ];
