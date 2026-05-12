@@ -1,5 +1,6 @@
 import {
   inFocus$,
+  viewMode$,
 } from "@mdxeditor/editor";
 
 import {
@@ -20,11 +21,13 @@ export const TextSelection = () => {
     scrollOffset,
     editorContainerRef,
     isFocus,
+    viewMode,
   ] = useCellValues(
     evoyaAiState$,
     scrollOffset$,
     editorContainerRef$,
     inFocus$,
+    viewMode$,
   );
   const [scrollComp, setScrollComp] = useState(0);
 
@@ -44,6 +47,7 @@ export const TextSelection = () => {
   // console.log('evoyaAiState', evoyaAiState);
   if (isFocus) return null;
   if (!evoyaAiState) return null;
+  if (viewMode !== 'rich-text') return null;
 
   const rectCompensation = 3.5;
   // const scrollCompensation = (evoyaAiState.scrollOffset ?? 0) - scrollOffset;

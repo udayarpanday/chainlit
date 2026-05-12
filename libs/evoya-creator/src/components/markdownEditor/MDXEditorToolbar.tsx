@@ -17,6 +17,7 @@ import {
   EvoyaAdvancedToggle,
   EvoyaBlockTypeSelect,
 } from './plugins/toolbar/components';
+import { AutoApproveToggle } from './plugins/toolbar/components/AutoApproveToggle';
 
 export default function MDXEditorToolbar({ setMdDiffContent }: { setMdDiffContent: (md: string) => void }) {
   return (
@@ -42,6 +43,8 @@ export default function MDXEditorToolbar({ setMdDiffContent }: { setMdDiffConten
                   <EvoyaDropdown setMdDiffContent={setMdDiffContent} />
                   <SaveContent />
                   <OpenFile />
+                  <Separator />
+                  <AutoApproveToggle />
                   <div style={{ flexGrow: 1 }}></div>
                   <EvoyaAdvancedToggle />
                 </>

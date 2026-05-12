@@ -6,7 +6,8 @@ import {
   $isRangeSelection,
   LexicalEditor,
   ElementNode,
-  $isTextNode
+  $isTextNode,
+  BaseSelection,
 } from "lexical";
 
 import {
@@ -33,7 +34,9 @@ import {
 import {
   $isTableNode,
   ExportMarkdownFromLexicalOptions,
+  exportMarkdownFromLexical,
 } from "@mdxeditor/editor";
+import { $isInlineMathNode, $isMathNode } from "../plugins/math";
 
 export const notInline = (node: LexicalNode) =>
   ($isElementNode(node) || $isDecoratorNode(node)) && !node.isInline();
@@ -41,19 +44,21 @@ export const notInline = (node: LexicalNode) =>
 export const notInlineExtended = (node: LexicalNode) =>
   (($isElementNode(node) || $isDecoratorNode(node)) && !node.isInline()) && !$isListItemNode(node) && !$isTableCellNode(node);
 
-export function getSelectionAsMarkdown(editor: LexicalEditor, _exportParams: Omit<ExportMarkdownFromLexicalOptions, 'root'>): string {
+export function getSelectionAsMarkdown(editor: LexicalEditor, fixedSelection: BaseSelection | null, _exportParams: Omit<ExportMarkdownFromLexicalOptions, 'root'>): string {
   let markdown = ''
 
   editor.getEditorState().read(() => {
-    const selection = $getSelection()
+    const selection = fixedSelection ?? $getSelection();
 
     // Return empty if no selection or collapsed
-    if (!selection || !$isRangeSelection(selection) || selection.isCollapsed()) {
+    if (!selection || selection.isCollapsed()) {
       return
     }
 
     // Get all nodes in the selection (entire nodes, not partial)
     const nodes = selection.getNodes()
+
+    console.log('getSelectionAsMarkdown - nodes', nodes);
 
     if (nodes.length === 0) {
       return
@@ -67,8 +72,8 @@ export function getSelectionAsMarkdown(editor: LexicalEditor, _exportParams: Omi
       // Walk up to find the nearest block-level parent (heading, paragraph, list item, etc.)
       while (current) {
         // Check if current node is a block-level node
-        if ($isHeadingNode(current) || $isListItemNode(current) || current.getType() === 'paragraph' || current.getType() === 'quote') {
-          if ($isElementNode(current)) {
+        if ($isHeadingNode(current) || $isListItemNode(current) || $isListNode(current) || $isMathNode(current) || current.getType() === 'paragraph' || current.getType() === 'quote') {
+          if ($isElementNode(current) && $isMathNode(current)) {
             parentNodes.add(current)
           }
           break
@@ -81,8 +86,11 @@ export function getSelectionAsMarkdown(editor: LexicalEditor, _exportParams: Omi
     // If we have parent nodes, use those instead of leaf nodes
     const nodesToProcess = parentNodes.size > 0 ? Array.from(parentNodes) : nodes
 
+    console.log('getSelectionAsMarkdown - nodesToProcess', nodesToProcess);
+
     // Helper function to recursively convert a node to markdown
     function nodeToMarkdown(node: LexicalNode): string {
+      console.log(node);
       if ($isHeadingNode(node)) {
         // Handle heading nodes
         const level = parseInt(node.getTag().replace('h', ''))
@@ -99,7 +107,9 @@ export function getSelectionAsMarkdown(editor: LexicalEditor, _exportParams: Omi
       } else if ($isListNode(node)) {
         // Handle list nodes
         const children = node.getChildren()
-        return children.map((child) => nodeToMarkdown(child)).join('') + '\n'
+        const content = children.map((child) => nodeToMarkdown(child)).join('') + '\n';
+        console.log(content);
+        return content
       } else if ($isTextNode(node)) {
         let text = node.getTextContent()
         const format = node.getFormat()
@@ -136,6 +146,15 @@ export function getSelectionAsMarkdown(editor: LexicalEditor, _exportParams: Omi
           return `[${linkText}](${url} "${title}")`
         }
         return `[${linkText}](${url})`
+      } else if ($isTableNode(node)) {
+        return exportMarkdownFromLexical({
+          root: node,
+          ..._exportParams,
+        })
+      } else if ($isMathNode(node)) {
+        return `$$\n${node.__mathString}\n$$`
+      } else if ($isInlineMathNode(node)) {
+        return `$${node.__mathString}$`
       } else if ($isElementNode(node)) {
         // For other element nodes, process their children
         const children = node.getChildren()
@@ -148,6 +167,10 @@ export function getSelectionAsMarkdown(editor: LexicalEditor, _exportParams: Omi
 
     // Convert all selected nodes to markdown and concatenate
     markdown = nodesToProcess.map((node) => nodeToMarkdown(node)).join('\n\n');
+    // markdown = nodesToProcess.map((node) => exportMarkdownFromLexical({
+    //   root: node,
+    //   ..._exportParams,
+    // })).join('\n\n');
   })
 
   return markdown.trim()

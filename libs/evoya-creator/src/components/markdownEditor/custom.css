@@ -3,7 +3,7 @@
 }
 
 .mdxeditor-popup-container {
-    z-index: 1020;
+    z-index: 10000;
 }
 
 .evoya-creator-editor {
@@ -211,7 +211,7 @@
     min-height: calc(100vh - 145px);
 }
 
-#evoya-creator-container .evoya-creator-editor, #evoya-files-container #fileviewer-root {
+#evoya-creator-container .evoya-creator-editor, #evoya-files-container #fileviewer-root, #evoya-mdx-editor .evoya-mdx-editor {
     h1, h2, h3, h4, h5, h6 {
         font-weight: bold;
         margin-bottom: .5rem;
@@ -252,4 +252,72 @@
     ol {
         list-style-type: decimal;
     }
+    blockquote {
+        background-color: var(--baseBg);
+        padding: 1rem;
+    }
+    blockquote p:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.comparison-container {
+  /* display: flex; */
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  margin: 16px 0;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.comparison-container.only-insert {
+    display: block;
+}
+
+.comparison-container .comparison-actions {
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+  grid-column: 1 / -1;
+  border-bottom: 1px solid #e0e0e0;
+  height: 42px;
+  font-size: 12px;
+}
+
+/* .text-reject {
+  color: #c53030;
+}
+
+.text-approve {
+  color: #2f855a;
+} */
+
+.comparison-container .comparison-actions .comparison-reject-action {
+  color: #c53030;
+}
+
+.comparison-container .comparison-actions .comparison-accept-action {
+  color: #2f855a;
+}
+
+.comparison-side {
+  flex: 1;
+  min-width: 0; /* Prevent flex items from overflowing */
+  position: relative;
+  padding: 12px;
+  pointer-events: none !important;
+}
+
+.comparison-side-current {
+  background-color: #fff5f5;
+  border-right: 1px solid #e0e0e0;
+}
+
+.comparison-side-new {
+  background-color: #f0fff4;
+}
+
+.comparison-content {
+  padding: 12px;
 }

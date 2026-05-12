@@ -61,12 +61,13 @@ export default function CreatorFrame() {
       >
         <ResizablePanelGroup
           direction="horizontal"
+          autoSaveId="creator-panel-sizes"
         >
-          <ResizablePanel defaultValue="50%">
+          <ResizablePanel defaultValue={50}>
             <CreatorChat />
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel defaultValue="50%">
+          <ResizablePanel defaultValue={50}>
             <div className="overflow-hidden h-full flex flex-col">
               <CreatorHeader />
               {CreatorRenderer}

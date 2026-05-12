@@ -144,6 +144,20 @@ export default function MDXEditorWrapper() {
 
   useEffect(() => {
     // @ts-expect-error is not a valid prop
+    window.updateEvoyaCreator = (message: IStep, parent: any) => {
+      console.log(message, parent);
+      console.log(message.output);
+      console.log(editorSelectionMessageContext);
+      const parsedMessage = messageParser(message.output);
+      console.log(parsedMessage);
+      mdxRealm?.pub(replaceSelectionContent$, {message: parsedMessage, context: editorSelectionMessageContext});
+
+      return parsedMessage.feedback;
+    }
+  }, [mdxRealm, editorSelectionMessageContext]);
+
+  useEffect(() => {
+    // @ts-expect-error is not a valid prop
     window.disableEvoyaCreatorLock = () => {
       // mdxRealm?.pub(replaceSelectionContent$, {message: parsedMessage, context: editorSelectionMessageContext});
       setIsReadOnly(false);
@@ -212,7 +226,7 @@ export default function MDXEditorWrapper() {
       </div>,
       document.getElementById('chainlit-copilot')?.shadowRoot?.getElementById('evoya-creator-context-ref')
     )}
-    <div ref={containerRef} className="overflow-auto h-full">
+    <div ref={containerRef} className="overflow-auto h-full relative">
       <style type="text/css">
         {mdxCss}
       </style>
@@ -224,6 +238,7 @@ export default function MDXEditorWrapper() {
         readOnly={isReadOnly}
         ref={mdxEditorRef}
         markdown={creatorContent}
+        overlayContainer={containerRef.current}
         iconComponentFor={getSvgIcon}
         translation={(key, defaultValue, interpolations) => getTranslations(key, defaultValue, interpolations, t)}
         plugins={[
