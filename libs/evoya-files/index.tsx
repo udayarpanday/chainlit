@@ -33,6 +33,7 @@ declare global {
 window.mountEvoyaFilesWidget = (config: EvoyaFilesConfig) => {
   const container = document.createElement('div');
   container.id = id;
+  container.style.width = '100%';
   config.container.appendChild(container);
   // container.style.height = '100%';
 
@@ -59,6 +60,9 @@ window.mountEvoyaFilesWidget = (config: EvoyaFilesConfig) => {
       font-family: sans-serif;
       color: inherit;
       box-sizing: border-box;
+      max-height: 100%;
+      display: flex;
+      flex-direction: column;
     }
   `;
   shadowContainer.appendChild(resetStyles);

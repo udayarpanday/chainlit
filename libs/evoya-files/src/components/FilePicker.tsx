@@ -29,6 +29,18 @@ import Uploader from './Uploader';
 import FolderBreadcrumbs from './FolderBreadcrumbs';
 import { downloadBlob } from '@/utils/file';
 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from '@chainlit/app/src/components/ui/dialog';
+import {
+  ScrollArea
+} from '@chainlit/app/src/components/ui/scroll-area';
+
 type Props = {
   initialPath: string;
   showActions?: boolean;
@@ -60,6 +72,7 @@ export default function FilePicker({
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const fetchDirectory = async (path: string) => {
     setSelectedPath(path)
@@ -202,6 +215,10 @@ export default function FilePicker({
       setIsLoading(false);
     }
   }
+
+  const deleteItemsHandler = () => {
+    deleteItems(pathData.items.filter((item) => selectedElements.includes(item.id)))
+  }
   
   const deleteItems = async (items: FilePickerItemType[]) => {
     setIsLoading(true);
@@ -218,14 +235,14 @@ export default function FilePicker({
       });
       const json = await response.json();
       if (json.success) {
-        toast.success('File deleted!');
+        toast.success('Items deleted!');
         loadCurrentPath();
       } else {
-        toast.error('Failed to delete file!');
+        toast.error('Failed to delete items!');
       }
     } catch(err) {
       console.error(err);
-      toast.error('Failed to delete file!');
+      toast.error('Failed to delete items!');
     } finally {
       setIsLoading(false);
     }
@@ -239,7 +256,7 @@ export default function FilePicker({
           downloadBlob(blob, items[0].name);
         });
     } else {
-      fetch(`${apiBaseUrl}/api/files/download/bulk/`, {
+      fetch(`${apiBaseUrl}/api/files/download/bulk/check/`, {
         method: "POST",
         body: JSON.stringify({
           paths: items.map((item) => item.path)
@@ -249,9 +266,29 @@ export default function FilePicker({
           'X-CSRFToken': csrfToken,
         },
       })
-        .then((response) => response.blob())
-        .then((blob) => {
-          downloadBlob(blob, items[0].name);
+        .then((response) => response.json())
+        .then((json) => {
+          if (json.success) {
+            fetch(`${apiBaseUrl}/api/files/download/bulk/`, {
+              method: "POST",
+              body: JSON.stringify({
+                paths: items.map((item) => item.path)
+              }),
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+              },
+            })
+              .then((response) => response.blob())
+              .then((blob) => {
+                downloadBlob(blob, items[0].name);
+              });
+          } else {
+            toast.error(json.error);
+          }
+        })
+        .catch((e) => {
+          toast.error('Download not possible');
         });
     }
   }
@@ -311,7 +348,7 @@ export default function FilePicker({
         loadCurrentPath={loadCurrentPath}
       />
     )}
-    <div className='relative'>
+    <div className='relative flex flex-col overflow-hidden'>
       <FolderBreadcrumbs
         pathData={pathData}
         fetchDirectory={fetchDirectory}
@@ -319,56 +356,60 @@ export default function FilePicker({
         attachmentMode={attachmentMode}
         destinationMode={destinationMode}
       />
-      <div className={cn("rounded-lg border bg-white py-2 px-4 min-h-24 relative", isDragActive && hasUpload ? 'bg-primary/20' : '')} {...(hasUpload ? getRootProps() : {})}>
+      <div className={cn("rounded-lg border bg-white min-h-24 relative overflow-hidden flex", isDragActive && hasUpload ? 'bg-primary/20' : '')} {...(hasUpload ? getRootProps() : {})}>
         {hasUpload && <input {...getInputProps()} />}
-        {(isLoading || isUploading) && (
-          <div className='absolute rounded-lg top-0 right-0 bottom-0 left-0 bg-white/50 flex items-center justify-center z-10'>
-            <LoaderCircle className='animate-spin' />
-          </div>
-        )}
-        <div className={cn("grid", showActions ? 'grid-cols-[max-content_auto_max-content_max-content_max-content_max-content]' : (singleMode ? 'grid-cols-[auto_max-content_max-content_max-content]' : 'grid-cols-[max-content_auto_max-content_max-content_max-content]'))}>
-          <div className="contents text-xs">
-            {!singleMode && 
-              <div className="flex items-center p-2">
-                {multiselect && <Checkbox checked={!isLoading && selectedElements.length === pathData.items.length} onCheckedChange={onCheckedChange} />}
+        <ScrollArea className='w-full' type='auto'>
+          <div className="pb-2 px-4">
+            {(isLoading || isUploading) && (
+              <div className='absolute rounded-lg top-0 right-0 bottom-0 left-0 bg-white/50 flex items-center justify-center z-10'>
+                <LoaderCircle className='animate-spin' />
               </div>
-            }
-            <div className="p-2 flex items-center text-gray-400 font-semibold">
-              <Translator path="evoyaFiles.headers.name" />
+            )}
+            <div className={cn("grid", showActions ? 'grid-cols-[max-content_auto_max-content_max-content_max-content_max-content]' : (singleMode ? 'grid-cols-[auto_max-content_max-content_max-content]' : 'grid-cols-[max-content_auto_max-content_max-content_max-content]'))}>
+              <div className="contents text-xs">
+                {!singleMode && 
+                  <div className="flex items-center p-2 pt-4 sticky top-0 bg-white">
+                    {multiselect && <Checkbox checked={!isLoading && selectedElements.length === pathData.items.length} onCheckedChange={onCheckedChange} />}
+                  </div>
+                }
+                <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
+                  <Translator path="evoyaFiles.headers.name" />
+                </div>
+                <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
+                  <Translator path="evoyaFiles.headers.owner" />
+                </div>
+                <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
+                  <Translator path="evoyaFiles.headers.modified" />
+                </div>
+                <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
+                  <Translator path="evoyaFiles.headers.size" />
+                </div>
+                {showActions && <div className="sticky top-0 bg-white"></div>}
+              </div>
+              {pathData.items.length > 0 && pathData.items.map((item) => (
+                <FilePickerItem
+                  item={item}
+                  selected={selectedElements.includes(item.id)}
+                  setSelectedState={(value) => setItemSelected(item.id, value)}
+                  onClick={() => itemClick(item)}
+                  showActions={showActions}
+                  singleMode={singleMode}
+                  onFileUpload={onFileUpload}
+                  hasUpload={hasUpload}
+                  deleteItems={deleteItems}
+                  moveItem={moveItem}
+                  renameItem={renameItem}
+                  downloadItems={downloadItems}
+                />
+              ))}
+              {(pathData.items.length === 0 && !isLoading) && (
+                <div className='col-span-full p-2 flex justify-center text-sm text-gray-400'>
+                  No Entries
+                </div>
+              )}
             </div>
-            <div className="p-2 flex items-center text-gray-400 font-semibold">
-              <Translator path="evoyaFiles.headers.owner" />
-            </div>
-            <div className="p-2 flex items-center text-gray-400 font-semibold">
-              <Translator path="evoyaFiles.headers.modified" />
-            </div>
-            <div className="p-2 flex items-center text-gray-400 font-semibold">
-              <Translator path="evoyaFiles.headers.size" />
-            </div>
-            {showActions && <div></div>}
           </div>
-          {pathData.items.length > 0 && pathData.items.map((item) => (
-            <FilePickerItem
-              item={item}
-              selected={selectedElements.includes(item.id)}
-              setSelectedState={(value) => setItemSelected(item.id, value)}
-              onClick={() => itemClick(item)}
-              showActions={showActions}
-              singleMode={singleMode}
-              onFileUpload={onFileUpload}
-              hasUpload={hasUpload}
-              deleteItems={deleteItems}
-              moveItem={moveItem}
-              renameItem={renameItem}
-              downloadItems={downloadItems}
-            />
-          ))}
-          {(pathData.items.length === 0 && !isLoading) && (
-            <div className='col-span-full p-2 flex justify-center text-sm text-gray-400'>
-              No Entries
-            </div>
-          )}
-        </div>
+        </ScrollArea>
       </div>
       {(selectedElements.length > 0 || attachmentMode) && !destinationMode && !singleMode && (
         <div className="rounded-lg border bg-white flex justify-between items-center mt-4 pl-4 pr-1 py-1">
@@ -386,7 +427,7 @@ export default function FilePicker({
                 </Button>
                 <Button
                   variant="ghost-destructive"
-                  onClick={() => deleteItems(pathData.items.filter((item) => selectedElements.includes(item.id)))}
+                  onClick={() => setDeleteOpen(true)}
                 >
                   <Trash2 />
                   <Translator path="evoyaFiles.actions.delete.label" />
@@ -404,6 +445,29 @@ export default function FilePicker({
           </div>
         </div>
       )}
+      <Dialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+      >
+        <DialogContent className="z-[9999]">
+          <DialogHeader>
+            <DialogTitle>
+              <Translator path="evoyaFiles.actions.delete_bulk.title" />
+            </DialogTitle>
+            <DialogDescription>
+              <Translator path="evoyaFiles.actions.delete_bulk.description" />
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setDeleteOpen(false)}>
+              <Translator path="common.actions.cancel" />
+            </Button>
+            <Button variant="destructive" onClick={deleteItemsHandler}>
+              <Translator path="common.actions.confirm" />
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
     </>
   );

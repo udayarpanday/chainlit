@@ -252,10 +252,10 @@ export default function FilePickerItem({
                 <DialogContent className="z-[9999] max-w-screen-sm">
                   <DialogHeader>
                     <DialogTitle>
-                      <Translator path="evoyaFiles.actions.move.title" />
+                      {isFile ? <Translator path="evoyaFiles.actions.move.title" /> : <Translator path="evoyaFiles.actions.move_folder.title" />}
                     </DialogTitle>
                     <DialogDescription>
-                      <Translator path="evoyaFiles.actions.move.description" />
+                      {isFile ? <Translator path="evoyaFiles.actions.move.description" /> : <Translator path="evoyaFiles.actions.move_folder.description" />}
                     </DialogDescription>
                   </DialogHeader>
                   <div>
@@ -282,7 +282,7 @@ export default function FilePickerItem({
                 <DialogContent className="z-[9999]">
                   <DialogHeader>
                     <DialogTitle>
-                      <Translator path="evoyaFiles.actions.rename.title" />
+                      {isFile ? <Translator path="evoyaFiles.actions.rename.title" /> : <Translator path="evoyaFiles.actions.rename_folder.title" />}
                     </DialogTitle>
                   </DialogHeader>
                   <div>
@@ -305,10 +305,10 @@ export default function FilePickerItem({
                 <DialogContent className="z-[9999]">
                   <DialogHeader>
                     <DialogTitle>
-                      <Translator path="evoyaFiles.actions.delete.title" />
+                      {isFile ? <Translator path="evoyaFiles.actions.delete.title" /> : <Translator path="evoyaFiles.actions.delete_folder.title" />}
                     </DialogTitle>
                     <DialogDescription>
-                      <Translator path="evoyaFiles.actions.delete.description" />
+                      {isFile ? <Translator path="evoyaFiles.actions.delete.description" /> : <Translator path="evoyaFiles.actions.delete_folder.description" />}
                     </DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
