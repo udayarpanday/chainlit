@@ -1,29 +1,17 @@
 import {
-  FilePickerData,
-  FilePickerItem as FilePickerItemType,
-} from '@/types';
-import {
   useContext,
-  useEffect,
   useState,
 } from 'react';
 
-import { Checkbox } from '@chainlit/app/src/components/ui/checkbox';
 import { Translator } from '@chainlit/app/src/components/i18n';
 import { Button } from '@chainlit/app/src/components/ui/button';
 
-import FilePickerItem from './FilePickerItem'
-import { v4 as uuidv4 } from 'uuid';
 import { toast } from '@/utils/evoya-toast';
 
 import {
-  Home,
-  ChevronRight,
-  Download,
-  Trash2,
-  LoaderCircle,
   Upload,
   FolderPlus,
+  ArrowLeft,
 } from 'lucide-react';
 import { cn } from '@chainlit/app/src/lib/utils';
 import { FilePickerContext } from '@/context/file-context';
@@ -34,7 +22,6 @@ import {
   DialogHeader,
   DialogFooter,
   DialogTitle,
-  DialogDescription,
 } from '@chainlit/app/src/components/ui/dialog';
 
 import { useUpload } from '@chainlit/app/src/hooks/useUpload';
@@ -56,7 +43,7 @@ export default function Uploader({
   onFileUpload,
   loadCurrentPath,
 }: Props) {
-  const { apiBaseUrl, csrfToken } = useContext(FilePickerContext);
+  const { apiBaseUrl, csrfToken, projectId, type } = useContext(FilePickerContext);
   const [newFolderName, setNewFolderName] = useState('');
   const [newFolderOpen, setNewFolderOpen] = useState(false);
 
@@ -107,8 +94,16 @@ export default function Uploader({
 
   return (
     <>
+      {(projectId && type !== 'compact') && (
+        <div className='mb-4'>
+          <a href={`/projects/${projectId}/`} className='flex items-center mr-4 text-gray-400 hover:text-foreground text-sm'>
+            <ArrowLeft className='h-4' />
+            <span className='pl-1'>back to Project</span>
+          </a>
+        </div>
+      )}
       <div className="flex justify-between items-center mb-4">
-        <div className="font-bold text-2xl">Files</div>
+        <div className={cn("font-bold", type === 'compact' ? 'text-xl' : 'text-2xl')}>Files</div>
         {currentPath !== '/' && (
           <div className="flex gap-2">
             <input
@@ -119,19 +114,22 @@ export default function Uploader({
             <Button
               id='upload-button'
               disabled={isLoading}
+              size={type === 'compact' ? 'sm' : 'default'}
               {...upload2.getRootProps()}
             >
               <Upload className="h-5" />
               <Translator path="evoyaFiles.actions.upload.title" />
             </Button>
-            <Button
-              id='create-folder-button'
-              disabled={isLoading}
-              onClick={() => setNewFolderOpen(true)}
-            >
-              <FolderPlus className="h-5" />
-              <Translator path="evoyaFiles.actions.create_folder.title" />
-            </Button>
+            {type !== 'compact' && (
+              <Button
+                id='create-folder-button'
+                disabled={isLoading}
+                onClick={() => setNewFolderOpen(true)}
+              >
+                <FolderPlus className="h-5" />
+                <Translator path="evoyaFiles.actions.create_folder.title" />
+              </Button>
+            )}
           </div>
         )}
       </div>

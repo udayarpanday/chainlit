@@ -16,6 +16,11 @@ type EvoyaFilesConfig = {
   container: HTMLElement;
   apiBaseUrl: string;
   csrfToken: string;
+  workspaceId?: string;
+  projectId?: string;
+  type?: string;
+  file?: string;
+  mime?: string;
 }
 
 declare global {
@@ -79,7 +84,16 @@ window.mountEvoyaFilesWidget = (config: EvoyaFilesConfig) => {
   root = ReactDOM.createRoot(shadowRootElement);
   root.render(
     <React.StrictMode>
-      <App initialPath={config.initialPath} apiBaseUrl={config.apiBaseUrl} csrfToken={config.csrfToken} />
+      <App
+        initialPath={config.initialPath}
+        apiBaseUrl={config.apiBaseUrl}
+        csrfToken={config.csrfToken}
+        projectId={config.projectId}
+        workspaceId={config.workspaceId}
+        type={config.type ?? 'default'}
+        file={config.file}
+        mime={config.mime}
+      />
     </React.StrictMode>
   );
 };

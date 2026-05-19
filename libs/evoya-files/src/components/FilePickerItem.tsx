@@ -1,4 +1,4 @@
-import { FilePickerItem as FilePickerItemType } from '@/types';
+import type { FilePickerItem } from '@/types';
 import {
   useState,
 } from 'react';
@@ -52,7 +52,7 @@ import { useUpload } from '@chainlit/app/src/hooks/useUpload';
 import FilePicker from './FilePicker';
 
 type Props = {
-  item: FilePickerItemType;
+  item: FilePickerItem;
   isSelectable?: boolean;
   selected: boolean;
   setSelectedState: (value: boolean) => void;
@@ -60,11 +60,12 @@ type Props = {
   showActions?: boolean;
   hasUpload?: boolean;
   singleMode?: boolean;
+  compact?: boolean;
   onFileUpload?: (file: File) => void;
-  deleteItems?: (items: FilePickerItemType[]) => Promise<void>;
-  moveItem?: (item: FilePickerItemType, destination: string) => Promise<void>;
-  renameItem?: (item: FilePickerItemType, newName: string) => Promise<void>;
-  downloadItems?: (items: FilePickerItemType[]) => void;
+  deleteItems?: (items: FilePickerItem[]) => Promise<void>;
+  moveItem?: (item: FilePickerItem, destination: string) => Promise<void>;
+  renameItem?: (item: FilePickerItem, newName: string) => Promise<void>;
+  downloadItems?: (items: FilePickerItem[]) => void;
 }
 
 export default function FilePickerItem({
@@ -75,6 +76,7 @@ export default function FilePickerItem({
   onClick = () => {},
   hasUpload = false,
   singleMode = false,
+  compact = false,
   onFileUpload = () => {},
   deleteItems = async () => {},
   moveItem = async () => {},
@@ -85,12 +87,12 @@ export default function FilePickerItem({
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const [moveOpen, setMoveOpen] = useState(false);
-  const [moveDestination, setMoveDestination] = useState<FilePickerItemType[]>([]);
+  const [moveDestination, setMoveDestination] = useState<FilePickerItem[]>([]);
   const { t } = useTranslation();
 
   const isFile = "size" in item;
 
-  const getItemIcon = (item: FilePickerItemType) => {
+  const getItemIcon = (item: FilePickerItem) => {
     if ("size" in item) {
       const fileNameArray = item.name.split('.');
       const extension = fileNameArray[fileNameArray.length - 1];
@@ -99,18 +101,18 @@ export default function FilePickerItem({
         case 'png':
         case 'jpg':
         case 'jpeg':
-          return <FileImage className="h-4" />
+          return <FileImage className="h-4 shrink-0" />
         case 'pdf':
         case 'txt':
         case 'md':
-          return <FileText className="h-4" />;
+          return <FileText className="h-4 shrink-0" />;
         case 'json':
-          return <FileBraces className="h-4" />
+          return <FileBraces className="h-4 shrink-0" />
         default:
-          return <File className="h-4" />
+          return <File className="h-4 shrink-0" />
       }
     }
-    return <FolderOpen className="h-4" />
+    return <FolderOpen className="h-4 shrink-0" />
   }
 
   const openCreator = () => {
@@ -173,9 +175,13 @@ export default function FilePickerItem({
         {getItemIcon(item)}
         <span className="ml-1 overflow-hidden overflow-ellipsis whitespace-nowrap">{item.name}</span>
       </div>
-      <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20" onClick={clickItem}>{item.owner}</div>
-      <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20" onClick={clickItem}>{item.modified ? getDateDisplay(item.modified) : ''}</div>
-      <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20" onClick={clickItem}>{"size" in item ? getSizeDisplay(item.size) : '--'}</div>
+      {!compact && (
+        <>
+          <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20" onClick={clickItem}>{item.owner}</div>
+          <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20" onClick={clickItem}>{item.modified ? getDateDisplay(item.modified) : ''}</div>
+          <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20" onClick={clickItem}>{"size" in item ? getSizeDisplay(item.size) : '--'}</div>
+        </>
+      )}
       {showActions && (
         <div className="p-2 border-t flex items-center justify-end gap-1 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20">
           <TooltipProvider>

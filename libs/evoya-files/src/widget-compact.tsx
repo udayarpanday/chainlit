@@ -11,8 +11,6 @@ interface Props {
   csrfToken: string;
   workspaceId?: string;
   projectId?: string;
-  file?: string;
-  mime?: string;
 }
 
 const customFileRenderer = [
@@ -24,14 +22,15 @@ const customFileRenderer = [
   'application/pdf',
 ];
 
-export default function Widget({ initialPath, apiBaseUrl, csrfToken, workspaceId, projectId, file, mime }: Props) {
-  const [selectedPath, setSelectedPath] = useState(initialPath);
-  const [openFile, setOpenFile] = useState<EvoyaFile | null>((file && mime) ? { path: initialPath + file, name: file, mime: mime, owner: '', size: 0, showActions: false, modified: new Date(), created: new Date() } : null);
+export default function WidgetCompact({ initialPath, apiBaseUrl, csrfToken, workspaceId, projectId }: Props) {
   const handleItemClick = (item: FilePickerItem) => {
     const isFile = "size" in item;
     if (isFile) {
       if (customFileRenderer.some((renderer) => item.mime.includes(renderer))) {
-        setOpenFile(item as EvoyaFile);
+        const filePathArr = item.path.split('/');
+        filePathArr.pop();
+        const filePath = filePathArr.join('/') + "/"
+        window.location.href = `/files/manage/?path=${filePath}&file=${item.name}&mime=${item.mime}&projectId=${projectId}`
       } else {
         fetch(`${apiBaseUrl}/api/files/download/?path=${item.path}`)
           .then((response) => response.blob())
@@ -39,14 +38,13 @@ export default function Widget({ initialPath, apiBaseUrl, csrfToken, workspaceId
             downloadBlob(blob, item.name);
           });
       }
+    } else {
+      window.location.href = `/files/manage/?path=${item.path}&projectId=${projectId}`
     }
   }
 
   const setSelectedPathHandler = (value: string) => {
-    setSelectedPath(value);
-    const urlParams = new URLSearchParams(window.location.search);
-    urlParams.set('path', value);
-    window.history.replaceState({}, '', `${window.location.origin}${window.location.pathname}?${urlParams.toString()}`)
+    // window.location.href = `/files/manage/?path=${value}&projectId=${projectId}`
   }
 
   const selectedItemsChange = () => {}
@@ -57,22 +55,18 @@ export default function Widget({ initialPath, apiBaseUrl, csrfToken, workspaceId
       csrfToken,
       workspaceId,
       projectId,
-      type: 'default'
+      type: 'compact'
     }}>
-      {!openFile && (
-        <FilePicker
-          initialPath={selectedPath}
-          handleItemClick={handleItemClick}
-          selectedItemsChange={selectedItemsChange}
-          setSelectedPath={setSelectedPathHandler}
-          showActions
-          multiselect
-          hasUpload
-        />
-      )}
-      {openFile && (
-        <ViewerWrapper file={openFile} setOpenFile={setOpenFile} />
-      )}
+      <FilePicker
+        initialPath={initialPath}
+        handleItemClick={handleItemClick}
+        selectedItemsChange={selectedItemsChange}
+        setSelectedPath={setSelectedPathHandler}
+        showActions
+        singleMode
+        hasUpload
+        compact
+      />
     </FilePickerContext.Provider>
   );
 }

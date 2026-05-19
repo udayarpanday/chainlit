@@ -3,6 +3,9 @@ import { createContext } from 'react';
 interface FilePickerContext {
   apiBaseUrl: string;
   csrfToken?: string;
+  projectId?: string;
+  workspaceId?: string;
+  type: string;
 }
 
 const defaultContext = {

@@ -13,7 +13,7 @@ import { downloadBlobFromUrl } from "@/utils/file";
 import { AudioPlayer } from "./audio";
 
 export function ViewerWrapper({ file, setOpenFile }: { file: EvoyaFile; setOpenFile: (file: EvoyaFile | null) => void }) {
-  const { apiBaseUrl, csrfToken } = useContext(FilePickerContext);  
+  const { apiBaseUrl, csrfToken, projectId } = useContext(FilePickerContext);  
   const [content, setContent] = useState('');
   const [blobUrl, setBlobUrl] = useState('');
   const [fileLoaded, setFileLoaded] = useState(false);
@@ -87,6 +87,14 @@ export function ViewerWrapper({ file, setOpenFile }: { file: EvoyaFile; setOpenF
 
   return (
     <>
+      {projectId && (
+        <div className='mb-4'>
+          <a href={`/projects/${projectId}/`} className='flex items-center mr-4 text-gray-400 hover:text-foreground text-sm'>
+            <ArrowLeft className='h-4' />
+            <span className='pl-1'>back to Project</span>
+          </a>
+        </div>
+      )}
       <div className="flex items-center mb-4">
         <div>
           <Button

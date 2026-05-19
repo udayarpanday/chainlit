@@ -52,6 +52,7 @@ type Props = {
   attachmentMode?: boolean;
   destinationMode?: boolean;
   singleMode?: boolean;
+  compact?: boolean;
 }
 
 export default function FilePicker({
@@ -62,6 +63,7 @@ export default function FilePicker({
   attachmentMode = false,
   destinationMode = false,
   singleMode = false,
+  compact = false,
   handleItemClick = () => {},
   selectedItemsChange = () => {},
   setSelectedPath = () => {},
@@ -349,13 +351,15 @@ export default function FilePicker({
       />
     )}
     <div className='relative flex flex-col overflow-hidden'>
-      <FolderBreadcrumbs
-        pathData={pathData}
-        fetchDirectory={fetchDirectory}
-        isLoading={isLoading}
-        attachmentMode={attachmentMode}
-        destinationMode={destinationMode}
-      />
+      {!compact && (
+        <FolderBreadcrumbs
+          pathData={pathData}
+          fetchDirectory={fetchDirectory}
+          isLoading={isLoading}
+          attachmentMode={attachmentMode}
+          destinationMode={destinationMode}
+        />
+      )}
       <div className={cn("rounded-lg border bg-white min-h-24 relative overflow-hidden flex", isDragActive && hasUpload ? 'bg-primary/20' : '')} {...(hasUpload ? getRootProps() : {})}>
         {hasUpload && <input {...getInputProps()} />}
         <ScrollArea className='w-full' type='auto'>
@@ -365,7 +369,17 @@ export default function FilePicker({
                 <LoaderCircle className='animate-spin' />
               </div>
             )}
-            <div className={cn("grid", showActions ? 'grid-cols-[max-content_auto_max-content_max-content_max-content_max-content]' : (singleMode ? 'grid-cols-[auto_max-content_max-content_max-content]' : 'grid-cols-[max-content_auto_max-content_max-content_max-content]'))}>
+            <div
+              className={cn(
+                "grid",
+                showActions ?
+                  (compact ? 'grid-cols-[auto_max-content]' : 'grid-cols-[max-content_auto_max-content_max-content_max-content_max-content]')
+                  : (singleMode ?
+                    'grid-cols-[auto_max-content_max-content_max-content]'
+                    : 'grid-cols-[max-content_auto_max-content_max-content_max-content]'
+                  )
+              )
+            }>
               <div className="contents text-xs">
                 {!singleMode && 
                   <div className="flex items-center p-2 pt-4 sticky top-0 bg-white">
@@ -375,15 +389,19 @@ export default function FilePicker({
                 <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
                   <Translator path="evoyaFiles.headers.name" />
                 </div>
-                <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
-                  <Translator path="evoyaFiles.headers.owner" />
-                </div>
-                <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
-                  <Translator path="evoyaFiles.headers.modified" />
-                </div>
-                <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
-                  <Translator path="evoyaFiles.headers.size" />
-                </div>
+                {!compact && (
+                  <>
+                    <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
+                      <Translator path="evoyaFiles.headers.owner" />
+                    </div>
+                    <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
+                      <Translator path="evoyaFiles.headers.modified" />
+                    </div>
+                    <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
+                      <Translator path="evoyaFiles.headers.size" />
+                    </div>
+                  </>
+                )}
                 {showActions && <div className="sticky top-0 bg-white"></div>}
               </div>
               {pathData.items.length > 0 && pathData.items.map((item) => (
@@ -394,6 +412,7 @@ export default function FilePicker({
                   onClick={() => itemClick(item)}
                   showActions={showActions}
                   singleMode={singleMode}
+                  compact={compact}
                   onFileUpload={onFileUpload}
                   hasUpload={hasUpload}
                   deleteItems={deleteItems}
@@ -411,7 +430,7 @@ export default function FilePicker({
           </div>
         </ScrollArea>
       </div>
-      {(selectedElements.length > 0 || attachmentMode) && !destinationMode && !singleMode && (
+      {(selectedElements.length > 0 || attachmentMode) && !destinationMode && !singleMode && !compact && (
         <div className="rounded-lg border bg-white flex justify-between items-center mt-4 pl-4 pr-1 py-1">
           <div className="text-sm">{selectedElements.length} <Translator path="evoyaFiles.common.selected" /></div>
           <div className="flex items-center gap-1">
