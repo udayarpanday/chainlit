@@ -52,11 +52,11 @@ import {
 import { useMemo, useState } from "react";
 
 import { editMathFormula$ } from './mathDialog';
+import { setNodeSelectionByKey$ } from "../evoyaAi";
 
 export const MdastMathVisitor: MdastImportVisitor<Math> = {
   testNode: 'math',
   visitNode({ mdastNode, actions }) {
-    console.log(mdastNode);
     actions.addAndStepInto(
       $createMathNode({mathString: mdastNode.value})
     );
@@ -76,7 +76,6 @@ export const LexicalMathVisitor: LexicalExportVisitor<MathNode, Math> = {
 export const MdastInlineMathVisitor: MdastImportVisitor<InlineMath> = {
   testNode: 'inlineMath',
   visitNode({ mdastNode, actions }) {
-    console.log(mdastNode);
     actions.addAndStepInto(
       $createInlineMathNode({mathString: mdastNode.value})
     );
@@ -154,17 +153,6 @@ export class MathNode extends DecoratorNode<JSX.Element> {
 
   decorate(_parentEditor: LexicalEditor): JSX.Element {
     return <MathFormulaRenderer formula={this.__mathString} nodeKey={this.__key} />
-    // var html = renderToString(this.__mathString, {
-    //   throwOnError: false,
-    //   output: "mathml",
-    // });
-    // if (html) {
-    //   return (
-    //     <span dangerouslySetInnerHTML={{__html: html}} />
-    //   );
-    // }
-
-    // return <span>{this.__mathString}</span>;
   }
 
   isInline(): boolean {
@@ -246,20 +234,6 @@ export class InlineMathNode extends DecoratorNode<JSX.Element> {
 
   decorate(_parentEditor: LexicalEditor): JSX.Element {
     return <MathFormulaRenderer formula={this.__mathString} inline nodeKey={this.__key} />
-    // const html = renderToString(this.__mathString, {
-    //   throwOnError: false,
-    //   output: "mathml",
-    // });
-    // if (html) {
-    //   return (
-    //     <span>
-    //       <span dangerouslySetInnerHTML={{__html: html}} />
-
-    //     </span>
-    //   );
-    // }
-
-    // return <span>{this.__mathString}</span>;
   }
 
   isInline(): boolean {
@@ -267,11 +241,11 @@ export class InlineMathNode extends DecoratorNode<JSX.Element> {
   }
 }
 
-export const MathFormulaRenderer = ({ formula, nodeKey }: { formula: string; inline?: boolean; nodeKey: string; }) => {
+export const MathFormulaRenderer = ({ formula, nodeKey, inline }: { formula: string; inline?: boolean; nodeKey: string; }) => {
   const iconComponentFor = useCellValue(iconComponentFor$);
   const setShowEditMath = usePublisher(editMathFormula$);
+  // const setNodeSelectionByKey = usePublisher(setNodeSelectionByKey$);
   const showEditMath = useCellValue(editMathFormula$);
-  const [editMath, setEditMath] = useState(false);
   const formulaHtml = useMemo(() => {
     return renderToString(formula, {
       throwOnError: false,
@@ -283,7 +257,7 @@ export const MathFormulaRenderer = ({ formula, nodeKey }: { formula: string; inl
     return (
       <span className={`math-wrapper ${showEditMath?.nodeKey === nodeKey ? '_active' : ''}`} onDoubleClick={() => setShowEditMath({ nodeKey, mathFormula: formula })}>
         <span className="math-formula" dangerouslySetInnerHTML={{__html: formulaHtml}} />
-        {/* <span className="inline-action" onClick={() => setShowEditMath({ nodeKey, mathFormula: formula })}>{iconComponentFor('edit')}</span> */}
+        {/* {!inline && <span className="inline-action" onClick={() => setNodeSelectionByKey(nodeKey)}>{iconComponentFor('handPointer')}</span>} */}
       </span>
     );
   }

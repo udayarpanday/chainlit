@@ -444,6 +444,21 @@ export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
       }
       realm.pub(evoyaAiState$, selectionContext);
     });
+    // Monitor if it causes issues, but currently it fixes resetting selection of table cell content when clicking to the chat input, because root editor selection was still there
+    realm.sub(realm.pipe(realm.combine(activeEditor$, currentSelection$), withLatestFrom(rootEditor$)), ([[activeEditor], rootEditor]) => {
+      if (activeEditor && activeEditor._config.namespace === "TableCellEditor" && activeEditor.getRootElement() === document.activeElement && rootEditor) {
+        rootEditor.read(() => {
+          const selection = $getSelection();
+          if (selection) {
+            console.log('removing root selection')
+            rootEditor.update(() => {
+              $setSelection(null);
+              rootEditor.blur();
+            });
+          }
+        })
+      }
+    });
     /*realm.sub(realm.pipe(inFocus$, withLatestFrom(activeEditor$, rootEditor$, readOnly$, viewMode$)), ([inFocus, activeEditor, rootEditor, readOnly, viewMode]) => {
       console.log('inFocus', inFocus)
       if (activeEditor && rootEditor && inFocus) {

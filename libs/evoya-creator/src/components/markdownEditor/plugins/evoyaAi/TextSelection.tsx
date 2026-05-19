@@ -48,14 +48,12 @@ export const TextSelection = () => {
     }
   }, []);
 
-  console.log("evoyaAiState", evoyaAiState)
-  console.log("isFocus", isFocus)
-
   // console.log('evoyaAiState', evoyaAiState);
-  if (isFocus) return null;
   if (!rootEditor) return null;
   if (!evoyaAiState) return null;
   if (viewMode !== 'rich-text') return null;
+  console.log("evoyaAiState", evoyaAiState)
+  if (isFocus) return null;
 
   const rectCompensation = 3.5;
   // const scrollCompensation = (evoyaAiState.scrollOffset ?? 0) - scrollOffset;
