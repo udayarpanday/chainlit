@@ -52,6 +52,7 @@ import {
 export default function MDXEditorWrapper({ content, onChange }: { content: string; onChange: (value: string) => void; }) {
   const [mdContent, setMdContent] = useState(content);
   const mdxEditorRef = useRef<MDXEditorMethods>(null);
+  const containerRef = useRef<HTMLElement>(null);
 
   return (
     <div
@@ -62,38 +63,42 @@ export default function MDXEditorWrapper({ content, onChange }: { content: strin
         minHeight: '300px',
         maxHeight: '600px',
       }}
+      ref={containerRef}
       onClick={() => mdxEditorRef.current?.focus()}
     >
       <style type="text/css">
         {mdxCss}
         {mdxCustomCss}
       </style>
-      <MDXEditor
-        className="evoya-mdx-editor"
-        ref={mdxEditorRef}
-        markdown={content}
-        iconComponentFor={getSvgIcon}
-        autoFocus
-        suppressHtmlProcessing
-        plugins={[
-            toolbarPlugin({ toolbarContents: () => <EditorToolbar /> }),
-            ...MDX_PLUGINS,
-            imagePlugin(),
-            evoyaMathPlugin(),
-            evoyaMathDialogPlugin(),
-            diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: content }),
-        ]}
-        // plugins={[
-        //   ...MDX_PLUGINS,
-        //   evoyaMathPlugin(),
-        //   evoyaMathDialogPlugin(),
-        //   diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: content }),
-        // ]}
-        onChange={(md) => {
-          setMdContent(md);
-          onChange(md);
-        }}
-      />
+      <div onClick={(e) => {e.preventDefault(); e.stopPropagation()}}>
+        <MDXEditor
+          className="evoya-mdx-editor"
+          ref={mdxEditorRef}
+          markdown={content}
+          iconComponentFor={getSvgIcon}
+          overlayContainer={containerRef.current}
+          autoFocus
+          suppressHtmlProcessing
+          plugins={[
+              toolbarPlugin({ toolbarContents: () => <EditorToolbar /> }),
+              ...MDX_PLUGINS,
+              imagePlugin(),
+              evoyaMathPlugin(),
+              evoyaMathDialogPlugin(),
+              diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: content }),
+          ]}
+          // plugins={[
+          //   ...MDX_PLUGINS,
+          //   evoyaMathPlugin(),
+          //   evoyaMathDialogPlugin(),
+          //   diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: content }),
+          // ]}
+          onChange={(md) => {
+            setMdContent(md);
+            onChange(md);
+          }}
+        />
+      </div>
     </div>
   );
 }
