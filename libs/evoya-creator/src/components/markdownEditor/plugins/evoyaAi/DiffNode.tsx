@@ -30,6 +30,7 @@ import {
   useTranslation,
   markdownSourceEditorValue$,
   LexicalExportVisitor,
+  rootEditor$,
 } from '@mdxeditor/editor';
 
 import { createPortal } from 'react-dom';
@@ -52,6 +53,7 @@ export function ComparisonActionsPortal() {
   const setComparisonNodeKeys = usePublisher(comparisonNodeKeys$);
   const rejectChange = usePublisher(rejectDiffNode$);
   const iconComponentFor = useCellValue(iconComponentFor$);
+  const rootEditor = useCellValue(rootEditor$);
   const comparisonNodeKeys = useCellValue(comparisonNodeKeys$);
   
   // useEffect(() => {
@@ -73,15 +75,36 @@ export function ComparisonActionsPortal() {
   //   target: target as HTMLElement
   // }));
 
-  const targets: Element[] = comparisonNodeKeys.reduce((curr, node) => {
-    const domElement = document.querySelector(`[data-node-key="${node}"]`);
+  const targets: HTMLElement[] = comparisonNodeKeys.reduce((curr, node) => {
+    const domElement = document.querySelector(`[data-node-key="${node}"]`) as HTMLElement;
     if (domElement) return [...curr, domElement];
     return curr;
-  }, [] as Element[])
-  const newPortals = targets.map(target => ({
-    key: target.getAttribute('data-node-key') || '',
-    target: target as HTMLElement
-  }));
+  }, [] as HTMLElement[])
+  // const newPortals = targets.map(target => ({
+  //   key: target.getAttribute('data-node-key') || '',
+  //   target: target as HTMLElement
+  // }));
+  const newPortals = targets.map(target => {
+    let leftOffset = 0;
+    let topOffset = 0;
+
+    const tableElement: HTMLDivElement | null = target.closest(".evoya-table-wrapper");
+
+    if (tableElement) {
+      const tdElement = target.closest("td");
+      leftOffset += (tdElement?.offsetLeft ?? 0) - 3;
+      topOffset += (tdElement?.offsetTop ?? 0);
+
+      leftOffset += (tableElement?.offsetLeft ?? 0);
+      topOffset += (tableElement?.offsetTop ?? 0);
+    }
+    return {
+      key: target.getAttribute('data-node-key') || '',
+      target: target as HTMLElement,
+      offsetTop: target.offsetTop + topOffset,
+      offsetRight: (rootEditor?._rootElement?.offsetWidth ?? 0) - leftOffset - target.offsetWidth,
+    }
+  });
 
   console.log(newPortals);
 
@@ -97,14 +120,15 @@ export function ComparisonActionsPortal() {
 
   return (
     <>
-      {newPortals.map(({ key, target }) => 
+      {newPortals.map(({ key, target, offsetTop, offsetRight }) => 
         <div
           key={key}
           className="absolute bg-white p-1 rounded border flex gap-2"
           style={{
             // top: target.getBoundingClientRect().top,
-            top: target.offsetTop + 43 + 4,
-            right: 12 + 4
+            // top: target.offsetTop + 43 + 4,
+            top: offsetTop + 43 + 4,
+            right: offsetRight - 10
           }}
         >
           <Button variant="ghost" size="xs" className="text-destructive !w-auto px-2 text-xs" onClick={() => reject(key)}>

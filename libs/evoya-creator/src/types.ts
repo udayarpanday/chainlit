@@ -17,12 +17,14 @@ export type SelectionContext = {
   lexical: RangeSelection | NodeSelection | null;
   markdown: string | null;
   selectionType: 'range' | 'node' | 'caret' | 'document' | 'codeblock' | null;
-  rectangles?: Array<DOMRect>;
+  // rectangles?: Array<DOMRect>;
+  rectangles?: Array<{ height: number; width: number; top: number; left: number; }>;
   rect?: any;
   scrollOffset?: number;
   code?: string;
   selectedCode?: string;
   language?: string;
+  topLevelElement?: LexicalNode;
 }
 
 export type CodeSelectionContext = {
