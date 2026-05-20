@@ -711,9 +711,15 @@ export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
       if (activeEditor) {
         const nodeSelection = $createNodeSelection();
         nodeSelection.add(value.getKey());
-        const domElement = activeEditor.getElementByKey(value.getKey());
+        let domElement = activeEditor.getElementByKey(value.getKey());
         const rects = [];
         if (domElement) {
+          if ($isImageNode(value)) {
+            const wrapperChild = domElement.firstElementChild;
+            if (wrapperChild) {
+              domElement = wrapperChild as HTMLDivElement;
+            }
+          }
           rects.push({
             height: domElement.offsetHeight,
             width: domElement.offsetWidth,
