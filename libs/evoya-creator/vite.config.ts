@@ -36,7 +36,7 @@ export default defineConfig({
           prefix: '#evoya-creator-container',
           ignoreFiles: ['markdownEditor/custom.css', 'editor/style.css', '@mdxeditor/editor/dist/style.css'],
           // exclude: ['*', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'strong', 'b', 'ul', 'ol', 'li', 'button', 'blockquote'],
-          exclude: ['*'],
+          exclude: ['*', 'button'],
         }),
       ]
     }
