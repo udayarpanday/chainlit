@@ -58,6 +58,11 @@ import { IAgents } from './types/agents';
 import { OutputAudioChunk } from './types/audio';
 
 import { ChainlitContext } from './context';
+import {
+  markTaskEnded,
+  markTaskStarted,
+  resetTaskLoading
+} from './taskLoading';
 import type { IToken } from './useChatData';
 
 
@@ -188,6 +193,7 @@ const useChatSession = () => {
 
       socket.on('connect', () => {
         socket.emit('connection_successful');
+        setLoading(resetTaskLoading());
         setSession((s) => ({ ...s!, error: false }));
         isReconnectingRef.current = false;
       });
@@ -197,11 +203,11 @@ const useChatSession = () => {
       });
 
       socket.on('task_start', () => {
-        setLoading(true);
+        setLoading(markTaskStarted());
       });
 
       socket.on('task_end', () => {
-        setLoading(false);
+        setLoading(markTaskEnded());
       });
 
       socket.on('reload', () => {
@@ -365,7 +371,6 @@ const useChatSession = () => {
       socket.on('ask', ({ msg, spec }, callback) => {
         setAskUser({ spec, callback, parentId: msg.parentId });
         setMessages((oldMessages) => addMessage(oldMessages, msg));
-
         setLoading(false);
       });
 
@@ -546,6 +551,8 @@ const useChatSession = () => {
       session.socket.removeAllListeners();
       session.socket.close();
     }
+    resetTaskLoading();
+    setLoading(false);
   }, [session]);
 
   return {

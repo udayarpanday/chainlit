@@ -197,18 +197,43 @@ const parseNestedJsonValues = (value: unknown): unknown => {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === 'object' && !Array.isArray(value);
 
-const getEntryPriority = (label: string) => {
-  if (label === 'messages') return -1;
-  if (label === 'tools') return 1;
+const getTrailingSectionBucket = (label: string) => {
+  const normalizedLabel = label.toLowerCase();
+
+  if (normalizedLabel === 'messages') return 1;
+  if (normalizedLabel === 'tools') return 2;
 
   return 0;
 };
 
-const sortEntries = (entries: [string, unknown][]) =>
-  [...entries].sort(
-    ([leftLabel], [rightLabel]) =>
-      getEntryPriority(leftLabel) - getEntryPriority(rightLabel)
-  );
+const sortEntries = (entries: [string, unknown][]) => {
+  const regularEntries: [string, unknown][] = [];
+  const trailingMessageEntries: [string, unknown][] = [];
+  const trailingToolEntries: [string, unknown][] = [];
+
+  entries.forEach((entry) => {
+    const [label] = entry;
+    const bucket = getTrailingSectionBucket(label);
+
+    if (bucket === 1) {
+      trailingMessageEntries.push(entry);
+      return;
+    }
+
+    if (bucket === 2) {
+      trailingToolEntries.push(entry);
+      return;
+    }
+
+    regularEntries.push(entry);
+  });
+
+  return [
+    ...regularEntries,
+    ...trailingMessageEntries,
+    ...trailingToolEntries
+  ];
+};
 
 const formatLabel = (label?: string) => {
   if (!label) return '';
@@ -510,12 +535,12 @@ const ViewContext = () => {
           <DialogContent
             className="
               z-[9999]
-              flex
+              !flex
               h-[98vh]
               min-h-0
               w-[96vw]
               max-w-[1500px]
-              flex-col
+              !flex-col
               overflow-hidden
             "
           >
@@ -528,9 +553,9 @@ const ViewContext = () => {
             <Tabs
               value={activeTab}
               onValueChange={(value) => setActiveTab(value as ContextTab)}
-              className="flex min-h-0 flex-1 flex-col gap-3"
+              className="flex min-h-0 flex-1 flex-col"
             >
-              <div>
+              <div className="flex shrink-0 items-center gap-2">
                 <TabsList className="w-fit">
                   {tabs.map((tab) => (
                     <TabsTrigger key={tab.id} value={tab.id}>
@@ -557,7 +582,7 @@ const ViewContext = () => {
                 <TabsContent
                   key={tab.id}
                   value={tab.id}
-                  className="flex-1 min-h-0 overflow-auto overscroll-contain touch-pan-y rounded-md border p-4"
+                  className="mt-3 flex-1 min-h-0 overflow-auto overscroll-contain touch-pan-y rounded-md border p-4"
                   onWheelCapture={(e) => e.stopPropagation()}
                   onTouchMoveCapture={(e) => e.stopPropagation()}
                 >

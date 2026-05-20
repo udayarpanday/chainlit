@@ -10,21 +10,39 @@ interface Props {
   isRunning?: boolean;
 }
 
-const globalTools = [
-  'tool_Web_Request',
-  'tool_Google_Search',
-  'tool_Task_Scheduler',
-  'tool_Image_to_Text',
-  'tool_Link_Checker',
-  'tool_Image_Generator',
-  'tool_Code_Interpreter'
-];
+function humanizeToolName(name: string): string {
+  const normalizedName = name.replace(/^tool_/, '');
+
+  if (normalizedName.includes('_')) {
+    return normalizedName
+      .split('_')
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  }
+
+  return normalizedName.replace(/([a-z0-9])([A-Z])/g, '$1 $2');
+}
 
 function getToolStepInfo(step: IStep): string {
-  if (globalTools.includes(step.name)) {
-    return step.name.split('_').slice(1).join(' ')
+  return humanizeToolName(step.name);
+}
+
+function getLatestToolStep(steps: IStep[]): IStep | undefined {
+  for (let i = steps.length - 1; i >= 0; i--) {
+    const step = steps[i];
+
+    if (step.steps?.length) {
+      const nestedStep = getLatestToolStep(step.steps);
+      if (nestedStep) {
+        return nestedStep;
+      }
+    }
+
+    if (step.name === 'tools' || step.type === 'tool') {
+      return step;
+    }
   }
-  return step.name.split('_').slice(1, -1).join(' ');
 }
 
 function getStepInfo(step: IStep, { thinkingText, toolText, processingText }: { thinkingText: string, toolText: string, processingText: string}): string {
@@ -32,16 +50,28 @@ function getStepInfo(step: IStep, { thinkingText, toolText, processingText }: { 
     return processingText;
   }
 
-  switch(step.name) {
-    case 'tools':
-      if (step.steps && step.steps.length > 0) {
-        return `${toolText} ${getToolStepInfo(step.steps[0])}`;
-      } else {
-        return toolText;
-      }
-    default:
-      return thinkingText;
+  if (step.name === 'tools') {
+    if (!step.steps?.length) {
+      return toolText;
+    }
+
+    const latestToolStep = getLatestToolStep(step.steps);
+    if (latestToolStep) {
+      return getStepInfo(latestToolStep, {
+        thinkingText,
+        toolText,
+        processingText
+      });
+    }
+
+    return toolText;
   }
+
+  if (step.type === 'tool') {
+    return `${toolText} ${getToolStepInfo(step)}`;
+  }
+
+  return thinkingText;
 }
 
 export default function ToolStepInfo({
@@ -59,9 +89,11 @@ export default function ToolStepInfo({
 
     //   return currentStepInfo;
     // }
-    if (toolCalls.length > 0) {
+    const latestToolStep = getLatestToolStep(toolCalls);
+
+    if (latestToolStep) {
       const currentStepInfo = getStepInfo(
-        toolCalls[toolCalls.length - 1],
+        latestToolStep,
         {
           thinkingText: t('chat.evoya.cot.thinking'),
           toolText: t('chat.evoya.cot.using_tool'),

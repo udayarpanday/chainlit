@@ -36,6 +36,10 @@ const EMPTY_ELEMENTS: IMessageElement[] = [];
 
 const langGraphExclude = ['default', 'dashboard', 'container'];
 
+const hasVisibleOutput = (output?: string) => {
+  return !!output?.trim();
+};
+
 const Message = memo(
   ({
     message,
@@ -125,7 +129,11 @@ const Message = memo(
                       />
                     </div>
                   ) : null}
-                  {(toolCalls && toolCalls.length > 0 && !message.output && evoyaMode !== 'default') && <ToolStepInfo toolCalls={toolCalls} />}
+                  {(isRunning || (toolCalls && toolCalls.length > 0)) &&
+                  !hasVisibleOutput(message.output) &&
+                  evoyaMode !== 'default' ? (
+                    <ToolStepInfo toolCalls={toolCalls ?? []} />
+                  ) : null}
                   {/* Display the step and its children */}
                   {isStep ? (
                     <Step step={message} isRunning={isRunning}>

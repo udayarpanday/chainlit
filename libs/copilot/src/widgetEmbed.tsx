@@ -1,11 +1,11 @@
 import Chat from 'chat';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { useSetRecoilState } from 'recoil';
 
 import { useState, useEffect, useContext } from 'react';
 import Header from './components/Header';
 import { WidgetContext } from './context';
 import { cn } from '@/lib/utils';
-import { firstUserInteraction, evoyaCreatorEnabledState } from '@chainlit/react-client';
+import { evoyaCreatorEnabledState } from '@chainlit/react-client';
 
 
 export default function WidgetEmbedded() {
@@ -36,17 +36,21 @@ export default function WidgetEmbedded() {
   // }, []);
 
   return (
-    <div className={cn("flex flex-col bg-background h-full w-full relative shadow-lg ", 
-      expanded
-      ? 'copilot-container-expanded'
-      : 'copilot-container-collapsed')}>
-      <div className='h-[calc(100%-75px)]'>
-        {
-          !evoya?.headerConfig?.hideHeaderBar && (
-            <Header expanded={expanded} setExpanded={setExpanded} />
-          )
-        }
-        <Chat />
+    <div
+      className={cn(
+        'flex h-full w-full flex-col bg-background relative shadow-lg',
+        expanded
+          ? 'copilot-container-expanded'
+          : 'copilot-container-collapsed'
+      )}
+    >
+      <div className="flex min-h-0 flex-1 flex-col">
+        {!evoya?.headerConfig?.hideHeaderBar && (
+          <Header expanded={expanded} setExpanded={setExpanded} />
+        )}
+        <div className="min-h-0 flex-1">
+          <Chat />
+        </div>
       </div>
     </div>
   );
