@@ -267,8 +267,10 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
             comparisonNode.append(newSide);
           }
 
-          // realm.pub(comparisonNodeKeys$, [...comparisonNodeKeys, comparisonNode.getKey()]);
+          realm.pub(comparisonNodeKeys$, [...comparisonNodeKeys, comparisonNode.getKey()]);
           // realm.pub(evoyaViewType$, "approve");
+          // realm.pub(updateComparisonNodeKeys$);
+          realm.pub(resetSelection$);
 
           $setSelection(null);
         });
@@ -320,14 +322,16 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
             comparisonNode.append(newSide);
           }
 
-          // realm.pub(comparisonNodeKeys$, [...comparisonNodeKeys, comparisonNode.getKey()]);
+          realm.pub(comparisonNodeKeys$, [...comparisonNodeKeys, comparisonNode.getKey()]);
           // realm.pub(evoyaViewType$, "approve");
+          // realm.pub(updateComparisonNodeKeys$);
+          realm.pub(resetSelection$);
 
           $setSelection(null);
         });
       }
-      realm.pub(resetSelection$);
-      realm.pub(updateComparisonNodeKeys$);
+      // realm.pub(resetSelection$);
+      // realm.pub(updateComparisonNodeKeys$);
     }
   });
 });
@@ -699,60 +703,56 @@ export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
       }
     });
     realm.sub(realm.pipe(setNodeSelectionByKey$, withLatestFrom(rootEditor$, activeEditor$)), ([value, rootEditor, activeEditor]) => {
-      rootEditor?.update(() => {
-        const selection = $createNodeSelection();
-        selection.add(value);
-        realm.pub(setNodeSelection$, selection.getNodes()[0]);
+      activeEditor?.read(() => {
+        realm.pub(setNodeSelection$, $getNodeByKey(value));
       });
     });
     realm.sub(realm.pipe(setNodeSelection$, withLatestFrom(rootEditor$, activeEditor$)), ([value, rootEditor, activeEditor]) => {
-      const selection = $createNodeSelection();
-      selection.add(value.__key);
-
-      let mdExportTarget = value;
-      if ($isImageNode(value)) {
-        mdExportTarget = value.getParent();
-      }
-
-      const selMd = exportMarkdownFromLexical({
-        root: mdExportTarget,
-        visitors: realm.getValue(exportVisitors$),
-        jsxComponentDescriptors: realm.getValue(jsxComponentDescriptors$),
-        toMarkdownExtensions: realm.getValue(toMarkdownExtensions$),
-        toMarkdownOptions: realm.getValue(toMarkdownOptions$),
-        jsxIsAvailable: realm.getValue(jsxIsAvailable$)
-      });
-      console.log(selMd);
-
-      let scrollOffset = 0;
-      if (params?.containerRef?.current) {
-        scrollOffset = params?.containerRef.current.scrollTop;
-      }
-      
-      rootEditor?.update(() => {
-        const domElement = rootEditor.getElementByKey(value.getKey());
-        let newRect;
+      if (activeEditor) {
+        const nodeSelection = $createNodeSelection();
+        nodeSelection.add(value.getKey());
+        const domElement = activeEditor.getElementByKey(value.getKey());
+        const rects = [];
         if (domElement) {
-          newRect = domElement.getBoundingClientRect()
+          rects.push({
+            height: domElement.offsetHeight,
+            width: domElement.offsetWidth,
+            top: domElement.offsetTop,
+            left: domElement.offsetLeft
+          });
         }
-
-        const selectionContext = {
-          lexical: selection,
-          markdown: selMd,
-          selectionType: 'node' as const,
-          rect: newRect,
-          scrollOffset
-        };
-        
         if (params?.setSelectionContext) {
+          const visitors = realm.getValue(exportVisitors$);
+          const toMarkdownExtensions = realm.getValue(toMarkdownExtensions$);
+          const toMarkdownOptions = realm.getValue(toMarkdownOptions$);
+          const jsxComponentDescriptors = realm.getValue(jsxComponentDescriptors$);
+          const jsxIsAvailable = realm.getValue(jsxIsAvailable$);
+
+          const markdown = getSelectionAsMarkdown(activeEditor, nodeSelection, {
+            visitors,
+            toMarkdownExtensions,
+            toMarkdownOptions,
+            jsxComponentDescriptors,
+            jsxIsAvailable
+          });
+
+          console.log(nodeSelection)
+
+          const selectionContext = {
+            rectangles: rects,
+            markdown,
+            lexical: nodeSelection,
+            selectionType: 'node' as const,
+            scrollOffset: 0,
+          };
           params.setSelectionContext(selectionContext);
+          // realm.pub(evoyaAiState$, selectionContext);
+          realm.pubIn({
+            [evoyaAiState$]: selectionContext,
+            [inFocus$]: false
+          });
         }
-  
-        realm.pubIn({
-          [evoyaAiState$]: selectionContext,
-          [inFocus$]: false
-        });
-      });
+      }
     });
     realm.sub(realm.pipe(setCodeSelection$, withLatestFrom(rootEditor$, activeEditor$)), ([value, rootEditor, activeEditor]) => {
       const selection = $createNodeSelection();
