@@ -84,6 +84,10 @@
                     "error": "Ein Fehler ist aufgetreten"
                 }
             },
+            "project": {
+                "title": "Projekte",
+                "empty": "Keine Projekte gefunden"
+            },
             "tasklist": {
                 "TaskList": {
                     "title": "\ud83d\uddd2\ufe0f Aufgabenliste",

@@ -24,6 +24,7 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from '@/components/ui/tooltip';
+import Translator from '@/components/i18n/Translator';
 
 type ProjectId = string | number;
 
@@ -261,14 +262,21 @@ export default function Projects({ disabled = false }: Props) {
                 id="projects-button"
                 variant="ghost"
                 size="icon"
-                className="relative hover:bg-muted"
+                className={cn(
+                  'relative',
+                  'hover:bg-muted',
+                  selectedProjects.length
+                    &&'text-primary hover:text-primary'
+                )}
                 disabled={disabled}
               >
                 <FolderKanban className="!size-5" />
               </Button>
             </PopoverTrigger>
           </TooltipTrigger>
-          <TooltipContent>Projects</TooltipContent>
+          <TooltipContent>
+            <Translator path="components.molecules.project.title" />
+          </TooltipContent>
         </Tooltip>
       </TooltipProvider>
 
@@ -306,7 +314,7 @@ export default function Projects({ disabled = false }: Props) {
             ))}
             {!visibleProjects.length ? (
               <p className="px-3 py-4 text-sm text-muted-foreground">
-                No projects found.
+                <Translator path="components.molecules.project.empty" />
               </p>
             ) : null}
           </div>
