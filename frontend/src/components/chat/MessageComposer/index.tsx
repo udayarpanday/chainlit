@@ -2,8 +2,8 @@ import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   useRecoilState,
-  useResetRecoilState,
   useRecoilValue,
+  useResetRecoilState,
   useSetRecoilState
 } from 'recoil';
 import { v4 as uuidv4 } from 'uuid';
@@ -31,6 +31,7 @@ import { evoyaAttachmentsState, EvoyaAttachment } from '@/state/evoya';
 import { Attachments } from './Attachments';
 import CommandButton from './CommandButton';
 import Input, { InputMethods } from './Input';
+import Projects from './Projects';
 import SubmitButton from './SubmitButton';
 import UploadButton from './UploadButton';
 import UploadButtonDropdown from './UploadButtonDropdown';
@@ -177,10 +178,10 @@ export default function MessageComposer({
     if (disabled || (value === '' && attachments.length === 0 && evoyaAttachments.length === 0)) {
       return;
     }
-    
+
     // Get full content including agents
     const fullContent = inputRef.current?.getFullContent?.() || value;
-    
+
     if (askUser) {
       onReply(fullContent);
     } else {
@@ -252,11 +253,14 @@ export default function MessageComposer({
             />
           )}
           {evoya && evoya?.type == 'dashboard' && (
-            <CommandButton
-              disabled={disabled}
-              selectedCommand={selectedCommand}
-              onCommandSelect={setSelectedCommand}
-            />
+            <>
+              <CommandButton
+                disabled={disabled}
+                selectedCommand={selectedCommand}
+                onCommandSelect={setSelectedCommand}
+              />
+              <Projects disabled={disabled} />
+            </>
           )}
           {evoya?.evoyaCreator?.enabled && <EvoyaCreatorButton />}
           {evoya?.api?.privacyShield?.enabled && (
