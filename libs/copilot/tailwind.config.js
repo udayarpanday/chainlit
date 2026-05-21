@@ -3,7 +3,7 @@ const px = (num) => `${num * 4}px`;
 export default {
 	darkMode: ["class"],
 	content: [
-		"./src/**/*.{ts,tsx,js,jsx}",
+		"../copilot/src/**/*.{ts,tsx,js,jsx}",
 		"../../frontend/src/**/*.{ts,tsx,js,jsx}",
 		"../evoya-files/src/**/*.{ts,tsx,js,jsx}",
 		"../evoya-creator/src/**/*.{ts,tsx,js,jsx}",

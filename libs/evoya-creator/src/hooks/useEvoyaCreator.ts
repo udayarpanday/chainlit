@@ -18,7 +18,7 @@ import { WidgetContext } from '@/context';
 
 import type { IStep } from 'client-types/';
 
-import { toast } from 'sonner';
+import { toast } from '@evoya/file-picker/src/utils/evoya-toast';
 
 export default function useEvoyaCreator() {
   const { config } = useContext(WidgetContext);
@@ -64,15 +64,19 @@ export default function useEvoyaCreator() {
     })
   }
 
-  const saveCreatorContent = async () => {
-    if (!fileInfo || !config) return;
+  const saveCreatorContent = async (dFileInfo: { path: string; name: string; mime: string; }) => {
+    let saveFileInfo = fileInfo;
+    if (dFileInfo) {
+      saveFileInfo = dFileInfo
+    }
+    if (!saveFileInfo || !config) return;
     const blob = new Blob([creatorContent], {
-      type: fileInfo?.mime,
+      type: saveFileInfo?.mime,
     });
-    const newFile = new File([blob as BlobPart], fileInfo?.name ?? 'file');
+    const newFile = new File([blob as BlobPart], saveFileInfo?.name ?? 'file');
     try {
       const data = new FormData();
-      const filePath = fileInfo.path.split('/');
+      const filePath = saveFileInfo.path.split('/');
       filePath.pop();
       data.append('file', newFile)
       data.append('path', filePath.join('/') + "/")
@@ -105,6 +109,7 @@ export default function useEvoyaCreator() {
   return {
     enabled: config?.enabled ?? false,
     fileInfo,
+    setFileInfo,
     creatorType,
     active,
     setActive,

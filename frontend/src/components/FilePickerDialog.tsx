@@ -32,7 +32,8 @@ const FilePickerDialog = ({ open, setOpen, selectFile }: Props): JSX.Element => 
         <div>
           <FilePickerContext.Provider value={{
             apiBaseUrl: window.location.origin,
-            csrfToken: ''
+            csrfToken: '',
+            type: "default"
           }}>
             <FilePicker 
               initialPath='/'

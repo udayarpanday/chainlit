@@ -636,11 +636,15 @@
                 "label": "Detailed"
             },
             "save": {
-                "label": "Speichern"
+                "label": "Speichern",
+                "input": "File name"
             },
             "open": {
                 "label": "Open file..."
             }
+        },
+        "action": {
+            "cancel": "Abbrechen"
         }
     },
     "agentList": {

@@ -273,9 +273,29 @@ const useChatSession = () => {
       );
 
       socket.on('update_message', (message: IStep) => {
-        setMessages((oldMessages) =>
-          updateMessageById(oldMessages, message.id, message)
-        );
+        setMessages((oldMessages) => {
+          let newMessages = oldMessages;
+          /* // @ts-expect-error is not a valid prop
+          if (message.type === 'run' && message.name === 'on_message' && message.end && window.evoyaCreatorEnabled) {
+            const oldMsg = findMessageById(oldMessages, message.id)
+            console.log(oldMsg)
+            // const directParent = findMessageById(oldMessages, message.parentId || '');
+            // let messageParent = directParent;
+            // if (directParent?.parentId) {
+              // messageParent = findMessageById(oldMessages, directParent.parentId);
+            // }
+            if (oldMsg?.steps?.length && oldMsg.steps[0].output) {
+              // @ts-expect-error is not a valid prop
+              const newOutput = window.updateEvoyaCreator(oldMsg.steps[0], message) || oldMsg.steps[0].output;
+              // window.updateEvoyaCreator(message.output);
+              newMessages = updateMessageById(oldMessages, oldMsg.steps[0].id, {
+                ...oldMsg.steps[0],
+                output: newOutput
+              })
+            }
+          }*/
+          return updateMessageById(newMessages, message.id, message)
+        });
       });
 
       socket.on('delete_message', (message: IStep) => {
@@ -291,15 +311,21 @@ const useChatSession = () => {
       socket.on(
         'stream_token',
         ({ id, token, isSequence, isInput }: IToken) => {
-          setMessages((oldMessages) =>
-            updateMessageContentById(
+          setMessages((oldMessages) => {
+            const newMessages = updateMessageContentById(
               oldMessages,
               id,
               token,
               isSequence,
               isInput
-            )
-          );
+            );
+            // @ts-expect-error is not a valid prop
+            if (window.evoyaCreatorEnabled) {
+              // @ts-expect-error is not a valid prop
+              window.streamEvoyaCreator(findMessageById(newMessages, id));
+            }
+            return newMessages;
+          });
         }
       );
 
