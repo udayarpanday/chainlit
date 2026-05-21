@@ -18,7 +18,7 @@ import { WidgetContext } from '@/context';
 
 import type { IStep } from 'client-types/';
 
-import { toast } from '@evoya/file-picker/src/utils/evoya-toast';
+import { toast } from '@chainlit/app/src/lib/evoya-toast';
 
 export default function useEvoyaCreator() {
   const { config } = useContext(WidgetContext);

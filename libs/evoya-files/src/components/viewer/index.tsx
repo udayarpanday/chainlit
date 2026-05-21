@@ -4,7 +4,7 @@ import { FilePickerContext } from '@/context/file-context';
 import { useContext, useEffect, useState } from "react";
 import { PdfViewer } from "./pdf";
 import { TextViewer } from "./text";
-import { toast } from '@/utils/evoya-toast';
+import { toast } from '@chainlit/app/src/lib/evoya-toast';
 import { Button } from '@chainlit/app/src/components/ui/button';
 import { ArrowLeft, Download, LoaderCircle, Save } from 'lucide-react';
 import { ImageViewer } from "./image";

@@ -20,7 +20,7 @@ import {
 import { cn } from '@chainlit/app/src/lib/utils';
 
 import { Checkbox } from '@chainlit/app/src/components/ui/checkbox';
-import { getSizeDisplay, getDateDisplay } from '@/utils/file';
+import { getSizeDisplay, getDateDisplay } from '../utils/file';
 
 import { Button } from '@chainlit/app/src/components/ui/button';
 import { Input } from '@chainlit/app/src/components/ui/input';

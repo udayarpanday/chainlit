@@ -6,7 +6,7 @@ import {
 import { Translator } from '@chainlit/app/src/components/i18n';
 import { Button } from '@chainlit/app/src/components/ui/button';
 
-import { toast } from '@/utils/evoya-toast';
+import { toast } from '@chainlit/app/src/lib/evoya-toast';
 
 import {
   Upload,
@@ -14,7 +14,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { cn } from '@chainlit/app/src/lib/utils';
-import { FilePickerContext } from '@/context/file-context';
+import { FilePickerContext } from '../context/file-context';
 
 import {
   Dialog,

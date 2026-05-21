@@ -1,7 +1,7 @@
 import {
   FilePickerData,
   FilePickerItem as FilePickerItemType,
-} from '@/types';
+} from '../types';
 import {
   useContext,
   useEffect,
@@ -14,7 +14,7 @@ import { Button } from '@chainlit/app/src/components/ui/button';
 
 import FilePickerItem from './FilePickerItem'
 import { v4 as uuidv4 } from 'uuid';
-import { toast } from '@/utils/evoya-toast';
+import { toast } from '@chainlit/app/src/lib/evoya-toast';
 
 import {
   Download,
@@ -22,12 +22,12 @@ import {
   LoaderCircle,
 } from 'lucide-react';
 import { cn } from '@chainlit/app/src/lib/utils';
-import { FilePickerContext } from '@/context/file-context';
+import { FilePickerContext } from '../context/file-context';
 
 import { useUpload } from '@chainlit/app/src/hooks/useUpload';
 import Uploader from './Uploader';
 import FolderBreadcrumbs from './FolderBreadcrumbs';
-import { downloadBlob } from '@/utils/file';
+import { downloadBlob } from '../utils/file';
 
 import {
   Dialog,
