@@ -267,12 +267,15 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
             comparisonNode.append(newSide);
           }
 
-          realm.pub(comparisonNodeKeys$, [...comparisonNodeKeys, comparisonNode.getKey()]);
+          // realm.pub(comparisonNodeKeys$, [...comparisonNodeKeys, comparisonNode.getKey()]);
           // realm.pub(evoyaViewType$, "approve");
           // realm.pub(updateComparisonNodeKeys$);
           realm.pub(resetSelection$);
 
           $setSelection(null);
+        }, {
+          // onUpdate: () => realm.pub(comparisonNodeKeys$, [...comparisonNodeKeys, comparisonNodeKey])
+          onUpdate: () => realm.pub(updateComparisonNodeKeys$)
         });
       } else if (selectionType === 'range') {
         // dont need to handle for now
@@ -322,12 +325,15 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
             comparisonNode.append(newSide);
           }
 
-          realm.pub(comparisonNodeKeys$, [...comparisonNodeKeys, comparisonNode.getKey()]);
+          // realm.pub(comparisonNodeKeys$, [...comparisonNodeKeys, comparisonNode.getKey()]);
           // realm.pub(evoyaViewType$, "approve");
           // realm.pub(updateComparisonNodeKeys$);
           realm.pub(resetSelection$);
 
           $setSelection(null);
+        }, {
+          // onUpdate: () => realm.pub(comparisonNodeKeys$, [...comparisonNodeKeys, comparisonNodeKey])
+          onUpdate: () => realm.pub(updateComparisonNodeKeys$)
         });
       }
       // realm.pub(resetSelection$);
@@ -434,8 +440,9 @@ export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
     realm.sub(realm.pipe(comparisonNodeKeys$, withLatestFrom(evoyaAutoApprove$)), ([comparisonNodeKeys, evoyaAutoApprove]) => {
       if (evoyaAutoApprove && comparisonNodeKeys.length > 0) {
         comparisonNodeKeys.forEach((key) => realm.pub(approveDiffNode$, { key }));
+      } else {
+        realm.pub(evoyaViewType$, comparisonNodeKeys.length > 0 ? "approve" : "default");
       }
-      realm.pub(evoyaViewType$, comparisonNodeKeys.length > 0 ? "approve" : "default");
     });
     realm.sub(resetSelection$, () => {
       const selectionContext = {
