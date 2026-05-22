@@ -138,8 +138,9 @@
 .copilot-container-expanded{
   position: fixed;
   inset: 10px;
-  width: 98.8vw;
-  height: 97.5vh;
+  width: calc(100vw - 20px);
+  height: calc(100vh - 20px);
+  height: calc(100dvh - 20px);
   z-index: 1000;
 }
 
@@ -147,8 +148,9 @@
   .copilot-container-expanded{
     position: fixed;
     inset: 0px;
-    width:100vw;
+    width: 100vw;
     height: 100vh;
+    height: 100dvh;
     z-index: 1000;
   }
   [data-radix-popper-content-wrapper] {

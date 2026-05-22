@@ -46,6 +46,7 @@ export default function SubmitButton({
       .replace(/\uFEFF/g, ''); // Remove byte order mark
     return cleanedValue === '';
   };
+
   return (
     <TooltipProvider>
       {!loading &&

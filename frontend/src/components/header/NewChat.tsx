@@ -3,7 +3,9 @@ import { Plus } from 'lucide-react';
 import React, { useContext } from 'react';
 
 import {
+  ChainlitContext,
   useAudio,
+  useAuth,
   useChatInteract,
   useChatSession
 } from '@chainlit/react-client';
@@ -20,6 +22,8 @@ interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 const NewChatButton = ({ newSession }: Props) => {
   const { clear } = useChatInteract();
   const { evoya, setAccessToken } = useContext(WidgetContext);
+  const apiClient = useContext(ChainlitContext);
+  const { setUserFromAPI } = useAuth();
 
   const { endConversation, audioConnection } = useAudio();
   const isAudioOn = audioConnection === 'on';
@@ -51,6 +55,10 @@ const NewChatButton = ({ newSession }: Props) => {
         if (newAccessToken) {
           localStorage.setItem('chainlit_token', newAccessToken);
           setAccessToken(newAccessToken);
+           apiClient
+            .jwtAuth(newAccessToken)
+            .then((res) => setUserFromAPI())
+            .catch((err) => console.log(err));
         }
       } catch (error) {
         console.error('Failed to get new access token:', error);

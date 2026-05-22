@@ -36,6 +36,10 @@ const EMPTY_ELEMENTS: IMessageElement[] = [];
 
 const langGraphExclude = ['default', 'dashboard', 'container'];
 
+const hasVisibleOutput = (output?: string) => {
+  return !!output?.trim();
+};
+
 const Message = memo(
   ({
     message,
@@ -117,11 +121,19 @@ const Message = memo(
               ) : (
                 <div className="ai-message flex gap-4 w-full">
                   {!isStep || !indent ? (
-                    <>
-                      <MessageAvatar author={message.name} content={message.output} hide={message.name === 'LangGraph'} />
-                    </>
+                    <div className="hidden md:block">
+                      <MessageAvatar
+                        author={message.name}
+                        content={message.output}
+                        hide={message.name === 'LangGraph'}
+                      />
+                    </div>
                   ) : null}
-                  {(toolCalls && toolCalls.length > 0 && !message.output && evoyaMode !== 'default') && <ToolStepInfo toolCalls={toolCalls} />}
+                  {(isRunning || (toolCalls && toolCalls.length > 0)) &&
+                  !hasVisibleOutput(message.output) &&
+                  evoyaMode !== 'default' ? (
+                    <ToolStepInfo toolCalls={toolCalls ?? []} />
+                  ) : null}
                   {/* Display the step and its children */}
                   {isStep ? (
                     <Step step={message} isRunning={isRunning}>

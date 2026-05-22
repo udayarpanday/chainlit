@@ -78,7 +78,7 @@ const EvoyaCreatorButton = (): JSX.Element => {
               size="icon"
               variant="ghost"
               onClick={handleClick}
-              className={`hover:bg-muted ${hasContent ? 'text-primary' : ''}`}
+              className={`hover:bg-muted ${hasContent ? 'text-primary hover:text-primary' : ''}`}
             >
               <PencilLine className="!size-5" />
             </Button>

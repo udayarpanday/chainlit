@@ -1,16 +1,13 @@
 import { WidgetContext } from '@/context';
 import DashboardSidebarButton from '@/evoya/DashboardSidebarButton';
-import EvoyaCreatorButton from '@/evoya/EvoyaCreatorButton';
 import FavoriteSessionButton from '@/evoya/FavoriteSessionButton';
 import ShareSessionButton from '@/evoya/ShareSessionButton';
-import AgentList, { AgentListItem } from './AgentList';
-import { Maximize2, Minimize, X } from 'lucide-react';
+import ViewContext from '@/evoya/ViewContext';
+import { Maximize2, X } from 'lucide-react';
 import { useContext, useEffect, useState } from 'react';
-import { useMediaQuery } from 'react-responsive';
 import { useRecoilValue } from 'recoil';
 
 import AudioPresence from '@chainlit/app/src/components/AudioPresence';
-import { Logo } from '@chainlit/app/src/components/Logo';
 import ChatProfiles from '@chainlit/app/src/components/header/ChatProfiles';
 import NewChatButton from '@chainlit/app/src/components/header/NewChat';
 import { Button } from '@chainlit/app/src/components/ui/button';
@@ -25,7 +22,8 @@ import {
   useChatData,
   useConfig
 } from '@chainlit/react-client';
-import ViewContext from '@/evoya/ViewContext';
+
+import AgentList, { AgentListItem } from './AgentList';
 
 const sessionTokenKey = 'session_token';
 
@@ -39,6 +37,9 @@ interface DashboardBridgeAgent {
   title?: string;
   agent_uuid?: string;
   uuid?: string;
+  session_uuid?: string;
+  chat_session_uuid?: string;
+  is_favorite?: boolean | string;
   user_can_edit?: boolean | string;
   show_agent_menu?: boolean | string;
   show_edit_agent_option?: boolean | string;
@@ -50,7 +51,12 @@ interface DashboardBridgeAgent {
 interface DashboardBridgeData {
   chatAgents?: DashboardBridgeAgent[];
   recent_agents?: DashboardBridgeAgent[];
-  resumeChat?: (agentUuid: string, sessionUuid?: string | null, isFavorite?: boolean) => void;
+  restrictSharedSessionsToOrg?: boolean;
+  resumeChat?: (
+    agentUuid: string,
+    sessionUuid?: string | null,
+    isFavorite?: boolean
+  ) => void;
 }
 
 declare global {
@@ -65,11 +71,14 @@ interface Props {
   isPopup?: boolean;
 }
 
-const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element => {
+const Header = ({
+  expanded,
+  setExpanded,
+  isPopup = false
+}: Props): JSX.Element => {
   const { loading } = useChatData();
   const { config } = useConfig();
   const { audioConnection } = useAudio();
-  const isTabletOrMobile = useMediaQuery({ query: '(max-width: 768px)' });
 
   const creatorEnabled = useRecoilValue(evoyaCreatorEnabledState);
 
@@ -79,21 +88,30 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
   const firstInteraction = useRecoilValue(firstUserInteraction);
 
   const hasChatProfiles = !!config?.chatProfiles?.length;
-
   const [sessionUuid, setSessionUuid] = useState(evoya?.session_uuid ?? '');
   const [agents, setAgents] = useState<AgentListItem[]>([]);
   const [recentAgents, setRecentAgents] = useState<AgentListItem[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState<string>();
-  const [optimisticDefaultAgentId, setOptimisticDefaultAgentId] = useState<string>();
+  const [optimisticDefaultAgentId, setOptimisticDefaultAgentId] =
+    useState<string>();
+  const [restrictSharedSessionsToOrg, setRestrictSharedSessionsToOrg] =
+    useState(false);
 
-  const mapBridgeAgentToItem = (agent: DashboardBridgeAgent): AgentListItem | null => {
+  const mapBridgeAgentToItem = (
+    agent: DashboardBridgeAgent
+  ): AgentListItem | null => {
     const toBoolean = (value: boolean | string | undefined) =>
       value === true || value === 'true';
 
-    const agentUuid =
-      agent.agent_uuid || agent.uuid || agent.chat__uuid || agent.chat_uuid;
-    const numericId = agent.id ?? agent.chat__id;
-    const label = agent.name || agent.title || agent.chat__name || 'Untitled Agent';
+    const chatUuid = agent.chat__uuid || agent.chat_uuid;
+    const agentUuid = agent.agent_uuid || chatUuid || agent.uuid;
+    const numericId = agent.chat__id ?? agent.id;
+    const sessionUuid =
+      agent.session_uuid ||
+      agent.chat_session_uuid ||
+      (chatUuid && agent.uuid !== chatUuid ? agent.uuid : undefined);
+    const label =
+      agent.name || agent.title || agent.chat__name || 'Untitled Agent';
     if (!agentUuid && !numericId) return null;
     const id = String(agentUuid || numericId);
     return {
@@ -102,6 +120,8 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
       agentUuid,
       numericId,
       userCanEdit: toBoolean(agent.user_can_edit),
+      sessionUuid,
+      isFavorite: toBoolean(agent.is_favorite),
       showAgentMenu:
         agent.show_agent_menu === undefined
           ? true
@@ -120,9 +140,12 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
   };
 
   const syncDashboardBridgeData = () => {
-    if (evoya?.type !== 'dashboard' || !window.dashboardDataForModal) return;
+    if (evoya?.type !== 'dashboard' || !window.dashboardDataForModal) {
+      setRestrictSharedSessionsToOrg(false);
+      return;
+    }
     const data = window.dashboardDataForModal();
-    
+    setRestrictSharedSessionsToOrg(Boolean(data.restrictSharedSessionsToOrg));
     let chatAgents = (data.chatAgents ?? [])
       .map(mapBridgeAgentToItem)
       .filter((agent): agent is AgentListItem => !!agent);
@@ -136,14 +159,21 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
 
     const recentCandidate = (data.recent_agents ?? [])
       .map(mapBridgeAgentToItem)
-      .filter((agent): agent is AgentListItem => !!agent);
+      .filter((agent): agent is AgentListItem => !!agent)
+      .map((agent) => ({ ...agent, isRecent: true }));
 
     let recent = recentCandidate.map((recentAgent) => {
-      if (recentAgent.agentUuid && chatAgentsByUuid.has(recentAgent.agentUuid)) {
+      if (
+        recentAgent.agentUuid &&
+        chatAgentsByUuid.has(recentAgent.agentUuid)
+      ) {
         const canonicalAgent = chatAgentsByUuid.get(recentAgent.agentUuid)!;
         return {
           ...canonicalAgent,
-          isDefault: canonicalAgent.isDefault || recentAgent.isDefault
+          isDefault: canonicalAgent.isDefault || recentAgent.isDefault,
+          isRecent: true,
+          sessionUuid: recentAgent.sessionUuid,
+          isFavorite: recentAgent.isFavorite
         };
       }
       return recentAgent;
@@ -179,7 +209,8 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
 
     const params = new URLSearchParams(window.location.search);
     const urlAgentUuid = params.get('agent_uuid');
-    const defaultAgent = chatAgents.find((agent) => agent.isDefault) ?? chatAgents[0];
+    const defaultAgent =
+      chatAgents.find((agent) => agent.isDefault) ?? chatAgents[0];
 
     setSelectedAgentId((prev) => {
       if (prev && chatAgents.some((agent) => agent.id === prev)) {
@@ -214,7 +245,7 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
       setSessionUuid(sessionJson.session_uuid);
       localStorage.setItem(sessionTokenKey, sessionJson.session_uuid);
       document.cookie = `${sessionTokenKey}=${sessionJson.session_uuid};path=/`;
-    } catch (e) {
+    } catch (_e) {
       return;
     }
   };
@@ -254,19 +285,42 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
     window.addEventListener('agent-changed', onAgentChanged as EventListener);
     return () => {
       window.removeEventListener('reload-chat-sidebar', onReload);
-      window.removeEventListener('agent-changed', onAgentChanged as EventListener);
+      window.removeEventListener(
+        'agent-changed',
+        onAgentChanged as EventListener
+      );
     };
   }, [evoya?.type, optimisticDefaultAgentId]);
 
+  const getCanonicalAgent = (agent: AgentListItem) =>
+    agents.find((item) => {
+      if (agent.agentUuid && item.agentUuid) {
+        return item.agentUuid === agent.agentUuid;
+      }
+      if (agent.numericId !== undefined && item.numericId !== undefined) {
+        return String(item.numericId) === String(agent.numericId);
+      }
+      return item.id === agent.id;
+    });
+
+  const getAgentUuid = (agent: AgentListItem) =>
+    agent.agentUuid || getCanonicalAgent(agent)?.agentUuid;
+
   const handleAgentSelect = (agent: AgentListItem) => {
-    setSelectedAgentId(agent.id);
+    const canonicalAgent = getCanonicalAgent(agent);
+    const agentUuid = agent.agentUuid || canonicalAgent?.agentUuid;
+
+    if (!agentUuid) return;
+
+    setSelectedAgentId(canonicalAgent?.id ?? agent.id);
+
     window.dispatchEvent(
       new CustomEvent('agent-changed', {
         detail: {
-          agent_uuid: agent.agentUuid || agent.id,
+          agent_uuid: agentUuid,
           agent: {
-            uuid: agent.agentUuid || agent.id,
-            agent_uuid: agent.agentUuid || agent.id
+            uuid: agentUuid,
+            agent_uuid: agentUuid
           }
         }
       })
@@ -279,11 +333,18 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
   };
 
   const handleOpenTestChat = (agent: AgentListItem) => {
-    const agentUuid = agent.agentUuid || agent.id;
-    window.open(`${location.origin}/chat/authorize-chat/${agentUuid}/`, '_blank');
+    const agentUuid = getAgentUuid(agent);
+    if (!agentUuid) return;
+    window.open(
+      `${location.origin}/chat/authorize-chat/${agentUuid}/`,
+      '_blank'
+    );
   };
 
   const handleSetDefaultAgent = (agent: AgentListItem) => {
+    const agentUuid = getAgentUuid(agent);
+    if (!agentUuid) return;
+
     setOptimisticDefaultAgentId(agent.id);
 
     const matches = (item: AgentListItem) => {
@@ -308,11 +369,10 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
         isDefault: matches(item)
       }))
     );
-    setSelectedAgentId(agent.id);
     window.dispatchEvent(
       new CustomEvent('agent-set-default-requested', {
         detail: {
-          agent_uuid: agent.agentUuid || agent.id
+          agent_uuid: agentUuid
         }
       })
     );
@@ -367,7 +427,11 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
             <img src={evoya.logo} style={{ height: '25px', width: 'auto' }} />
           )
         )}
-        {evoya?.headerConfig?.showSessionButton && <NewChatButton newSession={(sessionUuid) => setSessionUuid(sessionUuid ?? '')}/>}
+        {evoya?.headerConfig?.showSessionButton && (
+          <NewChatButton
+            newSession={(sessionUuid) => setSessionUuid(sessionUuid ?? '')}
+          />
+        )}
       </div>
       <div className="flex items-center">
         {audioConnection === 'on' ? (
@@ -381,13 +445,12 @@ const Header = ({ expanded, setExpanded, isPopup = false }: Props): JSX.Element 
         ) : null}
         {evoya?.type === 'dashboard' && (
           <>
-            <ViewContext/>
-            {!creatorEnabled && (
-              <>
-                <FavoriteSessionButton sessionUuid={sessionUuid} />
-                <ShareSessionButton sessionUuid={sessionUuid} />
-              </>
-            )}
+            <ViewContext />
+            <FavoriteSessionButton sessionUuid={sessionUuid} />
+            <ShareSessionButton
+              sessionUuid={sessionUuid}
+              restrictSharedSessionsToOrg={restrictSharedSessionsToOrg}
+            />
           </>
         )}
         {!creatorEnabled && (

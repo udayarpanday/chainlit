@@ -21,6 +21,7 @@ import {
   currentThreadIdState,
   elementState,
   firstUserInteraction,
+  initialTranscriptState,
   isAiSpeakingState,
   loadingState,
   messagesState,
@@ -36,6 +37,7 @@ import {
   wavStreamPlayerState
 } from 'src/state';
 import {
+  ChatInputSocketPayload,
   IAction,
   ICommand,
   IElement,
@@ -47,16 +49,22 @@ import {
 import {
   addMessage,
   deleteMessageById,
-  updateMessageById,
-  updateMessageContentById,
   findMessageById,
+  updateMessageById,
+  updateMessageContentById
 } from 'src/utils/message';
 
+import { IAgents } from './types/agents';
 import { OutputAudioChunk } from './types/audio';
 
 import { ChainlitContext } from './context';
+import {
+  markTaskEnded,
+  markTaskStarted,
+  resetTaskLoading
+} from './taskLoading';
 import type { IToken } from './useChatData';
-import { IAgents } from './types/agents';
+
 
 const useChatSession = () => {
   const client = useContext(ChainlitContext);
@@ -86,26 +94,31 @@ const useChatSession = () => {
   const [chatProfile, setChatProfile] = useRecoilState(chatProfileState);
   const idToResume = useRecoilValue(threadIdToResumeState);
   const setThreadResumeError = useSetRecoilState(resumeThreadErrorState);
+  const setInitialTranscript = useSetRecoilState(initialTranscriptState);
 
   const token = localStorage.getItem('chainlit_token') || '';
 
   const [currentThreadId, setCurrentThreadId] =
     useRecoilState(currentThreadIdState);
 
-  // Use currentThreadId as thread id in websocket header
   useEffect(() => {
     if (session?.socket) {
       session.socket.auth['threadId'] = currentThreadId || '';
     }
   }, [currentThreadId]);
 
+  const isReconnectingRef = useRef(false);
+  const reconnectAttemptRef = useRef(0);
+
   const _connect = useCallback(
     async ({
       transports,
-      userEnv
+      userEnv,
+      evoya
     }: {
       transports?: string[];
       userEnv: Record<string, string>;
+      evoya: { session_uuid: string };
     }) => {
       const { protocol, host, pathname } = new URL(client.httpEndpoint);
       const uri = `${protocol}//${host}`;
@@ -122,18 +135,27 @@ const useChatSession = () => {
           console.error(`Failed to set sticky session cookie: ${err}`);
         }
       }
-      
+
+      isReconnectingRef.current = false;
+      reconnectAttemptRef.current = 0;
+
       const socket = io(uri, {
         path,
         withCredentials: true,
         transports,
-        auth: {
-          clientType: client.type,
-          sessionId,
-          threadId: idToResume || '',
-          userEnv: JSON.stringify(userEnv),
-          Authorization: token,
-          chatProfile: chatProfile ? encodeURIComponent(chatProfile) : ''
+        auth: (cb) => {
+          cb({
+            clientType: client.type,
+            sessionId,
+            threadId: idToResume || '',
+            userEnv: JSON.stringify(userEnv),
+            Authorization: token,
+            chatProfile: chatProfile ? encodeURIComponent(chatProfile) : '',
+            socketReconnection: isReconnectingRef.current ? 'true' : 'false',
+            reconnectAttempt: String(reconnectAttemptRef.current),
+            chatSessionUuid:
+              evoya?.session_uuid || localStorage.getItem('session_token') || '' // Pass the Evoya session UUID to the server,
+          });
         },
         extraHeaders: {
           Authorization: `Bearer ${token}` || '',
@@ -146,6 +168,21 @@ const useChatSession = () => {
             : ''
         }
       });
+
+      socket.io.on('reconnect_attempt', (attempt: number) => {
+        isReconnectingRef.current = true;
+        reconnectAttemptRef.current = attempt;
+      });
+
+      socket.io.on('reconnect', (attempt: number) => {
+        reconnectAttemptRef.current = attempt;
+      });
+
+      socket.io.on('reconnect_failed', () => {
+        isReconnectingRef.current = false;
+        reconnectAttemptRef.current = 0;
+      });
+
       setSession((old) => {
         old?.socket?.removeAllListeners();
         old?.socket?.close();
@@ -156,7 +193,9 @@ const useChatSession = () => {
 
       socket.on('connect', () => {
         socket.emit('connection_successful');
+        setLoading(resetTaskLoading());
         setSession((s) => ({ ...s!, error: false }));
+        isReconnectingRef.current = false;
       });
 
       socket.on('connect_error', (_) => {
@@ -164,11 +203,11 @@ const useChatSession = () => {
       });
 
       socket.on('task_start', () => {
-        setLoading(true);
+        setLoading(markTaskStarted());
       });
 
       socket.on('task_end', () => {
-        setLoading(false);
+        setLoading(markTaskEnded());
       });
 
       socket.on('reload', () => {
@@ -332,7 +371,6 @@ const useChatSession = () => {
       socket.on('ask', ({ msg, spec }, callback) => {
         setAskUser({ spec, callback, parentId: msg.parentId });
         setMessages((oldMessages) => addMessage(oldMessages, msg));
-
         setLoading(false);
       });
 
@@ -367,7 +405,6 @@ const useChatSession = () => {
       });
 
       socket.on('agents', (agents: IAgents[]) => {
-        console.log("Received agents prompt:", agents);
         setAgents(agents);
       });
 
@@ -377,10 +414,31 @@ const useChatSession = () => {
         });
       });
 
-      socket.on('context_prompt', (context: { context_prompt: string, is_superuser: boolean | undefined }) => {
-        if (context) {
-          setContextPrompt(context)
+      socket.on(
+        'context_prompt',
+        (context: {
+          context_prompt: string;
+          context_prompt_exact_sent_to_llm?: unknown;
+          is_superuser: boolean | undefined;
+        }) => {
+          if (context) {
+            setContextPrompt(context);
+          }
         }
+      );
+      
+      socket.on('initial_transcript', (payload: ChatInputSocketPayload) => {
+        const text = typeof payload === 'string' ? payload : payload?.text;
+
+        if (typeof text !== 'string') {
+          return;
+        }
+
+        setInitialTranscript({
+          text,
+          mode: typeof payload === 'string' ? 'replace' : payload.mode || 'replace',
+          receivedAt: Date.now()
+        });
       });
 
       socket.on('set_sidebar_elements', (elements: IMessageElement[]) => {
@@ -493,6 +551,8 @@ const useChatSession = () => {
       session.socket.removeAllListeners();
       session.socket.close();
     }
+    resetTaskLoading();
+    setLoading(false);
   }, [session]);
 
   return {
