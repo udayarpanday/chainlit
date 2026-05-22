@@ -64,7 +64,7 @@ export default function useEvoyaCreator() {
     })
   }
 
-  const saveCreatorContent = async (dFileInfo: { path: string; name: string; mime: string; }) => {
+  const saveCreatorContent = async (dFileInfo?: { path: string; name: string; mime: string; }) => {
     let saveFileInfo = fileInfo;
     if (dFileInfo) {
       saveFileInfo = dFileInfo

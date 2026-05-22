@@ -15,8 +15,6 @@ import {
   DOMConversionMap,
   DOMConversionOutput,
   DOMExportOutput,
-  DecoratorNode,
-  LexicalEditor,
 } from 'lexical';
 import {
   approveDiffNode$,
@@ -25,16 +23,12 @@ import {
 } from '.';
 
 import {
-  ButtonWithTooltip,
   iconComponentFor$,
   useTranslation,
-  markdownSourceEditorValue$,
   LexicalExportVisitor,
   rootEditor$,
 } from '@mdxeditor/editor';
 
-import { createPortal } from 'react-dom';
-import { DOMElement, useEffect, useState } from 'react';
 import { Button } from '@chainlit/app/src/components/ui/button';
 import * as Mdast from 'mdast'
 
@@ -48,42 +42,20 @@ export type SerializedComparisonNode = Spread<
 >;
 
 export function ComparisonActionsPortal() {
-  const [portals, setPortals] = useState<Array<{ key: string; target: HTMLElement }>>([]);
   const acceptChange = usePublisher(approveDiffNode$);
-  const setComparisonNodeKeys = usePublisher(comparisonNodeKeys$);
   const rejectChange = usePublisher(rejectDiffNode$);
   const iconComponentFor = useCellValue(iconComponentFor$);
   const rootEditor = useCellValue(rootEditor$);
   const comparisonNodeKeys = useCellValue(comparisonNodeKeys$);
-  
-  // useEffect(() => {
-  //   // Find all portal targets
-  //   const targets = document.querySelectorAll('.comparison-actions-portal');
-  //   const newPortals = Array.from(targets).map(target => ({
-  //     key: target.getAttribute('data-node-key') || '',
-  //     target: target as HTMLElement
-  //   }));
-  //   setPortals(newPortals);
-  // }, [comparisonNodeKeys]);
+
   console.log("comparisonNodeKeys", comparisonNodeKeys);
-  // console.log("portals", portals);
-
-
-  // const targets = document.querySelectorAll('.comparison-actions-portal');
-  // const newPortals = Array.from(targets).map(target => ({
-  //   key: target.getAttribute('data-node-key') || '',
-  //   target: target as HTMLElement
-  // }));
 
   const targets: HTMLElement[] = comparisonNodeKeys.reduce((curr, node) => {
     const domElement = document.querySelector(`[data-node-key="${node}"]`) as HTMLElement;
     if (domElement) return [...curr, domElement];
     return curr;
   }, [] as HTMLElement[])
-  // const newPortals = targets.map(target => ({
-  //   key: target.getAttribute('data-node-key') || '',
-  //   target: target as HTMLElement
-  // }));
+
   const newPortals = targets.map(target => {
     let leftOffset = 0;
     let topOffset = 0;
@@ -109,12 +81,10 @@ export function ComparisonActionsPortal() {
   console.log(newPortals);
 
   const reject = (key: string) => {
-    // setComparisonNodeKeys(comparisonNodeKeys.filter((val) => val !== key));
     rejectChange({ key });
   }
 
   const accept = (key: string) => {
-    // setComparisonNodeKeys(comparisonNodeKeys.filter((val) => val !== key));
     acceptChange({ key });
   }
 
@@ -125,8 +95,6 @@ export function ComparisonActionsPortal() {
           key={key}
           className="absolute bg-white p-1 rounded border flex gap-2"
           style={{
-            // top: target.getBoundingClientRect().top,
-            // top: target.offsetTop + 43 + 4,
             top: offsetTop + 43 + 4,
             right: offsetRight - 10
           }}
@@ -182,24 +150,6 @@ export class ComparisonNode extends ElementNode {
     dom.className = `comparison-container ${this.__onlyInsert ? 'only-insert' : ''}`;
     dom.contentEditable = "false";
 
-    // const actions = document.createElement('div');
-    // actions.className = 'comparison-actions'
-
-    // const actionReject = document.createElement('div');
-    // actionReject.className = "comparison-action comparison-reject-action";
-    // actionReject.textContent = "Reject";
-    // actions.appendChild(actionReject);
-
-    // const actionAccept = document.createElement('div');
-    // actionAccept.className = "comparison-action comparison-accept-action";
-    // actionAccept.textContent = "Accept";
-    // actions.appendChild(actionAccept);
-
-    // actionReject.onclick = () => this.rejectChange();
-
-    // dom.appendChild(actions);
-
-    // Create a portal target
     const actionsTarget = document.createElement('div');
     actionsTarget.className = 'comparison-actions comparison-actions-portal';
     actionsTarget.setAttribute('data-node-key', this.__key);
@@ -208,18 +158,6 @@ export class ComparisonNode extends ElementNode {
 
     return dom;
   }
-
-  // acceptChange() {
-  //   const realm = useRealm();
-  //   realm.pub(approveDiffNode$, {key: this.getKey()});
-  //   // const parent = this.getParent();
-  // }
-
-  // rejectChange() {
-  //   const realm = useRealm();
-  //   realm.pub(rejectDiffNode$, {key: this.getKey()});
-  //   // const parent = this.getParent();
-  // }
 
   updateDOM(prevNode: ComparisonNode, dom: HTMLElement): boolean {
     // Return false to indicate that the node does not need to be recreated
@@ -305,35 +243,7 @@ export class ComparisonSideNode extends ElementNode {
     const dom = document.createElement('div');
     dom.className = `comparison-side comparison-side-${this.__side}`;
     
-    // Add label
-    // const label = document.createElement('div');
-    // label.className = 'comparison-label';
-    // const labelSpan = document.createElement('span');
-    // labelSpan.textContent = this.__side === 'current' ? 'Current' : 'New';
-    // label.appendChild(labelSpan);
-    // dom.appendChild(label);
-
-    // if (this.__side === 'current') {
-    //   const actions = document.createElement('div');
-    //   actions.className = 'comparison-actions'
-
-    //   const actionAccept = document.createElement('div');
-    //   actionAccept.className = "comparison-accept-action";
-    //   actionAccept.textContent = "Accept";
-    //   actions.appendChild(actionAccept);
-
-    //   actionAccept.onclick = this.acceptChange
-
-    //   label.appendChild(actions);
-    // }
-    
-    // Add content container
-    // const content = document.createElement('div');
-    // content.className = 'comparison-content';
-    // dom.appendChild(content);
-    
     return dom;
-    // return content;
   }
 
   acceptChange() {

@@ -7,29 +7,17 @@ import {
   readOnly$,
   inFocus$,
   addComposerChild$,
-  exportMarkdownFromLexical,
-  insertMarkdown$,
   exportVisitors$,
   jsxComponentDescriptors$,
   toMarkdownExtensions$,
   toMarkdownOptions$,
   jsxIsAvailable$,
-  importVisitors$,
-  mdastExtensions$,
-  syntaxExtensions$,
-  directiveDescriptors$,
-  codeBlockEditorDescriptors$,
   addActivePlugin$,
   rootEditor$,
-  $isTableNode,
-  $isCodeBlockNode,
-  $createCodeBlockNode,
   $isImageNode,
   viewMode$,
   addLexicalNode$,
   addExportVisitor$,
-  createRootEditorSubscription$,
-  createActiveEditorSubscription$
 } from "@mdxeditor/editor";
 
 import {
@@ -41,48 +29,16 @@ import {
 
 import {
   $wrapNodes,
-  $isAtNodeEnd,
-  $patchStyleText,
-  createDOMRange,
-  createRectsFromDOMRange,
-  $ensureForwardRangeSelection,
 } from "@lexical/selection";
 
 import {
-  $isTableCellNode,
-} from "@lexical/table";
-
-import {
-  $isListItemNode,
-  $isListNode,
-} from "@lexical/list";
-
-import {
-  $isHeadingNode,
-} from "@lexical/rich-text";
-
-import {
-  $generateJSONFromSelectedNodes,
-  $generateNodesFromSerializedNodes,
-} from "@lexical/clipboard";
-
-import {
   LexicalNode,
-  ElementNode,
-  EditorConfig,
-  $isTextNode,
-  $isParagraphNode,
   $isRangeSelection,
   $getRoot,
   $setSelection,
-  $createRangeSelection,
   $createNodeSelection,
-  $applyNodeReplacement,
-  $createTextNode,
-  $createParagraphNode,
   $getSelection,
   $getNodeByKey,
-  $getNearestRootOrShadowRoot,
   getNearestEditorFromDOMNode,
 } from "lexical";
 
@@ -99,10 +55,17 @@ import { TextSelection } from "./TextSelection";
 import { getSelectionAsMarkdown } from "../../utils/selection";
 import { CreatorLock } from "./CreatorLock";
 
-import { tryImportingMarkdown, evoyaImportMarkdownToLexical } from "@/components/markdownEditor/utils/markdown";
+import { tryImportingMarkdown } from "@/components/markdownEditor/utils/markdown";
 
-import { notInline, notInlineExtended } from "@/components/markdownEditor/utils/selection";
-import { $createComparisonNode, $createComparisonSideNode, ComparisonActionsPortal, ComparisonNode, ComparisonSideNode, LexicalComparisonSideVisitor, LexicalComparisonVisitor } from "./DiffNode";
+import {
+  $createComparisonNode,
+  $createComparisonSideNode,
+  ComparisonActionsPortal,
+  ComparisonNode,
+  ComparisonSideNode,
+  LexicalComparisonSideVisitor,
+  LexicalComparisonVisitor
+} from "./DiffNode";
 
 export const evoyaAiState$ = Cell<SelectionContext | null>(selectionContextDefaultData, (r) => {
   // r.sub(evoyaAiState$, console.log);
@@ -118,22 +81,6 @@ type EvoyaAiPluginParams = {
 }
 
 export const approveDiffNode$ = Signal<{ key: string; }>((realm) => {
-  // realm.sub(realm.pipe(approveDiffNode$, withLatestFrom(activeEditor$)), ([value, activeEditor]) => {
-  //   activeEditor?.update(() => {
-  //     const diffNode = $getNodeByKey(value.key) as ComparisonNode;
-  //     console.log(diffNode)
-  //     const sideNodes = diffNode.getChildren();
-  //     console.log(sideNodes);
-
-  //     const newContentNode = (sideNodes as ComparisonSideNode[]).find((node) => node.__side === 'new');
-  //     const contentNodes = newContentNode.getChildren();
-
-  //     contentNodes.forEach((node) => {
-  //       diffNode.insertBefore(node);
-  //     });
-  //     diffNode.remove();
-  //   });
-  // })
   realm.sub(realm.pipe(approveDiffNode$, withLatestFrom(rootEditor$, comparisonNodeKeys$)), ([value, rootEditor, comparisonNodeKeys]) => {
     if (rootEditor) {
       const rootEditorDom = rootEditor.getRootElement();
@@ -153,8 +100,8 @@ export const approveDiffNode$ = Signal<{ key: string; }>((realm) => {
             diffNode.insertBefore(node);
           });
           diffNode.remove();
-
-          realm.pub(comparisonNodeKeys$, comparisonNodeKeys.filter((key) => key !== value.key));
+        }, {
+          onUpdate: () => realm.pub(updateComparisonNodeKeys$)
         });
       }
     }
@@ -162,26 +109,6 @@ export const approveDiffNode$ = Signal<{ key: string; }>((realm) => {
 });
 
 export const rejectDiffNode$ = Signal<{ key: string; }>((realm) => {
-  // realm.sub(realm.pipe(rejectDiffNode$, withLatestFrom(activeEditor$)), ([value, activeEditor]) => {
-  //   // realm.pub(evoyaViewType$, "default");
-  //   activeEditor?.update(() => {
-  //     const diffNode = $getNodeByKey(value.key) as ComparisonNode;
-  //     console.log(diffNode)
-  //     const sideNodes = diffNode.getChildren();
-  //     console.log(sideNodes);
-
-  //     if (!diffNode.__onlyInsert) {
-  //       const newContentNode = (sideNodes as ComparisonSideNode[]).find((node) => node.__side === 'current');
-  //       const contentNodes = newContentNode.getChildren();
-
-  //       contentNodes.forEach((node) => {
-  //         diffNode.insertBefore(node);
-  //       });
-  //     }
-
-  //     diffNode.remove();
-  //   });
-  // })
   realm.sub(realm.pipe(rejectDiffNode$, withLatestFrom(rootEditor$, comparisonNodeKeys$)), ([value, rootEditor, comparisonNodeKeys]) => {
     if (rootEditor) {
       const rootEditorDom = rootEditor.getRootElement();
@@ -204,8 +131,8 @@ export const rejectDiffNode$ = Signal<{ key: string; }>((realm) => {
           }
 
           diffNode.remove();
-
-          realm.pub(comparisonNodeKeys$, comparisonNodeKeys.filter((key) => key !== value.key));
+        }, {
+          onUpdate: () => realm.pub(updateComparisonNodeKeys$)
         });
       }
     }
@@ -267,14 +194,10 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
             comparisonNode.append(newSide);
           }
 
-          // realm.pub(comparisonNodeKeys$, [...comparisonNodeKeys, comparisonNode.getKey()]);
-          // realm.pub(evoyaViewType$, "approve");
-          // realm.pub(updateComparisonNodeKeys$);
           realm.pub(resetSelection$);
 
           $setSelection(null);
         }, {
-          // onUpdate: () => realm.pub(comparisonNodeKeys$, [...comparisonNodeKeys, comparisonNodeKey])
           onUpdate: () => realm.pub(updateComparisonNodeKeys$)
         });
       } else if (selectionType === 'range') {
@@ -325,19 +248,13 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
             comparisonNode.append(newSide);
           }
 
-          // realm.pub(comparisonNodeKeys$, [...comparisonNodeKeys, comparisonNode.getKey()]);
-          // realm.pub(evoyaViewType$, "approve");
-          // realm.pub(updateComparisonNodeKeys$);
           realm.pub(resetSelection$);
 
           $setSelection(null);
         }, {
-          // onUpdate: () => realm.pub(comparisonNodeKeys$, [...comparisonNodeKeys, comparisonNodeKey])
           onUpdate: () => realm.pub(updateComparisonNodeKeys$)
         });
       }
-      // realm.pub(resetSelection$);
-      // realm.pub(updateComparisonNodeKeys$);
     }
   });
 });
@@ -394,42 +311,7 @@ export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
     realm.pub(addComposerChild$, TextSelection);
     realm.pub(addComposerChild$, CreatorLock);
     realm.pub(addComposerChild$, ComparisonActionsPortal);
-    // realm.pub(replaceSelectionContent$, null);
 
-    /*realm.pub(createRootEditorSubscription$, (rootEditor) => {
-      return rootEditor.registerUpdateListener(({ editorState }) => {
-        editorState.read(() => {
-          console.log(rootEditor.getRootElement())
-          // console.log('getChildrenKeys', $getRoot().getChildren())
-          // const rootChildren = $getRoot().getChildren();
-          // const comparisonNodes = rootChildren.filter((child) => child.getType() === 'comparison').map((child) => child.getKey());
-
-          const comparisonNodes = Array.from(rootEditor.getRootElement()?.querySelectorAll('.comparison-action') ?? []).map((el) => el.dataset.nodeKey)
-          console.log('calc comparisonNodes', comparisonNodes)
-          realm.pub(comparisonNodeKeys$, comparisonNodes);
-          realm.pub(evoyaViewType$, comparisonNodes.length > 0 ? "approve" : "default");
-        });
-      });
-    });*/
-    /*realm.pub(createActiveEditorSubscription$, (activeEditor) => {
-      return activeEditor.registerUpdateListener(({ editorState }) => {
-        editorState.read(() => {
-          let rootEditor = activeEditor;
-          if (activeEditor._parentEditor) {
-            rootEditor = activeEditor._parentEditor;
-          }
-          console.log(rootEditor.getRootElement())
-          // console.log('getChildrenKeys', $getRoot().getChildren())
-          // const rootChildren = $getRoot().getChildren();
-          // const comparisonNodes = rootChildren.filter((child) => child.getType() === 'comparison').map((child) => child.getKey());
-
-          const comparisonNodes = Array.from(rootEditor.getRootElement()?.querySelectorAll('.comparison-actions') ?? []).map((el) => el.dataset.nodeKey)
-          console.log('calc comparisonNodes', comparisonNodes)
-          realm.pub(comparisonNodeKeys$, comparisonNodes);
-          // realm.pub(evoyaViewType$, comparisonNodes.length > 0 ? "approve" : "default");
-        });
-      });
-    });*/
     realm.sub(realm.pipe(updateComparisonNodeKeys$, withLatestFrom(rootEditor$)), ([__, rootEditor]) => {
       if (rootEditor) {
         const comparisonNodes = (Array.from(rootEditor.getRootElement()?.querySelectorAll('.comparison-actions') ?? []) as HTMLDivElement[]).map((el) => el.dataset.nodeKey)
@@ -470,18 +352,6 @@ export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
         })
       }
     });
-    /*realm.sub(realm.pipe(inFocus$, withLatestFrom(activeEditor$, rootEditor$, readOnly$, viewMode$)), ([inFocus, activeEditor, rootEditor, readOnly, viewMode]) => {
-      console.log('inFocus', inFocus)
-      if (activeEditor && rootEditor && inFocus) {
-        if (activeEditor._key !== rootEditor?._key) {
-            // rootEditor.blur();
-          // rootEditor?.update(() => {
-          //   $setSelection(null);
-          //   rootEditor.blur();
-          // })
-        }
-      }
-    });*/
     realm.sub(realm.pipe(realm.combine(currentSelection$, onWindowChange$), withLatestFrom(activeEditor$, rootEditor$, readOnly$, inFocus$, viewMode$)), ([[selection], activeEditor, rootEditor, readOnly, inFocus, viewMode]) => {
       if (viewMode === 'source' || viewMode === 'diff') {
         return ''
@@ -535,33 +405,16 @@ export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
             console.log(startPoint, endPoint);
 
             if (startPoint.key !== endPoint.key) {
-              // const topElementKeys: string[] = [];
               const topElements = selection.getNodes().reduce((acc: LexicalNode[], el: LexicalNode) => {
                 const topEl = el.getTopLevelElement();
                 const topElKey = topEl?.getKey();
-                // if (topElKey && !topElementKeys.includes(topElKey)) {
                 if (topEl && topElKey && !acc.find((item) => item.getKey() === topElKey)) {
-                  // topElementKeys.push(topElKey);
                   return [...acc, topEl]
                 }
                 return acc;
               }, [])
-              console.log(topElements);
               const nodeSelection = $createNodeSelection();
               topElements.forEach((el) => nodeSelection.add(el.__key))
-              // activeEditor?.update(() => {
-              //   $setSelection(nodeSelection);
-              // });
-
-              // const domRange = createDOMRange(activeEditor, topElements, 0, endPoint.getNode(), endPoint.offset);
-              // const rects = domRange ? createRectsFromDOMRange(activeEditor, domRange) : [];
-              // const rects: ClientRect[] = topElements.map((el) => {
-              //   const domElement = activeEditor.getElementByKey(el.getKey());
-              //   if (domElement) {
-              //     return domElement.getBoundingClientRect()
-              //   }
-              //   return null;
-              // })
 
               const nodeRects = topElements.map((node) => {
                 const domNode = activeEditor.getElementByKey(node.getKey());
@@ -605,7 +458,6 @@ export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
                 });
 
                 const selectionContext = {
-                  // rectangles: rects,
                   rectangles: nodeRects,
                   markdown,
                   lexical: nodeSelection,
@@ -621,15 +473,10 @@ export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
               nodeSelection.add(topLevelNode.__key)
               const domElement = activeEditor.getElementByKey(topLevelNode.getKey());
               const rects = [];
-              console.log('domElement', domElement);
-              console.log('activeEditor', activeEditor);
-              console.log('rootEditor', rootEditor);
               if (domElement) {
-                // rects.push(domElement.getBoundingClientRect());
                 let leftOffset = 0;
                 let topOffset = 0;
 
-                console.log(activeEditor._config.namespace)
                 if (activeEditor._config.namespace === "TableCellEditor") {
                   const tdElement = activeEditor._rootElement?.parentElement;
                   leftOffset += (tdElement?.offsetLeft ?? 0);
@@ -656,8 +503,6 @@ export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
                     jsxIsAvailable
                   });
 
-                  // activeEditor.focus();
-
                   const selectionContext = {
                     rectangles: rects,
                     markdown,
@@ -669,34 +514,6 @@ export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
                   realm.pub(evoyaAiState$, selectionContext);
                 }
               }
-
-              // const domRange = createDOMRange(activeEditor, startPoint.getNode(), startPoint.offset, endPoint.getNode(), endPoint.offset);
-              // const rects = domRange ? createRectsFromDOMRange(activeEditor, domRange) : [];
-
-              // if (params?.setSelectionContext) {
-              //   const markdown = getSelectionAsMarkdown(activeEditor, null, {
-              //     visitors,
-              //     toMarkdownExtensions,
-              //     toMarkdownOptions,
-              //     jsxComponentDescriptors,
-              //     jsxIsAvailable
-              //   });
-
-              //   console.log(markdown);
-              //   // console.log(rects);
-              //   const topLevelElement = startPoint.getNode().getTopLevelElement();
-
-              //   const selectionContext = {
-              //     rectangles: rects,
-              //     markdown,
-              //     lexical: restoredSelection,
-              //     selectionType: 'range' as const,
-              //     scrollOffset,
-              //     topLevelElement,
-              //   };
-              //   params.setSelectionContext(selectionContext);
-              //   realm.pub(evoyaAiState$, selectionContext);
-              // }
             }
           } else {
             console.log('unhandled selection');
@@ -759,7 +576,6 @@ export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
             scrollOffset: 0,
           };
           params.setSelectionContext(selectionContext);
-          // realm.pub(evoyaAiState$, selectionContext);
           realm.pubIn({
             [evoyaAiState$]: selectionContext,
             [inFocus$]: false
