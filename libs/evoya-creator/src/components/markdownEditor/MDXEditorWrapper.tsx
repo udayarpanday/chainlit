@@ -44,6 +44,7 @@ import {
   evoyaAiPlugin,
   replaceSelectionContent$,
   evoyaAiState$,
+  // streamReplaceSelectionContent$,
 } from './plugins/evoyaAi';
 
 import {
@@ -80,6 +81,7 @@ import { IStep } from 'client-types/*';
 import {
   messageBuilder,
   messageParser,
+  streamParser,
 } from './utils/message';
 
 import {
@@ -154,6 +156,14 @@ export default function MDXEditorWrapper() {
 
       return parsedMessage.feedback;
     }
+    // @ts-expect-error is not a valid prop
+    window.streamEvoyaCreator = (message: IStep) => {
+      // const parsedMessage = streamParser(message.output);
+      // console.log(parsedMessage);
+      // mdxRealm?.pub(streamReplaceSelectionContent$, {message: parsedMessage, context: editorSelectionMessageContext});
+
+      // return parsedMessage.feedback;
+    }
   }, [mdxRealm, editorSelectionMessageContext]);
 
   useEffect(() => {
@@ -181,7 +191,7 @@ export default function MDXEditorWrapper() {
           margin: '0 -1rem'
         }}
       >
-        {(editorSelectionContext?.selectionType === "range" || editorSelectionContext?.selectionType === "node") && (
+        {editorSelectionContext?.selectionType && (
           <Badge
             className="font-bold p-0.5"
             variant="outline"
@@ -189,35 +199,7 @@ export default function MDXEditorWrapper() {
             <div className="bg-gray-100 rounded-full p-1">
               <HandPointer color='#FF2E4E' />
             </div>
-            <div className="px-2">Partial</div>
-            <Button onClick={handleRemoveContext} variant="ghost" size="xs" className="rounded-full">
-              <X />
-            </Button>
-          </Badge>
-        )}
-        {editorSelectionContext?.selectionType === "document" && (
-          <Badge
-            className="font-bold p-0.5"
-            variant="outline"
-          >
-            <div className="bg-gray-100 rounded-full p-1">
-              <HandPointer color='#FF2E4E' />
-            </div>
-            <div className="px-2">Everything</div>
-            <Button onClick={handleRemoveContext} variant="ghost" size="xs" className="rounded-full">
-              <X />
-            </Button>
-          </Badge>
-        )}
-        {editorSelectionContext?.selectionType === "codeblock" && (
-          <Badge
-            className="font-bold p-0.5"
-            variant="outline"
-          >
-            <div className="bg-gray-100 rounded-full p-1">
-              <HandPointer color='#FF2E4E' />
-            </div>
-            <div className="px-2">{editorSelectionContext.selectedCode ? "Code Selection" : "Code Block"}</div>
+            <div className="px-2">Selected</div>
             <Button onClick={handleRemoveContext} variant="ghost" size="xs" className="rounded-full">
               <X />
             </Button>
@@ -251,7 +233,6 @@ export default function MDXEditorWrapper() {
             containerRef,
             creatorType,
             setSelectionContext: (context: SelectionContext | null) => {
-              console.log('selectionContext', context);
               setEditorSelectionContext(context);
             },
             setRealm: setMdxRealm

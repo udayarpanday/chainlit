@@ -31,6 +31,7 @@ declare global {
     getEvoyaCreatorContentSelection: () => SelectionContext | null;
     // updateEvoyaCreator: (message: string) => void;
     updateEvoyaCreator: (message: IStep) => void;
+    streamEvoyaCreator: (message: IStep) => void;
   }
 }
 

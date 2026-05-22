@@ -276,21 +276,32 @@ export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
     if (params?.setRealm) {
       params.setRealm(realm);
     }
-    realm.sub(selectDocument$, () => {
+    realm.sub(realm.pipe(selectDocument$, withLatestFrom(rootEditor$)), ([_, rootEditor]) => {
       // activeEditor?.update(() => {
       //   $selectAll();
       // });
-      const selectionContext = {
-        lexical: null,
-        markdown: null,
-        selectionType: 'document' as const,
-      };
-      
-      if (params?.setSelectionContext) {
-        params.setSelectionContext(selectionContext);
-      }
+      if (rootEditor) {
+        const editorDom = rootEditor.getRootElement();
+        if (editorDom) {
+          const selectionContext: SelectionContext = {
+            lexical: null,
+            markdown: null,
+            rectangles: [{
+              top: editorDom.offsetTop,
+              left: editorDom.offsetLeft,
+              height: editorDom.offsetHeight,
+              width: editorDom.offsetWidth
+            }],
+            selectionType: 'document' as const,
+          };
+          
+          if (params?.setSelectionContext) {
+            params.setSelectionContext(selectionContext);
+          }
 
-      realm.pub(evoyaAiState$, selectionContext);
+          realm.pub(evoyaAiState$, selectionContext);
+        }
+      }
     });
 
     realm.sub(realm.pipe(resetDocument$, withLatestFrom(rootEditor$)), ([value, rootEditor]) => {
