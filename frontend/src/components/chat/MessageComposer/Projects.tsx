@@ -246,8 +246,7 @@ export default function Projects({ disabled = false }: Props) {
   };
 
   if (
-    evoya?.type !== 'dashboard' ||
-    (!projects.length && !selectedProjects.length)
+    evoya?.type !== 'dashboard'
   ) {
     return null;
   }
