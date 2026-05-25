@@ -224,8 +224,8 @@ export default function AgentList({
             }}
           >
             <UserRound className="h-4 w-4 text-primary" />
-            <span className="md:max-w-[170px] max-w-0 md:block hidden truncate">
-              {selectedAgent?.name ? truncateAgentName(selectedAgent.name,20) : ''}
+            <span className="md:max-w-[400px] max-w-0 md:block hidden truncate">
+              {selectedAgent?.name ? selectedAgent.name : ''}
             </span>
             <ChevronDown className="h-4 w-4 text-primary" />
           </Button>
