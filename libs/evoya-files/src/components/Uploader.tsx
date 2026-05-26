@@ -112,9 +112,11 @@ export default function Uploader({
               {...upload2.getInputProps()}
             />
             <Button
+              variant="outline"
               id='upload-button'
               disabled={isLoading}
               size={type === 'compact' ? 'sm' : 'default'}
+              className="text-[#7b809a] border-[#7b809a] hover:bg-[#7b809a]/10"
               {...upload2.getRootProps()}
             >
               <Upload className="h-5" />

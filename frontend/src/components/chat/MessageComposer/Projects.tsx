@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { Check, FolderKanban, Search } from 'lucide-react';
+import { Check, FolderOpen, Search } from 'lucide-react';
 import {
   useCallback,
   useContext,
@@ -121,7 +121,7 @@ const ProjectRow = ({
       selected ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/70'
     )}
   >
-    <FolderKanban className="h-4 w-4 shrink-0 text-foreground" />
+    <FolderOpen  className="h-4 w-4 shrink-0 text-foreground" />
     <span className="min-w-0 flex-1 truncate font-medium">
       {truncateProjectName(project.name, 36)}
     </span>
@@ -269,7 +269,7 @@ export default function Projects({ disabled = false }: Props) {
                 )}
                 disabled={disabled}
               >
-                <FolderKanban className="!size-5" />
+                <FolderOpen className="!size-5" />
               </Button>
             </PopoverTrigger>
           </TooltipTrigger>
