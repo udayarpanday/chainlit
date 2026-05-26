@@ -11,7 +11,7 @@ export const messageBuilder = (context: SelectionContext, message: IStep, mdCont
       full_text: mdContent,
     },
   };
-  if (context) {
+  if (context && context.selectionType) {
     if (context.selectionType === 'range' || context.selectionType === 'node') {
       additional = {
         metadata: {
@@ -74,6 +74,43 @@ function escapeBrackets(text: string) {
     },
   );
   return res;
+}
+
+export const streamParser = (message: string): CreatorMessage => {
+  const hasClosingTag = /\[\/(below|above|replace)\]/.test(message);
+  const hasFeedbackTag = /\[feedback\]/.test(message);
+
+  if (hasClosingTag || hasFeedbackTag) {
+    return messageParser(message);
+  }
+
+  const belowRegex = /\[below\]((.|\n|\r)*)/;
+  const aboveRegex = /\[above\]((.|\n|\r)*)/;
+  const replaceRegex = /\[replace\]((.|\n|\r)*)/;
+
+  const belowMatch = message.match(belowRegex);
+  const aboveMatch = message.match(aboveRegex);
+  const replaceMatch = message.match(replaceRegex);
+
+  let insertType = 'none';
+  let content = message;
+
+  if (belowMatch) {
+    insertType = 'after';
+    content = belowMatch[1];
+  } else if (aboveMatch) {
+    insertType = 'before';
+    content = aboveMatch[1];
+  } else if (replaceMatch) {
+    insertType = 'replace';
+    content = replaceMatch[1];
+  }
+
+  return {
+    insertType,
+    feedback: "Writing",
+    content
+  }
 }
 
 export const messageParser = (message: string): CreatorMessage => {

@@ -134,13 +134,22 @@ export default function MDXEditorWrapper() {
   useEffect(() => {
     // @ts-expect-error is not a valid prop
     window.sendCreatorMessage = (message) => {
-      const newMsg = messageBuilder(editorSelectionContext, message, creatorContent);
+      let context = editorSelectionContext;
+      if (!context || !context.selectionType) {
+        context = {
+          lexical: null,
+          markdown: null,
+          rectangles: [],
+          selectionType: 'document' as const,
+        }
+      }
+      const newMsg = messageBuilder(context, message, creatorContent);
 
       // @ts-expect-error is not a valid prop
       window.sendChainlitMessage(newMsg);
 
-      console.log('context', editorSelectionContext);
-      setEditorSelectionMessageContext(editorSelectionContext);
+      console.log('context', context);
+      setEditorSelectionMessageContext(context);
     }
   }, [creatorContent, editorSelectionContext]);
 
