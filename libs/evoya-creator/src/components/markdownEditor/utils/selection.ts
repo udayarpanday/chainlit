@@ -158,7 +158,7 @@ export function getSelectionAsMarkdown(editor: LexicalEditor, fixedSelection: Ba
       } else if ($isElementNode(node)) {
         // For other element nodes, process their children
         const children = node.getChildren()
-        return children.map((child) => nodeToMarkdown(child)).join('')
+        return children.map((child) => nodeToMarkdown(child)).join('') + (node.isInline() ? '' : '\n\n');
       }
 
       // Fallback: return text content
@@ -166,7 +166,7 @@ export function getSelectionAsMarkdown(editor: LexicalEditor, fixedSelection: Ba
     }
 
     // Convert all selected nodes to markdown and concatenate
-    markdown = nodesToProcess.map((node) => nodeToMarkdown(node)).join('\n\n');
+    markdown = nodesToProcess.map((node) => nodeToMarkdown(node)).join('');
     // markdown = nodesToProcess.map((node) => exportMarkdownFromLexical({
     //   root: node,
     //   ..._exportParams,

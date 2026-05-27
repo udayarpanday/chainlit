@@ -15,6 +15,9 @@ import {
   DOMConversionMap,
   DOMConversionOutput,
   DOMExportOutput,
+  DecoratorNode,
+  SerializedLexicalNode,
+  LexicalEditor,
 } from 'lexical';
 import {
   approveDiffNode$,
@@ -27,10 +30,21 @@ import {
   useTranslation,
   LexicalExportVisitor,
   rootEditor$,
+  cmExtensions$,
+  COMMON_STATE_CONFIG_EXTENSIONS,
 } from '@mdxeditor/editor';
 
+import { MergeView } from '@codemirror/merge';
+import { EditorState } from '@codemirror/state';
+import { EditorView, lineNumbers } from '@codemirror/view';
+import { basicLight } from 'cm6-theme-basic-light';
+import { basicSetup } from 'codemirror';
+import { markdown as markdownLanguageSupport } from '@codemirror/lang-markdown';
+
 import { Button } from '@chainlit/app/src/components/ui/button';
-import * as Mdast from 'mdast'
+import * as Mdast from 'mdast';
+import { useEffect, useRef, useCallback } from 'react';
+import { cn } from '@chainlit/app/src/lib/utils';
 
 export type SerializedComparisonNode = Spread<
   {
@@ -127,6 +141,270 @@ export const LexicalComparisonSideVisitor: LexicalExportVisitor<ComparisonSideNo
       actions.visitChildren(lexicalNode, mdastParent)
     }
   }
+}
+
+export const LexicalDifferenceVisitor: LexicalExportVisitor<DifferenceNode, Mdast.Nodes> = {
+  testLexicalNode: $isDifferenceNode,
+  visitLexicalNode({ mdastParent, lexicalNode, actions }) {
+    actions.visitChildren(lexicalNode, mdastParent)
+  }
+}
+
+export type SerializedDifferenceNode = Spread<
+  {
+    onlyInsert: boolean
+    currentNodes: LexicalNode[]
+    currentMarkdown: string
+    newMarkdown: string
+    type: 'difference'
+    version: 1
+  },
+  SerializedLexicalNode
+>
+
+export class DifferenceNode extends DecoratorNode<JSX.Element> {
+  __onlyInsert: boolean;
+  __currentNodes: LexicalNode[];
+  __currentMarkdown: string;
+  __newMarkdown: string;
+
+  static getType(): string {
+    return 'difference';
+  }
+
+  static clone(node: DifferenceNode): DifferenceNode {
+    return new DifferenceNode(node.__onlyInsert, node.__currentNodes, node.__currentMarkdown, node.__newMarkdown, node.__key);
+  }
+
+  getChildren() {
+    return this.__currentNodes;
+  }
+
+  constructor(onlyInsert: boolean, currentNodes: LexicalNode[], currentMarkdown: string, newMarkdown: string, key?: NodeKey) {
+    super(key);
+    this.__onlyInsert = onlyInsert;
+    this.__currentNodes = currentNodes;
+    this.__currentMarkdown = currentMarkdown;
+    this.__newMarkdown = newMarkdown;
+  }
+  
+  exportDOM(): DOMExportOutput {
+    const element = document.createElement('p');
+
+    return { element };
+  }
+
+  createDOM(config: EditorConfig): HTMLElement {
+    const div = document.createElement('p');
+    return div;
+  }
+
+  updateDOM(): false {
+    return false;
+  }
+  
+  static importJSON(serializedNode: SerializedDifferenceNode): DifferenceNode {
+    const { currentNodes, currentMarkdown, newMarkdown, onlyInsert } = serializedNode;
+    const node = $createDifferenceNode({ currentNodes, currentMarkdown, newMarkdown, onlyInsert });
+    return node;
+  }
+
+  exportJSON(): SerializedDifferenceNode {
+    return {
+      currentNodes: this.__currentNodes,
+      currentMarkdown: this.__currentMarkdown,
+      newMarkdown: this.__newMarkdown,
+      onlyInsert: this.__onlyInsert,
+      type: 'difference',
+      version: 1
+    }
+  }
+
+  decorate(_parentEditor: LexicalEditor): JSX.Element {
+    if (this.__onlyInsert) {
+      return <SourceRenderer
+          newMarkdown={this.__newMarkdown}
+          nodeKey={this.__key} 
+          modify={(val) => this.__newMarkdown = val}
+        />
+    }
+    return <DifferenceRenderer 
+        currentMarkdown={this.__currentMarkdown}
+        newMarkdown={this.__newMarkdown}
+        nodeKey={this.__key}
+        modify={(val) => this.__newMarkdown = val}
+      />
+  }
+
+  isInline(): boolean {
+    return false;
+  }
+}
+
+export interface CreateDifferenceNodeParameters {
+  onlyInsert: boolean
+  currentNodes: LexicalNode[]
+  currentMarkdown: string
+  newMarkdown: string
+  key?: NodeKey
+}
+
+export function $createDifferenceNode({ key, currentNodes, currentMarkdown, newMarkdown, onlyInsert}: CreateDifferenceNodeParameters): DifferenceNode {
+  return new DifferenceNode(onlyInsert, currentNodes, currentMarkdown, newMarkdown, key);
+}
+
+export function $isDifferenceNode(node: LexicalNode | null | undefined): node is DifferenceNode {
+  return node instanceof DifferenceNode;
+}
+
+export const DifferenceRenderer = ({
+  nodeKey,
+  currentMarkdown,
+  newMarkdown,
+  modify,
+}: {
+  currentMarkdown?: string;
+  newMarkdown: string;
+  nodeKey: string;
+  modify: (val: string) => void
+}) => {
+  const cmMergeViewRef = useRef<MergeView | null>(null);
+  const cmExtensions = useCellValue(cmExtensions$);
+  const elRef = useRef<HTMLDivElement | null>(null);
+
+  const acceptChange = usePublisher(approveDiffNode$);
+  const rejectChange = usePublisher(rejectDiffNode$);
+  const iconComponentFor = useCellValue(iconComponentFor$);
+
+  useEffect(() => {
+    const isReadOnly = false;
+
+    const revertParams = isReadOnly
+      ? ({
+          renderRevertControl: undefined,
+          revertControls: undefined
+        } as const)
+      : ({
+          renderRevertControl: () => {
+            const el = document.createElement('button')
+            el.classList.add('cm-merge-revert')
+            el.appendChild(document.createTextNode('\u2B95'))
+            return el
+          },
+          revertControls: 'a-to-b'
+        } as const)
+
+    cmMergeViewRef.current = new MergeView({
+      ...revertParams,
+      parent: elRef.current!,
+      orientation: 'a-b',
+      gutter: true,
+      a: {
+        doc: currentMarkdown,
+        extensions: [
+          ...cmExtensions,
+          basicLight,
+          basicSetup,
+          markdownLanguageSupport(),
+          lineNumbers(),
+          EditorView.lineWrapping,
+          EditorState.readOnly.of(true),
+        ]
+      },
+      b: {
+        doc: newMarkdown,
+        extensions: [
+          ...cmExtensions,
+          basicLight,
+          basicSetup,
+          markdownLanguageSupport(),
+          lineNumbers(),
+          EditorView.lineWrapping,
+          EditorView.updateListener.of(({ state }) => {
+            const md = state.doc.toString()
+            modify(md);
+          }),
+          EditorState.readOnly.of(false),
+        ]
+      }
+    })
+    return () => {
+      cmMergeViewRef.current?.destroy()
+      cmMergeViewRef.current = null
+    }
+  }, [cmExtensions])
+
+  return (
+    <div className="difference-container">
+      <div className="difference-actions flex items-center justify-end px-2 py-1 gap-1" {...{ "data-node-key": nodeKey }}>
+        <Button variant="ghost" size="xs" className="text-destructive !w-auto px-2 text-xs" onClick={() => rejectChange({key: nodeKey})}>
+          {iconComponentFor('close')}
+          <span>Reject</span>
+        </Button>
+        <Button variant="ghost" size="xs" className="text-success !w-auto px-2 text-xs" onClick={() => acceptChange({key: nodeKey})}>
+          {iconComponentFor('check')}
+          <span>Accept</span>
+        </Button>
+      </div>
+      <div ref={elRef} className="mdxeditor-diff-editor" />
+    </div>
+  );
+}
+
+export const SourceRenderer = ({ nodeKey, newMarkdown, modify }: { newMarkdown: string; nodeKey: string; modify: (val: string) => void; }) => {
+  const editorViewRef = useRef<EditorView | null>(null)
+  const cmExtensions = useCellValue(cmExtensions$);
+
+  const acceptChange = usePublisher(approveDiffNode$);
+  const rejectChange = usePublisher(rejectDiffNode$);
+  const iconComponentFor = useCellValue(iconComponentFor$);
+
+
+  const ref = useCallback(
+    (el: HTMLDivElement | null) => {
+      if (el !== null) {
+        const extensions = [
+          ...cmExtensions,
+          basicLight,
+          basicSetup,
+          markdownLanguageSupport(),
+          lineNumbers(),
+          EditorView.lineWrapping,
+          // EditorState.readOnly.of(true),
+          EditorState.readOnly.of(false),
+          EditorView.updateListener.of(({ state }) => {
+            const md = state.doc.toString()
+            modify(md);
+          }),
+        ]
+        el.innerHTML = ''
+        editorViewRef.current = new EditorView({
+          parent: el,
+          state: EditorState.create({ doc: newMarkdown, extensions })
+        })
+      } else {
+        editorViewRef.current?.destroy()
+        editorViewRef.current = null
+      }
+    },
+    [newMarkdown, cmExtensions]
+  )
+
+  return (
+    <div className="difference-container">
+      <div className="difference-actions flex items-center justify-end px-2 py-1 gap-1" {...{ "data-node-key": nodeKey }}>
+        <Button variant="ghost" size="xs" className="text-destructive !w-auto px-2 text-xs" onClick={() => rejectChange({key: nodeKey})}>
+          {iconComponentFor('close')}
+          <span>Reject</span>
+        </Button>
+        <Button variant="ghost" size="xs" className="text-success !w-auto px-2 text-xs" onClick={() => acceptChange({key: nodeKey})}>
+          {iconComponentFor('check')}
+          <span>Accept</span>
+        </Button>
+      </div>
+      <div ref={ref} className="cm-sourceView mdxeditor-source-editor" />
+    </div>
+  );
 }
 
 export class ComparisonNode extends ElementNode {

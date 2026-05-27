@@ -321,3 +321,18 @@
 .comparison-content {
   padding: 12px;
 }
+
+.difference-container {
+  margin: 16px 0;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.difference-container .difference-actions {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.difference-container .cm-mergeViewEditor:first-child {
+  border-right: 1px solid #e0e0e0;
+}

@@ -64,7 +64,10 @@ import {
   ComparisonNode,
   ComparisonSideNode,
   LexicalComparisonSideVisitor,
-  LexicalComparisonVisitor
+  LexicalComparisonVisitor,
+  DifferenceNode,
+  LexicalDifferenceVisitor,
+  $createDifferenceNode,
 } from "./DiffNode";
 
 export const evoyaAiState$ = Cell<SelectionContext | null>(selectionContextDefaultData, (r) => {
@@ -84,21 +87,32 @@ export const approveDiffNode$ = Signal<{ key: string; }>((realm) => {
   realm.sub(realm.pipe(approveDiffNode$, withLatestFrom(rootEditor$, comparisonNodeKeys$)), ([value, rootEditor, comparisonNodeKeys]) => {
     if (rootEditor) {
       const rootEditorDom = rootEditor.getRootElement();
-      const comparisonElement = rootEditorDom?.querySelector(`.comparison-actions[data-node-key="${value.key}"]`)
+      const comparisonElement = rootEditorDom?.querySelector(`[data-node-key="${value.key}"]`)
 
       if (comparisonElement) {
         const theEditor = getNearestEditorFromDOMNode(comparisonElement);
 
         theEditor?.update(() => {
-          const diffNode = $getNodeByKey(value.key) as ComparisonNode;
-          const sideNodes = diffNode.getChildren();
+          const diffNode = $getNodeByKey(value.key) as DifferenceNode;
+          // const sideNodes = diffNode.getChildren();
 
-          const newContentNode = (sideNodes as ComparisonSideNode[]).find((node) => node.__side === 'new');
-          const contentNodes = newContentNode.getChildren();
+          const importPoint = {
+            children: [] as LexicalNode[],
+            append(node: LexicalNode) {
+              this.children.push(node)
+            },
+            getType() {
+              return 'importroot';
+            }
+          }
 
-          contentNodes.forEach((node) => {
+          tryImportingMarkdown(realm, importPoint, diffNode.__newMarkdown);
+          const importChildren = importPoint.children;
+
+          importChildren.forEach((node) => {
             diffNode.insertBefore(node);
           });
+
           diffNode.remove();
         }, {
           onUpdate: () => realm.pub(updateComparisonNodeKeys$)
@@ -112,20 +126,33 @@ export const rejectDiffNode$ = Signal<{ key: string; }>((realm) => {
   realm.sub(realm.pipe(rejectDiffNode$, withLatestFrom(rootEditor$, comparisonNodeKeys$)), ([value, rootEditor, comparisonNodeKeys]) => {
     if (rootEditor) {
       const rootEditorDom = rootEditor.getRootElement();
-      const comparisonElement = rootEditorDom?.querySelector(`.comparison-actions[data-node-key="${value.key}"]`)
+      const comparisonElement = rootEditorDom?.querySelector(`[data-node-key="${value.key}"]`)
 
       if (comparisonElement) {
         const theEditor = getNearestEditorFromDOMNode(comparisonElement);
 
         theEditor?.update(() => {
-          const diffNode = $getNodeByKey(value.key) as ComparisonNode;
-          const sideNodes = diffNode.getChildren();
+          const diffNode = $getNodeByKey(value.key) as DifferenceNode;
+          // const sideNodes = diffNode.getChildren();
 
           if (!diffNode.__onlyInsert) {
-            const newContentNode = (sideNodes as ComparisonSideNode[]).find((node) => node.__side === 'current');
-            const contentNodes = newContentNode.getChildren();
+            // const newContentNode = (sideNodes as ComparisonSideNode[]).find((node) => node.__side === 'current');
+            // const contentNodes = newContentNode.getChildren();
 
-            contentNodes.forEach((node) => {
+            const importPoint = {
+              children: [] as LexicalNode[],
+              append(node: LexicalNode) {
+                this.children.push(node)
+              },
+              getType() {
+                return 'importroot';
+              }
+            }
+
+            tryImportingMarkdown(realm, importPoint, diffNode.__currentMarkdown);
+            const importChildren = importPoint.children;
+
+            importChildren.forEach((node) => {
               diffNode.insertBefore(node);
             });
           }
@@ -153,7 +180,7 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
       console.log("selectionType", selectionType);
       console.log("insertType", insertType);
       if (selectionType === 'node') {
-        activeEditor?.update(() => {
+        /*activeEditor?.update(() => {
           const lexicalNodes = lexicalSelection?.getNodes() ?? [];
           console.log(lexicalNodes);
 
@@ -199,6 +226,35 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
           $setSelection(null);
         }, {
           onUpdate: () => realm.pub(updateComparisonNodeKeys$)
+        });*/
+        activeEditor?.update(() => {
+          const lexicalNodes = lexicalSelection?.getNodes() ?? [];
+          console.log(lexicalNodes);
+
+          const differenceNode = $createDifferenceNode({
+            onlyInsert: insertType !== 'replace',
+            currentNodes: [],
+            // currentNodes: lexicalNodes,
+            currentMarkdown: selectionContext.markdown ?? '',
+            newMarkdown: value.message.content
+          });
+
+          if (insertType === 'replace') {
+            lexicalNodes[lexicalNodes.length - 1].insertAfter(differenceNode);
+            lexicalNodes.forEach((node) => node.remove());
+            // lexicalNodes.forEach((node) => removeFromParent(node));
+            // currentSide.remove();
+          } else if (insertType === 'after') {
+            lexicalNodes[lexicalNodes.length - 1].insertAfter(differenceNode);
+          } else if (insertType === 'before') {
+            lexicalNodes[lexicalNodes.length - 1].insertBefore(differenceNode);
+          }
+
+          realm.pub(resetSelection$);
+
+          $setSelection(null);
+        }, {
+          onUpdate: () => realm.pub(updateComparisonNodeKeys$)
         });
       } else if (selectionType === 'range') {
         // dont need to handle for now
@@ -207,7 +263,7 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
         // } else if (insertType === 'before') {
         // }
       } else if (selectionType === 'document') {
-        activeEditor?.update(() => {
+        /*activeEditor?.update(() => {
           const lexicalNodes = $getRoot().getChildren() ?? [];
           console.log($getRoot(), lexicalNodes);
 
@@ -246,6 +302,37 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
           } else if (insertType === 'before') {
             lexicalNodes[0].insertBefore(comparisonNode);
             comparisonNode.append(newSide);
+          }
+
+          realm.pub(resetSelection$);
+
+          $setSelection(null);
+        }, {
+          onUpdate: () => realm.pub(updateComparisonNodeKeys$)
+        });*/
+        activeEditor?.update(() => {
+          const lexicalNodes = $getRoot().getChildren() ?? [];
+          console.log(lexicalNodes);
+
+          const differenceNode = $createDifferenceNode({
+            onlyInsert: insertType !== 'replace',
+            currentNodes: [],
+            // currentNodes: lexicalNodes,
+            currentMarkdown: selectionContext.markdown ?? '',
+            newMarkdown: value.message.content
+          });
+
+          if (insertType === 'replace') {
+            lexicalNodes[lexicalNodes.length - 1].insertAfter(differenceNode);
+            // const currentSide = $createComparisonSideNode('current');
+            // currentSide.append(...(lexicalNodes ?? []));
+            // currentSide.remove();
+            // lexicalNodes.forEach((node) => removeFromParent(node));
+            lexicalNodes.forEach((node) => node.remove());
+          } else if (insertType === 'after') {
+            lexicalNodes[lexicalNodes.length - 1].insertAfter(differenceNode);
+          } else if (insertType === 'before') {
+            lexicalNodes[lexicalNodes.length - 1].insertBefore(differenceNode);
           }
 
           realm.pub(resetSelection$);
@@ -315,17 +402,17 @@ export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
       [addActivePlugin$]: 'evoyaAi',
       [creatorType$]: params?.creatorType,
       [editorContainerRef$]: params?.containerRef,
-      [addLexicalNode$]: [ComparisonNode, ComparisonSideNode],
-      [addExportVisitor$]: [LexicalComparisonVisitor, LexicalComparisonSideVisitor],
+      [addLexicalNode$]: [ComparisonNode, ComparisonSideNode, DifferenceNode],
+      [addExportVisitor$]: [LexicalComparisonVisitor, LexicalComparisonSideVisitor, LexicalDifferenceVisitor],
     });
 
     realm.pub(addComposerChild$, TextSelection);
     realm.pub(addComposerChild$, CreatorLock);
-    realm.pub(addComposerChild$, ComparisonActionsPortal);
+    // realm.pub(addComposerChild$, ComparisonActionsPortal);
 
     realm.sub(realm.pipe(updateComparisonNodeKeys$, withLatestFrom(rootEditor$)), ([__, rootEditor]) => {
       if (rootEditor) {
-        const comparisonNodes = (Array.from(rootEditor.getRootElement()?.querySelectorAll('.comparison-actions') ?? []) as HTMLDivElement[]).map((el) => el.dataset.nodeKey)
+        const comparisonNodes = (Array.from(rootEditor.getRootElement()?.querySelectorAll('.comparison-actions, .difference-actions') ?? []) as HTMLDivElement[]).map((el) => el.dataset.nodeKey)
         console.log('calc comparisonNodes', comparisonNodes)
         realm.pub(comparisonNodeKeys$, comparisonNodes);
       }
