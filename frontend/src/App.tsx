@@ -5,6 +5,7 @@ import { router } from 'router';
 
 import {
   ChainlitContext,
+  getScopedSessionStorageItem,
   useAuth,
   useChatSession,
   useConfig
@@ -47,7 +48,7 @@ function App() {
     const searchParams = new URLSearchParams(location.search);
     const token =
       searchParams.get('access_token') ||
-      localStorage.getItem('chainlit_token_iframe');
+      getScopedSessionStorageItem('chainlit_token_iframe');
     apiClient
       .jwtAuth(token)
       .then((res) => setUserFromAPI())

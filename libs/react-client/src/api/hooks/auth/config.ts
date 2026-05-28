@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
 import { IAuthConfig } from 'src/index';
+import { getScopedSessionStorageItem } from 'src/storage';
 
 import { useApi } from '../api';
 import { useAuthState } from './state';
 
 export const useAuthConfig = () => {
-  const token = localStorage.getItem('chainlit_token') || '';
+  const token = getScopedSessionStorageItem('chainlit_token') || '';
   const { authConfig, setAuthConfig } = useAuthState();
   const headers: Record<string, string> = token
     ? { Authorization: `Bearer ${token}` }

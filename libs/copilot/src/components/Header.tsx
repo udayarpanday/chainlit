@@ -17,6 +17,7 @@ import {
   firstUserInteraction
 } from '@chainlit/react-client';
 import {
+  setScopedSessionStorageItem,
   sessionIdState,
   useAudio,
   useChatData,
@@ -243,8 +244,10 @@ const Header = ({
       );
       const sessionJson = await sessionResponse.json();
       setSessionUuid(sessionJson.session_uuid);
-      localStorage.setItem(sessionTokenKey, sessionJson.session_uuid);
-      document.cookie = `${sessionTokenKey}=${sessionJson.session_uuid};path=/`;
+      setScopedSessionStorageItem(sessionTokenKey, sessionJson.session_uuid);
+      localStorage.removeItem(sessionTokenKey);
+      document.cookie =
+        `${sessionTokenKey}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
     } catch (_e) {
       return;
     }

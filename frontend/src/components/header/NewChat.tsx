@@ -4,6 +4,8 @@ import React, { useContext } from 'react';
 
 import {
   ChainlitContext,
+  removeScopedSessionStorageItem,
+  setScopedSessionStorageItem,
   useAudio,
   useAuth,
   useChatInteract,
@@ -31,6 +33,7 @@ const NewChatButton = ({ newSession }: Props) => {
 
   const handleClickOpen = async () => {
     localStorage.removeItem('session_token');
+    removeScopedSessionStorageItem('session_token');
     document.cookie =
       'session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     window.dispatchEvent(new CustomEvent('copilot-new-session'));
@@ -53,9 +56,10 @@ const NewChatButton = ({ newSession }: Props) => {
           {}
         );
         if (newAccessToken) {
-          localStorage.setItem('chainlit_token', newAccessToken);
+          setScopedSessionStorageItem('chainlit_token', newAccessToken);
+          localStorage.removeItem('chainlit_token');
           setAccessToken(newAccessToken);
-           apiClient
+          apiClient
             .jwtAuth(newAccessToken)
             .then((res) => setUserFromAPI())
             .catch((err) => console.log(err));
