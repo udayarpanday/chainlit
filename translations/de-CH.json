@@ -523,7 +523,7 @@
             }
         },
         "newChat": {
-            "button": "Neuer",
+            "button": "Neuer Chat",
             "dialog": {
                 "title": "Neuen Chat erstellen",
                 "description": "Dadurch wird Ihr aktueller Chatverlauf gelöscht. Möchten Sie wirklich fortfahren?",
