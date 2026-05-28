@@ -31,7 +31,11 @@ import {
   LexicalExportVisitor,
   rootEditor$,
   cmExtensions$,
-  COMMON_STATE_CONFIG_EXTENSIONS,
+  syntaxExtensions$,
+  mdastExtensions$,
+  MarkdownParseError,
+  VoidEmitter,
+  voidEmitter,
 } from '@mdxeditor/editor';
 
 import { MergeView } from '@codemirror/merge';
@@ -42,9 +46,17 @@ import { basicSetup } from 'codemirror';
 import { markdown as markdownLanguageSupport } from '@codemirror/lang-markdown';
 
 import { Button } from '@chainlit/app/src/components/ui/button';
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@chainlit/app/src/components/ui/toggle-group"
 import * as Mdast from 'mdast';
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { cn } from '@chainlit/app/src/lib/utils';
+import { fromMarkdown, type Options } from 'mdast-util-from-markdown';
+import { ParseOptions } from 'micromark-util-types'
+import { DiffNestedEditorsContext, DiffNestedLexicalEditor } from './DiffNestedLexicalEditor';
+import styles from '@mdxeditor/editor/dist/styles/ui.module.css.js';
 
 export type SerializedComparisonNode = Spread<
   {
@@ -154,8 +166,11 @@ export type SerializedDifferenceNode = Spread<
   {
     onlyInsert: boolean
     currentNodes: LexicalNode[]
+    mdastNodeCurrent: Mdast.Root;
+    mdastNodeNew: Mdast.Root;
     currentMarkdown: string
     newMarkdown: string
+    viewMode: 'render' | 'diff'
     type: 'difference'
     version: 1
   },
@@ -167,25 +182,32 @@ export class DifferenceNode extends DecoratorNode<JSX.Element> {
   __currentNodes: LexicalNode[];
   __currentMarkdown: string;
   __newMarkdown: string;
+  __mdastNodeCurrent: Mdast.Root;
+  __mdastNodeNew: Mdast.Root;
+  __viewMode: 'render' | 'diff';
+  __focusEmitter = voidEmitter();
 
   static getType(): string {
     return 'difference';
   }
 
   static clone(node: DifferenceNode): DifferenceNode {
-    return new DifferenceNode(node.__onlyInsert, node.__currentNodes, node.__currentMarkdown, node.__newMarkdown, node.__key);
+    return new DifferenceNode(node.__onlyInsert, node.__currentNodes, node.__currentMarkdown, node.__newMarkdown, node.__mdastNodeCurrent, node.__mdastNodeNew, node.__viewMode, node.__key);
   }
 
   getChildren() {
     return this.__currentNodes;
   }
 
-  constructor(onlyInsert: boolean, currentNodes: LexicalNode[], currentMarkdown: string, newMarkdown: string, key?: NodeKey) {
+  constructor(onlyInsert: boolean, currentNodes: LexicalNode[], currentMarkdown: string, newMarkdown: string, currentMdast: Mdast.Root, newMdast: Mdast.Root, viewMode: 'render' | 'diff', key?: NodeKey) {
     super(key);
     this.__onlyInsert = onlyInsert;
     this.__currentNodes = currentNodes;
     this.__currentMarkdown = currentMarkdown;
     this.__newMarkdown = newMarkdown;
+    this.__mdastNodeCurrent = currentMdast;
+    this.__mdastNodeNew = newMdast;
+    this.__viewMode = viewMode;
   }
   
   exportDOM(): DOMExportOutput {
@@ -204,8 +226,8 @@ export class DifferenceNode extends DecoratorNode<JSX.Element> {
   }
   
   static importJSON(serializedNode: SerializedDifferenceNode): DifferenceNode {
-    const { currentNodes, currentMarkdown, newMarkdown, onlyInsert } = serializedNode;
-    const node = $createDifferenceNode({ currentNodes, currentMarkdown, newMarkdown, onlyInsert });
+    const { currentNodes, currentMarkdown, newMarkdown, onlyInsert, mdastNodeCurrent, mdastNodeNew, viewMode } = serializedNode;
+    const node = $createDifferenceNode({ currentNodes, currentMarkdown, newMarkdown, onlyInsert, newMdast: mdastNodeNew, currentMdast: mdastNodeCurrent, viewMode });
     return node;
   }
 
@@ -215,12 +237,32 @@ export class DifferenceNode extends DecoratorNode<JSX.Element> {
       currentMarkdown: this.__currentMarkdown,
       newMarkdown: this.__newMarkdown,
       onlyInsert: this.__onlyInsert,
+      mdastNodeCurrent: this.__mdastNodeCurrent,
+      mdastNodeNew: this.__mdastNodeNew,
+      viewMode: this.__viewMode,
       type: 'difference',
       version: 1
     }
   }
 
-  decorate(_parentEditor: LexicalEditor): JSX.Element {
+  setMdastNode(mdastNode: Mdast.Root, markdown: string): void {
+    const writeable = this.getWritable();
+    writeable.__mdastNodeCurrent = mdastNode;
+    writeable.__currentMarkdown = markdown;
+  }
+
+  setNewMdastNode(mdastNode: Mdast.Root, markdown: string): void {
+    const writeable = this.getWritable();
+    writeable.__mdastNodeNew = mdastNode;
+    writeable.__newMarkdown = markdown;
+  }
+
+  setViewMode(viewMode: 'render' | 'diff'): void {
+    console.log(viewMode)
+    this.getWritable().__viewMode = viewMode;
+  }
+
+  decorate(parentEditor: LexicalEditor, config: EditorConfig): JSX.Element {
     if (this.__onlyInsert) {
       return <SourceRenderer
           newMarkdown={this.__newMarkdown}
@@ -232,8 +274,19 @@ export class DifferenceNode extends DecoratorNode<JSX.Element> {
         currentMarkdown={this.__currentMarkdown}
         newMarkdown={this.__newMarkdown}
         nodeKey={this.__key}
-        modify={(val) => this.__newMarkdown = val}
+        lexicalNode={this}
+        parentEditor={parentEditor}
+        focusEmitter={this.__focusEmitter}
+        config={config}
       />
+  }
+
+  isIsolated(): boolean {
+    return true;
+  }
+
+  isKeyboardSelectable(): boolean {
+    return false;
   }
 
   isInline(): boolean {
@@ -246,35 +299,203 @@ export interface CreateDifferenceNodeParameters {
   currentNodes: LexicalNode[]
   currentMarkdown: string
   newMarkdown: string
+  newMdast: Mdast.Root
+  currentMdast: Mdast.Root
+  viewMode: 'render' | 'diff'
   key?: NodeKey
 }
 
-export function $createDifferenceNode({ key, currentNodes, currentMarkdown, newMarkdown, onlyInsert}: CreateDifferenceNodeParameters): DifferenceNode {
-  return new DifferenceNode(onlyInsert, currentNodes, currentMarkdown, newMarkdown, key);
+export function $createDifferenceNode({ key, currentNodes, currentMarkdown, newMarkdown, onlyInsert, newMdast, viewMode, currentMdast}: CreateDifferenceNodeParameters): DifferenceNode {
+  return new DifferenceNode(onlyInsert, currentNodes, currentMarkdown, newMarkdown, currentMdast, newMdast, viewMode, key);
 }
 
 export function $isDifferenceNode(node: LexicalNode | null | undefined): node is DifferenceNode {
   return node instanceof DifferenceNode;
 }
 
+export type MdastExtensions = Options['mdastExtensions'];
+
+const importMarkdownToMdast = (markdown: string, syntaxExtensions: NonNullable<ParseOptions['extensions']>, mdastExtensions: MdastExtensions[]): Mdast.Root => {
+  let mdastRoot: Mdast.Root
+  try {
+    mdastRoot = fromMarkdown(markdown, {
+      extensions: syntaxExtensions,
+      mdastExtensions
+    })
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      throw new MarkdownParseError(`Error parsing markdown: ${e.message}`, e)
+    } else {
+      throw new MarkdownParseError(`Error parsing markdown: ${e}`, e)
+    }
+  }
+
+  return mdastRoot;
+}
+
+export const DifferenceEditor = ({
+  lexicalNode,
+  focusEmitter,
+  parentEditor,
+  config,
+}: {
+  lexicalNode: DifferenceNode;
+  focusEmitter: VoidEmitter;
+  parentEditor: LexicalEditor;
+  config: EditorConfig;
+}) => {
+  return (
+    <div className='grid grid-cols-2'>
+      <div className='difference-editor'>
+        <DiffNestedEditorsContext.Provider value={{
+          mdastNode: lexicalNode.__mdastNodeCurrent,
+          lexicalNode,
+          parentEditor,
+          focusEmitter,
+          config,
+        }}>
+          <DiffNestedLexicalEditor
+            side='current'
+            block
+            getContent={(node) => node.children as Mdast.PhrasingContent[]}
+            getUpdatedMdastNode={(mdastNode, children: any) => {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              return { ...mdastNode, children }
+            }}
+          />
+        </DiffNestedEditorsContext.Provider>
+      </div>
+      <div>
+        <DiffNestedEditorsContext.Provider value={{
+          mdastNode: lexicalNode.__mdastNodeNew,
+          lexicalNode,
+          parentEditor,
+          focusEmitter,
+          config,
+        }}>
+          <DiffNestedLexicalEditor
+            side='new'
+            block
+            getContent={(node) => node.children as Mdast.PhrasingContent[]}
+            getUpdatedMdastNode={(mdastNode, children: any) => {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              return { ...mdastNode, children }
+            }}
+          />
+        </DiffNestedEditorsContext.Provider>
+      </div>
+    </div>
+  )
+}
+
+export const SingleEditor = ({
+  lexicalNode,
+  focusEmitter,
+  parentEditor,
+  config,
+}: {
+  lexicalNode: DifferenceNode;
+  focusEmitter: VoidEmitter;
+  parentEditor: LexicalEditor;
+  config: EditorConfig;
+}) => {
+  return (
+    <div className=''>
+      <DiffNestedEditorsContext.Provider value={{
+        mdastNode: lexicalNode.__mdastNodeNew,
+        lexicalNode,
+        parentEditor,
+        focusEmitter,
+        config,
+      }}>
+        <DiffNestedLexicalEditor
+          side='new'
+          block
+          getContent={(node) => node.children as Mdast.PhrasingContent[]}
+          getUpdatedMdastNode={(mdastNode, children: any) => {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            return { ...mdastNode, children }
+          }}
+        />
+      </DiffNestedEditorsContext.Provider>
+    </div>
+  )
+}
+
 export const DifferenceRenderer = ({
   nodeKey,
+  currentMarkdown,
+  newMarkdown,
+  lexicalNode,
+  focusEmitter,
+  parentEditor,
+  config,
+}: {
+  currentMarkdown: string;
+  newMarkdown: string;
+  nodeKey: string;
+  lexicalNode: DifferenceNode;
+  focusEmitter: VoidEmitter;
+  parentEditor: LexicalEditor;
+  config: EditorConfig;
+}) => {
+  const acceptChange = usePublisher(approveDiffNode$);
+  const rejectChange = usePublisher(rejectDiffNode$);
+  const iconComponentFor = useCellValue(iconComponentFor$);
+  const syntaxExtensions = useCellValue(syntaxExtensions$);
+  const mdastExtensions = useCellValue(mdastExtensions$) as MdastExtensions[];
+  const t = useTranslation();
+  const [viewMode, setViewMode] = useState<'render' | 'diff'>('render');
+
+  const editMarkdown = (val: string) => {
+    parentEditor.update(() => {
+      const mdast = importMarkdownToMdast(val, syntaxExtensions, mdastExtensions);
+      lexicalNode.setNewMdastNode(mdast, val);
+    });
+  }
+
+  return (
+    <div className="difference-container">
+      <div className="difference-actions flex items-center justify-end px-2 py-1 gap-1" {...{ "data-node-key": nodeKey }}>
+        <div className={cn(styles.diffSourceToggleWrapper, 'flex items-center gap-1 [&>span]:flex')} style={{
+          '--accent': '230 10.71% 89.02%'
+        } as React.CSSProperties}>
+          <ToggleGroup type="single" size="sm" value={viewMode} variant="outline" onValueChange={(val: 'render' | 'diff') => setViewMode(val ? val : viewMode)}>
+            <ToggleGroupItem value="render" aria-label="Edit">
+              Edit
+            </ToggleGroupItem>
+            <ToggleGroupItem value="diff" aria-label="Compare">
+              Compare
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+        <Button variant="ghost" size="xs" className="text-destructive !w-auto px-2 text-xs" onClick={() => rejectChange({key: nodeKey})}>
+          {iconComponentFor('close')}
+          <span>Reject</span>
+        </Button>
+        <Button variant="ghost" size="xs" className="text-success !w-auto px-2 text-xs" onClick={() => acceptChange({key: nodeKey})}>
+          {iconComponentFor('check')}
+          <span>Accept</span>
+        </Button>
+      </div>
+      {viewMode === 'diff' && <MergeViewRenderer currentMarkdown={currentMarkdown} newMarkdown={newMarkdown} modify={editMarkdown} />}
+      {viewMode === 'render' && <DifferenceEditor lexicalNode={lexicalNode} parentEditor={parentEditor} focusEmitter={focusEmitter} config={config} />}
+    </div>
+  );
+}
+
+export const MergeViewRenderer = ({
   currentMarkdown,
   newMarkdown,
   modify,
 }: {
   currentMarkdown?: string;
   newMarkdown: string;
-  nodeKey: string;
   modify: (val: string) => void
 }) => {
   const cmMergeViewRef = useRef<MergeView | null>(null);
   const cmExtensions = useCellValue(cmExtensions$);
   const elRef = useRef<HTMLDivElement | null>(null);
-
-  const acceptChange = usePublisher(approveDiffNode$);
-  const rejectChange = usePublisher(rejectDiffNode$);
-  const iconComponentFor = useCellValue(iconComponentFor$);
 
   useEffect(() => {
     const isReadOnly = false;
@@ -335,8 +556,56 @@ export const DifferenceRenderer = ({
   }, [cmExtensions])
 
   return (
+    <div ref={elRef} className="mdxeditor-diff-editor" />
+  );
+}
+
+export const SourceRenderer = ({
+  nodeKey,
+  newMarkdown,
+  lexicalNode,
+  focusEmitter,
+  parentEditor,
+  config,
+  modify
+}: {
+  modify: (val: string) => void;
+  newMarkdown: string;
+  nodeKey: string;
+  lexicalNode: DifferenceNode;
+  focusEmitter: VoidEmitter;
+  parentEditor: LexicalEditor;
+  config: EditorConfig;
+}) => {
+  const [viewMode, setViewMode] = useState<'render' | 'diff'>('render')
+  const acceptChange = usePublisher(approveDiffNode$);
+  const rejectChange = usePublisher(rejectDiffNode$);
+  const iconComponentFor = useCellValue(iconComponentFor$);
+  const syntaxExtensions = useCellValue(syntaxExtensions$);
+  const mdastExtensions = useCellValue(mdastExtensions$) as MdastExtensions[];
+
+  const editMarkdown = (val: string) => {
+    parentEditor.update(() => {
+      const mdast = importMarkdownToMdast(val, syntaxExtensions, mdastExtensions);
+      lexicalNode.setNewMdastNode(mdast, val);
+    });
+  }
+
+  return (
     <div className="difference-container">
       <div className="difference-actions flex items-center justify-end px-2 py-1 gap-1" {...{ "data-node-key": nodeKey }}>
+        <div className={cn(styles.diffSourceToggleWrapper, 'flex items-center gap-1 [&>span]:flex')} style={{
+          '--accent': '230 10.71% 89.02%'
+        } as React.CSSProperties}>
+          <ToggleGroup type="single" size="sm" value={viewMode} variant="outline" onValueChange={(val: 'render' | 'diff') => setViewMode(val ? val : viewMode)}>
+            <ToggleGroupItem value="render" aria-label="Edit">
+              Edit
+            </ToggleGroupItem>
+            <ToggleGroupItem value="diff" aria-label="Compare">
+              Compare
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
         <Button variant="ghost" size="xs" className="text-destructive !w-auto px-2 text-xs" onClick={() => rejectChange({key: nodeKey})}>
           {iconComponentFor('close')}
           <span>Reject</span>
@@ -346,19 +615,15 @@ export const DifferenceRenderer = ({
           <span>Accept</span>
         </Button>
       </div>
-      <div ref={elRef} className="mdxeditor-diff-editor" />
+      {viewMode === 'diff' && <SourceEditor newMarkdown={newMarkdown} modify={editMarkdown} />}
+      {viewMode === 'render' && <SingleEditor lexicalNode={lexicalNode} parentEditor={parentEditor} focusEmitter={focusEmitter} config={config} />}
     </div>
   );
 }
 
-export const SourceRenderer = ({ nodeKey, newMarkdown, modify }: { newMarkdown: string; nodeKey: string; modify: (val: string) => void; }) => {
+export const SourceEditor = ({ newMarkdown, modify }: { newMarkdown: string; modify: (val: string) => void; }) => {
   const editorViewRef = useRef<EditorView | null>(null)
   const cmExtensions = useCellValue(cmExtensions$);
-
-  const acceptChange = usePublisher(approveDiffNode$);
-  const rejectChange = usePublisher(rejectDiffNode$);
-  const iconComponentFor = useCellValue(iconComponentFor$);
-
 
   const ref = useCallback(
     (el: HTMLDivElement | null) => {
@@ -370,7 +635,6 @@ export const SourceRenderer = ({ nodeKey, newMarkdown, modify }: { newMarkdown: 
           markdownLanguageSupport(),
           lineNumbers(),
           EditorView.lineWrapping,
-          // EditorState.readOnly.of(true),
           EditorState.readOnly.of(false),
           EditorView.updateListener.of(({ state }) => {
             const md = state.doc.toString()
@@ -387,23 +651,11 @@ export const SourceRenderer = ({ nodeKey, newMarkdown, modify }: { newMarkdown: 
         editorViewRef.current = null
       }
     },
-    [newMarkdown, cmExtensions]
+    [cmExtensions]
   )
 
   return (
-    <div className="difference-container">
-      <div className="difference-actions flex items-center justify-end px-2 py-1 gap-1" {...{ "data-node-key": nodeKey }}>
-        <Button variant="ghost" size="xs" className="text-destructive !w-auto px-2 text-xs" onClick={() => rejectChange({key: nodeKey})}>
-          {iconComponentFor('close')}
-          <span>Reject</span>
-        </Button>
-        <Button variant="ghost" size="xs" className="text-success !w-auto px-2 text-xs" onClick={() => acceptChange({key: nodeKey})}>
-          {iconComponentFor('check')}
-          <span>Accept</span>
-        </Button>
-      </div>
-      <div ref={ref} className="cm-sourceView mdxeditor-source-editor" />
-    </div>
+    <div ref={ref} className="cm-sourceView mdxeditor-source-editor" />
   );
 }
 

@@ -18,6 +18,9 @@ import {
   viewMode$,
   addLexicalNode$,
   addExportVisitor$,
+  MarkdownParseError,
+  syntaxExtensions$,
+  mdastExtensions$,
 } from "@mdxeditor/editor";
 
 import {
@@ -70,6 +73,10 @@ import {
   $createDifferenceNode,
 } from "./DiffNode";
 
+import { fromMarkdown, type Options } from 'mdast-util-from-markdown';
+import { ParseOptions } from 'micromark-util-types';
+import * as Mdast from 'mdast';
+
 export const evoyaAiState$ = Cell<SelectionContext | null>(selectionContextDefaultData, (r) => {
   // r.sub(evoyaAiState$, console.log);
 });
@@ -84,7 +91,7 @@ type EvoyaAiPluginParams = {
 }
 
 export const approveDiffNode$ = Signal<{ key: string; }>((realm) => {
-  realm.sub(realm.pipe(approveDiffNode$, withLatestFrom(rootEditor$, comparisonNodeKeys$)), ([value, rootEditor, comparisonNodeKeys]) => {
+  realm.sub(realm.pipe(approveDiffNode$, withLatestFrom(rootEditor$)), ([value, rootEditor]) => {
     if (rootEditor) {
       const rootEditorDom = rootEditor.getRootElement();
       const comparisonElement = rootEditorDom?.querySelector(`[data-node-key="${value.key}"]`)
@@ -94,7 +101,6 @@ export const approveDiffNode$ = Signal<{ key: string; }>((realm) => {
 
         theEditor?.update(() => {
           const diffNode = $getNodeByKey(value.key) as DifferenceNode;
-          // const sideNodes = diffNode.getChildren();
 
           const importPoint = {
             children: [] as LexicalNode[],
@@ -123,7 +129,7 @@ export const approveDiffNode$ = Signal<{ key: string; }>((realm) => {
 });
 
 export const rejectDiffNode$ = Signal<{ key: string; }>((realm) => {
-  realm.sub(realm.pipe(rejectDiffNode$, withLatestFrom(rootEditor$, comparisonNodeKeys$)), ([value, rootEditor, comparisonNodeKeys]) => {
+  realm.sub(realm.pipe(rejectDiffNode$, withLatestFrom(rootEditor$)), ([value, rootEditor]) => {
     if (rootEditor) {
       const rootEditorDom = rootEditor.getRootElement();
       const comparisonElement = rootEditorDom?.querySelector(`[data-node-key="${value.key}"]`)
@@ -133,12 +139,8 @@ export const rejectDiffNode$ = Signal<{ key: string; }>((realm) => {
 
         theEditor?.update(() => {
           const diffNode = $getNodeByKey(value.key) as DifferenceNode;
-          // const sideNodes = diffNode.getChildren();
 
           if (!diffNode.__onlyInsert) {
-            // const newContentNode = (sideNodes as ComparisonSideNode[]).find((node) => node.__side === 'current');
-            // const contentNodes = newContentNode.getChildren();
-
             const importPoint = {
               children: [] as LexicalNode[],
               append(node: LexicalNode) {
@@ -179,6 +181,12 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
 
       console.log("selectionType", selectionType);
       console.log("insertType", insertType);
+
+      const syntaxExtensions = realm.getValue(syntaxExtensions$);
+      const mdastExtensions = realm.getValue(mdastExtensions$) as MdastExtensions[];
+      const currentMdast = importMarkdownToMdast(selectionContext.markdown ?? '', syntaxExtensions, mdastExtensions);
+      const newMdast = importMarkdownToMdast(value.message.content ?? '', syntaxExtensions, mdastExtensions);
+
       if (selectionType === 'node') {
         /*activeEditor?.update(() => {
           const lexicalNodes = lexicalSelection?.getNodes() ?? [];
@@ -236,7 +244,10 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
             currentNodes: [],
             // currentNodes: lexicalNodes,
             currentMarkdown: selectionContext.markdown ?? '',
-            newMarkdown: value.message.content
+            newMarkdown: value.message.content,
+            currentMdast: currentMdast,
+            newMdast: newMdast,
+            viewMode: 'render'
           });
 
           if (insertType === 'replace') {
@@ -319,7 +330,10 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
             currentNodes: [],
             // currentNodes: lexicalNodes,
             currentMarkdown: selectionContext.markdown ?? '',
-            newMarkdown: value.message.content
+            newMarkdown: value.message.content,
+            currentMdast: currentMdast,
+            newMdast: newMdast,
+            viewMode: 'render'
           });
 
           if (insertType === 'replace') {
@@ -345,6 +359,26 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
     }
   });
 });
+
+export type MdastExtensions = Options['mdastExtensions'];
+
+const importMarkdownToMdast = (markdown: string, syntaxExtensions: NonNullable<ParseOptions['extensions']>, mdastExtensions: MdastExtensions[]): Mdast.Root => {
+  let mdastRoot: Mdast.Root
+  try {
+    mdastRoot = fromMarkdown(markdown, {
+      extensions: syntaxExtensions,
+      mdastExtensions
+    })
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      throw new MarkdownParseError(`Error parsing markdown: ${e.message}`, e)
+    } else {
+      throw new MarkdownParseError(`Error parsing markdown: ${e}`, e)
+    }
+  }
+
+  return mdastRoot;
+}
 
 export const setNodeSelection$ = Signal<any>((r) => {});
 export const setNodeSelectionByKey$ = Signal<any>((r) => {});
