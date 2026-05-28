@@ -2,19 +2,24 @@ import { Card } from '@/components/ui/card';
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemSeparator, ItemTitle } from '@/components/ui/item';
 import type { IStep } from '@chainlit/react-client';
 import { ChevronRight, Globe } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ReactElement, useMemo, useState, PropsWithChildren } from 'react';
 import { StepIO } from '../../ToolCallsInfo';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { BaseToolCall } from './BaseToolCall';
-import Markdown from '@/components/Markdown';
-import { tryParseJSONObject } from '@/lib/evoya';
-import ReactJsonView from '@microlink/react-json-view'
 
-export const WebRequest = ({ step }: { step: StepIO }) => {
+export const BaseToolCall = ({
+  hasError,
+  icon,
+  title,
+  contentItemClass = '',
+  children,
+}: PropsWithChildren<{
+  hasError: boolean;
+  icon: ReactElement;
+  title: string;
+  contentItemClass?: string;
+}>) => {
   const [isOpen, setIsOpen] = useState(false);
-  const hasError = step.outputParsed.messages[0].kwargs.status === 'error';
-  const jsonResponse = useMemo(() => tryParseJSONObject(step.outputParsed.messages[0].kwargs.content), [step]);
   // const inputJson = JSON.parse(step.input ?? '{}');
   // const inputJson = useMemo(() => {
   //   if (step.showInput === "json") {
@@ -36,32 +41,15 @@ export const WebRequest = ({ step }: { step: StepIO }) => {
   // console.log(inputJson);
 
   return (
-    <BaseToolCall
-      title={step.inputParsed.tool_call.args.url ?? 'no url data for web request'}
-      icon={<Globe />}
-      hasError={hasError}
-    >
-      {!jsonResponse && (
-        <Markdown
-          allowHtml={true}
-        >
-          {step.outputParsed.messages[0].kwargs.content}
-        </Markdown>
-      )}
-      {jsonResponse && <ReactJsonView src={jsonResponse} />}
-    </BaseToolCall>
-  );
-
-  return (
     <Card className={cn(hasError && 'bg-destructive/20 border-destructive')}>
       <ItemGroup>
         <Item size="sm">
           <ItemMedia variant="icon">
-            <Globe />
+            {icon}
           </ItemMedia>
           <ItemContent className="overflow-hidden">
             <ItemTitle className="overflow-hidden whitespace-nowrap w-full">
-              <span className="text-ellipsis overflow-hidden">{step.inputParsed.tool_call.args.url ?? 'no url data for web request'}</span>
+              <span className="text-ellipsis overflow-hidden">{title}</span>
             </ItemTitle>
           </ItemContent>
           <ItemActions>
@@ -73,11 +61,9 @@ export const WebRequest = ({ step }: { step: StepIO }) => {
         {isOpen && (
           <>
             <ItemSeparator className={cn(hasError && 'bg-destructive')} />
-            <Item size="sm">
+            <Item size="sm" className={contentItemClass}>
               <ItemContent className="overflow-hidden">
-                <ItemDescription>
-                  {step.outputParsed.messages[0].kwargs.content}
-                </ItemDescription>
+                {children}
               </ItemContent>
             </Item>
           </>

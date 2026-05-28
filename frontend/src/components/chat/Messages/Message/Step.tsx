@@ -5,7 +5,6 @@ import { PropsWithChildren, useMemo, useState } from 'react';
 import type { IStep } from '@chainlit/react-client';
 
 import { Translator } from 'components/i18n';
-import { WebRequest } from './Content/Tools/WebRequest';
 
 interface Props {
   step: IStep;
@@ -26,15 +25,6 @@ export default function Step({
   const isError = step.isError;
 
   const stepName = step.name;
-
-  const renderContent = useMemo(() => {
-    switch (stepName) {
-      case "tool_Web_Request":
-        return <WebRequest step={step} />
-      default:
-        return <>{children}</>
-    }
-  }, [step, children]);
 
   return (
     <div className="flex flex-col flex-grow w-0">
@@ -69,7 +59,7 @@ export default function Step({
 
       {open && (
         <div className="flex-grow mt-4 ml-2 pl-4 border-l-2 border-primary">
-          {renderContent}
+          {children}
         </div>
       )}
     </div>

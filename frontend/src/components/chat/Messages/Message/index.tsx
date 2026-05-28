@@ -175,6 +175,7 @@ const Message = memo(
                         </>
                       ) : null}
                       <MessageButtons
+                        toolCalls={toolCalls ?? []}
                         message={message}
                         actions={actions}
                         run={

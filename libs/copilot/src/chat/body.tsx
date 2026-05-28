@@ -26,6 +26,7 @@ import ElementSideView from 'components/ElementSideView';
 import PrivacyShield from '@/evoya/privacyShield';
 import { usePrivacyShield } from '@/evoya/privacyShield/usePrivacyShield';
 import { WidgetContext } from '@/context';
+import EvoyaToolCallsSideView from '@/evoya/EvoyaToolCallsSideView';
 
 interface ChatFunctions {
   submit: (text: string) => void;
@@ -235,6 +236,7 @@ const Chat = () => {
         <PrivacyShield submit={submitFunction} />
       )}
       <ElementSideView />
+      <EvoyaToolCallsSideView />
     </div>
   );
 };

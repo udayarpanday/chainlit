@@ -1,54 +1,52 @@
 import { Card } from '@/components/ui/card';
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemSeparator, ItemTitle } from '@/components/ui/item';
 import type { IStep } from '@chainlit/react-client';
-import { ChevronRight, Globe } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { StepIO } from '../../ToolCallsInfo';
+import Google from '@/components/icons/Google';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { BaseToolCall } from './BaseToolCall';
 import Markdown from '@/components/Markdown';
 import { tryParseJSONObject } from '@/lib/evoya';
-import ReactJsonView from '@microlink/react-json-view'
 
-export const WebRequest = ({ step }: { step: StepIO }) => {
+export const GoogleSearch = ({ step }: { step: StepIO }) => {
   const [isOpen, setIsOpen] = useState(false);
   const hasError = step.outputParsed.messages[0].kwargs.status === 'error';
   const jsonResponse = useMemo(() => tryParseJSONObject(step.outputParsed.messages[0].kwargs.content), [step]);
-  // const inputJson = JSON.parse(step.input ?? '{}');
-  // const inputJson = useMemo(() => {
-  //   if (step.showInput === "json") {
-  //     const json = JSON.parse(step.input ?? '{}');
-  //     console.log(json);
-  //     if (json.input && typeof json.input === 'string') {
-  //       try {
-  //         return JSON.parse(json.input.replace(/'/g, '"'));
-  //       } catch(e) {
-  //         return { url: 'failed'}
-  //       }
-  //     }
-
-  //     return json;
-  //   }
-
-  //   return {};
-  // }, [step]);
-  // console.log(inputJson);
 
   return (
     <BaseToolCall
-      title={step.inputParsed.tool_call.args.url ?? 'no url data for web request'}
-      icon={<Globe />}
+      title={step.inputParsed.tool_call.args.query ?? 'no query data'}
+      icon={<Google />}
       hasError={hasError}
+      contentItemClass="!p-0"
     >
       {!jsonResponse && (
-        <Markdown
-          allowHtml={true}
-        >
+        <div className='p-2'>
           {step.outputParsed.messages[0].kwargs.content}
-        </Markdown>
+        </div>
       )}
-      {jsonResponse && <ReactJsonView src={jsonResponse} />}
+      {jsonResponse && (
+        <ItemGroup>
+          {jsonResponse.organic.map((item, index) => (
+            <>
+              {index > 0 && <ItemSeparator />}
+              <Item size="sm">
+                <ItemContent className="overflow-hidden">
+                  <ItemTitle className="overflow-hidden whitespace-nowrap w-full">
+                    <span className="text-ellipsis overflow-hidden">{item.title}</span>
+                  </ItemTitle>
+                  <ItemDescription>
+                    {item.link}
+                  </ItemDescription>
+                </ItemContent>
+              </Item>
+            </>
+          ))}
+        </ItemGroup>
+      )}
     </BaseToolCall>
   );
 
@@ -57,11 +55,11 @@ export const WebRequest = ({ step }: { step: StepIO }) => {
       <ItemGroup>
         <Item size="sm">
           <ItemMedia variant="icon">
-            <Globe />
+            <Google />
           </ItemMedia>
           <ItemContent className="overflow-hidden">
             <ItemTitle className="overflow-hidden whitespace-nowrap w-full">
-              <span className="text-ellipsis overflow-hidden">{step.inputParsed.tool_call.args.url ?? 'no url data for web request'}</span>
+              <span className="text-ellipsis overflow-hidden">{step.inputParsed.tool_call.args.query ?? 'no query data'}</span>
             </ItemTitle>
           </ItemContent>
           <ItemActions>

@@ -13,14 +13,16 @@ import MessageActions from './Actions';
 import { DebugButton } from './DebugButton';
 import { EvoyaCreatorButton } from './EvoyaCreatorButton';
 import { FeedbackButtons } from './FeedbackButtons';
+import EvoyaToolCallsButton from './EvoyaToolCallsButton';
 
 interface Props {
   message: IStep;
   actions: IAction[];
   run?: IStep;
+  toolCalls?: IStep[];
 }
 
-const MessageButtons = ({ message, actions, run }: Props) => {
+const MessageButtons = ({ message, actions, run, toolCalls }: Props) => {
   const { config } = useConfig();
   const { firstInteraction } = useChatMessages();
   const isMobile = useIsMobile();
@@ -52,6 +54,7 @@ const MessageButtons = ({ message, actions, run }: Props) => {
       {showDebugButton ? (
         <DebugButton debugUrl={config.debugUrl!} step={message} />
       ) : null}
+      {toolCalls && toolCalls.length > 0 && <EvoyaToolCallsButton toolCalls={toolCalls} />}
     </div>
   );
 };
