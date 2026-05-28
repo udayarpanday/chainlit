@@ -58,103 +58,6 @@ import { ParseOptions } from 'micromark-util-types'
 import { DiffNestedEditorsContext, DiffNestedLexicalEditor } from './DiffNestedLexicalEditor';
 import styles from '@mdxeditor/editor/dist/styles/ui.module.css.js';
 
-export type SerializedComparisonNode = Spread<
-  {
-    type: 'comparison';
-    onlyInsert: boolean,
-    version: 1;
-  },
-  SerializedElementNode
->;
-
-export function ComparisonActionsPortal() {
-  const acceptChange = usePublisher(approveDiffNode$);
-  const rejectChange = usePublisher(rejectDiffNode$);
-  const iconComponentFor = useCellValue(iconComponentFor$);
-  const rootEditor = useCellValue(rootEditor$);
-  const comparisonNodeKeys = useCellValue(comparisonNodeKeys$);
-
-  console.log("comparisonNodeKeys", comparisonNodeKeys);
-
-  const targets: HTMLElement[] = comparisonNodeKeys.reduce((curr, node) => {
-    const domElement = document.querySelector(`[data-node-key="${node}"]`) as HTMLElement;
-    if (domElement) return [...curr, domElement];
-    return curr;
-  }, [] as HTMLElement[])
-
-  const newPortals = targets.map(target => {
-    let leftOffset = 0;
-    let topOffset = 0;
-
-    const tableElement: HTMLDivElement | null = target.closest(".evoya-table-wrapper");
-
-    if (tableElement) {
-      const tdElement = target.closest("td");
-      leftOffset += (tdElement?.offsetLeft ?? 0) - 3;
-      topOffset += (tdElement?.offsetTop ?? 0);
-
-      leftOffset += (tableElement?.offsetLeft ?? 0);
-      topOffset += (tableElement?.offsetTop ?? 0);
-    }
-    return {
-      key: target.getAttribute('data-node-key') || '',
-      target: target as HTMLElement,
-      offsetTop: target.offsetTop + topOffset,
-      offsetRight: (rootEditor?._rootElement?.offsetWidth ?? 0) - leftOffset - target.offsetWidth,
-    }
-  });
-
-  console.log(newPortals);
-
-  const reject = (key: string) => {
-    rejectChange({ key });
-  }
-
-  const accept = (key: string) => {
-    acceptChange({ key });
-  }
-
-  return (
-    <>
-      {newPortals.map(({ key, target, offsetTop, offsetRight }) => 
-        <div
-          key={key}
-          className="absolute bg-white p-1 rounded border flex gap-2"
-          style={{
-            top: offsetTop + 43 + 4,
-            right: offsetRight - 10
-          }}
-        >
-          <Button variant="ghost" size="xs" className="text-destructive !w-auto px-2 text-xs" onClick={() => reject(key)}>
-            {iconComponentFor('close')}
-            <span>Reject</span>
-          </Button>
-          <Button variant="ghost" size="xs" className="text-success !w-auto px-2 text-xs" onClick={() => accept(key)}>
-            {iconComponentFor('check')}
-            <span>Accept</span>
-          </Button>
-        </div>
-      )}
-    </>
-  );
-}
-
-export const LexicalComparisonVisitor: LexicalExportVisitor<ComparisonNode, Mdast.Nodes> = {
-  testLexicalNode: $isComparisonNode,
-  visitLexicalNode({ mdastParent, lexicalNode, actions }) {
-    actions.visitChildren(lexicalNode, mdastParent)
-  }
-}
-
-export const LexicalComparisonSideVisitor: LexicalExportVisitor<ComparisonSideNode, Mdast.Nodes> = {
-  testLexicalNode: $isComparisonSideNode,
-  visitLexicalNode({ mdastParent, lexicalNode, actions }) {
-    if (lexicalNode.__side === "current") {
-      actions.visitChildren(lexicalNode, mdastParent)
-    }
-  }
-}
-
 export const LexicalDifferenceVisitor: LexicalExportVisitor<DifferenceNode, Mdast.Nodes> = {
   testLexicalNode: $isDifferenceNode,
   visitLexicalNode({ mdastParent, lexicalNode, actions }) {
@@ -165,7 +68,6 @@ export const LexicalDifferenceVisitor: LexicalExportVisitor<DifferenceNode, Mdas
 export type SerializedDifferenceNode = Spread<
   {
     onlyInsert: boolean
-    currentNodes: LexicalNode[]
     mdastNodeCurrent: Mdast.Root;
     mdastNodeNew: Mdast.Root;
     currentMarkdown: string
@@ -179,7 +81,6 @@ export type SerializedDifferenceNode = Spread<
 
 export class DifferenceNode extends DecoratorNode<JSX.Element> {
   __onlyInsert: boolean;
-  __currentNodes: LexicalNode[];
   __currentMarkdown: string;
   __newMarkdown: string;
   __mdastNodeCurrent: Mdast.Root;
@@ -192,17 +93,12 @@ export class DifferenceNode extends DecoratorNode<JSX.Element> {
   }
 
   static clone(node: DifferenceNode): DifferenceNode {
-    return new DifferenceNode(node.__onlyInsert, node.__currentNodes, node.__currentMarkdown, node.__newMarkdown, node.__mdastNodeCurrent, node.__mdastNodeNew, node.__viewMode, node.__key);
+    return new DifferenceNode(node.__onlyInsert, node.__currentMarkdown, node.__newMarkdown, node.__mdastNodeCurrent, node.__mdastNodeNew, node.__viewMode, node.__key);
   }
 
-  getChildren() {
-    return this.__currentNodes;
-  }
-
-  constructor(onlyInsert: boolean, currentNodes: LexicalNode[], currentMarkdown: string, newMarkdown: string, currentMdast: Mdast.Root, newMdast: Mdast.Root, viewMode: 'render' | 'diff', key?: NodeKey) {
+  constructor(onlyInsert: boolean, currentMarkdown: string, newMarkdown: string, currentMdast: Mdast.Root, newMdast: Mdast.Root, viewMode: 'render' | 'diff', key?: NodeKey) {
     super(key);
-    this.__onlyInsert = onlyInsert;
-    this.__currentNodes = currentNodes;
+    this.__onlyInsert = onlyInsert
     this.__currentMarkdown = currentMarkdown;
     this.__newMarkdown = newMarkdown;
     this.__mdastNodeCurrent = currentMdast;
@@ -226,14 +122,13 @@ export class DifferenceNode extends DecoratorNode<JSX.Element> {
   }
   
   static importJSON(serializedNode: SerializedDifferenceNode): DifferenceNode {
-    const { currentNodes, currentMarkdown, newMarkdown, onlyInsert, mdastNodeCurrent, mdastNodeNew, viewMode } = serializedNode;
-    const node = $createDifferenceNode({ currentNodes, currentMarkdown, newMarkdown, onlyInsert, newMdast: mdastNodeNew, currentMdast: mdastNodeCurrent, viewMode });
+    const { currentMarkdown, newMarkdown, onlyInsert, mdastNodeCurrent, mdastNodeNew, viewMode } = serializedNode;
+    const node = $createDifferenceNode({ currentMarkdown, newMarkdown, onlyInsert, newMdast: mdastNodeNew, currentMdast: mdastNodeCurrent, viewMode });
     return node;
   }
 
   exportJSON(): SerializedDifferenceNode {
     return {
-      currentNodes: this.__currentNodes,
       currentMarkdown: this.__currentMarkdown,
       newMarkdown: this.__newMarkdown,
       onlyInsert: this.__onlyInsert,
@@ -266,8 +161,11 @@ export class DifferenceNode extends DecoratorNode<JSX.Element> {
     if (this.__onlyInsert) {
       return <SourceRenderer
           newMarkdown={this.__newMarkdown}
-          nodeKey={this.__key} 
-          modify={(val) => this.__newMarkdown = val}
+          nodeKey={this.__key}
+          lexicalNode={this}
+          parentEditor={parentEditor}
+          focusEmitter={this.__focusEmitter}
+          config={config}
         />
     }
     return <DifferenceRenderer 
@@ -296,7 +194,6 @@ export class DifferenceNode extends DecoratorNode<JSX.Element> {
 
 export interface CreateDifferenceNodeParameters {
   onlyInsert: boolean
-  currentNodes: LexicalNode[]
   currentMarkdown: string
   newMarkdown: string
   newMdast: Mdast.Root
@@ -305,8 +202,8 @@ export interface CreateDifferenceNodeParameters {
   key?: NodeKey
 }
 
-export function $createDifferenceNode({ key, currentNodes, currentMarkdown, newMarkdown, onlyInsert, newMdast, viewMode, currentMdast}: CreateDifferenceNodeParameters): DifferenceNode {
-  return new DifferenceNode(onlyInsert, currentNodes, currentMarkdown, newMarkdown, currentMdast, newMdast, viewMode, key);
+export function $createDifferenceNode({ key, currentMarkdown, newMarkdown, onlyInsert, newMdast, viewMode, currentMdast}: CreateDifferenceNodeParameters): DifferenceNode {
+  return new DifferenceNode(onlyInsert, currentMarkdown, newMarkdown, currentMdast, newMdast, viewMode, key);
 }
 
 export function $isDifferenceNode(node: LexicalNode | null | undefined): node is DifferenceNode {
@@ -567,9 +464,7 @@ export const SourceRenderer = ({
   focusEmitter,
   parentEditor,
   config,
-  modify
 }: {
-  modify: (val: string) => void;
   newMarkdown: string;
   nodeKey: string;
   lexicalNode: DifferenceNode;
@@ -602,7 +497,7 @@ export const SourceRenderer = ({
               Edit
             </ToggleGroupItem>
             <ToggleGroupItem value="diff" aria-label="Compare">
-              Compare
+              Source
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
