@@ -11,6 +11,7 @@ export interface EvoyaCreatorConfig {
   apiBaseUrl?: string;
   csrfToken?: string;
   workspaceId?: string;
+  isSuperUser?: boolean;
 }
 
 export type SelectionContext = {

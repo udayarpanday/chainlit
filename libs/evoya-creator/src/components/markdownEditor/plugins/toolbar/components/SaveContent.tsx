@@ -77,6 +77,8 @@ export const SaveContent: React.FC = () => {
       setSaving(false);
     });
   };
+  
+  if (!config?.isSuperUser) return null;
 
   return (
     <>

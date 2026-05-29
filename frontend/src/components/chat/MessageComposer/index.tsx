@@ -35,6 +35,7 @@ import Projects from './Projects';
 import SubmitButton from './SubmitButton';
 import UploadButton from './UploadButton';
 import UploadButtonDropdown from './UploadButtonDropdown';
+import { promptState } from '@chainlit/react-client';
 
 interface Props {
   fileSpec: FileSpec;
@@ -51,6 +52,7 @@ export default function MessageComposer({
   setAutoScroll,
   submitProxy
 }: Props) {
+  const context = useRecoilValue(promptState);
   const { evoya } = useContext(WidgetContext);
   const inputRef = useRef<InputMethods>(null);
   const [value, setValue] = useState('');
@@ -236,7 +238,7 @@ export default function MessageComposer({
       )}
       <div className="flex items-center justify-between">
         <div className="flex items-center -ml-1.5">
-          {(evoya && evoya?.type != 'dashboard') && (
+          {((evoya && evoya?.type != 'dashboard') || !context?.is_superuser) && (
             <UploadButton
               disabled={disabled}
               fileSpec={fileSpec}
@@ -244,7 +246,7 @@ export default function MessageComposer({
               onFileUpload={onFileUpload}
             />
           )}
-          {(evoya && evoya?.type == 'dashboard') && (
+          {(evoya && evoya?.type == 'dashboard' && context?.is_superuser) && (
             <UploadButtonDropdown
               disabled={disabled}
               fileSpec={fileSpec}
@@ -259,7 +261,7 @@ export default function MessageComposer({
                 selectedCommand={selectedCommand}
                 onCommandSelect={setSelectedCommand}
               />
-              <Projects disabled={disabled} />
+              {context?.is_superuser && <Projects disabled={disabled} />}
             </>
           )}
           {evoya?.evoyaCreator?.enabled && <EvoyaCreatorButton />}
