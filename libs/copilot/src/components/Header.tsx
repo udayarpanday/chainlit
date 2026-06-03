@@ -394,7 +394,7 @@ const Header = ({
         {hasChatProfiles ? <ChatProfiles /> : ''}
         {evoya?.type === 'dashboard' ? (
           <>
-            <DashboardSidebarButton />
+            {!creatorEnabled && <DashboardSidebarButton/>}
             {creatorEnabled && (
               <div className="h-9 flex items-center font-bold">Chat</div>
             )}
@@ -446,7 +446,7 @@ const Header = ({
             barSpacing={2}
           />
         ) : null}
-        {evoya?.type === 'dashboard' && (
+        {(evoya?.type === 'dashboard' && !creatorEnabled) && (
           <>
             <ViewContext />
             <FavoriteSessionButton sessionUuid={sessionUuid} />

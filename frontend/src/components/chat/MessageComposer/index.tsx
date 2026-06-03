@@ -2,8 +2,8 @@ import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   useRecoilState,
-  useResetRecoilState,
   useRecoilValue,
+  useResetRecoilState,
   useSetRecoilState
 } from 'recoil';
 import { v4 as uuidv4 } from 'uuid';
@@ -26,12 +26,16 @@ import { Button } from '@/components/ui/button';
 
 import { chatSettingsOpenState } from '@/state/project';
 import { IAttachment, attachmentsState } from 'state/chat';
+import { evoyaAttachmentsState, EvoyaAttachment } from '@/state/evoya';
 
 import { Attachments } from './Attachments';
 import CommandButton from './CommandButton';
 import Input, { InputMethods } from './Input';
+import Projects from './Projects';
 import SubmitButton from './SubmitButton';
 import UploadButton from './UploadButton';
+import UploadButtonDropdown from './UploadButtonDropdown';
+import { promptState } from '@chainlit/react-client';
 
 interface Props {
   fileSpec: FileSpec;
@@ -48,6 +52,7 @@ export default function MessageComposer({
   setAutoScroll,
   submitProxy
 }: Props) {
+  const context = useRecoilValue(promptState);
   const { evoya } = useContext(WidgetContext);
   const inputRef = useRef<InputMethods>(null);
   const [value, setValue] = useState('');
@@ -55,6 +60,7 @@ export default function MessageComposer({
   const [selectedAgents, setSelectedAgents] = useState<any[]>([]);
   const setChatSettingsOpen = useSetRecoilState(chatSettingsOpenState);
   const [attachments, setAttachments] = useRecoilState(attachmentsState);
+  const [evoyaAttachments, setEvoyaAttachments] = useRecoilState(evoyaAttachmentsState);
   const initialTranscript = useRecoilValue(initialTranscriptState);
   const resetInitialTranscript = useResetRecoilState(initialTranscriptState);
   const { t } = useTranslation();
@@ -97,6 +103,7 @@ export default function MessageComposer({
     async (
       msg: string,
       attachments?: IAttachment[],
+      evoyaAttachments?: EvoyaAttachment[],
       selectedCommand?: string,
       selectedAgents?: string[]
     ) => {
@@ -116,6 +123,9 @@ export default function MessageComposer({
         ?.filter((a) => !!a.serverId)
         .map((a) => ({ id: a.serverId! }));
 
+      const evoyaReferences = evoyaAttachments
+        ?.map((a) => ({ path: a.path }));
+
       if (setAutoScroll) {
         setAutoScroll(true);
       }
@@ -125,7 +135,7 @@ export default function MessageComposer({
         // @ts-expect-error is not a valid prop
         window.sendCreatorMessage(message);
       } else {
-        sendMessage(message, fileReferences);
+        sendMessage(message, fileReferences, evoyaReferences);
       }
     },
     [user, sendMessage]
@@ -155,7 +165,7 @@ export default function MessageComposer({
         if (askUser) {
           onReply(text);
         } else {
-          onSubmit(text, attachments);
+          onSubmit(text, attachments, evoyaAttachments);
         }
         setAttachments([]);
         setValue('');
@@ -167,19 +177,20 @@ export default function MessageComposer({
   };
 
   const submitMessage = useCallback(() => {
-    if (disabled || (value === '' && attachments.length === 0)) {
+    if (disabled || (value === '' && attachments.length === 0 && evoyaAttachments.length === 0)) {
       return;
     }
-    
+
     // Get full content including agents
     const fullContent = inputRef.current?.getFullContent?.() || value;
-    
+
     if (askUser) {
       onReply(fullContent);
     } else {
-      onSubmit(fullContent, attachments, selectedCommand?.id, selectedAgents);
+      onSubmit(fullContent, attachments, evoyaAttachments, selectedCommand?.id, selectedAgents);
     }
     setAttachments([]);
+    setEvoyaAttachments([]);
     setSelectedAgents([]);
     inputRef.current?.reset();
   }, [
@@ -188,6 +199,7 @@ export default function MessageComposer({
     setValue,
     askUser,
     attachments,
+    evoyaAttachments,
     selectedCommand,
     selectedAgents,
     setAttachments,
@@ -203,7 +215,7 @@ export default function MessageComposer({
           : 'rounded-full'
       } flex flex-col`}
     >
-      {attachments.length > 0 ? (
+      {(attachments.length > 0 || evoyaAttachments.length > 0) ? (
         <div className="mb-1">
           <Attachments />
         </div>
@@ -226,18 +238,31 @@ export default function MessageComposer({
       )}
       <div className="flex items-center justify-between">
         <div className="flex items-center -ml-1.5">
-          <UploadButton
-            disabled={disabled}
-            fileSpec={fileSpec}
-            onFileUploadError={onFileUploadError}
-            onFileUpload={onFileUpload}
-          />
-          {evoya && evoya?.type == 'dashboard' && (
-            <CommandButton
+          {((evoya && evoya?.type != 'dashboard') || !context?.is_superuser) && (
+            <UploadButton
               disabled={disabled}
-              selectedCommand={selectedCommand}
-              onCommandSelect={setSelectedCommand}
+              fileSpec={fileSpec}
+              onFileUploadError={onFileUploadError}
+              onFileUpload={onFileUpload}
             />
+          )}
+          {(evoya && evoya?.type == 'dashboard' && context?.is_superuser) && (
+            <UploadButtonDropdown
+              disabled={disabled}
+              fileSpec={fileSpec}
+              onFileUploadError={onFileUploadError}
+              onFileUpload={onFileUpload}
+            />
+          )}
+          {evoya && evoya?.type == 'dashboard' && (
+            <>
+              <CommandButton
+                disabled={disabled}
+                selectedCommand={selectedCommand}
+                onCommandSelect={setSelectedCommand}
+              />
+              {context?.is_superuser && <Projects disabled={disabled} />}
+            </>
           )}
           {evoya?.evoyaCreator?.enabled && <EvoyaCreatorButton />}
           {evoya?.api?.privacyShield?.enabled && (

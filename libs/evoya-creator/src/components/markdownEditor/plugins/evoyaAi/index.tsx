@@ -1,46 +1,26 @@
 import {
-  createActiveEditorSubscription$,
-  createRootEditorSubscription$,
   realmPlugin,
   currentSelection$,
-  getSelectionRectangle,
-  getSelectedNode,
   activeEditor$,
-  useCellValue,
   withLatestFrom,
-  convertSelectionToNode$,
   onWindowChange$,
   readOnly$,
   inFocus$,
   addComposerChild$,
-  addLexicalNode$,
-  exportMarkdownFromLexical,
-  importMarkdownToLexical,
-  importMdastTreeToLexical,
-  MarkdownParseOptions,
-  $createTableNode,
-  insertDecoratorNode$,
-  insertMarkdown$,
-
   exportVisitors$,
   jsxComponentDescriptors$,
   toMarkdownExtensions$,
   toMarkdownOptions$,
   jsxIsAvailable$,
-  importVisitors$,
-  mdastExtensions$,
-  syntaxExtensions$,
-  directiveDescriptors$,
-  codeBlockEditorDescriptors$,
   addActivePlugin$,
-  addImportVisitor$,
-  addExportVisitor$,
-  LexicalExportVisitor,
   rootEditor$,
-  $isTableNode,
-  $isCodeBlockNode,
-  $createCodeBlockNode,
   $isImageNode,
+  viewMode$,
+  addLexicalNode$,
+  addExportVisitor$,
+  MarkdownParseError,
+  syntaxExtensions$,
+  mdastExtensions$,
 } from "@mdxeditor/editor";
 
 import {
@@ -48,81 +28,19 @@ import {
   Signal,
   Action,
   Cell,
-  useCellValues,
-  map,
 } from "@mdxeditor/gurx";
 
 import {
-  $convertToMarkdownString,
-  $convertFromMarkdownString,
-  TRANSFORMERS,
-} from "@lexical/markdown";
-
-import {
-  $wrapNodes,
-  $isAtNodeEnd,
-  $patchStyleText,
-  createDOMRange,
-  createRectsFromDOMRange,
-} from "@lexical/selection";
-
-import {
-  $findTableNode,
-  $isTableCellNode,
-} from "@lexical/table";
-
-import {
-  $isListItemNode,
-  $isListNode,
-} from "@lexical/list";
-
-import {
-  $isHeadingNode,
-} from "@lexical/rich-text";
-
-import {
-  $wrapSelectionInMarkNode,
-  MarkNode,
-} from "@lexical/mark";
-
-import {
-  $generateJSONFromSelectedNodes,
-  $generateNodesFromSerializedNodes,
-} from "@lexical/clipboard";
-
-import {
-  RangeSelection,
-  LexicalEditor,
-  createEditor,
   LexicalNode,
-  ElementNode,
-  DecoratorNode,
-  RootNode,
-  ParagraphNode,
-  TextNode,
-  $isTextNode,
-  $isParagraphNode,
   $isRangeSelection,
-  $isNodeSelection,
   $getRoot,
-  $copyNode,
-  $createParagraphNode,
-  $createTextNode,
-  KlassConstructor,
   $setSelection,
-  $getSelection,
-  $getPreviousSelection,
-  $createPoint,
-  $createRangeSelection,
   $createNodeSelection,
-  $isElementNode,
-  $isDecoratorNode,
-  SerializedEditor,
-  NodeSelection,
-  NodeKey,
-  $insertNodes,
-  $selectAll,
+  $getSelection,
+  $getNodeByKey,
+  getNearestEditorFromDOMNode,
 } from "lexical";
+
 import { RefObject } from "react";
 
 import {
@@ -133,320 +51,26 @@ import {
 } from "@/types";
 
 import { TextSelection } from "./TextSelection";
+import { getSelectionAsMarkdown } from "../../utils/selection";
+import { CreatorLock } from "./CreatorLock";
 
-import { tryImportingMarkdown, evoyaImportMarkdownToLexical } from "@/components/markdownEditor/utils/markdown";
+import { tryImportingMarkdown } from "@/components/markdownEditor/utils/markdown";
 
-import { notInline, notInlineExtended } from "@/components/markdownEditor/utils/selection";
+import {
+  DifferenceNode,
+  LexicalDifferenceVisitor,
+  $createDifferenceNode,
+} from "./DiffNode";
+
+import { fromMarkdown, type Options } from 'mdast-util-from-markdown';
+import { ParseOptions } from 'micromark-util-types';
+import * as Mdast from 'mdast';
 
 export const evoyaAiState$ = Cell<SelectionContext | null>(selectionContextDefaultData, (r) => {
   // r.sub(evoyaAiState$, console.log);
 });
 export const scrollOffset$ = Cell<number>(0);
 export const editorContainerRef$ = Cell<RefObject<HTMLElement> | null>(null);
-
-export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, context: SelectionContext}>((realm) => {
-  realm.sub(realm.pipe(replaceSelectionContent$, withLatestFrom(activeEditor$)), ([value, activeEditor]) => {
-    console.log(value);
-    if (value && value.message && value.context) {
-      console.log('selection context', value.context);
-      const selectionContext = value.context;
-      const lexicalSelection = value.context.lexical;
-      const insertType = value.message.insertType;
-      const stored = localStorage.getItem('evoya-creator');
-      let getStoredContent = stored ? JSON.parse(stored).content : null;
-
-      let markdownMessage = value.message.content;
-
-      // if (!lexicalSelection && selectionContext.selectionType !== 'document') return;
-      activeEditor?.update(() => {
-        $setSelection(null);
-        const importPoint = {
-          children: [] as LexicalNode[],
-          append(node: LexicalNode) {
-            this.children.push(node)
-          },
-          getType() {
-            // return lexicalSelection.getNodes()[0].getType();
-            return 'importroot';
-          }
-        }
-
-        // tryImportingMarkdown(realm, importPoint, value.message);
-        tryImportingMarkdown(realm, importPoint, markdownMessage);
-        console.log('importPoint', importPoint);
-        const importChildren = importPoint.children;
-        console.log('importChildren', importChildren);
-        let newChildren = importChildren;
-
-        if ( getStoredContent === '') {
-          localStorage.setItem(
-            'evoya-creator',
-            JSON.stringify({
-              content: value.message.content,
-              type: 'markdown'
-            })
-          );
-
-            const root = $getRoot();
-            $setSelection(null);
-            root.clear();
-
-            evoyaImportMarkdownToLexical({
-              root,
-              visitors: realm.getValue(importVisitors$),
-              mdastExtensions: realm.getValue(mdastExtensions$),
-              markdown: markdownMessage,
-              syntaxExtensions: realm.getValue(syntaxExtensions$),
-              jsxComponentDescriptors: realm.getValue(jsxComponentDescriptors$),
-              directiveDescriptors: realm.getValue(directiveDescriptors$),
-              codeBlockEditorDescriptors: realm.getValue(codeBlockEditorDescriptors$)
-            });
-
-            return
-        }
-       
-        if (selectionContext.selectionType === 'codeblock') {
-          if ($isCodeBlockNode(importChildren[0])) {
-            const codeBlockNode = lexicalSelection.getNodes()[0];
-            console.log('code block', codeBlockNode);
-
-            if (selectionContext.selectedCode) {
-              const currentCode = codeBlockNode.getCode();
-              console.log('currentCode', currentCode);
-              console.log('selectedCode', selectionContext.selectedCode);
-              console.log(currentCode.indexOf(selectionContext.selectedCode));
-              if (currentCode.indexOf(selectionContext.selectedCode) > -1) {
-                let newCode = '';
-                
-                if (insertType === 'after' || insertType === 'before') {
-                  const codeSegments = currentCode.split(selectionContext.selectedCode);
-                  const newCodeSegment = insertType === 'after' ? selectionContext.selectedCode + importChildren[0].getCode() : importChildren[0].getCode() + selectionContext.selectedCode;
-                  newCode = codeSegments.join(newCodeSegment);
-                  console.log('newCode', newCode);
-                  // codeBlockNode.setCode(newCode);
-                } else if (insertType === 'replace') {
-                  newCode = currentCode.replace(selectionContext.selectedCode, importChildren[0].getCode());
-                  console.log('newCode', newCode);
-                  // codeBlockNode.setCode(newCode);
-                }
-
-                codeBlockNode.insertAfter($createCodeBlockNode({ code: newCode, language: selectionContext.language, meta: codeBlockNode.getMeta() }));
-                codeBlockNode.remove();
-              }
-            } else {
-              if (insertType === 'after' || insertType === 'before') {
-                codeBlockNode.insertAfter(importChildren[0]);
-              } else if (insertType === 'replace') {
-                // codeBlockNode.setCode(importChildren[0].getCode());
-                codeBlockNode.insertAfter(importChildren[0]);
-                codeBlockNode.remove();
-              }
-            }
-          }
-
-          realm.pub(resetSelection$);
-          return;
-        }
-
-        // if (selectionContext.insertType === 'after' || selectionContext.insertType === 'before') {
-        if (insertType === 'after' || insertType === 'before') {
-          if (selectionContext.selectionType === 'document' || selectionContext.selectionType === null) {
-            const rootElement = $getRoot();
-            const insertAnchor = insertType === 'before' ? rootElement.getFirstChild() : rootElement.getLastChild();
-
-            if (insertType === 'after') {
-              newChildren = newChildren.toReversed();
-              newChildren.forEach((node) => insertAnchor.insertAfter(node));
-            } else {
-              newChildren.forEach((node) => insertAnchor.insertBefore(node));
-            }
-          } else {
-            const selectedNodes = lexicalSelection.getNodes();
-            // Selection not implemented yet
-            if ($isRangeSelection(lexicalSelection)) {
-              const lastPoint = lexicalSelection.isBackward() ? lexicalSelection.anchor : lexicalSelection.focus;
-              const firstPoint = lexicalSelection.isBackward() ? lexicalSelection.focus : lexicalSelection.anchor;
-              let insertAnchor = insertType === 'before' ? firstPoint.getNode() : lastPoint.getNode();
-              
-              if (insertAnchor.getType() === 'text') {
-                insertAnchor = insertAnchor.getParent();
-              }
-
-              console.log(insertAnchor);
-
-              if (importChildren.length === 1) {
-                if ($isListNode(importChildren[0])) {
-                  newChildren = importChildren[0].getChildren();
-                } else if ($isTableNode(importChildren[0])) {
-                  // do i need to handle?
-                }
-              }
-
-              if (insertType === 'after') {
-                newChildren = newChildren.toReversed();
-                newChildren.forEach((node) => insertAnchor.insertAfter(node));
-              } else {
-                newChildren.forEach((node) => insertAnchor.insertBefore(node));
-              }
-            } else {
-              let insertAnchor = selectedNodes[0];
-
-              if (insertType === 'after') {
-                newChildren = newChildren.toReversed();
-                newChildren.forEach((node) => insertAnchor.insertAfter(node));
-              } else {
-                newChildren.forEach((node) => insertAnchor.insertBefore(node));
-              }
-            }
-          }
-        // } else if (selectionContext.insertType === 'replace') {
-        } else if (insertType === 'replace') {
-          if (selectionContext.selectionType === null) {
-            return;
-          } else if (selectionContext.selectionType === 'document') {
-            const rootElement = $getRoot();
-            rootElement.clear();
-            // importMarkdownToLexical({
-            evoyaImportMarkdownToLexical({
-              root: rootElement,
-              visitors: realm.getValue(importVisitors$),
-              mdastExtensions: realm.getValue(mdastExtensions$),
-              markdown: markdownMessage,
-              syntaxExtensions: realm.getValue(syntaxExtensions$),
-              jsxComponentDescriptors: realm.getValue(jsxComponentDescriptors$),
-              directiveDescriptors: realm.getValue(directiveDescriptors$),
-              codeBlockEditorDescriptors: realm.getValue(codeBlockEditorDescriptors$)
-            });
-          } else {
-            const selectedNodes = lexicalSelection.getNodes();
-            console.log('selectedNodes', selectedNodes);
-            if ($isRangeSelection(lexicalSelection)) {
-              const lastPoint = lexicalSelection.isBackward() ? lexicalSelection.anchor : lexicalSelection.focus;
-              const firstPoint = lexicalSelection.isBackward() ? lexicalSelection.focus : lexicalSelection.anchor;
-              
-              if (selectedNodes.every((sn: LexicalNode) => sn.getType() === 'text')) {
-                let insertAnchor = lastPoint.getNode();
-
-                if (importChildren.length === 1) {
-                  if ($isListNode(importChildren[0])) {
-                    insertAnchor = insertAnchor.getParent();
-                    newChildren = importChildren[0].getChildren();
-                  } else if ($isParagraphNode(importChildren[0]) || $isHeadingNode(importChildren[0])) {
-                    newChildren = importChildren[0].getChildren();
-                  } else if ($isTableNode(importChildren[0])) {
-                    // do i need to handle?
-                  }
-                } else {
-                  insertAnchor = insertAnchor.getParent();
-                }
-
-                console.log('before insert nodes 1', newChildren, insertAnchor);
-
-                // selectedNodes.forEach((node) => node.remove());
-                if (notInline(insertAnchor) && insertAnchor.getChildren().length === 0) {
-                  newChildren.toReversed().forEach((node) => insertAnchor.insertAfter(node));
-                  insertAnchor.remove();
-                } else {
-                  // lexicalSelection.removeText();
-                  lexicalSelection.insertNodes(newChildren);
-                }
-              } else {
-                let insertAnchor = lastPoint.getNode().getParent();
-
-                if (importChildren.length === 1) {
-                  if ($isListNode(importChildren[0])) {
-                    newChildren = importChildren[0].getChildren();
-                  } else if ($isTableNode(importChildren[0])) {
-                    // do i need to handle?
-                  }
-                }
-
-                console.log('before insert nodes 2', newChildren, insertAnchor);
-
-                newChildren.toReversed().forEach((node) => insertAnchor.insertAfter(node));
-                selectedNodes.forEach((node) => node.remove());
-              }
-            } else {
-              // lexicalSelection.insertNodes(paragraph.getChildren());
-              if (importChildren.every((sn: LexicalNode) => sn.getType() === 'text')) {
-                // lexicalSelection.insertNodes(importChildren);
-              } else {
-                if (selectedNodes.length === 1) {
-                  if ($isParagraphNode(selectedNodes[0]) || $isHeadingNode(selectedNodes[0])) {
-                    // importChildren.toReversed().forEach((node) => selectedNodes[0].insertAfter(node));
-                  } else if ($isListItemNode(selectedNodes[0])) {
-                    console.log('insert list item', importChildren[0].getChildren());
-                    // importChildren[0].getChildren().toReversed().forEach((node) => selectedNodes[0].insertAfter(node));
-                    newChildren = importChildren[0].getChildren();
-                  } else if ($isTableCellNode(selectedNodes[0])) {
-                    // do i need to handle?
-                  } else if ($isTableNode(selectedNodes[0])) {
-                    // importChildren.toReversed().forEach((node) => selectedNodes[0].insertAfter(node));
-                  } else {
-                    // no use case yet
-                  }
-                  newChildren.toReversed().forEach((node) => selectedNodes[0].insertAfter(node));
-                  selectedNodes[0].remove();
-                } else {
-                  // no use case yet
-                }
-              }
-            }
-          }
-        }
-
-
-        // reset selection
-        // const selectionContext = {
-        //   lexical: null,
-        //   markdown: null,
-        //   selectionType: null,
-        //   insertType: null
-        // };
-
-        // realm.pub(evoyaAiState$, selectionContext);
-        // realm.pub(resetSelection$);
-
-          // select inserted children (didnt work)
-        if (newChildren.length > 0 && insertType!='none') {
-          if (insertType === 'replace' && selectionContext.selectionType === 'document' && getStoredContent === '') {
-            // $selectAll();
-            realm.pub(selectDocument$);
-          } else {
-            console.log('select new content', newChildren);
-            const newSelection = $createRangeSelection();
-            // const selectionStartNode = $isTextNode(newChildren[0]) ? newChildren[0] : newChildren[0].getFirstDescendant();
-            if ($isTableNode(newChildren[0])) {
-              realm.pub(setNodeSelection$, newChildren[0]);
-            } else {
-              const selectionStartNode = $isTextNode(newChildren[0]) ? newChildren[0] : newChildren[0].getFirstDescendant();
-              const selectionEndNode = $isTextNode(newChildren[newChildren.length - 1]) ? newChildren[newChildren.length - 1] : newChildren[newChildren.length - 1].getLastDescendant();
-              if ($isTextNode(selectionStartNode) && $isTextNode(selectionEndNode)) {
-                newSelection.setTextNodeRange(selectionStartNode, 0, selectionEndNode, selectionEndNode.getTextContent().length);
-                console.log(newSelection);
-                $setSelection(newSelection);
-              } else {
-                // TODO?
-              }
-            }
-          }
-
-          // const textNodes = importPoint
-
-          // newSelection.setTextNodeRange();
-          // $setSelection(newSelection);
-          // newChildren.forEach((node) => node.select());
-          // console.log(newSelection);
-
-          // const insertedContentSelection = $createNodeSelection();
-          // newChildren.forEach((node) => insertedContentSelection.add(node.getKey()));
-          // $setSelection(insertedContentSelection);
-          // $wrapSelectionInMarkNode(newSelection, false, 'evoyainsert');
-        }
-      });
-    }
-  });
-});
 
 type EvoyaAiPluginParams = {
   containerRef: RefObject<HTMLElement>;
@@ -455,430 +79,536 @@ type EvoyaAiPluginParams = {
   setSelectionContext: (context: SelectionContext | null) => void;
 }
 
+export const approveDiffNode$ = Signal<{ key: string; }>((realm) => {
+  realm.sub(realm.pipe(approveDiffNode$, withLatestFrom(rootEditor$)), ([value, rootEditor]) => {
+    if (rootEditor) {
+      const rootEditorDom = rootEditor.getRootElement();
+      const comparisonElement = rootEditorDom?.querySelector(`[data-node-key="${value.key}"]`)
+
+      if (comparisonElement) {
+        const theEditor = getNearestEditorFromDOMNode(comparisonElement);
+
+        theEditor?.update(() => {
+          const diffNode = $getNodeByKey(value.key) as DifferenceNode;
+
+          const importPoint = {
+            children: [] as LexicalNode[],
+            append(node: LexicalNode) {
+              this.children.push(node)
+            },
+            getType() {
+              return 'importroot';
+            }
+          }
+
+          tryImportingMarkdown(realm, importPoint, diffNode.__newMarkdown);
+          const importChildren = importPoint.children;
+
+          importChildren.forEach((node) => {
+            diffNode.insertBefore(node);
+          });
+
+          diffNode.remove();
+        }, {
+          onUpdate: () => realm.pub(updateComparisonNodeKeys$)
+        });
+      }
+    }
+  })
+});
+
+export const rejectDiffNode$ = Signal<{ key: string; }>((realm) => {
+  realm.sub(realm.pipe(rejectDiffNode$, withLatestFrom(rootEditor$)), ([value, rootEditor]) => {
+    if (rootEditor) {
+      const rootEditorDom = rootEditor.getRootElement();
+      const comparisonElement = rootEditorDom?.querySelector(`[data-node-key="${value.key}"]`)
+
+      if (comparisonElement) {
+        const theEditor = getNearestEditorFromDOMNode(comparisonElement);
+
+        theEditor?.update(() => {
+          const diffNode = $getNodeByKey(value.key) as DifferenceNode;
+
+          if (!diffNode.__onlyInsert) {
+            const importPoint = {
+              children: [] as LexicalNode[],
+              append(node: LexicalNode) {
+                this.children.push(node)
+              },
+              getType() {
+                return 'importroot';
+              }
+            }
+
+            tryImportingMarkdown(realm, importPoint, diffNode.__currentMarkdown);
+            const importChildren = importPoint.children;
+
+            importChildren.forEach((node) => {
+              diffNode.insertBefore(node);
+            });
+          }
+
+          diffNode.remove();
+        }, {
+          onUpdate: () => realm.pub(updateComparisonNodeKeys$)
+        });
+      }
+    }
+  })
+});
+
+export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, context: SelectionContext}>((realm) => {
+  realm.sub(realm.pipe(replaceSelectionContent$, withLatestFrom(activeEditor$, comparisonNodeKeys$)), ([value, activeEditor, comparisonNodeKeys]) => {
+    console.log(value);
+    if (value && value.message && value.context) {
+      const selectionContext = value.context;
+      const lexicalSelection = value.context.lexical;
+      const selectionType = value.context.selectionType;
+      const insertType = value.message.insertType;
+
+      realm.pub(viewMode$, 'rich-text');
+
+      console.log("selectionType", selectionType);
+      console.log("insertType", insertType);
+
+      const syntaxExtensions = realm.getValue(syntaxExtensions$);
+      const mdastExtensions = realm.getValue(mdastExtensions$) as MdastExtensions[];
+      const currentMdast = importMarkdownToMdast(selectionContext.markdown ?? '', syntaxExtensions, mdastExtensions);
+      const newMdast = importMarkdownToMdast(value.message.content ?? '', syntaxExtensions, mdastExtensions);
+
+      if (selectionType === 'node') {
+        activeEditor?.update(() => {
+          const lexicalNodes = lexicalSelection?.getNodes() ?? [];
+          console.log(lexicalNodes);
+
+          const differenceNode = $createDifferenceNode({
+            onlyInsert: insertType !== 'replace',
+            currentNodes: [],
+            // currentNodes: lexicalNodes,
+            currentMarkdown: selectionContext.markdown ?? '',
+            newMarkdown: value.message.content,
+            currentMdast: currentMdast,
+            newMdast: newMdast,
+            viewMode: 'render'
+          });
+
+          if (insertType === 'replace') {
+            lexicalNodes[lexicalNodes.length - 1].insertAfter(differenceNode);
+            lexicalNodes.forEach((node) => node.remove());
+          } else if (insertType === 'after') {
+            lexicalNodes[lexicalNodes.length - 1].insertAfter(differenceNode);
+          } else if (insertType === 'before') {
+            lexicalNodes[lexicalNodes.length - 1].insertBefore(differenceNode);
+          }
+
+          realm.pub(resetSelection$);
+
+          $setSelection(null);
+        }, {
+          onUpdate: () => realm.pub(updateComparisonNodeKeys$)
+        });
+      } else if (selectionType === 'range') {
+        // dont need to handle for now
+        // if (insertType === 'replace') {
+        // } else if (insertType === 'after') {
+        // } else if (insertType === 'before') {
+        // }
+      } else if (selectionType === 'document') {
+        activeEditor?.update(() => {
+          const lexicalNodes = $getRoot().getChildren() ?? [];
+          console.log(lexicalNodes);
+
+          const differenceNode = $createDifferenceNode({
+            onlyInsert: insertType !== 'replace',
+            currentNodes: [],
+            currentMarkdown: selectionContext.markdown ?? '',
+            newMarkdown: value.message.content,
+            currentMdast: currentMdast,
+            newMdast: newMdast,
+            viewMode: 'render'
+          });
+
+          if (insertType === 'replace') {
+            lexicalNodes[lexicalNodes.length - 1].insertAfter(differenceNode);
+            lexicalNodes.forEach((node) => node.remove());
+          } else if (insertType === 'after') {
+            lexicalNodes[lexicalNodes.length - 1].insertAfter(differenceNode);
+          } else if (insertType === 'before') {
+            lexicalNodes[lexicalNodes.length - 1].insertBefore(differenceNode);
+          }
+
+          realm.pub(resetSelection$);
+
+          $setSelection(null);
+        }, {
+          onUpdate: () => realm.pub(updateComparisonNodeKeys$)
+        });
+      }
+    }
+  });
+});
+
+export type MdastExtensions = Options['mdastExtensions'];
+
+const importMarkdownToMdast = (markdown: string, syntaxExtensions: NonNullable<ParseOptions['extensions']>, mdastExtensions: MdastExtensions[]): Mdast.Root => {
+  let mdastRoot: Mdast.Root
+  try {
+    mdastRoot = fromMarkdown(markdown, {
+      extensions: syntaxExtensions,
+      mdastExtensions
+    })
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      throw new MarkdownParseError(`Error parsing markdown: ${e.message}`, e)
+    } else {
+      throw new MarkdownParseError(`Error parsing markdown: ${e}`, e)
+    }
+  }
+
+  return mdastRoot;
+}
+
 export const setNodeSelection$ = Signal<any>((r) => {});
 export const setNodeSelectionByKey$ = Signal<any>((r) => {});
 export const setCodeSelection$ = Signal<any>((r) => {});
 export const resetSelection$ = Action((r) => {});
 export const selectDocument$ = Action((r) => {});
 export const resetDocument$ = Action((r) => {});
+export const updateComparisonNodeKeys$ = Action((r) => {});
 export const creatorType$ = Cell<string>('', (r) => {});
-// export const evoyaAiParams$ = Cell<EvoyaAiPluginParams | null>(null, (r) => {});
+export const evoyaViewType$ = Cell<"default" | "approve">('default', (r) => {});
+export const evoyaAutoApprove$ = Cell<boolean>(false, (r) => {});
+export const comparisonNodeKeys$ = Cell<string[]>([], (r) => {});
 
 export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
   init: (realm, params) => {
     if (params?.setRealm) {
       params.setRealm(realm);
     }
-    realm.sub(realm.pipe(selectDocument$, withLatestFrom(activeEditor$)), ([value, activeEditor]) => {
+    realm.sub(realm.pipe(selectDocument$, withLatestFrom(rootEditor$)), ([_, rootEditor]) => {
       // activeEditor?.update(() => {
       //   $selectAll();
       // });
-      const selectionContext = {
-        lexical: null,
-        markdown: null,
-        selectionType: 'document' as 'document',
-        insertType: 'replace' as 'replace',
-      };
-      
-      if (params?.setSelectionContext) {
-        params.setSelectionContext(selectionContext);
-      }
+      if (rootEditor) {
+        const editorDom = rootEditor.getRootElement();
+        if (editorDom) {
+          const selectionContext: SelectionContext = {
+            lexical: null,
+            markdown: null,
+            rectangles: [{
+              top: editorDom.offsetTop,
+              left: editorDom.offsetLeft,
+              height: editorDom.offsetHeight,
+              width: editorDom.offsetWidth
+            }],
+            selectionType: 'document' as const,
+          };
+          
+          if (params?.setSelectionContext) {
+            params.setSelectionContext(selectionContext);
+          }
 
-      realm.pub(evoyaAiState$, selectionContext);
+          realm.pub(evoyaAiState$, selectionContext);
+        }
+      }
     });
 
-    realm.sub(realm.pipe(resetDocument$, withLatestFrom(activeEditor$)), ([value, activeEditor]) => {
-      activeEditor?.update(() => {
+    realm.sub(realm.pipe(resetDocument$, withLatestFrom(rootEditor$)), ([value, rootEditor]) => {
+      rootEditor?.update(() => {
         const root = $getRoot();
         root.clear();
       });
-    });  
-
-    // const updateScrollOffset = () => {
-    //   console.log(params?.containerRef?.current?.scrollTop);
-    //   realm.pub(scrollOffset$, params?.containerRef?.current?.scrollTop)
-    // }
-
-    // window.addEventListener('resize', updateScrollOffset)
-    // window.addEventListener('scroll', updateScrollOffset)
+    });
 
     realm.pubIn({
       [addActivePlugin$]: 'evoyaAi',
       [creatorType$]: params?.creatorType,
       [editorContainerRef$]: params?.containerRef,
-      // [evoyaAiParams$]: params,
-      // [addImportVisitor$]: MdastHeadingVisitor,
-      // [addLexicalNode$]: SelectionPlaceholderNode,
-      [addLexicalNode$]: MarkNode,
-      // [addExportVisitor$]: LexicalSelectionVisitor,
+      [addLexicalNode$]: [DifferenceNode],
+      [addExportVisitor$]: [LexicalDifferenceVisitor],
     });
-    // realm.pub(editorContainerRef$, params?.containerRef);
+
     realm.pub(addComposerChild$, TextSelection);
-    realm.pub(replaceSelectionContent$, null);
-    // realm.pub(addLexicalNode$, SelectionPlaceholderNode);
+    realm.pub(addComposerChild$, CreatorLock);
+
+    realm.sub(realm.pipe(updateComparisonNodeKeys$, withLatestFrom(rootEditor$)), ([__, rootEditor]) => {
+      if (rootEditor) {
+        const comparisonNodes = (Array.from(rootEditor.getRootElement()?.querySelectorAll('.comparison-actions, .difference-actions') ?? []) as HTMLDivElement[]).map((el) => el.dataset.nodeKey)
+        console.log('calc comparisonNodes', comparisonNodes)
+        realm.pub(comparisonNodeKeys$, comparisonNodes);
+      }
+    });
+    realm.sub(realm.pipe(comparisonNodeKeys$, withLatestFrom(evoyaAutoApprove$)), ([comparisonNodeKeys, evoyaAutoApprove]) => {
+      if (evoyaAutoApprove && comparisonNodeKeys.length > 0) {
+        comparisonNodeKeys.forEach((key) => realm.pub(approveDiffNode$, { key }));
+      } else {
+        realm.pub(evoyaViewType$, comparisonNodeKeys.length > 0 ? "approve" : "default");
+      }
+    });
     realm.sub(resetSelection$, () => {
       const selectionContext = {
         lexical: null,
         markdown: null,
         selectionType: null,
-        insertType: null
       };
       if (params?.setSelectionContext) {
         params.setSelectionContext(selectionContext);
       }
       realm.pub(evoyaAiState$, selectionContext);
     });
-    realm.sub(realm.pipe(realm.combine(currentSelection$, onWindowChange$), withLatestFrom(activeEditor$, readOnly$, inFocus$)), ([[selection], activeEditor, readOnly, inFocus]) => {
-      const nodeToMarkdown = (node: ElementNode) => {
-        return exportMarkdownFromLexical({
-          root: node,
-          visitors: realm.getValue(exportVisitors$),
-          jsxComponentDescriptors: realm.getValue(jsxComponentDescriptors$),
-          toMarkdownExtensions: realm.getValue(toMarkdownExtensions$),
-          toMarkdownOptions: realm.getValue(toMarkdownOptions$),
-          jsxIsAvailable: realm.getValue(jsxIsAvailable$)
-        });
-      };
+    // Monitor if it causes issues, but currently it fixes resetting selection of table cell content when clicking to the chat input, because root editor selection was still there
+    realm.sub(realm.pipe(realm.combine(activeEditor$, currentSelection$), withLatestFrom(rootEditor$)), ([[activeEditor], rootEditor]) => {
+      if (activeEditor && activeEditor._config.namespace === "TableCellEditor" && activeEditor.getRootElement() === document.activeElement && rootEditor) {
+        rootEditor.read(() => {
+          const selection = $getSelection();
+          if (selection) {
+            console.log('removing root selection')
+            rootEditor.update(() => {
+              $setSelection(null);
+              rootEditor.blur();
+            });
+          }
+        })
+      }
+    });
+    realm.sub(realm.pipe(realm.combine(currentSelection$, onWindowChange$), withLatestFrom(activeEditor$, rootEditor$, readOnly$, inFocus$, viewMode$)), ([[selection], activeEditor, rootEditor, readOnly, inFocus, viewMode]) => {
+      if (viewMode === 'source' || viewMode === 'diff') {
+        return ''
+      }
+
+      if (!activeEditor) {
+        return ''
+      }
+
+      // Get all export parameters from realm
+      const visitors = realm.getValue(exportVisitors$);
+      const toMarkdownExtensions = realm.getValue(toMarkdownExtensions$);
+      const toMarkdownOptions = realm.getValue(toMarkdownOptions$);
+      const jsxComponentDescriptors = realm.getValue(jsxComponentDescriptors$);
+      const jsxIsAvailable = realm.getValue(jsxIsAvailable$);
+
+      let scrollOffset = 0;
 
       if (activeEditor && selection && !readOnly && inFocus) {
-        if ($isRangeSelection(selection)) {
-          const startPoint = selection.isBackward() ? selection.focus : selection.anchor;
-          const endPoint = !selection.isBackward() ? selection.focus : selection.anchor;
-          const domRange = createDOMRange(activeEditor, startPoint.getNode(), startPoint.offset, endPoint.getNode(), endPoint.offset);
-          console.log(domRange);
-          const rects = createRectsFromDOMRange(activeEditor, domRange);
-          console.log(rects);
-          let scrollOffset = 0;
+        if (selection.anchor.is(selection.focus)) {
+          const selectionContext = {
+            lexical: null,
+            markdown: null,
+            selectionType: null,
+            insertType: null
+          };
+          
+          if (params?.setSelectionContext) {
+            params.setSelectionContext(selectionContext);
+          }
+          realm.pub(evoyaAiState$, selectionContext);
+        } else {
           if (params?.containerRef?.current) {
             scrollOffset = params?.containerRef.current.scrollTop;
           }
-          
-          const startEnd = selection.getStartEndPoints();
-          const restoredSelection = $createRangeSelection();
-          const startOffset = startEnd[0].offset;
-          const endOffset = startEnd[1].offset;
-          restoredSelection.anchor.set(startEnd[0].key, startOffset, 'text');
-          restoredSelection.focus.set(startEnd[1].key, endOffset, 'text');
-          console.log(restoredSelection);
+          if ($isRangeSelection(selection)) {
+            const startPoint = selection.anchor;
+            const endPoint = selection.focus;
 
-          if (selection.anchor.is(selection.focus)) {
-            const selectionContext = {
-              lexical: null,
-              markdown: null,
-              selectionType: null,
-              insertType: null
-            };
-            
-            if (params?.setSelectionContext) {
-              params.setSelectionContext(selectionContext);
-            }
+            console.log(startPoint, endPoint);
 
-            realm.pub(evoyaAiState$, selectionContext);
-          } else {
-            const selectedNodes = selection.getNodes();
-            console.log(selection);
-            console.log(selectedNodes);
+            if (startPoint.key !== endPoint.key) {
+              const topElements = selection.getNodes().reduce((acc: LexicalNode[], el: LexicalNode) => {
+                const topEl = el.getTopLevelElement();
+                const topElKey = topEl?.getKey();
+                if (topEl && topElKey && !acc.find((item) => item.getKey() === topElKey)) {
+                  return [...acc, topEl]
+                }
+                return acc;
+              }, [])
+              const nodeSelection = $createNodeSelection();
+              topElements.forEach((el) => nodeSelection.add(el.__key))
 
-            if (selectedNodes.length > 0) {
-              const anchorParent = selectedNodes[0].getParent();
-              const anchorParentKey = selectedNodes[0].getParent().getKey();
-              console.log(selectedNodes[0].getParent());
+              const nodeRects = topElements.map((node) => {
+                const domNode = activeEditor.getElementByKey(node.getKey());
+                let leftOffset = 0;
+                let topOffset = 0;
 
-              if (selectedNodes.every((sn: LexicalNode) => sn.getType() === 'text' && sn.__parent === anchorParentKey)) {
-                if (anchorParent?.getType() === 'listitem' && startPoint.offset === 0 && $isAtNodeEnd(endPoint)) {
-                  const selMd = nodeToMarkdown(anchorParent);
-                  console.log(selMd);
+                if (domNode) {
+                  if (activeEditor._config.namespace === "TableCellEditor") {
+                    const tdElement = activeEditor._rootElement?.parentElement;
+                    leftOffset += (tdElement?.offsetLeft ?? 0);
+                    topOffset += (tdElement?.offsetTop ?? 0);
 
-                  const selectionContext = {
-                    lexical: restoredSelection,
-                    markdown: selMd,
-                    selectionType: 'range' as 'range',
-                    insertType: 'replace' as 'replace',
-                    rectangles: rects,
-                    scrollOffset
-                  };
-                  
-                  if (params?.setSelectionContext) {
-                    params.setSelectionContext(selectionContext);
+                    const tableElement: HTMLDivElement | null | undefined = tdElement?.closest(".evoya-table-wrapper");
+                    leftOffset += (tableElement?.offsetLeft ?? 0);
+                    topOffset += (tableElement?.offsetTop ?? 0);
                   }
 
-                  realm.pub(evoyaAiState$, selectionContext);
-                } else {
-                  // activeEditor.update(() => {
-                    // const extractedSelectionNodes = selection.extract();
-                    // const extractedSelectionNodes = restoredSelection.extract();
-                    const selMd = restoredSelection.getTextContent();
-
-
-                    // const extractedNodes = extractedSelectionNodes.map(en => {
-                    //   const newTextNode = new TextNode(en.__text);
-                    //   newTextNode.__style = en.__style;
-                    //   newTextNode.__format = en.__format;
-                    //   return newTextNode;
-                    // });
-                    // const elemNode = new ParagraphNode();
-                    // elemNode.append(...extractedNodes);
-                    // const selMd = nodeToMarkdown(elemNode);
-                    // console.log(selMd);
-
-                    // const el = $createParagraphNode();
-                    // el.splice(0, 0, $generateNodesFromSerializedNodes($generateJSONFromSelectedNodes(activeEditor, $getSelection()).nodes));
-                    // const selMd = nodeToMarkdown(el);
-                    // const selMd = $convertToMarkdownString(TRANSFORMERS, el);;
-                    // const selMd = exportMarkdownFromLexical({
-                    //   root: el,
-                    //   visitors: realm.getValue(exportVisitors$),
-                    //   jsxComponentDescriptors: realm.getValue(jsxComponentDescriptors$),
-                    //   toMarkdownExtensions: realm.getValue(toMarkdownExtensions$),
-                    //   toMarkdownOptions: realm.getValue(toMarkdownOptions$),
-                    //   jsxIsAvailable: realm.getValue(jsxIsAvailable$)
-                    // });
-                    
-                    // const selMd = selectedNodes.map((textNode) => nodeToMarkdown(textNode)).join('');
-
-                    // console.log(selMd);
-
-                    const selectionContext = {
-                      lexical: restoredSelection,
-                      markdown: selMd,
-                      selectionType: 'range' as 'range',
-                      insertType: 'replace' as 'replace',
-                      rectangles: rects,
-                      scrollOffset
-                    };
-                    
-                    if (params?.setSelectionContext) {
-                      params.setSelectionContext(selectionContext);
-                    }
-
-                    realm.pub(evoyaAiState$, selectionContext);
-                  // });
+                  return {
+                    height: domNode.offsetHeight,
+                    width: domNode.offsetWidth,
+                    top: domNode.offsetTop + topOffset,
+                    left: domNode.offsetLeft + leftOffset
+                  }
                 }
-              } else if (selectedNodes.length === 1) {
-                const selMd = nodeToMarkdown(selectedNodes[0]);
-                console.log(selMd);
+
+                return {
+                  height: 0,
+                  width: 0,
+                  top: 0,
+                  left: 0
+                }
+              });
+
+              if (params?.setSelectionContext) {
+                const markdown = getSelectionAsMarkdown(activeEditor, nodeSelection, {
+                  visitors,
+                  toMarkdownExtensions,
+                  toMarkdownOptions,
+                  jsxComponentDescriptors,
+                  jsxIsAvailable
+                });
 
                 const selectionContext = {
-                  lexical: restoredSelection,
-                  markdown: selMd,
-                  selectionType: 'range' as 'range',
-                  insertType: 'replace' as 'replace',
-                  rectangles: rects,
-                  scrollOffset
+                  rectangles: nodeRects,
+                  markdown,
+                  lexical: nodeSelection,
+                  selectionType: 'node' as const,
+                  scrollOffset,
                 };
-                
-                if (params?.setSelectionContext) {
-                  params.setSelectionContext(selectionContext);
-                }
-
+                params.setSelectionContext(selectionContext);
                 realm.pub(evoyaAiState$, selectionContext);
-              } else {
-                /*const exportPoint = {
-                  __key: 'root',
-                  __type: 'root',
-                  children: [] as LexicalNode[],
-                  append(node: LexicalNode) {
-                    this.children.push(node)
-                  },
-                  getType() {
-                    // return lexicalSelection.getNodes()[0].getType();
-                    return 'root';
-                  }
-                }*/
-                const extractedSelectionNodes = selection.extract();
-                console.log(extractedSelectionNodes);
-                console.log(selection.getNodes());
-                let nodeFilter = notInline;
-                if (selectedNodes.some($isListItemNode)) {
-                  nodeFilter = notInlineExtended;
-                }
-                const filteredNodes = selectedNodes.filter(nodeFilter);
-                const selMd = filteredNodes.map((node) => nodeToMarkdown(node)).join('');
-                console.log(selMd);
-                // const newRects = filteredNodes.map((node) => {
-                //   const domElement = activeEditor.getElementByKey(node.getKey());
-                //   let newRect;
-                //   if (domElement) {
-                //     newRect = domElement.getBoundingClientRect()
-                //   }
-                //   return newRect;
-                // });
-                const newRects = filteredNodes
-                  .map((node) => activeEditor.getElementByKey(node.getKey()))
-                  .filter((domElement) => !!domElement)
-                  .map((domElement) => domElement.getBoundingClientRect());
+              }
+            } else {
+              const topLevelNode = startPoint.getNode().getTopLevelElement();
+              const nodeSelection = $createNodeSelection();
+              nodeSelection.add(topLevelNode.__key)
+              const domElement = activeEditor.getElementByKey(topLevelNode.getKey());
+              const rects = [];
+              if (domElement) {
+                let leftOffset = 0;
+                let topOffset = 0;
 
-                const selectionContext = {
-                  lexical: restoredSelection,
-                  markdown: selMd,
-                  selectionType: 'range' as const,
-                  insertType: 'replace' as const,
-                  rectangles: newRects,
-                  scrollOffset
-                };
-                
+                if (activeEditor._config.namespace === "TableCellEditor") {
+                  const tdElement = activeEditor._rootElement?.parentElement;
+                  leftOffset += (tdElement?.offsetLeft ?? 0);
+                  topOffset += (tdElement?.offsetTop ?? 0);
+
+                  const tableElement: HTMLDivElement | null | undefined = tdElement?.closest(".evoya-table-wrapper");
+                  leftOffset += (tableElement?.offsetLeft ?? 0);
+                  topOffset += (tableElement?.offsetTop ?? 0);
+                }
+
+                rects.push({
+                  height: domElement?.offsetHeight,
+                  width: domElement?.offsetWidth,
+                  top: domElement?.offsetTop + topOffset,
+                  left: domElement?.offsetLeft + leftOffset
+                });
+
                 if (params?.setSelectionContext) {
-                  params.setSelectionContext(selectionContext);
-                }
-
-                realm.pub(evoyaAiState$, selectionContext);
-
-
-                // exportPoint.children = 
-
-                // el.splice(0, 0, $generateNodesFromSerializedNodes($generateJSONFromSelectedNodes(activeEditor, $getSelection()).nodes));
-                // $generateNodesFromSerializedNodes($generateJSONFromSelectedNodes(activeEditor, selection).nodes).forEach((node) => exportPoint.append(node));
-                // const el = new RootNode();
-                // el.splice(0, 0, $generateNodesFromSerializedNodes($generateJSONFromSelectedNodes(activeEditor, $getSelection()).nodes));
-                /*activeEditor.update(() => {
-                  // const el = new RootNode();
-                  // el.splice(0, 0, $generateNodesFromSerializedNodes($generateJSONFromSelectedNodes(activeEditor, $getSelection()).nodes));
-                  // const selMd = nodeToMarkdown(el);
-                  // console.log(selMd);
-                  const exportNodes = $generateNodesFromSerializedNodes($generateJSONFromSelectedNodes(activeEditor, selection).nodes);
-                  console.log(exportNodes);
-                  const selMd = exportNodes.map((node) => nodeToMarkdown(node)).join('');
-                  // const selMd = nodeToMarkdown(exportPoint);
-                  console.log(selMd);
-                  // console.log($generateNodesFromSerializedNodes($generateJSONFromSelectedNodes(activeEditor, selection).nodes));
-
-                  const selectionContext = {
-                    lexical: restoredSelection,
-                    markdown: selMd,
-                    selectionType: 'range' as 'range',
-                    insertType: 'replace' as 'replace',
-                    rectangles: rects,
-                    scrollOffset
-                  };
-                  
-                  if (params?.setSelectionContext) {
-                    params.setSelectionContext(selectionContext);
-                  }
-
-                  realm.pub(evoyaAiState$, selectionContext);
-                });*/
-                // exportPoint.children = $generateNodesFromSerializedNodes($generateJSONFromSelectedNodes(activeEditor, $getSelection()).nodes);
-                // const selMd = nodeToMarkdown(exportPoint);
-                // console.log(selMd);
-
-                /*const lexicalTypes = ['text', 'paragraph', 'heading', 'listitem', 'list', 'table', 'image', 'math', 'inlineMath'];
-                if (selectedNodes.every((sn: LexicalNode) => lexicalTypes.includes(sn.getType()))) {
-                  activeEditor.update(() => {
-                    const el = $createParagraphNode();
-                    el.splice(0, 0, $generateNodesFromSerializedNodes($generateJSONFromSelectedNodes(activeEditor, $getSelection()).nodes));
-                    const selMd = nodeToMarkdown(el);
-                    console.log(selMd);
-
-                    const selectionContext = {
-                      lexical: restoredSelection,
-                      markdown: selMd,
-                      selectionType: 'range' as 'range',
-                      insertType: 'replace' as 'replace',
-                      rectangles: rects,
-                      scrollOffset
-                    };
-                    
-                    if (params?.setSelectionContext) {
-                      params.setSelectionContext(selectionContext);
-                    }
-
-                    realm.pub(evoyaAiState$, selectionContext);
+                  const markdown = getSelectionAsMarkdown(activeEditor, nodeSelection, {
+                    visitors,
+                    toMarkdownExtensions,
+                    toMarkdownOptions,
+                    jsxComponentDescriptors,
+                    jsxIsAvailable
                   });
-                } else if (selectedNodes.some((sn: LexicalNode) => ['listitem', 'list'].includes(sn.getType()))) {
-                  // handle list selection ???
-                }*/
+
+                  const selectionContext = {
+                    rectangles: rects,
+                    markdown,
+                    lexical: nodeSelection,
+                    selectionType: 'node' as const,
+                    scrollOffset,
+                  };
+                  params.setSelectionContext(selectionContext);
+                  realm.pub(evoyaAiState$, selectionContext);
+                }
               }
             }
+          } else {
+            console.log('unhandled selection');
           }
-        } else {
-          console.log('unhandled selection');
         }
+      } else {
+        if (params?.setSelectionContext) {
+          params.setSelectionContext(selectionContextDefaultData);
+        }
+        realm.pub(evoyaAiState$, selectionContextDefaultData);
       }
     });
     realm.sub(realm.pipe(setNodeSelectionByKey$, withLatestFrom(rootEditor$, activeEditor$)), ([value, rootEditor, activeEditor]) => {
-      rootEditor?.update(() => {
-        const selection = $createNodeSelection();
-        selection.add(value);
-        realm.pub(setNodeSelection$, selection.getNodes()[0]);
+      activeEditor?.read(() => {
+        realm.pub(setNodeSelection$, $getNodeByKey(value));
       });
     });
     realm.sub(realm.pipe(setNodeSelection$, withLatestFrom(rootEditor$, activeEditor$)), ([value, rootEditor, activeEditor]) => {
-      const selection = $createNodeSelection();
-      selection.add(value.__key);
-
-      let mdExportTarget = value;
-      if ($isImageNode(value)) {
-        mdExportTarget = value.getParent();
-      }
-
-      const selMd = exportMarkdownFromLexical({
-        root: mdExportTarget,
-        visitors: realm.getValue(exportVisitors$),
-        jsxComponentDescriptors: realm.getValue(jsxComponentDescriptors$),
-        toMarkdownExtensions: realm.getValue(toMarkdownExtensions$),
-        toMarkdownOptions: realm.getValue(toMarkdownOptions$),
-        jsxIsAvailable: realm.getValue(jsxIsAvailable$)
-      });
-      console.log(selMd);
-
-      let scrollOffset = 0;
-      if (params?.containerRef?.current) {
-        scrollOffset = params?.containerRef.current.scrollTop;
-      }
-      
-      rootEditor?.update(() => {
-        const domElement = rootEditor.getElementByKey(value.getKey());
-        let newRect;
+      if (activeEditor) {
+        const nodeSelection = $createNodeSelection();
+        nodeSelection.add(value.getKey());
+        let domElement = activeEditor.getElementByKey(value.getKey());
+        const rects = [];
         if (domElement) {
-          newRect = domElement.getBoundingClientRect()
+          if ($isImageNode(value)) {
+            const wrapperChild = domElement.firstElementChild;
+            if (wrapperChild) {
+              domElement = wrapperChild as HTMLDivElement;
+            }
+          }
+          rects.push({
+            height: domElement.offsetHeight,
+            width: domElement.offsetWidth,
+            top: domElement.offsetTop,
+            left: domElement.offsetLeft
+          });
         }
-        console.log(newRect);
-
-        const selectionContext = {
-          lexical: selection,
-          markdown: selMd,
-          selectionType: 'node' as 'node',
-          insertType: 'replace' as 'replace',
-          rect: newRect,
-          scrollOffset
-        };
-        
         if (params?.setSelectionContext) {
+          const visitors = realm.getValue(exportVisitors$);
+          const toMarkdownExtensions = realm.getValue(toMarkdownExtensions$);
+          const toMarkdownOptions = realm.getValue(toMarkdownOptions$);
+          const jsxComponentDescriptors = realm.getValue(jsxComponentDescriptors$);
+          const jsxIsAvailable = realm.getValue(jsxIsAvailable$);
+
+          const markdown = getSelectionAsMarkdown(activeEditor, nodeSelection, {
+            visitors,
+            toMarkdownExtensions,
+            toMarkdownOptions,
+            jsxComponentDescriptors,
+            jsxIsAvailable
+          });
+
+          console.log(nodeSelection)
+
+          const selectionContext = {
+            rectangles: rects,
+            markdown,
+            lexical: nodeSelection,
+            selectionType: 'node' as const,
+            scrollOffset: 0,
+          };
           params.setSelectionContext(selectionContext);
+          realm.pubIn({
+            [evoyaAiState$]: selectionContext,
+            [inFocus$]: false
+          });
         }
-  
-        realm.pubIn({
-          [evoyaAiState$]: selectionContext,
-          [inFocus$]: false
-        });
-      });
+      }
     });
     realm.sub(realm.pipe(setCodeSelection$, withLatestFrom(rootEditor$, activeEditor$)), ([value, rootEditor, activeEditor]) => {
-      // rootEditor?.update(() => {
-        const selection = $createNodeSelection();
-        selection.add(value.nodeKey);
+      const selection = $createNodeSelection();
+      selection.add(value.nodeKey);
 
-        const selectionContext = {
-          lexical: selection,
-          markdown: null,
-          selectionType: 'codeblock' as 'codeblock',
-          insertType: 'replace' as 'replace',
-          code: value.code,
-          selectedCode: value.selection,
-          language: value.language,
-        };
-        // const selectionContext = {
-        //   lexical: selection,
-        //   code: value.code,
-        //   selectedCode: value.selection
-        // };
-        
-        if (params?.setSelectionContext) {
-          params.setSelectionContext(selectionContext);
-        }
+      const selectionContext = {
+        lexical: selection,
+        markdown: null,
+        selectionType: 'codeblock' as const,
+        code: value.code,
+        selectedCode: value.selection,
+        language: value.language,
+      };
+      
+      if (params?.setSelectionContext) {
+        params.setSelectionContext(selectionContext);
+      }
 
-        realm.pub(evoyaAiState$, selectionContext);
-      // });
+      realm.pub(evoyaAiState$, selectionContext);
     });
   },
   update(realm, params) {

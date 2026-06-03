@@ -1,9 +1,10 @@
-import createCache from '@emotion/cache';
-import { CacheProvider } from '@emotion/react';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
 import Editor from './src/components/markdownEditorStandalone/index';
+
+import sonnercss from '../copilot/sonner.css?inline';
+import tailwindcss from '../copilot/src/index.css?inline';
 
 let root: ReactDOM.Root | null = null;
 
@@ -26,22 +27,21 @@ window.mountMDXEditor = ({ selector, onChange }) => {
 
   const container = document.createElement('div');
   container.id = id;
-  
+
+  const tailwindStyles = document.createElement('style');
+  tailwindStyles.textContent = tailwindcss.toString();
+  container.appendChild(tailwindStyles);
+
+  // const sonnerStyles = document.createElement('style');
+  // sonnerStyles.textContent = sonnercss.toString();
+  // container.appendChild(sonnerStyles);
 
   textarea.parentNode?.insertBefore(container, textarea);
-
-  const cache = createCache({
-    key: 'css',
-    prepend: true,
-    container: container
-  });
 
   root = ReactDOM.createRoot(container);
   root.render(
     <React.StrictMode>
-      <CacheProvider value={cache}>
-        <Editor content={content} onChange={onChange} />
-      </CacheProvider>
+      <Editor content={content} onChange={onChange} />
     </React.StrictMode>
   );
 };

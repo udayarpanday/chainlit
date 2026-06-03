@@ -7,19 +7,25 @@ import {
 export interface EvoyaCreatorConfig {
   enabled: boolean;
   container: HTMLElement;
+  theme?: 'light' | 'dark';
+  apiBaseUrl?: string;
+  csrfToken?: string;
+  workspaceId?: string;
+  isSuperUser?: boolean;
 }
 
 export type SelectionContext = {
   lexical: RangeSelection | NodeSelection | null;
   markdown: string | null;
   selectionType: 'range' | 'node' | 'caret' | 'document' | 'codeblock' | null;
-  insertType: 'after' | 'before' | 'replace' | null;
-  rectangles?: Array<DOMRect>;
+  // rectangles?: Array<DOMRect>;
+  rectangles?: Array<{ height: number; width: number; top: number; left: number; }>;
   rect?: any;
   scrollOffset?: number;
   code?: string;
   selectedCode?: string;
   language?: string;
+  topLevelElement?: LexicalNode;
 }
 
 export type CodeSelectionContext = {
@@ -32,7 +38,6 @@ export const selectionContextDefaultData: SelectionContext = {
   lexical: null,
   markdown: null,
   selectionType: null,
-  insertType: null
 }
 
 export interface ImportPoint {

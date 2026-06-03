@@ -18,6 +18,7 @@ let root: ReactDOM.Root | null = null;
 declare global {
   interface Window {
     cl_shadowRootElement: HTMLDivElement;
+    cl_shadowRootElement_container: HTMLDivElement;
     theme?: {
       light: Record<string, string>;
       dark: Record<string, string>;
@@ -51,6 +52,7 @@ window.mountChainlitWidget = (config: IWidgetConfig, evoya: EvoyaConfig) => {
   }
 
   window.cl_shadowRootElement = shadowRootElement;
+  window.cl_shadowRootElement_container = container;
 
   const resetStyles = document.createElement('style');
   resetStyles.textContent = `

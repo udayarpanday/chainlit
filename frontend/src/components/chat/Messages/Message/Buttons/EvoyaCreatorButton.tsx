@@ -5,7 +5,7 @@ import {
   type IStep,
 } from '@chainlit/react-client';
 
-import { FilePlus  } from 'lucide-react';
+import { PencilLine  } from 'lucide-react';
 
 import { useTranslation } from '@/components/i18n/Translator';
 import { Button } from '@/components/ui/button';
@@ -65,7 +65,7 @@ export function EvoyaCreatorButton({ message }: Props) {
               size="icon"
               className={`text-muted-foreground`}
             >
-              <FilePlus className="h-4 w-4" />
+              <PencilLine className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>

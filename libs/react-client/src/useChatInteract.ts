@@ -17,11 +17,12 @@ import {
   threadIdToResumeState,
   tokenCountState
 } from 'src/state';
-import { IFileRef, IStep } from 'src/types';
+import { IFileRef, IStep, IEvoyaFileRef } from 'src/types';
 import { addMessage } from 'src/utils/message';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ChainlitContext } from './context';
+import { markTaskStopped, resetTaskLoading } from './taskLoading';
 
 type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
@@ -49,6 +50,8 @@ const useChatInteract = () => {
   const clear = useCallback(() => {
     session?.socket.emit('clear_session');
     session?.socket.disconnect();
+    resetTaskLoading();
+    setLoading(false);
     setIdToResume(undefined);
     resetSessionId();
     setFirstUserInteraction(undefined);
@@ -66,7 +69,8 @@ const useChatInteract = () => {
   const sendMessage = useCallback(
     (
       message: PartialBy<IStep, 'createdAt' | 'id'>,
-      fileReferences: IFileRef[] = []
+      fileReferences: IFileRef[] = [],
+      evoyaAttachments: IEvoyaFileRef[] = [],
     ) => {
       if (!message.id) {
         message.id = uuidv4();
@@ -76,7 +80,7 @@ const useChatInteract = () => {
       }
       setMessages((oldMessages) => addMessage(oldMessages, message as IStep));
 
-      session?.socket.emit('client_message', { message, fileReferences });
+      session?.socket.emit('client_message', { message, fileReferences, evoyaAttachments });
     },
     [session?.socket]
   );
@@ -152,7 +156,7 @@ const useChatInteract = () => {
       })
     );
 
-    setLoading(false);
+    setLoading(markTaskStopped());
 
     session?.socket.emit('stop');
   }, [session?.socket]);

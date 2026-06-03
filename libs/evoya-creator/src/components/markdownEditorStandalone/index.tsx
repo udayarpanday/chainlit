@@ -3,8 +3,6 @@ import {
   useRef,
 } from 'react';
 
-import Box from '@mui/material/Box';
-
 import {
   MDXEditor,
   diffSourcePlugin,
@@ -46,56 +44,107 @@ import {
 
 import EditorToolbar from './toolbar';
 
+import {
+  SimpleMermaidCodeEditorDescriptor,
+  SimpleVegaLiteCodeEditorDescriptor,
+} from '../markdownEditor/plugins/extend/codeblocks';
+
 export default function MDXEditorWrapper({ content, onChange }: { content: string; onChange: (value: string) => void; }) {
   const [mdContent, setMdContent] = useState(content);
   const mdxEditorRef = useRef<MDXEditorMethods>(null);
   const containerRef = useRef<HTMLElement>(null);
 
   return (
-    <Box
-      ref={containerRef}
-      sx={{
+    <div
+      style={{
         overflow: 'auto',
         height: '100%',
         cursor: 'text',
         minHeight: '300px',
+        maxHeight: '600px',
       }}
+      ref={containerRef}
       onClick={() => mdxEditorRef.current?.focus()}
     >
       <style type="text/css">
         {mdxCss}
         {mdxCustomCss}
       </style>
-      <MDXEditor
-        className="evoya-mdx-editor"
-        ref={mdxEditorRef}
-        markdown={content}
-        iconComponentFor={getSvgIcon}
-        autoFocus
-        suppressHtmlProcessing
-        plugins={[
-          ...MDX_PLUGINS,
-          evoyaMathPlugin(),
-          evoyaMathDialogPlugin(),
-          diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: content }),
-        ]}
-        onChange={(md) => {
-          setMdContent(md);
-          onChange(md);
-        }}
-      />
-    </Box>
+      <div onClick={(e) => {e.preventDefault(); e.stopPropagation()}}>
+        <MDXEditor
+          className="evoya-mdx-editor"
+          ref={mdxEditorRef}
+          markdown={content}
+          iconComponentFor={getSvgIcon}
+          overlayContainer={containerRef.current}
+          autoFocus
+          suppressHtmlProcessing
+          plugins={[
+              toolbarPlugin({ toolbarContents: () => <EditorToolbar /> }),
+              ...MDX_PLUGINS,
+              imagePlugin(),
+              evoyaMathPlugin(),
+              evoyaMathDialogPlugin(),
+              diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: content }),
+          ]}
+          // plugins={[
+          //   ...MDX_PLUGINS,
+          //   evoyaMathPlugin(),
+          //   evoyaMathDialogPlugin(),
+          //   diffSourcePlugin({ viewMode: 'rich-text', diffMarkdown: content }),
+          // ]}
+          onChange={(md) => {
+            setMdContent(md);
+            onChange(md);
+          }}
+        />
+      </div>
+    </div>
   );
 }
 
 export const MDX_PLUGINS = [
-  toolbarPlugin({ toolbarContents: () => <EditorToolbar /> }),
   listsPlugin(),
+  quotePlugin(),
   headingsPlugin(),
   linkPlugin(),
   linkDialogPlugin(),
   tablePlugin(),
   thematicBreakPlugin(),
   // frontmatterPlugin(),
+  codeBlockPlugin({
+    codeBlockEditorDescriptors: [
+      SimpleMermaidCodeEditorDescriptor,
+      SimpleVegaLiteCodeEditorDescriptor,
+      { priority: -10, match: (_) => true, Editor: CodeMirrorEditor }
+    ]
+  }),
+  // sandpackPlugin({ sandpackConfig: virtuosoSampleSandpackConfig }),
+  codeMirrorPlugin({
+    codeBlockLanguages: {
+      js: 'JavaScript',
+      json: 'JSON',
+      vega: 'Vega',
+      mermaid: 'Mermaid',
+      mmd: 'Mermaid',
+      markdown: 'Markdown',
+      css: 'CSS',
+      txt: 'Plain Text',
+      plaintext: 'Plain Text',
+      tsx: 'TypeScript',
+      '': 'Unspecified'
+    }
+  }),
   markdownShortcutPlugin(),
 ];
+// export const MDX_PLUGINS = [
+//   toolbarPlugin({ toolbarContents: () => <EditorToolbar /> }),
+//   listsPlugin(),
+//   headingsPlugin(),
+//   linkPlugin(),
+//   linkDialogPlugin(),
+//   tablePlugin(),
+//   thematicBreakPlugin(),
+//   // frontmatterPlugin(),
+//   markdownShortcutPlugin(),
+// ];

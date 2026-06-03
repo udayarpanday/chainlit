@@ -3,25 +3,37 @@ import {
   useMemo,
 } from 'react';
 
-import Box from '@mui/material/Box';
-
 import useEvoyaCreator from '@/hooks/useEvoyaCreator';
 import MarkdownEditor from './markdownEditor';
 
 import CreatorHeader from './CreatorHeader';
-import { Height } from '@mui/icons-material';
+
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@chainlit/app/src/components/ui/resizable";
+import {
+  Dialog,
+  DialogContent,
+} from '@chainlit/app/src/components/ui/dialog';
+import CreatorChat from './CreatorChat';
 
 export default function CreatorFrame() {
   const {
     active,
+    closeCreatorOverlay,
     creatorType,
-    openCreatorWithContent
+    openCreatorWithContent,
+    openCreatorWithFile,
   } = useEvoyaCreator();
 
   useEffect(() => {
     // @ts-expect-error is not a valid prop
     window.openEvoyaCreator = openCreatorWithContent;
-  }, [openCreatorWithContent]);
+    // @ts-expect-error is not a valid prop
+    window.openEvoyaCreatorWithFile = openCreatorWithFile;
+  }, [openCreatorWithContent, openCreatorWithFile]);
 
   const CreatorRenderer = useMemo(() => {
     switch(creatorType.toLowerCase()) {
@@ -33,21 +45,36 @@ export default function CreatorFrame() {
     }
   }, [creatorType]);
 
-  if (!active) {
-    return null;
-  }
-
   return (
-    <Box
-      sx={{
-        overflow: 'hidden',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column'
-      }}
+    <Dialog
+      open={active}
+      onOpenChange={() => closeCreatorOverlay()}
     >
-      <CreatorHeader />
-      {CreatorRenderer}
-    </Box>
-  );
+      <DialogContent
+        className="z-[9999] h-full p-0 overflow-hidden border-0"
+        style={{
+          maxHeight: 'calc(100% - 2rem)',
+          maxWidth: 'calc(100% - 2rem)',
+        }}
+        // @ts-expect-error is not a valid prop
+        container={window.mdx_shadowRootElement}
+      >
+        <ResizablePanelGroup
+          direction="horizontal"
+          autoSaveId="creator-panel-sizes"
+        >
+          <ResizablePanel defaultValue={50}>
+            <CreatorChat />
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultValue={50}>
+            <div className="overflow-hidden h-full flex flex-col">
+              <CreatorHeader />
+              {CreatorRenderer}
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </DialogContent>
+    </Dialog>
+  )
 }

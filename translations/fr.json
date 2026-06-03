@@ -84,6 +84,10 @@
                     "error": "Une erreur s'est produite"
                 }
             },
+            "project": {
+                "title": "Projets",
+                "empty": "Aucun projet trouvé"
+            },
             "tasklist": {
                 "TaskList": {
                     "title": "🗒️ Liste des Tâches",

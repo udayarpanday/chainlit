@@ -106,3 +106,40 @@ export const VegaLiteCodeEditorDescriptor: CodeBlockEditorDescriptor = {
     );
   }
 }
+
+export const SimpleVegaLiteCodeEditorDescriptor: CodeBlockEditorDescriptor = {
+  match: (language, _meta) => {
+    return language === 'vega' || language == 'vega-lite'
+  },
+  priority: 0,
+  Editor: (props) => {
+    const iconComponentFor = useCellValue(iconComponentFor$);
+    const [previewMode, setPerviewMode] = useState(true);
+
+    return (
+      <div
+        onKeyDown={(e) => {
+          e.nativeEvent.stopImmediatePropagation()
+        }}
+      >
+        <div className="mermaidBlockWrapper">
+          <div className="mermaidBlockAction" onClick={() => setPerviewMode(!previewMode)}>
+            {previewMode ? iconComponentFor('code') : iconComponentFor('eye')}
+          </div>
+          {!previewMode &&
+            <div className="mermaidEditorWrapper">
+              <CodeMirrorEditor {...props} />
+            </div>
+          }
+          {previewMode &&
+            <div className="mermaidPreviewWrapper">
+              <div>
+                <VegaPreview code={props.code} />
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    );
+  }
+}

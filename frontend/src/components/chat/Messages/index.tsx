@@ -45,6 +45,22 @@ const checkToolStep = (step: IStep): boolean => {
   return step.steps?.some((s) => s.type === 'tool' && s.end == null || checkToolStep(s)) || false;
 };
 
+const collectToolCallSteps = (steps: IStep[]): IStep[] => {
+  const toolSteps: IStep[] = [];
+
+  for (const step of steps) {
+    if (step.name === 'tools' || step.type === 'tool') {
+      toolSteps.push(step);
+    }
+
+    if (step.steps?.length) {
+      toolSteps.push(...collectToolCallSteps(step.steps));
+    }
+  }
+
+  return toolSteps;
+};
+
 const Messages = memo(
   ({ messages, elements, actions, indent, isRunning, scorableRun }: Props) => {
     const { evoya } = useContext(WidgetContext);
@@ -121,14 +137,10 @@ const Messages = memo(
             const isScorable =
               isRunLastAssistantMessage || isLastAssistantMessage;
 
-            const toolCalls = [];
+            const toolCalls: IStep[] = [];
 
             if (indent === 0 && m.type === 'assistant_message') {
-              const documentProcessor = messages.find((m) => m.name.includes('DocumentProcessor') && m.type === 'tool');
-              if (documentProcessor) toolCalls.push(documentProcessor);
-
-              const langGraph = messages.find((m) => m.name === 'LangGraph' && m.type === 'run');
-              toolCalls.push(...(langGraph?.steps ?? []));
+              toolCalls.push(...collectToolCallSteps(messages));
             }
 
             return (

@@ -30,11 +30,11 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { container?: Element | DocumentFragment}
+>(({ className, container, children, ...props }, ref) => (
   <DialogPortal
     container={
-      window.cl_shadowRootElement ? window.cl_shadowRootElement : undefined
+      container ?? (window.cl_shadowRootElement ? window.cl_shadowRootElement : undefined)
     }
   >
     <DialogOverlay />

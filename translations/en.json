@@ -84,6 +84,10 @@
                     "error": "An Error occurred"
                 }
             },
+            "project": {
+                "title": "Projects",
+                "empty": "No projects found"
+            },
             "tasklist": {
                 "TaskList": {
                     "title": "\ud83d\uddd2\ufe0f Task List",
@@ -544,6 +548,128 @@
         "description": "To use this app, the following API keys are required. The keys are stored on your device's local storage.",
         "success": {
             "saved": "Saved successfully"
+        }
+    },
+    "evoyaFiles": {
+        "actions": {
+            "attachments": {
+                "label": "Cloud Storage",
+                "description": "Platform, OneDrive, etc.",
+                "title": "Attach Files"
+            },
+            "open": {
+                "title": "Open file"
+            },
+            "upload": {
+                "title": "Upload",
+                "label": "Upload from Computer",
+                "description": "Browse local files"
+            },
+            "create_folder": {
+                "title": "Create Folder"
+            },
+            "clear": {
+                "label": "Clear"
+            },
+            "download": {
+                "label": "Download"
+            },
+            "rename": {
+                "label": "Rename",
+                "title": "Rename File",
+                "description": "New Name"
+            },
+            "move": {
+                "label": "Move to",
+                "title": "Move File",
+                "description": "Select destination"
+            },
+            "rename_folder": {
+                "label": "Rename",
+                "title": "Rename Folder",
+                "description": "New Name"
+            },
+            "move_folder": {
+                "label": "Move to",
+                "title": "Move Folder",
+                "description": "Select destination"
+            },
+            "delete": {
+                "label": "Delete",
+                "title": "Delete File",
+                "description": "Are you sure you want to delete this file?"
+            },
+            "delete_folder": {
+                "label": "Delete",
+                "title": "Delete Folder",
+                "description": "Are you sure you want to delete this folder?"
+            },
+            "delete_bulk": {
+                "label": "Delete",
+                "title": "Delete Items",
+                "description": "Are you sure you want to delete those items?"
+            }
+        },
+        "common": {
+            "selected": "selected"
+        },
+        "headers": {
+            "name": "Name",
+            "owner": "Owner",
+            "modified": "Modified",
+            "size": "Size"
+        }
+    },
+    "evoyaCreator": {
+        "toolbar": {
+            "newDocument": {
+                "label": "Start a new Document",
+                "description": "Clear the editor and begin fresh"
+            },
+            "selectAll": {
+                "label": "Select all text",
+                "description": "AI will edit the entire document, not just a part"
+            },
+            "downloadText": {
+                "label": "Download as Text (.txt)",
+                "description": "Plain text, no formatting"
+            },
+            "downloadMd": {
+                "label": "Download as Markdown (.md)",
+                "description": "Text with Markdown formatting"
+            },
+            "diffSource": {
+                "label": "Save as compare baseline",
+                "description": "Saves the current content from Edit view as the reference version. Future edits are compared to it in Compare view."
+            },
+            "editMode": {
+                "label": "Edit",
+                "description": "Write and format your document"
+            },
+            "compareMode": {
+                "label": "Compare",
+                "description": "See changes vs. saved baseline"
+            },
+            "sourceMode": {
+                "label": "Source view",
+                "description": "Advanced — view raw Markdown"
+            },
+            "advancedView": {
+                "label": "Advanced View"
+            },
+            "detailedView": {
+                "label": "Detailed"
+            },
+            "save": {
+                "label": "Speichern",
+                "input": "File name"
+            },
+            "open": {
+                "label": "Open file..."
+            }
+        },
+        "action": {
+            "cancel": "Cancel"
         }
     },
     "agentList": {

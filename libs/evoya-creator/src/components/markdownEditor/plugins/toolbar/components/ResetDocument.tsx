@@ -13,7 +13,13 @@ import styles from '@mdxeditor/editor/dist/styles/ui.module.css.js';
 
 import { resetDocument$ } from '../../evoyaAi';
 
-const ResetModal = ({ show, setShow }) => {
+export const ResetModal = ({
+  show,
+  setShow
+}: {
+  show: boolean;
+  setShow: (val: boolean) => void
+}) => {
   const editorRootElementRef = useCellValue(editorRootElementRef$);
   const resetDocument = usePublisher(resetDocument$);
   const t = useTranslation();
