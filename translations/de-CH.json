@@ -240,9 +240,10 @@
                         "attachFiles": "Dateien anhängen"
                     },
                     "waterMark": {
-                        "text": "Powered By"
+                        "text": "KI kann Fehler machen. Bitte überprüfen Sie wichtige Informationen."
                     },
                     "additionalInfo": {
+                        "defaultText": "Geben Sie / für Prompts oder @ ein, um andere Agenten einzubeziehen",
                         "text": "All information provided without warranty. Please verify the accuracy of the information provided."
                     },
                     "view_agent_details": {
@@ -458,7 +459,7 @@
         "settings": {
             "title": "Einstellungen"
         },
-        "watermark": "Erstellt mit",
+        "watermark": "KI kann Fehler machen. Bitte überprüfen Sie wichtige Informationen.",
         "context": {
             "title": "CTX",
             "modal_title_tip": "Kontext anzeigen",

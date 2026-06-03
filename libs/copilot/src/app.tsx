@@ -109,7 +109,11 @@ export default function App({ widgetConfig }: Props) {
   };
 
   return (
-    <ThemeProvider storageKey="vite-ui-theme" defaultTheme={defaultTheme}>
+    <ThemeProvider
+      storageKey="vite-ui-theme"
+      defaultTheme={defaultTheme}
+      brandColor={evoya.brand_color}
+    >
       <Toaster richColors className="toast" position="top-right" />
       {evoya.type === 'default' ? (
         <Widget config={widgetConfig} error={fetchError || authError} />

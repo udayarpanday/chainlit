@@ -240,9 +240,10 @@
                         "attachFiles": "Allega file"
                     },
                     "waterMark": {
-                        "text": "Offerto da"
+                        "text": "L'IA può commettere errori. Verifica le informazioni importanti."
                     },
                     "additionalInfo": {
+                        "defaultText": "Digita / per i prompt o @ per coinvolgere altri agenti",
                         "text": "Tutte le informazioni fornite senza garanzia. Verifica l'accuratezza delle informazioni fornite."
                     }
                 },
@@ -455,7 +456,7 @@
         "settings": {
             "title": "Pannello delle impostazioni"
         },
-        "watermark": "Costruito con"
+        "watermark": "L'IA può commettere errori. Verifica le informazioni importanti."
     },
     "threadHistory": {
         "sidebar": {
