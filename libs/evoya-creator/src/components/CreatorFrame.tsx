@@ -77,11 +77,4 @@ export default function CreatorFrame() {
       </DialogContent>
     </Dialog>
   )
-
-  return (
-    <div className="overflow-hidden h-full flex flex-col">
-      <CreatorHeader />
-      {CreatorRenderer}
-    </div>
-  );
 }

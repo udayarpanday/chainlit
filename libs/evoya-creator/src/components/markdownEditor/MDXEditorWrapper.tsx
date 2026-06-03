@@ -14,10 +14,6 @@ import {
   MDXEditor,
   diffSourcePlugin,
   markdownShortcutPlugin,
-  AdmonitionDirectiveDescriptor,
-  DirectiveDescriptor,
-  directivesPlugin,
-  frontmatterPlugin,
   headingsPlugin,
   imagePlugin,
   linkDialogPlugin,
@@ -58,10 +54,6 @@ import {
 import {
   evoyaMathDialogPlugin,
 } from './plugins/math/mathDialog';
-
-import {
-  evoyaRootPlugin,
-} from './plugins/extend/root';
 
 import {
   CodeSelectionContext,
@@ -274,7 +266,6 @@ export const MDX_PLUGINS = [
   linkDialogPlugin(),
   tablePlugin(),
   thematicBreakPlugin(),
-  // frontmatterPlugin(),
   codeBlockPlugin({
     codeBlockEditorDescriptors: [
       MermaidCodeEditorDescriptor,

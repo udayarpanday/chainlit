@@ -2,7 +2,6 @@ import {
   ButtonWithTooltip,
   iconComponentFor$,
   useTranslation,
-  markdownSourceEditorValue$,
 } from '@mdxeditor/editor';
 import React, { useState, useContext } from 'react';
 import { useCellValue, } from '@mdxeditor/gurx';
