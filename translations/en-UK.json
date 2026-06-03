@@ -236,9 +236,10 @@
                         "attachFiles": "Attach files"
                     },
                     "waterMark": {
-                        "text": "Powered By"
+                        "text": "AI can make mistakes. Please verify important information."
                     },
                     "additionalInfo": {
+                        "defaultText": "Type / for prompts or @ to involve other agents",
                         "text": "All information provided without warranty. Please verify the accuracy of the information provided."
                     },
                     "view_agent_details": {
@@ -454,7 +455,7 @@
         "settings": {
             "title": "Settings panel"
         },
-        "watermark": "Built with",
+        "watermark": "AI can make mistakes. Please verify important information.",
         "context": {
             "title": "CTX",
             "modal_title_tip": "View Context",

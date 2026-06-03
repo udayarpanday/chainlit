@@ -236,9 +236,10 @@
                         "attachFiles": "Joindre des fichiers"
                     },
                     "waterMark": {
-                        "text": "Propulsé par"
+                        "text": "L'IA peut faire des erreurs. Veuillez vérifier les informations importantes."
                     },
                     "additionalInfo": {
+                        "defaultText": "Tapez / pour les prompts ou @ pour impliquer d'autres agents",
                         "text": "Toutes les informations fournies sans garantie. Veuillez vérifier l'exactitude des informations fournies."
                     }
                 },
@@ -451,7 +452,7 @@
         "settings": {
             "title": "Panneau de paramètres"
         },
-        "watermark": "Construit avec",
+        "watermark": "L'IA peut faire des erreurs. Veuillez vérifier les informations importantes.",
         "context": {
             "title": "CTX",
             "modal_title_tip": "Afficher le contexte",

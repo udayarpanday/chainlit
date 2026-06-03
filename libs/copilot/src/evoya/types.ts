@@ -11,6 +11,7 @@ export interface EvoyaConfig {
   api?: EvoyaApiConfig;
   logo?: string | null;
   hideWaterMark?: boolean;
+  brand_color?: string | null;
   additionalInfo?: EvoyaAdditionalInfo;
   chatBubbleConfig?: EvoyaChatBubble;
   headerConfig?: EvoyaHeaderConfig;
@@ -44,6 +45,7 @@ export interface EvoyaAdditionalInfo {
   text?: string;
   link?: string;
   linkText?: string;
+  defaultText?: boolean;
 }
 
 export interface EvoyaChatBubble {

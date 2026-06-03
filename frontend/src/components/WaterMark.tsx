@@ -1,12 +1,36 @@
 import { useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Translator } from 'components/i18n';
 
 import 'assets/evoya_light.svg';
 import LogoDark from 'assets/evoya_light.svg?react';
 import LogoLight from 'assets/evoya_light.svg?react';
 
+import { Kbd } from './Kbd';
 import { useTheme } from './ThemeProvider';
 import { WidgetContext } from '@chainlit/copilot/src/context';
+
+const DEFAULT_ADDITIONAL_INFO_PATH =
+  'components.organisms.chat.inputBox.additionalInfo.defaultText';
+
+function DefaultAdditionalInfo() {
+  const { t } = useTranslation();
+
+  return t(DEFAULT_ADDITIONAL_INFO_PATH)
+    .split(/([/@])/)
+    .map((part, index) =>
+      part === '/' || part === '@' ? (
+        <Kbd
+          key={`${part}-${index}`}
+          className="mx-0.5 bg-primary/10 py-0 text-primary shadow-none"
+        >
+          {part}
+        </Kbd>
+      ) : (
+        part
+      )
+    );
+}
 
 export default function WaterMark() {
   const { variant } = useTheme();
@@ -47,6 +71,8 @@ export default function WaterMark() {
           <p className="text-xs text-muted-foreground tracking-normal">
             {evoya?.additionalInfo?.text ? (
               evoya?.additionalInfo?.text
+            ) : evoya?.additionalInfo?.defaultText ? (
+              <DefaultAdditionalInfo />
             ) : (
               <Translator path="components.organisms.chat.inputBox.additionalInfo.text" />
             )}
