@@ -72,13 +72,13 @@ export default function MDXEditorWrapper({ content, onChange }: { content: strin
       </style>
       <div onClick={(e) => {e.preventDefault(); e.stopPropagation()}}>
         <MDXEditor
+          suppressHtmlProcessing
           className="evoya-mdx-editor"
           ref={mdxEditorRef}
           markdown={content}
           iconComponentFor={getSvgIcon}
           overlayContainer={containerRef.current}
           autoFocus
-          suppressHtmlProcessing
           plugins={[
               toolbarPlugin({ toolbarContents: () => <EditorToolbar /> }),
               ...MDX_PLUGINS,

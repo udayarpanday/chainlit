@@ -18,7 +18,8 @@ export const OpenFile: React.FC = () => {
   const [fileDialogOpen, setFileDialogOpen] = useState(false);
   const t = useTranslation();
   const {
-    openCreatorWithFile
+    openCreatorWithFile,
+    fileInfo,
   } = useEvoyaCreator();
 
   const openDocument = (file: EvoyaFile) => {
@@ -41,9 +42,11 @@ export const OpenFile: React.FC = () => {
         {iconComponentFor('folder-open')}
       </ButtonWithTooltip>
       <FilePickerDialog
+        initialPath={fileInfo?.folderPath ?? '/'}
         open={fileDialogOpen}
         setOpen={setFileDialogOpen}
         selectFile={openDocument}
+        selectFilter={(file) => file.mime.indexOf('markdown') > -1}
       />
     </>
   )

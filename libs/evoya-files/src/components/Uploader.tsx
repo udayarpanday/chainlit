@@ -1,6 +1,7 @@
 import {
   useContext,
   useState,
+  useRef,
 } from 'react';
 
 import { Translator } from '@chainlit/app/src/components/i18n';
@@ -12,6 +13,7 @@ import {
   Upload,
   FolderPlus,
   ArrowLeft,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@chainlit/app/src/lib/utils';
 import { FilePickerContext } from '../context/file-context';
@@ -31,7 +33,7 @@ import { Input } from '@chainlit/app/src/components/ui/input';
 type Props = {
   currentPath: string;
   isLoading: boolean;
-  onFileUpload: (file: File) => void;
+  onFileUpload: (files: File[]) => void;
   setIsLoading: (value: boolean) => void;
   loadCurrentPath: () => void;
 }
@@ -46,8 +48,10 @@ export default function Uploader({
   const { apiBaseUrl, csrfToken, projectId, type } = useContext(FilePickerContext);
   const [newFolderName, setNewFolderName] = useState('');
   const [newFolderOpen, setNewFolderOpen] = useState(false);
+  const folderNameInput = useRef<HTMLInputElement>(null);
 
-  const createFolder = async () => {
+  const createFolder = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setNewFolderOpen(false);
     setIsLoading(true);
     try {
@@ -87,9 +91,9 @@ export default function Uploader({
 
   const upload2 = useUpload({
     spec: fileSpec,
-    onResolved: (payloads: File[]) => onFileUpload(payloads[0]),
+    onResolved: (payloads: File[]) => onFileUpload(payloads),
     onError: onFileUploadError,
-    options: { noDrag: false, multiple: false }
+    options: { noDrag: false, multiple: true }
   });
 
   return (
@@ -98,12 +102,14 @@ export default function Uploader({
         <div className='mb-4'>
           <a href={`/projects/${projectId}/`} className='flex items-center mr-4 text-gray-400 hover:text-foreground text-sm'>
             <ArrowLeft className='h-4' />
-            <span className='pl-1'>back to Project</span>
+            <span className='pl-1'><Translator path="evoyaFiles.actions.back_to_project.label" /></span>
           </a>
         </div>
       )}
       <div className="flex justify-between items-center mb-4">
-        <div className={cn("font-bold", type === 'compact' ? 'text-xl' : 'text-2xl')}>Files</div>
+        <div className={cn("font-bold", type === 'compact' ? 'text-xl' : 'text-2xl')}>
+          <Translator path="evoyaFiles.common.files" />
+        </div>
         {currentPath !== '/' && (
           <div className="flex gap-2">
             <input
@@ -132,6 +138,20 @@ export default function Uploader({
                 <Translator path="evoyaFiles.actions.create_folder.title" />
               </Button>
             )}
+            {type === 'compact' && (
+              <Button
+                asChild
+                size="sm"
+              >
+                <a
+                  href={`/files/manage/?path=${currentPath}&projectId=${projectId}`}
+                  target="_blank"
+                >
+                  <ExternalLink className="h-5" />
+                  <Translator path="evoyaFiles.actions.open_folder.title" />
+                </a>
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -139,20 +159,22 @@ export default function Uploader({
         open={newFolderOpen}
         onOpenChange={setNewFolderOpen}
       >
-        <DialogContent className="z-[9999]">
+        <DialogContent className="z-[9999]" onOpenAutoFocus={() => setTimeout(() => folderNameInput.current?.focus(), 200)}>
           <DialogHeader>
             <DialogTitle>
               <Translator path="evoyaFiles.actions.create_folder.title" />
             </DialogTitle>
           </DialogHeader>
           <div>
-            <Input value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)} placeholder="Name" />
+            <form onSubmit={createFolder} id="create-foler-form">
+              <Input value={newFolderName} ref={folderNameInput} onChange={(e) => setNewFolderName(e.target.value)} placeholder="Name" autoFocus />
+            </form>
           </div>
           <DialogFooter>
             <Button variant="secondary" onClick={() => setNewFolderOpen(false)}>
               <Translator path="common.actions.cancel" />
             </Button>
-            <Button onClick={createFolder}>
+            <Button type="submit" form="#create-foler-form">
               <Translator path="common.actions.confirm" />
             </Button>
           </DialogFooter>

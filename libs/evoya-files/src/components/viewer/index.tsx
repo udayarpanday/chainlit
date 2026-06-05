@@ -1,4 +1,4 @@
-import { EvoyaFile } from "@/types";
+import { EvoyaFile, PathItem } from "@/types";
 import { MarkdownViewer } from "./markdown";
 import { FilePickerContext } from '@/context/file-context';
 import { useContext, useEffect, useState } from "react";
@@ -11,13 +11,38 @@ import { ImageViewer } from "./image";
 import { Translator } from '@chainlit/app/src/components/i18n';
 import { downloadBlobFromUrl } from "@/utils/file";
 import { AudioPlayer } from "./audio";
+import FolderBreadcrumbs from '../FolderBreadcrumbs';
+import { useTranslation } from '@chainlit/app/src/components/i18n/Translator';
 
-export function ViewerWrapper({ file, setOpenFile }: { file: EvoyaFile; setOpenFile: (file: EvoyaFile | null) => void }) {
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from '@chainlit/app/src/components/ui/dialog';
+
+export function ViewerWrapper({
+  file,
+  setOpenFile,
+  pathItems = [],
+  setSelectedPath = () => {}
+}: {
+  file: EvoyaFile;
+  pathItems?: PathItem[];
+  setOpenFile: (file: EvoyaFile | null) => void;
+  setSelectedPath?: (path: string) => void;
+}) {
   const { apiBaseUrl, csrfToken, projectId } = useContext(FilePickerContext);  
   const [content, setContent] = useState('');
+  const [originalContent, setOriginalContent] = useState('');
   const [blobUrl, setBlobUrl] = useState('');
   const [fileLoaded, setFileLoaded] = useState(false);
+  const [leavePageOpen, setLeavePageOpen] = useState(false);
+  const [pathLoaded, setPathLoaded] = useState(pathItems);
   const [canSave, setCanSave] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (
@@ -35,9 +60,26 @@ export function ViewerWrapper({ file, setOpenFile }: { file: EvoyaFile; setOpenF
       setBlobUrl(URL.createObjectURL(blob));
       const text = await blob.text();
       setContent(text);
+      setOriginalContent(text);
       setFileLoaded(true);
-    })
+    });
+    if (pathLoaded.length === 0) {
+      const filePath = file.path.split('/');
+      filePath.pop();
+      fetchDirectory(filePath.join('/') + "/");
+    }
   }, [file]);
+
+  useEffect(() => {
+    if (content !== originalContent) {
+      window.onbeforeunload = function() {return t('evoyaFiles.actions.leave_page.description')}
+    } else {
+      window.onbeforeunload = function() {}
+    }
+    return () => {
+      window.onbeforeunload = function() {}
+    }
+  }, [content, originalContent]);
 
   const saveFile = async () => {
     const blob = new Blob([content], {
@@ -69,6 +111,20 @@ export function ViewerWrapper({ file, setOpenFile }: { file: EvoyaFile; setOpenF
     }
   }
 
+  const fetchDirectory = async (path: string) => {
+    setPathLoaded([]);
+    const response = await fetch(`${apiBaseUrl}/api/files?path=${path}`);
+    const json = await response.json();
+    setPathLoaded([
+      {
+        name: 'Home',
+        path: '/',
+        canOpen: true
+      },
+      ...json.breadcrumbs
+    ]);
+  }
+
   const fileRenderer = () => {
     if (file.mime === 'application/pdf') {
       return <PdfViewer path={blobUrl} />
@@ -82,6 +138,19 @@ export function ViewerWrapper({ file, setOpenFile }: { file: EvoyaFile; setOpenF
       return <ImageViewer path={blobUrl} />
     } else if (file.mime.includes('audio/') || file.mime === 'video/webm') { // Text file type fallback
       return <AudioPlayer path={blobUrl} />
+    }
+  }
+
+  const handleLeavePage = () => {
+    setOpenFile(null);
+    setLeavePageOpen(false);
+  }
+
+  const backHandler = () => {
+    if (content !== originalContent) {
+      setLeavePageOpen(true);
+    } else {
+      setOpenFile(null);
     }
   }
 
@@ -100,7 +169,7 @@ export function ViewerWrapper({ file, setOpenFile }: { file: EvoyaFile; setOpenF
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setOpenFile(null)}
+            onClick={() => backHandler()}
             className="hover:bg-gray-200 rounded-full"
           >
             <ArrowLeft />
@@ -122,6 +191,39 @@ export function ViewerWrapper({ file, setOpenFile }: { file: EvoyaFile; setOpenF
           </div>
         )}
       </div>
+      <FolderBreadcrumbs
+        pathData={{path: pathLoaded, items: []}}
+        fetchDirectory={(path) => {
+          setOpenFile(null);
+          setSelectedPath(path);
+        }}
+        isLoading={pathLoaded.length === 0}
+        attachmentMode={false}
+        destinationMode={false}
+      />
+      <Dialog
+        open={leavePageOpen}
+        onOpenChange={setLeavePageOpen}
+      >
+        <DialogContent className="z-[9999]">
+          <DialogHeader>
+            <DialogTitle>
+              <Translator path="evoyaFiles.actions.leave_page.title" />
+            </DialogTitle>
+            <DialogDescription>
+              <Translator path="evoyaFiles.actions.leave_page.description" />
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setLeavePageOpen(false)}>
+              <Translator path="common.actions.cancel" />
+            </Button>
+            <Button variant="destructive" onClick={handleLeavePage}>
+              <Translator path="common.actions.confirm" />
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {!fileLoaded && (
         <div className="flex items-center mb-4">
           <LoaderCircle className="animation-spin" />

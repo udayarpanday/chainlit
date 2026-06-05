@@ -61,7 +61,8 @@ import styles from '@mdxeditor/editor/dist/styles/ui.module.css.js';
 export const LexicalDifferenceVisitor: LexicalExportVisitor<DifferenceNode, Mdast.Nodes> = {
   testLexicalNode: $isDifferenceNode,
   visitLexicalNode({ mdastParent, lexicalNode, actions }) {
-    actions.visitChildren(lexicalNode, mdastParent)
+    // actions.visitChildren(lexicalNode, mdastParent)
+    lexicalNode.getMdastNode().children.forEach((mdastChild) => actions.appendToParent(mdastParent, mdastChild));
   }
 }
 
@@ -144,6 +145,10 @@ export class DifferenceNode extends DecoratorNode<JSX.Element> {
     const writeable = this.getWritable();
     writeable.__mdastNodeCurrent = mdastNode;
     writeable.__currentMarkdown = markdown;
+  }
+
+  getMdastNode() {
+    return this.__mdastNodeCurrent;
   }
 
   setNewMdastNode(mdastNode: Mdast.Root, markdown: string): void {

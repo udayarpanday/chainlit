@@ -217,6 +217,7 @@ export default function MDXEditorWrapper() {
         {mdxCustomCss}
       </style>
       <MDXEditor
+        suppressHtmlProcessing
         className="evoya-creator-editor"
         readOnly={isReadOnly}
         ref={mdxEditorRef}

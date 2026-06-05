@@ -1,5 +1,6 @@
 import type { FilePickerItem } from '@/types';
 import {
+  useRef,
   useState,
 } from 'react';
 
@@ -60,8 +61,9 @@ type Props = {
   showActions?: boolean;
   hasUpload?: boolean;
   singleMode?: boolean;
+  attachmentMode?: boolean;
   compact?: boolean;
-  onFileUpload?: (file: File) => void;
+  onFileUpload?: (files: File[], forcePath?: string) => void;
   deleteItems?: (items: FilePickerItem[]) => Promise<void>;
   moveItem?: (item: FilePickerItem, destination: string) => Promise<void>;
   renameItem?: (item: FilePickerItem, newName: string) => Promise<void>;
@@ -76,6 +78,7 @@ export default function FilePickerItem({
   onClick = () => {},
   hasUpload = false,
   singleMode = false,
+  attachmentMode = false,
   compact = false,
   onFileUpload = () => {},
   deleteItems = async () => {},
@@ -89,6 +92,7 @@ export default function FilePickerItem({
   const [moveOpen, setMoveOpen] = useState(false);
   const [moveDestination, setMoveDestination] = useState<FilePickerItem[]>([]);
   const { t } = useTranslation();
+  const renameInputRef = useRef<HTMLInputElement>(null)
 
   const isFile = "size" in item;
 
@@ -120,11 +124,13 @@ export default function FilePickerItem({
     window.openEvoyaCreatorWithFile(item, { type: item.mime.indexOf('markdown') > -1 ? 'markdown' : 'text' });
   }
 
-  const renameItemHandler = () => {
+  const renameItemHandler = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setRenameOpen(false);
     renameItem(item, renameValue)
   }
-  const moveItemHandler = () => {
+  const moveItemHandler = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     setMoveOpen(false);
     moveItem(item, moveDestination[0].path)
   }
@@ -151,9 +157,9 @@ export default function FilePickerItem({
 
   const upload = useUpload({
     spec: fileSpec,
-    onResolved: (payloads: File[]) => hasUpload && onFileUpload(payloads[0]),
+    onResolved: (payloads: File[]) => hasUpload && onFileUpload(payloads, item.path),
     onError: onFileUploadError,
-    options: { noDrag: false, noClick: true, noDragEventsBubbling: true, }
+    options: { noDrag: false, noClick: true, noDragEventsBubbling: true, multiple: true }
   });
   const { getRootProps, getInputProps, isDragActive } = upload ?? {};
 
@@ -162,7 +168,7 @@ export default function FilePickerItem({
       {!isFile && hasUpload && <input {...getInputProps()} />}
       {!singleMode &&
         <div className="p-2 border-t flex items-center group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20">
-          <Checkbox checked={selected} onCheckedChange={(val: boolean) => setSelectedState(val)} />
+          {!(!isFile && attachmentMode) && <Checkbox checked={selected} onCheckedChange={(val: boolean) => setSelectedState(val)} />}
         </div>
       }
       <div
@@ -265,17 +271,19 @@ export default function FilePickerItem({
                     </DialogDescription>
                   </DialogHeader>
                   <div>
-                    <FilePicker 
-                      initialPath='/'
-                      selectedItemsChange={setMoveDestination}
-                      destinationMode
-                    />
+                    <form onSubmit={moveItemHandler} id="move-file-form">
+                      <FilePicker 
+                        initialPath='/'
+                        selectedItemsChange={setMoveDestination}
+                        destinationMode
+                      />
+                    </form>
                   </div>
                   <DialogFooter>
                     <Button variant="secondary" onClick={() => setMoveOpen(false)}>
                       <Translator path="common.actions.cancel" />
                     </Button>
-                    <Button onClick={moveItemHandler}>
+                    <Button type="submit" form="#move-file-form">
                       <Translator path="common.actions.confirm" />
                     </Button>
                   </DialogFooter>
@@ -285,20 +293,22 @@ export default function FilePickerItem({
                 open={renameOpen}
                 onOpenChange={setRenameOpen}
               >
-                <DialogContent className="z-[9999]">
+                <DialogContent className="z-[9999]" onOpenAutoFocus={() => setTimeout(() => renameInputRef.current?.focus(), 200)}>
                   <DialogHeader>
                     <DialogTitle>
-                      {isFile ? <Translator path="evoyaFiles.actions.rename.title" /> : <Translator path="evoyaFiles.actions.rename_folder.title" />}
+                      {isFile ? <Translator path="evoyaFiles.actions.rename.title" /> : <Translator path="evoyaFiles.actions.rename_folder.title" />}11
                     </DialogTitle>
                   </DialogHeader>
                   <div>
-                    <Input value={renameValue} onChange={(e) => setRenameValue(e.target.value)} placeholder={t('evoyaFiles.actions.rename.description')} />
+                    <form onSubmit={renameItemHandler} id="rename-file-form">
+                      <Input value={renameValue} ref={renameInputRef} onChange={(e) => setRenameValue(e.target.value)} placeholder={t('evoyaFiles.actions.rename.description')} autoFocus />
+                    </form>
                   </div>
                   <DialogFooter>
                     <Button variant="secondary" onClick={() => setRenameOpen(false)}>
                       <Translator path="common.actions.cancel" />
                     </Button>
-                    <Button onClick={renameItemHandler}>
+                    <Button type="submit" form="#rename-file-form">
                       <Translator path="common.actions.confirm" />
                     </Button>
                   </DialogFooter>

@@ -53,8 +53,8 @@ export default function CreatorFrame() {
       <DialogContent
         className="z-[9999] h-full p-0 overflow-hidden border-0"
         style={{
-          maxHeight: 'calc(100% - 2rem)',
-          maxWidth: 'calc(100% - 2rem)',
+          maxHeight: 'calc(100% - 1rem)',
+          maxWidth: 'calc(100% - 1rem)',
         }}
         // @ts-expect-error is not a valid prop
         container={window.mdx_shadowRootElement}
