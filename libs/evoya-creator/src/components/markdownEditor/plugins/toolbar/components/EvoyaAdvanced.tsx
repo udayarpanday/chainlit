@@ -46,6 +46,11 @@ export const EvoyaAdvancedToggle: React.FC = () => {
         onCheckedChange={(checked: boolean) => {
           setShowAdvancedToolbar(checked);
         }}
+        style={
+          showAdvancedToolbar
+            ? { backgroundColor: 'hsl(var(--primary))' }
+            : undefined
+        }
         className={cn(
           'data-[state=checked]:bg-primary'
         )}

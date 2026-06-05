@@ -1,7 +1,4 @@
 import { useContext, useEffect, useState } from 'react';
-import { toast } from 'sonner';
-import { MdOutlineStar } from "react-icons/md";
-import { Star } from 'lucide-react';
 import { PencilLine  } from 'lucide-react';
 import { Translator } from '@chainlit/app/src/components/i18n';
 import {
@@ -11,6 +8,7 @@ import {
   TooltipTrigger
 } from '@chainlit/app/src/components/ui/tooltip';
 import { Button } from '@chainlit/app/src/components/ui/button';
+import { WidgetContext } from '../context';
 
 function escapeBrackets(text: string) {
   const pattern =
@@ -35,6 +33,7 @@ function escapeBrackets(text: string) {
 
 const EvoyaCreatorButton = (): JSX.Element => {
   const [hasContent, setHasContent] = useState(false);
+  const { evoya } = useContext(WidgetContext);
   const handleClick = () => {
     const restoreContent = localStorage.getItem('evoya-creator');
 
@@ -42,10 +41,10 @@ const EvoyaCreatorButton = (): JSX.Element => {
       const restoreContentObj = JSON.parse(restoreContent);
 
       // @ts-expect-error custom property
-      window.openEvoyaCreator({output: escapeBrackets(restoreContentObj.content)}, { type: restoreContentObj.type });
+      window.openEvoyaCreator({output: escapeBrackets(restoreContentObj.content)}, { type: restoreContentObj.type, brand_color: evoya?.brand_color });
     } else {
       // @ts-expect-error custom property
-      window.openEvoyaCreator({output: ''}, { type: 'markdown' });
+      window.openEvoyaCreator({output: ''}, { type: 'markdown', brand_color: evoya?.brand_color });
     }
   };
 

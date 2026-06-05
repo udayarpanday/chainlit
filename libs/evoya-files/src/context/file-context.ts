@@ -6,6 +6,7 @@ interface FilePickerContext {
   projectId?: string;
   workspaceId?: string;
   type: string;
+  brandColor?: string | null;
 }
 
 const defaultContext = {

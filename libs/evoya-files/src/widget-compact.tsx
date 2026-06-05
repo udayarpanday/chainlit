@@ -1,8 +1,6 @@
-import { useState } from 'react';
 import FilePicker from './components/FilePicker';
 import { FilePickerContext } from './context/file-context';
-import { FilePickerItem, EvoyaFile } from './types';
-import { ViewerWrapper } from './components/viewer';
+import { FilePickerItem } from './types';
 import { downloadBlob } from './utils/file';
 
 interface Props {
@@ -11,6 +9,7 @@ interface Props {
   csrfToken: string;
   workspaceId?: string;
   projectId?: string;
+  brandColor?: string | null;
 }
 
 const customFileRenderer = [
@@ -22,7 +21,7 @@ const customFileRenderer = [
   'application/pdf',
 ];
 
-export default function WidgetCompact({ initialPath, apiBaseUrl, csrfToken, workspaceId, projectId }: Props) {
+export default function WidgetCompact({ initialPath, apiBaseUrl, csrfToken, workspaceId, projectId, brandColor }: Props) {
   const handleItemClick = (item: FilePickerItem) => {
     const isFile = "size" in item;
     if (isFile) {
@@ -43,7 +42,7 @@ export default function WidgetCompact({ initialPath, apiBaseUrl, csrfToken, work
     }
   }
 
-  const setSelectedPathHandler = (value: string) => {
+  const setSelectedPathHandler = (_value: string) => {
     // window.location.href = `/files/manage/?path=${value}&projectId=${projectId}`
   }
 
@@ -55,7 +54,8 @@ export default function WidgetCompact({ initialPath, apiBaseUrl, csrfToken, work
       csrfToken,
       workspaceId,
       projectId,
-      type: 'compact'
+      type: 'compact',
+      brandColor
     }}>
       <FilePicker
         initialPath={initialPath}

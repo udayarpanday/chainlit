@@ -1,5 +1,6 @@
 import type { FilePickerItem } from '@/types';
 import {
+  useContext,
   useState,
 } from 'react';
 
@@ -50,6 +51,7 @@ import {
 
 import { useUpload } from '@chainlit/app/src/hooks/useUpload';
 import FilePicker from './FilePicker';
+import { FilePickerContext } from '../context/file-context';
 
 type Props = {
   item: FilePickerItem;
@@ -115,9 +117,11 @@ export default function FilePickerItem({
     return <FolderOpen className="h-4 shrink-0" />
   }
 
+  const { brandColor } = useContext(FilePickerContext);
+
   const openCreator = () => {
     // @ts-expect-error is not a valid prop
-    window.openEvoyaCreatorWithFile(item, { type: item.mime.indexOf('markdown') > -1 ? 'markdown' : 'text' });
+    window.openEvoyaCreatorWithFile(item, { type: item.mime.indexOf('markdown') > -1 ? 'markdown' : 'text', brand_color: brandColor });
   }
 
   const renameItemHandler = () => {
