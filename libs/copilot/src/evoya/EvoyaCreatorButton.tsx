@@ -33,7 +33,11 @@ function escapeBrackets(text: string) {
   return res;
 }
 
-const EvoyaCreatorButton = (): JSX.Element => {
+interface Props {
+  disabled?: boolean;
+}
+
+const EvoyaCreatorButton = ({ disabled = false }: Props): JSX.Element => {
   const [hasContent, setHasContent] = useState(false);
   const handleClick = () => {
     const restoreContent = localStorage.getItem('evoya-creator');
@@ -79,6 +83,7 @@ const EvoyaCreatorButton = (): JSX.Element => {
               variant="ghost"
               onClick={handleClick}
               className={`hover:bg-muted ${hasContent ? 'text-primary hover:text-primary' : ''}`}
+              disabled={disabled}
             >
               <PencilLine className="!size-5" />
             </Button>

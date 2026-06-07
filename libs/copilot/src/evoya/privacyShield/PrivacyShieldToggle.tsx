@@ -13,7 +13,12 @@ import {
 
 import { usePrivacyShield } from './usePrivacyShield';
 
-const PrivacyShieldToggle = ({evoya}): JSX.Element => {
+interface Props {
+  disabled?: boolean;
+  evoya: any;
+}
+
+const PrivacyShieldToggle = ({ disabled = false, evoya }: Props): JSX.Element => {
   const { enabled, setEnabled, enabledVisual, setEnabledVisual, sections } =
     usePrivacyShield();
 
@@ -37,6 +42,7 @@ const PrivacyShieldToggle = ({evoya}): JSX.Element => {
                 size="icon"
                 className="hover:bg-muted"
                 onClick={() => setEnabled(!enabled)}
+                disabled={disabled}
               >
                 {enabled ? (
                   <Lock className="!size-5 text-primary" />
@@ -70,7 +76,7 @@ const PrivacyShieldToggle = ({evoya}): JSX.Element => {
               size="icon"
               className="hover:bg-muted"
               onClick={() => setEnabledVisual(!enabledVisual)}
-              disabled={sections.length === 0}
+              disabled={disabled || sections.length === 0}
             >
               {enabled &&
                 (enabledVisual ? (

@@ -398,6 +398,7 @@
     "chat": {
         "input": {
             "placeholder": "Ihre Eingabe...",
+            "archived": "Dieser Chat ist archiviert. Wählen Sie einen anderen Agenten aus, um fortzufahren.",
             "actions": {
                 "send": "Nachricht senden",
                 "stop": "Aufgabe stoppen",

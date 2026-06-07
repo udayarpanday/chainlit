@@ -74,3 +74,7 @@ export type ChatInputSocketPayload =
       text?: string;
       mode?: 'append' | 'replace';
     };
+
+export interface IChatArchived {
+  is_chat_archived: boolean;
+}

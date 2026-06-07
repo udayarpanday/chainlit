@@ -27,6 +27,7 @@ interface Props {
   id?: string;
   className?: string;
   autoFocus?: boolean;
+  disabled?: boolean;
   placeholder?: string;
   selectedCommand?: ICommand;
   setSelectedCommand: (command: ICommand | undefined) => void;
@@ -66,6 +67,7 @@ const Input = forwardRef<InputMethods, Props>(
       id,
       className,
       autoFocus,
+      disabled = false,
       selectedCommand,
       setSelectedCommand,
       onChange,
@@ -103,6 +105,13 @@ const Input = forwardRef<InputMethods, Props>(
     const isUpdatingRef = useRef(false);
     const [isCommandExpanded, setIsCommandExpanded] = useState(false);
     const isMobile = useIsMobile();
+
+    useEffect(() => {
+      if (!disabled) return;
+
+      setShowCommands(false);
+      setShowAgents(false);
+    }, [disabled]);
 
     const getContentWithoutCommand = () => {
       if (!contentEditableRef.current) return '';
@@ -172,6 +181,8 @@ const Input = forwardRef<InputMethods, Props>(
     };
 
     const syncContent = (value: string, mode: 'replace' | 'append') => {
+      if (disabled) return;
+
       const content = contentEditableRef.current;
       if (!content) return;
 
@@ -196,7 +207,7 @@ const Input = forwardRef<InputMethods, Props>(
 
     // Set up mutation observer to detect command span removal
     useEffect(() => {
-      if (!contentEditableRef.current) return;
+      if (!contentEditableRef.current || disabled) return;
 
       contentEditableRef.current.focus();
 
@@ -239,7 +250,7 @@ const Input = forwardRef<InputMethods, Props>(
       return () => {
         mutationObserverRef.current?.disconnect();
       };
-    }, []);
+    }, [disabled]);
 
     // Monitor input changes to detect when expanded content is completely removed
     useEffect(() => {
@@ -447,7 +458,7 @@ const Input = forwardRef<InputMethods, Props>(
     // Improved paste handler that works across browsers
     useEffect(() => {
       const textarea = contentEditableRef.current;
-      if (!textarea || !onPaste) return;
+      if (!textarea || !onPaste || disabled) return;
 
       const handlePaste = (event: ClipboardEvent) => {
         // Prevent the default paste behavior
@@ -514,9 +525,10 @@ const Input = forwardRef<InputMethods, Props>(
       return () => {
         textarea.removeEventListener('paste', handlePaste);
       };
-    }, [onPaste]);
+    }, [disabled, onPaste]);
 
     const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
+      if (disabled) return;
       if (isUpdatingRef.current) return;
 
       const textContent = getContentWithoutCommand();
@@ -563,6 +575,11 @@ const Input = forwardRef<InputMethods, Props>(
         });
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (disabled) {
+        e.preventDefault();
+        return;
+      }
+
       if (!showCommands && !showAgents) {
         if (e.key === 'Enter' && !e.shiftKey && onEnter && !isComposing) {
           // Check if on mobile device
@@ -622,6 +639,8 @@ const Input = forwardRef<InputMethods, Props>(
     };
 
     const handleCommandSelect = (command?: ICommand) => {
+      if (disabled) return;
+
       setShowCommands(false);
       setIsCommandExpanded(false); // Reset expansion state when selecting a new command
 
@@ -647,6 +666,8 @@ const Input = forwardRef<InputMethods, Props>(
     };
 
     const handleAgentSelect = (agent: any) => {
+      if (disabled) return;
+
       setShowAgents(false);
       setSelectedIndex(0);
 
@@ -680,6 +701,8 @@ const Input = forwardRef<InputMethods, Props>(
     };
 
     const handleRemoveAgent = (agentId: string) => {
+      if (disabled) return;
+
       setSelectedAgents((prev) => prev.filter((a) => a.uuid !== agentId));
       if (contentEditableRef.current) {
         contentEditableRef.current.focus();
@@ -709,6 +732,7 @@ const Input = forwardRef<InputMethods, Props>(
                     </span>
                     <button
                       onClick={() => handleRemoveAgent(agent.uuid)}
+                      disabled={disabled}
                       className="ml-1 hover:bg-gray-500 rounded-full p-0.5 transition-colors"
                       type="button"
                       aria-label={`Remove ${agent.name}`}
@@ -735,10 +759,11 @@ const Input = forwardRef<InputMethods, Props>(
           id={id}
           autoFocus={autoFocus}
           ref={contentEditableRef}
-          contentEditable
+          contentEditable={!disabled}
+          aria-disabled={disabled}
           data-placeholder={placeholder}
           className={cn(
-            'min-h-10 max-h-[250px] overflow-y-auto w-full focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground',
+            'min-h-10 max-h-[250px] overflow-y-auto w-full focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
             className
           )}
           onInput={handleInput}

@@ -395,6 +395,7 @@
     "chat": {
         "input": {
             "placeholder": "Tapez votre message ici...",
+            "archived": "Ce chat est archivé. Sélectionnez un autre agent pour continuer.",
             "actions": {
                 "send": "Envoyer le message",
                 "stop": "Arrêter la tâche",

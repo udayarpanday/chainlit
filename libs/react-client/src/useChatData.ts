@@ -3,6 +3,7 @@ import { useRecoilValue } from 'recoil';
 import {
   actionState,
   askUserState,
+  chatArchived,
   callFnState,
   chatSettingsDefaultValueSelector,
   chatSettingsInputsState,
@@ -27,6 +28,7 @@ const useChatData = () => {
   const actions = useRecoilValue(actionState);
   const session = useRecoilValue(sessionState);
   const askUser = useRecoilValue(askUserState);
+  const isChatArchived = useRecoilValue(chatArchived);
   const callFn = useRecoilValue(callFnState);
   const chatSettingsInputs = useRecoilValue(chatSettingsInputsState);
   const chatSettingsValue = useRecoilValue(chatSettingsValueState);
@@ -36,6 +38,7 @@ const useChatData = () => {
 
   const connected = session?.socket.connected && !session?.error;
   const disabled =
+    isChatArchived ||
     !connected ||
     loading ||
     askUser?.spec.type === 'file' ||
@@ -48,6 +51,7 @@ const useChatData = () => {
     chatSettingsDefaultValue,
     chatSettingsInputs,
     chatSettingsValue,
+    chatArchived: isChatArchived,
     connected,
     disabled,
     elements,

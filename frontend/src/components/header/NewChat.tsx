@@ -1,9 +1,11 @@
 import { WidgetContext } from 'context';
 import { Plus } from 'lucide-react';
 import React, { useContext } from 'react';
+import { useRecoilValue } from 'recoil';
 
 import {
   ChainlitContext,
+  chatArchived,
   removeScopedSessionStorageItem,
   setScopedSessionStorageItem,
   useAudio,
@@ -21,15 +23,17 @@ interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   newSession?: (sessionUuid?: string) => void;
 }
 
-const NewChatButton = ({ newSession }: Props) => {
+const NewChatButton = ({ disabled, newSession }: Props) => {
   const { clear } = useChatInteract();
   const { evoya, setAccessToken } = useContext(WidgetContext);
   const apiClient = useContext(ChainlitContext);
   const { setUserFromAPI } = useAuth();
+  const isChatArchived = useRecoilValue(chatArchived);
 
   const { endConversation, audioConnection } = useAudio();
   const isAudioOn = audioConnection === 'on';
   const isMobile = useIsMobile();
+  const isDisabled = disabled || isChatArchived;
 
   const handleClickOpen = async () => {
     localStorage.removeItem('session_token');
@@ -78,6 +82,7 @@ const NewChatButton = ({ newSession }: Props) => {
         variant="outline"
         id="new-chat-button"
         onClick={handleClickOpen}
+        disabled={isDisabled}
         className="text-[#7b809a] border-[#7b809a] hover:bg-[#7b809a]/10"
       >
         <Plus className="w-4 h-4" />
