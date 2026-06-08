@@ -38,6 +38,7 @@ import { useRecoilState, useSetRecoilState } from 'recoil';
 import { EvoyaAttachment, evoyaAttachmentsState } from 'state/evoya';
 import { v4 as uuidv4 } from 'uuid';
 import { FilePickerContext } from '@evoya/file-picker/src/context/file-context';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface UploadButtonProps {
   disabled?: boolean;
@@ -63,7 +64,8 @@ export const UploadButton = ({
   const [evoyaAttachments, setEvoyaAttachments] = useRecoilState(evoyaAttachmentsState);
   const [filesOpen, setFilesOpen] = useState(false);
   const [cloudAttachments, setCloudAttachments] = useState<FilePickerItemType[]>([]);
-
+  const isMobile = useIsMobile();
+  
   const attachFiles = () => {
     console.log(cloudAttachments);
     const attachements: EvoyaAttachment[] = cloudAttachments.map((item) => {
@@ -106,7 +108,19 @@ export const UploadButton = ({
                   <PaperClip className="!size-6" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent  
+                align={isMobile ? 'center' : 'start'}
+                side={isMobile ? 'top' : undefined}
+                sideOffset={isMobile ? 5 : 12}
+                className="focus:outline-none w-[57vw] min-w-[320px] w-md-[820px] w-lg-[950px] p-0"
+                style={{
+                  position: isMobile ? 'fixed' : 'relative',
+                  bottom: isMobile ? '-82vh' : '42px',
+                  right: isMobile ? 'auto' : '48px',
+                  left: isMobile ? '45px' : 'auto',
+                  transform: 'none',
+                  zIndex: 50
+                }}>
                 <DropdownMenuItem>
                   <input
                     id="upload-button-input"
