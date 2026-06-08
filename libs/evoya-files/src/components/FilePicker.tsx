@@ -1,6 +1,8 @@
-import {
+import type {
+  EvoyaFile,
   FilePickerData,
-  FilePickerItem as FilePickerItemType,
+  FilePickerItem,
+  PathItem,
 } from '../types';
 import {
   useContext,
@@ -12,7 +14,7 @@ import { Checkbox } from '@chainlit/app/src/components/ui/checkbox';
 import { Translator } from '@chainlit/app/src/components/i18n';
 import { Button } from '@chainlit/app/src/components/ui/button';
 
-import FilePickerItem from './FilePickerItem'
+import FilePickerItemComponent from './FilePickerItem'
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from '@chainlit/app/src/lib/evoya-toast';
 
@@ -44,8 +46,9 @@ import {
 type Props = {
   initialPath: string;
   showActions?: boolean;
-  handleItemClick?: (item: FilePickerItemType) => void;
-  selectedItemsChange?: (items: FilePickerItemType[]) => void;
+  setPathItems?: (items: PathItem[]) => void;
+  handleItemClick?: (item: FilePickerItem) => void;
+  selectedItemsChange?: (items: FilePickerItem[]) => void;
   setSelectedPath?: (path: string) => void;
   hasUpload?: boolean;
   multiselect?: boolean;
@@ -53,6 +56,7 @@ type Props = {
   destinationMode?: boolean;
   singleMode?: boolean;
   compact?: boolean;
+  selectFilter?: (val: EvoyaFile) => boolean;
 }
 
 export default function FilePicker({
@@ -64,13 +68,16 @@ export default function FilePicker({
   destinationMode = false,
   singleMode = false,
   compact = false,
+  setPathItems = () => {},
   handleItemClick = () => {},
   selectedItemsChange = () => {},
   setSelectedPath = () => {},
+  selectFilter = () => true,
 }: Props) {
   const { apiBaseUrl, csrfToken } = useContext(FilePickerContext);
   const [currentPath, setCurrentPath] = useState(initialPath);
   const [pathData, setPathData] = useState<FilePickerData>({ path: [], items: []});
+  const [folderFiles, setFolderFiles] = useState<FilePickerItem[]>([]);
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,39 +91,46 @@ export default function FilePicker({
     setCurrentPath(path);
     setSelectedElements([]);
     selectedItemsChange([]);
-    setPathData({
-      // path: dummyPathItems,
-      path: [
+    const folderFiles = (destinationMode ? [] : json.documents)
+      .filter(selectFilter)
+      .map((document) => ({
+        ...document,
+        created: document.created ? new Date(document.created) : null,
+        modified: document.modified ? new Date(document.modified) : null,
+        id: uuidv4(),
+      }));
+    const pathItems = [
         {
           name: 'Home',
           path: '/',
           canOpen: true
         },
         ...json.breadcrumbs
-      ],
+      ];
+    setFolderFiles(folderFiles);
+    setPathItems(pathItems);
+    setPathData({
+      // path: dummyPathItems,
+      path: pathItems,
       // items: dummyItems.filter((item) => !destinationMode || !("size" in item))
       items: [
-        ...json.folders.map((folder) => ({
-          ...folder,
-          created: folder.created ? new Date(folder.created) : null,
-          modified: folder.modified ? new Date(folder.modified) : null,
-          id: uuidv4(),
-        })),
-        ...(destinationMode ? [] : json.documents).map((document) => ({
-          ...document,
-          created: document.created ? new Date(document.created) : null,
-          modified: document.modified ? new Date(document.modified) : null,
-          id: uuidv4(),
-        }))
+        ...json.folders
+          .map((folder) => ({
+            ...folder,
+            created: folder.created ? new Date(folder.created) : null,
+            modified: folder.modified ? new Date(folder.modified) : null,
+            id: uuidv4(),
+          })),
+        ...folderFiles
       ]
     });
     setIsLoading(false);
   }
 
-  const itemClick = (item: FilePickerItemType) => {
+  const itemClick = (item: FilePickerItem) => {
     const isFile = "size" in item;
     handleItemClick(item);
-    if (!isFile) {
+    if (!isFile && !compact) {
       fetchDirectory(item.path);
     }
   }
@@ -151,16 +165,18 @@ export default function FilePicker({
   }
 
   const onCheckedChange = (val: boolean) => {
+    const items = attachmentMode ? folderFiles : pathData.items;
+    console.log(items);
     if (val) {
-      setSelectedElements(pathData.items.map((item) => item.id));
-      selectedItemsChange(pathData.items);
+      setSelectedElements(items.map((item) => item.id));
+      selectedItemsChange(items);
     } else {
       setSelectedElements([]);
       selectedItemsChange([]);
     }
   }
   
-  const moveItem = async (item: FilePickerItemType, destinationPath: string) => {
+  const moveItem = async (item: FilePickerItem, destinationPath: string) => {
     setIsLoading(true);
     try {
       const response = await fetch(`${apiBaseUrl}/api/files/move/`, {
@@ -189,7 +205,7 @@ export default function FilePicker({
     }
   }
   
-  const renameItem = async (item: FilePickerItemType, newName: string) => {
+  const renameItem = async (item: FilePickerItem, newName: string) => {
     setIsLoading(true);
     try {
       const response = await fetch(`${apiBaseUrl}/api/files/rename/`, {
@@ -222,7 +238,7 @@ export default function FilePicker({
     deleteItems(pathData.items.filter((item) => selectedElements.includes(item.id)))
   }
   
-  const deleteItems = async (items: FilePickerItemType[]) => {
+  const deleteItems = async (items: FilePickerItem[]) => {
     setIsLoading(true);
     try {
       const response = await fetch(`${apiBaseUrl}/api/files/delete/`, {
@@ -250,7 +266,7 @@ export default function FilePicker({
     }
   }
 
-  const downloadItems = (items: FilePickerItemType[]) => {
+  const downloadItems = (items: FilePickerItem[]) => {
     if (items.length === 1 && "size" in items[0]) {
       fetch(`${apiBaseUrl}/api/files/download/?path=${items[0].path}`)
         .then((response) => response.blob())
@@ -295,12 +311,38 @@ export default function FilePicker({
     }
   }
 
-  const onFileUpload = async (file: File) => {
+  const onFileUpload = async (files: File[], forcePath: string = '') => {
+    console.log(files);
+    try {
+      const responses = await Promise.all(files.map((file) => onSingleFileUpload(file, forcePath)));
+      console.log(responses);
+      if (responses.every((resp) => resp.success)) {
+        if (files.length > 1) {
+          toast.success('Files uploaded!');
+        } else {
+          toast.success('File uploaded!');
+        }
+        loadCurrentPath();
+      }
+    } catch(err) {
+      if (files.length > 1) {
+        toast.error('Failed to upload files!');
+      } else {
+        toast.error('Failed to upload file!');
+      }
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  const onSingleFileUpload = async (file: File, forcePath: string = '') => {
     setIsUploading(true);
     try {
+      const filePathArr = (file.path ?? '').split('/').filter((item: string) => !!item);
+      filePathArr.pop();
       const data = new FormData();
       data.append('file', file)
-      data.append('path', currentPath)
+      data.append('path', (forcePath ? forcePath : currentPath) + (filePathArr.length > 0 ? '/' + filePathArr.join('/') : ''))
       const response = await fetch(`${apiBaseUrl}/api/files/upload/`, {
         method: 'POST',
         body: data,
@@ -310,16 +352,19 @@ export default function FilePicker({
       });
       const json = await response.json();
       if (json.success) {
-        toast.success('File uploaded!');
-        loadCurrentPath();
+        // toast.success('File uploaded!');
+        // loadCurrentPath();
+        return json;
       } else {
-        toast.error('Failed to upload file!');
+        throw new Error('Failed to upload file');
+        // toast.error('Failed to upload file!');
       }
     } catch(err) {
       console.error(err);
-      toast.error('Failed to upload file!');
+      // toast.error('Failed to upload file!');
+      throw err;
     } finally {
-      setIsUploading(false);
+      // setIsUploading(false);
     }
   }
 
@@ -333,11 +378,13 @@ export default function FilePicker({
 
   const upload = useUpload({
     spec: fileSpec,
-    onResolved: (payloads: File[]) => hasUpload && onFileUpload(payloads[0]),
+    onResolved: (payloads: File[]) => hasUpload && onFileUpload(payloads),
     onError: onFileUploadError,
-    options: { noDrag: false, noClick: true, multiple: false }
+    options: { noDrag: false, noClick: true, multiple: true }
   });
   const { getRootProps, getInputProps, isDragActive } = upload ?? {};
+
+  const selectableItemsLength = attachmentMode ? folderFiles.length : pathData.items.length;
 
   return (
     <>
@@ -360,7 +407,7 @@ export default function FilePicker({
           destinationMode={destinationMode}
         />
       )}
-      <div className={cn("rounded-lg border bg-white min-h-24 relative overflow-hidden flex", isDragActive && hasUpload ? 'bg-primary/20' : '')} {...(hasUpload ? getRootProps() : {})}>
+      <div className={cn("rounded-lg border min-h-24 relative overflow-hidden flex", isDragActive && hasUpload ? 'bg-primary/20 [.contents>div]:bg-primary/20' : 'bg-white')} {...(hasUpload ? getRootProps() : {})}>
         {hasUpload && <input {...getInputProps()} />}
         <ScrollArea className='w-full' type='auto'>
           <div className="pb-2 px-4">
@@ -383,7 +430,7 @@ export default function FilePicker({
               <div className="contents text-xs">
                 {!singleMode && 
                   <div className="flex items-center p-2 pt-4 sticky top-0 bg-white">
-                    {multiselect && <Checkbox checked={!isLoading && selectedElements.length === pathData.items.length} onCheckedChange={onCheckedChange} />}
+                    {multiselect && <Checkbox checked={!isLoading && selectableItemsLength > 0 && selectedElements.length === selectableItemsLength} disabled={selectableItemsLength === 0} onCheckedChange={onCheckedChange} />}
                   </div>
                 }
                 <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
@@ -405,13 +452,14 @@ export default function FilePicker({
                 {showActions && <div className="sticky top-0 bg-white"></div>}
               </div>
               {pathData.items.length > 0 && pathData.items.map((item) => (
-                <FilePickerItem
+                <FilePickerItemComponent
                   item={item}
                   selected={selectedElements.includes(item.id)}
                   setSelectedState={(value) => setItemSelected(item.id, value)}
                   onClick={() => itemClick(item)}
                   showActions={showActions}
                   singleMode={singleMode}
+                  attachmentMode={attachmentMode}
                   compact={compact}
                   onFileUpload={onFileUpload}
                   hasUpload={hasUpload}
@@ -423,7 +471,7 @@ export default function FilePicker({
               ))}
               {(pathData.items.length === 0 && !isLoading) && (
                 <div className='col-span-full p-2 flex justify-center text-sm text-gray-400'>
-                  No Entries
+                  <Translator path="evoyaFiles.common.no_entries" />
                 </div>
               )}
             </div>

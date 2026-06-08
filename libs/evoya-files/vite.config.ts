@@ -57,6 +57,7 @@ export default defineConfig({
       'react-i18next': path.resolve(__dirname, './node_modules/react-i18next'),
       'usehooks-ts': path.resolve(__dirname, './node_modules/usehooks-ts'),
       "@mdxeditor/editor/dist/styles/ui.module.css.js": path.resolve(__dirname, "../evoya-creator/node_modules/@mdxeditor/editor/dist/styles/ui.module.css.js"),
+      "@mdxeditor/editor/dist/plugins/core/SharedHistoryPlugin.js": path.resolve(__dirname, "../evoya-creator/node_modules/@mdxeditor/editor/dist/plugins/core/SharedHistoryPlugin.js"),
     }
   }
 });

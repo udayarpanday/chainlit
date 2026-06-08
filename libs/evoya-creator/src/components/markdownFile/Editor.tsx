@@ -68,6 +68,7 @@ export default function Editor({ content, setContent }: { content: string; setCo
         {mdxCustomCss}
       </style>
       <MDXEditor
+        suppressHtmlProcessing
         className="evoya-creator-editor"
         ref={mdxEditorRef}
         markdown={mdContent}

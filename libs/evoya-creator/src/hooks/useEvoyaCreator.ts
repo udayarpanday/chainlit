@@ -47,7 +47,10 @@ export default function useEvoyaCreator() {
   const openCreatorWithFile = (file: { path: string; name: string; mime: string; }, openConfig: any) => {
     window.dispatchEvent(new CustomEvent('open-evoya-creator', { detail: { config: openConfig }}));
     setCreatorType(openConfig.type ?? 'markdown');
-    setFileInfo(file);
+    const filePathArr = file.path.split('/');
+    filePathArr.pop();
+    const filePath = filePathArr.join('/') + "/"
+    setFileInfo({ ...file, folderPath: filePath});
 
     fetch(`${config.apiBaseUrl}/api/files/download/?path=${file.path}`).then(async (response) => {
       const text = await response.text();

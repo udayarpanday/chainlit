@@ -277,7 +277,7 @@ export const resetDocument$ = Action((r) => {});
 export const updateComparisonNodeKeys$ = Action((r) => {});
 export const creatorType$ = Cell<string>('', (r) => {});
 export const evoyaViewType$ = Cell<"default" | "approve">('default', (r) => {});
-export const evoyaAutoApprove$ = Cell<boolean>(false, (r) => {});
+export const evoyaAutoApprove$ = Cell<boolean>(true, (r) => {});
 export const comparisonNodeKeys$ = Cell<string[]>([], (r) => {});
 
 export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
