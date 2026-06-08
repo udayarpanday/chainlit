@@ -1,19 +1,15 @@
-import { useEffect, useContext, useState } from 'react';
+import { useEffect, useContext } from 'react';
 import { WidgetContext } from '@/context';
 
 const CreatorChat = (): JSX.Element => {
   const { config } = useContext(WidgetContext);
-  const [agents, setAgents] = useState([]);
-  const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
 
   useEffect(() => {
     if (!window.cl_shadowRootElement_container) {
       fetch(`${config.apiBaseUrl}/api/agent/user/list/`)
         .then((response) => response.json())
         .then((agents) => {
-          setAgents(agents);
           const defaultAgent = agents.find((agent) => agent.is_default).uuid;
-          setSelectedAgent(defaultAgent)
           loadChatWithUuid(defaultAgent)
         })
     } else {
@@ -40,6 +36,7 @@ const CreatorChat = (): JSX.Element => {
           enabled: true,
           initialEnabled: true
         },
+        brand_color: config?.brand_color,
         speechToText: true,
         workspace_id: config.workspaceId
       }

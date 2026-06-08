@@ -13,6 +13,7 @@ interface Props {
   projectId?: string;
   file?: string;
   mime?: string;
+  brandColor?: string | null;
 }
 
 const customFileRenderer = [
@@ -24,7 +25,7 @@ const customFileRenderer = [
   'application/pdf',
 ];
 
-export default function Widget({ initialPath, apiBaseUrl, csrfToken, workspaceId, projectId, file, mime }: Props) {
+export default function Widget({ initialPath, apiBaseUrl, csrfToken, workspaceId, projectId, file, mime, brandColor }: Props) {
   const [selectedPath, setSelectedPath] = useState(initialPath);
   const [pathItems, setPathItems] = useState<PathItem[]>([]);
   const [openFile, setOpenFile] = useState<EvoyaFile | null>((file && mime) ? { path: initialPath + file, name: file, mime: mime, owner: '', size: 0, showActions: false, modified: new Date(), created: new Date() } : null);
@@ -58,7 +59,8 @@ export default function Widget({ initialPath, apiBaseUrl, csrfToken, workspaceId
       csrfToken,
       workspaceId,
       projectId,
-      type: 'default'
+      type: 'default',
+      brandColor
     }}>
       {!openFile && (
         <FilePicker

@@ -7,8 +7,8 @@ import {
 
 import { PencilLine  } from 'lucide-react';
 
-import { useTranslation } from '@/components/i18n/Translator';
 import { Button } from '@/components/ui/button';
+import { WidgetContext } from '@chainlit/copilot/src/context';
 import {
   Tooltip,
   TooltipContent,
@@ -44,10 +44,11 @@ function escapeBrackets(text: string) {
 
 export function EvoyaCreatorButton({ message }: Props) {
   const { showEvoyaCreatorButton } = useContext(MessageContext);
+  const { evoya } = useContext(WidgetContext);
 
   const handleClick = () => {
     // @ts-expect-error custom property
-    window.openEvoyaCreator({...message, output: escapeBrackets(message.output)}, { type: 'markdown' });
+    window.openEvoyaCreator({...message, output: escapeBrackets(message.output)}, { type: 'markdown', brand_color: evoya?.brand_color });
   };
 
   if (!showEvoyaCreatorButton) {
@@ -77,6 +78,6 @@ export function EvoyaCreatorButton({ message }: Props) {
       </div>
     </TooltipProvider>
   );
-};
+}
 
 export default EvoyaCreatorButton;

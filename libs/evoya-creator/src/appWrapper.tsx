@@ -39,7 +39,11 @@ export default function AppWrapper({ config }: Props) {
 
   return (
     <RecoilRoot>
-      <ThemeProvider storageKey="vite-ui-theme" defaultTheme={defaultTheme}>
+      <ThemeProvider
+        storageKey="vite-ui-theme"
+        defaultTheme={defaultTheme}
+        brandColor={config.brand_color}
+      >
         <WidgetContext.Provider
           value={{
             config
