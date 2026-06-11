@@ -85,6 +85,7 @@ import { Button } from '@chainlit/app/src/components/ui/button';
 import { X } from 'lucide-react';
 import { getTranslations } from './utils/translations';
 import { useTranslation } from '@chainlit/app/src/components/i18n/Translator';
+import { pasteNormalizerPlugin } from './plugins/pasteNormalizer';
 
 export default function MDXEditorWrapper() {
   const {
@@ -231,6 +232,7 @@ export default function MDXEditorWrapper() {
           imagePlugin({
             EditImageToolbar: EditImageToolbar
           }),
+          pasteNormalizerPlugin(),
           evoyaAiPlugin({
             containerRef,
             creatorType,

@@ -1,31 +1,40 @@
 import {
-  Separator,
-  UndoRedo,
+  BoldItalicUnderlineToggles,
+  ChangeCodeMirrorLanguage,
+  ConditionalContents,
   CreateLink,
   ListsToggle,
-  BoldItalicUnderlineToggles,
-  ConditionalContents,
-  ChangeCodeMirrorLanguage,
+  Separator,
+  UndoRedo
 } from '@mdxeditor/editor';
 
+import { AutoApproveToggle } from './plugins/toolbar/components/AutoApproveToggle';
+
 import {
-  OpenFile,
-  SaveContent,
-  EvoyaDiffSourceToggleWrapper,
-  EvoyaDropdown,
   EvoyaAdvanced,
   EvoyaAdvancedToggle,
   EvoyaBlockTypeSelect,
+  EvoyaDiffSourceToggleWrapper,
+  EvoyaDropdown,
+  OpenFile,
+  PasteSanitizerToggle,
+  SaveContent
 } from './plugins/toolbar/components';
-import { AutoApproveToggle } from './plugins/toolbar/components/AutoApproveToggle';
 
-export default function MDXEditorToolbar({ setMdDiffContent }: { setMdDiffContent: (md: string) => void }) {
+export default function MDXEditorToolbar({
+  setMdDiffContent
+}: {
+  setMdDiffContent: (md: string) => void;
+}) {
   return (
     <EvoyaDiffSourceToggleWrapper>
       <div style={{ flexGrow: 1 }} className="[&>div]:items-center">
         <ConditionalContents
           options={[
-            { when: (editor) => editor?.editorType === 'codeblock', contents: () => <ChangeCodeMirrorLanguage /> },
+            {
+              when: (editor) => editor?.editorType === 'codeblock',
+              contents: () => <ChangeCodeMirrorLanguage />
+            },
             {
               fallback: () => (
                 <>
@@ -44,6 +53,8 @@ export default function MDXEditorToolbar({ setMdDiffContent }: { setMdDiffConten
                   <SaveContent />
                   <OpenFile />
                   <Separator />
+                  <PasteSanitizerToggle />
+                  <Separator />
                   <AutoApproveToggle />
                   <div style={{ flexGrow: 1 }}></div>
                   <EvoyaAdvancedToggle />
@@ -54,5 +65,5 @@ export default function MDXEditorToolbar({ setMdDiffContent }: { setMdDiffConten
         />
       </div>
     </EvoyaDiffSourceToggleWrapper>
-  )
+  );
 }
