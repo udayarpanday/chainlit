@@ -162,8 +162,7 @@ const useChatSession = () => {
         withCredentials: true,
         transports,
         query: {
-          chainlit_session_id: evoya?.session_uuid ||
-              getScopedSessionStorageItem('session_token') || null,
+          chainlit_session_id: sessionId,
         },
         auth: (cb) => {
           cb({
