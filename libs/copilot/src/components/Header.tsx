@@ -240,7 +240,7 @@ const Header = ({
     try {
       const sessionResponse = await apiClient.get(
         `/chat_session_uuid/${sessionId}/`,
-        accessToken
+        accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined
       );
       const sessionJson = await sessionResponse.json();
       setSessionUuid(sessionJson.session_uuid);
