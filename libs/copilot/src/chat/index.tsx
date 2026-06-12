@@ -13,26 +13,27 @@ export default function ChatWrapper() {
   const { accessToken, evoya } = useContext(WidgetContext);
   const { connect, session } = useChatSession();
   const { sendMessage } = useChatInteract();
+  const evoyaSessionUuid = evoya?.session_uuid || '';
 
   useEffect(() => {
-    if (evoya?.session_uuid) {
-      setScopedSessionStorageItem('session_token', evoya.session_uuid);
+    if (evoyaSessionUuid) {
+      setScopedSessionStorageItem('session_token', evoyaSessionUuid);
       localStorage.removeItem('session_token');
       document.cookie =
         'session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     }
-  }, [evoya?.session_uuid]);
+  }, [evoyaSessionUuid]);
 
   useEffect(() => {
-    if (session?.socket?.connected) return;
+    if (session?.socket) return;
     connect({
       // @ts-expect-error window typing
       transports: window.transports,
       userEnv: {},
       accessToken: `Bearer ${accessToken}`,
-      evoya
+      evoya: { session_uuid: evoyaSessionUuid }
     });
-  }, [accessToken, connect, evoya, evoya?.session_uuid]);
+  }, [accessToken, connect, evoyaSessionUuid, session?.socket]);
 
   useEffect(() => {
     // @ts-expect-error is not a valid prop

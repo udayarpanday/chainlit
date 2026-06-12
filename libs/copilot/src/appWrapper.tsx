@@ -1,5 +1,5 @@
 import { makeApiClient } from 'api';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { RecoilRoot } from 'recoil';
 import { IWidgetConfig } from 'types';
 
@@ -21,7 +21,18 @@ interface Props {
 
 export default function AppWrapper({ widgetConfig, evoya }: Props) {
   const [accessToken, setAccessToken] = useState(widgetConfig.accessToken);
-  const apiClient = makeApiClient(widgetConfig.chainlitServer);
+  const apiClient = useMemo(
+    () => makeApiClient(widgetConfig.chainlitServer),
+    [widgetConfig.chainlitServer]
+  );
+  const widgetContextValue = useMemo(
+    () => ({
+      accessToken,
+      setAccessToken,
+      evoya
+    }),
+    [accessToken, evoya]
+  );
   const [customThemeLoaded, setCustomThemeLoaded] = useState(false);
 
   useEffect(() => {
@@ -44,9 +55,7 @@ export default function AppWrapper({ widgetConfig, evoya }: Props) {
 
     apiClient
       .get('/public/theme.json', {
-        headers: {
-          Authorization: `Bearer ${widgetConfig.accessToken}`
-        }
+        Authorization: `Bearer ${widgetConfig.accessToken}`
       })
       .then(async (res) => {
         try {
@@ -81,13 +90,7 @@ export default function AppWrapper({ widgetConfig, evoya }: Props) {
   if (!customThemeLoaded) return null;
   return (
     <ChainlitContext.Provider value={apiClient}>
-      <WidgetContext.Provider
-        value={{
-          accessToken,
-          setAccessToken,
-          evoya
-        }}
-      >
+      <WidgetContext.Provider value={widgetContextValue}>
         <RecoilRoot>
           <App widgetConfig={widgetConfig} />
         </RecoilRoot>
