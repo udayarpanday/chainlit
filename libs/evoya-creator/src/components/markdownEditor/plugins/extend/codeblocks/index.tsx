@@ -1,25 +1,27 @@
 import {
+  codeBlockLanguages$,
+  normalizeCodeBlockLanguages,
+  realmPlugin
+} from '@mdxeditor/editor';
+
+import { EvoyaCodeEditorDescriptor } from './EvoyaCodeEditor';
+import {
   MermaidCodeEditorDescriptor,
-  SimpleMermaidCodeEditorDescriptor,
+  SimpleMermaidCodeEditorDescriptor
 } from './Mermaid';
 import {
-  EvoyaCodeEditorDescriptor
-} from './EvoyaCodeEditor';
-import {
-  VegaLiteCodeEditorDescriptor,
   SimpleVegaLiteCodeEditorDescriptor,
+  VegaLiteCodeEditorDescriptor
 } from './VegaLite';
 
-import {
-  realmPlugin,
-  codeBlockLanguages$,
-} from "@mdxeditor/editor";
-
-
-const evoyaCodePlugin = realmPlugin<{codeBlockLanguages: Record<string, string>}>({
+const evoyaCodePlugin = realmPlugin<{
+  codeBlockLanguages: Record<string, string>;
+}>({
   init: (realm, params) => {
     realm.pubIn({
-      [codeBlockLanguages$]: params?.codeBlockLanguages,
+      [codeBlockLanguages$]: normalizeCodeBlockLanguages(
+        params?.codeBlockLanguages ?? {}
+      )
     });
   }
 });
@@ -30,5 +32,5 @@ export {
   VegaLiteCodeEditorDescriptor,
   SimpleVegaLiteCodeEditorDescriptor,
   EvoyaCodeEditorDescriptor,
-  evoyaCodePlugin,
-}
+  evoyaCodePlugin
+};

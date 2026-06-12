@@ -115,6 +115,21 @@ function shouldUnwrapParagraph(lines: string[]): boolean {
     visibleLines[0].endsWith(':') &&
     averageLength < 50 &&
     visibleLines.length <= 3;
+  const hasStrongContinuation = visibleLines.some((line, index) => {
+    if (index === 0) {
+      return false;
+    }
+
+    const previousLine = visibleLines[index - 1];
+    return (
+      (/[A-Za-z]-$/.test(previousLine) && /^[a-z]/.test(line)) ||
+      /^[,.;:!?%)\]}]/.test(line)
+    );
+  });
+
+  if (hasStrongContinuation) {
+    return true;
+  }
 
   if (looksLikeLabel) {
     return false;
@@ -450,6 +465,8 @@ export const pasteNormalizerPlugin = realmPlugin({
             return false;
           }
 
+          const preferCleanedText = Boolean(text && html && !textUnchanged);
+
           let dataTransfer: DataTransfer;
           try {
             dataTransfer = new DataTransfer();
@@ -460,7 +477,7 @@ export const pasteNormalizerPlugin = realmPlugin({
           if (cleanedText) {
             dataTransfer.setData('text/plain', cleanedText);
           }
-          if (cleanedHtml) {
+          if (cleanedHtml && !preferCleanedText) {
             dataTransfer.setData('text/html', cleanedHtml);
           }
 
