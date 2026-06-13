@@ -47,6 +47,9 @@ interface DashboardBridgeAgent {
   show_test_chat_option?: boolean | string;
   is_curated?: boolean | string;
   is_default?: boolean | string;
+  is_archived?: boolean | string;
+  archived?: boolean | string;
+  is_chat_archived?: boolean | string;
 }
 
 interface DashboardBridgeData {
@@ -136,7 +139,11 @@ const Header = ({
           ? true
           : toBoolean(agent.show_test_chat_option),
       isCurated: toBoolean(agent.is_curated),
-      isDefault: toBoolean(agent.is_default)
+      isDefault: toBoolean(agent.is_default),
+      isArchived:
+        toBoolean(agent.is_archived) ||
+        toBoolean(agent.archived) ||
+        toBoolean(agent.is_chat_archived)
     };
   };
 
@@ -172,6 +179,7 @@ const Header = ({
         return {
           ...canonicalAgent,
           isDefault: canonicalAgent.isDefault || recentAgent.isDefault,
+          isArchived: canonicalAgent.isArchived || recentAgent.isArchived,
           isRecent: true,
           sessionUuid: recentAgent.sessionUuid,
           isFavorite: recentAgent.isFavorite
