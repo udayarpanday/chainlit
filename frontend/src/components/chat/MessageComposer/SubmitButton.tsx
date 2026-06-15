@@ -1,8 +1,10 @@
 import { Send } from 'lucide-react';
 import { useContext } from 'react';
+import { useRecoilValue } from 'recoil';
 
 import { WidgetContext } from '@chainlit/copilot/src/context';
 import {
+  chatArchived,
   useChatData,
   useChatInteract,
   useChatMessages
@@ -32,6 +34,7 @@ export default function SubmitButton({
   value
 }: SubmitButtonProps) {
   const { evoya } = useContext(WidgetContext);
+  const isChatArchived = useRecoilValue(chatArchived);
   const { loading } = useChatData();
   const { firstInteraction } = useChatMessages();
   const { stopTask } = useChatInteract();
@@ -62,6 +65,7 @@ export default function SubmitButton({
               size="icon"
               variant="outline"
               className="rounded-full h-8 w-8 hover:bg-muted"
+              disabled={isChatArchived}
             >
               <Stop className="!size-5" />
             </Button>

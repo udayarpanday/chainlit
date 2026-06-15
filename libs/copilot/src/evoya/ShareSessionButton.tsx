@@ -35,6 +35,7 @@ import { EvoyaShareLink } from './types';
 interface Props {
   sessionUuid: string;
   restrictSharedSessionsToOrg?: boolean;
+  isChatArchived?: boolean;
 }
 
 interface SelectProps {
@@ -98,7 +99,8 @@ export const Select = ({
 
 export default function ShareSessionButton({
   sessionUuid,
-  restrictSharedSessionsToOrg = false
+  restrictSharedSessionsToOrg = false,
+  isChatArchived = false
 }: Props) {
   const { t } = useTranslation();
   const [expireTime, setExpireTime] = useState(0); // 0=never, 7=7days, 31=31days
@@ -138,6 +140,10 @@ export default function ShareSessionButton({
   }, [restrictSharedSessionsToOrg]);
 
   const handleClickOpen = async () => {
+    if (!sessionUuid || isChatArchived) {
+      return;
+    }
+
     setOpen(true);
     setIsLoading(true);
     if (!evoya?.api) {
@@ -370,6 +376,7 @@ export default function ShareSessionButton({
         }
       })()
     : '';
+  const isDisabled = sessionUuid === '' || isChatArchived;
 
   return (
     <div>
@@ -382,7 +389,7 @@ export default function ShareSessionButton({
                 size="icon"
                 variant="ghost"
                 onClick={handleClickOpen}
-                disabled={sessionUuid == ''}
+                disabled={isDisabled}
               >
                 <Share className="!size-5 " />
               </Button>
@@ -390,7 +397,7 @@ export default function ShareSessionButton({
           </TooltipTrigger>
           <TooltipContent>
             <p>
-              {sessionUuid === '' ? (
+              {isDisabled ? (
                 <Translator path="components.molecules.shareSession.inactiveButton" />
               ) : (
                 <Translator path="components.molecules.shareSession.openButton" />

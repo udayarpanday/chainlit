@@ -398,6 +398,7 @@
     "chat": {
         "input": {
             "placeholder": "Your input...",
+            "archived": "This chat belongs to an archived agent. Unarchive the agent to continue this chat, or select another agent to start a new chat.",
             "actions": {
                 "send": "Send message",
                 "stop": "Stop Task",

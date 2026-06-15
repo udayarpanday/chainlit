@@ -3,6 +3,7 @@ import { useRecoilValue, useResetRecoilState, useSetRecoilState } from 'recoil';
 import {
   actionState,
   askUserState,
+  chatArchived,
   chatSettingsInputsState,
   chatSettingsValueState,
   currentThreadIdState,
@@ -35,6 +36,7 @@ const useChatInteract = () => {
   const resetChatSettings = useResetRecoilState(chatSettingsInputsState);
   const resetSessionId = useResetRecoilState(sessionIdState);
   const resetChatSettingsValue = useResetRecoilState(chatSettingsValueState);
+  const resetChatArchived = useResetRecoilState(chatArchived);
 
   const setFirstUserInteraction = useSetRecoilState(firstUserInteraction);
   const setLoading = useSetRecoilState(loadingState);
@@ -62,6 +64,7 @@ const useChatInteract = () => {
     setTokenCount(0);
     resetChatSettings();
     resetChatSettingsValue();
+    resetChatArchived();
     setSideView(undefined);
     setCurrentThreadId(undefined);
   }, [session]);

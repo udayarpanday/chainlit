@@ -1,4 +1,4 @@
-import { debounce } from 'lodash';
+import { debounce, set } from 'lodash';
 import { useCallback, useContext, useEffect, useRef } from 'react';
 import {
   useRecoilState,
@@ -14,6 +14,7 @@ import {
   askUserState,
   audioConnectionState,
   callFnState,
+  chatArchived,
   chatProfileState,
   chatSettingsInputsState,
   chatSettingsValueState,
@@ -39,6 +40,7 @@ import {
 import {
   ChatInputSocketPayload,
   IAction,
+  IChatArchived,
   ICommand,
   IElement,
   IMessageElement,
@@ -98,6 +100,7 @@ const useChatSession = () => {
   const idToResume = useRecoilValue(threadIdToResumeState);
   const setThreadResumeError = useSetRecoilState(resumeThreadErrorState);
   const setInitialTranscript = useSetRecoilState(initialTranscriptState);
+  const setChatArchived = useSetRecoilState(chatArchived);
 
   const token = getScopedSessionStorageItem('chainlit_token') || '';
   const tabId = getChainlitTabId();
@@ -448,6 +451,10 @@ const useChatSession = () => {
             typeof payload === 'string' ? 'replace' : payload.mode || 'replace',
           receivedAt: Date.now()
         });
+      });
+
+      socket.on('chat_archived', (payload:IChatArchived) => {
+        setChatArchived(payload.is_chat_archived);
       });
 
       socket.on('set_sidebar_elements', (elements: IMessageElement[]) => {

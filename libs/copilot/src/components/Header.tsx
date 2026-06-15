@@ -13,6 +13,7 @@ import NewChatButton from '@chainlit/app/src/components/header/NewChat';
 import { Button } from '@chainlit/app/src/components/ui/button';
 import { ChainlitContext } from '@chainlit/react-client';
 import {
+  chatArchived,
   evoyaCreatorEnabledState,
   firstUserInteraction
 } from '@chainlit/react-client';
@@ -47,6 +48,9 @@ interface DashboardBridgeAgent {
   show_test_chat_option?: boolean | string;
   is_curated?: boolean | string;
   is_default?: boolean | string;
+  is_archived?: boolean | string;
+  archived?: boolean | string;
+  is_chat_archived?: boolean | string;
 }
 
 interface DashboardBridgeData {
@@ -82,6 +86,7 @@ const Header = ({
   const { audioConnection } = useAudio();
 
   const creatorEnabled = useRecoilValue(evoyaCreatorEnabledState);
+  const isChatArchived = useRecoilValue(chatArchived);
 
   const apiClient = useContext(ChainlitContext);
   const { accessToken, evoya } = useContext(WidgetContext);
@@ -136,7 +141,11 @@ const Header = ({
           ? true
           : toBoolean(agent.show_test_chat_option),
       isCurated: toBoolean(agent.is_curated),
-      isDefault: toBoolean(agent.is_default)
+      isDefault: toBoolean(agent.is_default),
+      isArchived:
+        toBoolean(agent.is_archived) ||
+        toBoolean(agent.archived) ||
+        toBoolean(agent.is_chat_archived)
     };
   };
 
@@ -172,6 +181,7 @@ const Header = ({
         return {
           ...canonicalAgent,
           isDefault: canonicalAgent.isDefault || recentAgent.isDefault,
+          isArchived: canonicalAgent.isArchived || recentAgent.isArchived,
           isRecent: true,
           sessionUuid: recentAgent.sessionUuid,
           isFavorite: recentAgent.isFavorite
@@ -453,6 +463,7 @@ const Header = ({
             <ShareSessionButton
               sessionUuid={sessionUuid}
               restrictSharedSessionsToOrg={restrictSharedSessionsToOrg}
+              isChatArchived={isChatArchived}
             />
           </>
         )}
