@@ -1,0 +1,215 @@
+{
+  "common": {
+    "actions": {
+      "cancel": "Cancelar",
+      "confirm": "Confirmar",
+      "continue": "Continuar",
+      "goBack": "Voltar",
+      "reset": "Redefinir",
+      "submit": "Enviar"
+    },
+    "status": {
+      "loading": "Carregando...",
+      "error": {
+        "default": "Ocorreu um erro",
+        "serverConnection": "Não foi possível conectar ao servidor"
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Faça login para acessar o aplicativo",
+      "form": {
+        "email": {
+          "label": "Endereço de e-mail",
+          "required": "e-mail é um campo obrigatório"
+        },
+        "password": {
+          "label": "Senha",
+          "required": "senha é um campo obrigatório"
+        },
+        "actions": {
+          "signin": "Entrar"
+        },
+        "alternativeText": {
+          "or": "OU"
+        }
+      },
+      "errors": {
+        "default": "Não foi possível entrar",
+        "signin": "Tente entrar com outra conta",
+        "oauthSignin": "Tente entrar com outra conta",
+        "redirectUriMismatch": "O URI de redirecionamento não corresponde à configuração do app OAuth",
+        "oauthCallback": "Tente entrar com outra conta",
+        "oauthCreateAccount": "Tente entrar com outra conta",
+        "emailCreateAccount": "Tente entrar com outra conta",
+        "callback": "Tente entrar com outra conta",
+        "oauthAccountNotLinked": "Para confirmar sua identidade, entre com a mesma conta usada originalmente",
+        "emailSignin": "Não foi possível enviar o e-mail",
+        "emailVerify": "Verifique seu e-mail. Um novo e-mail foi enviado",
+        "credentialsSignin": "Falha ao entrar. Verifique se os dados fornecidos estão corretos",
+        "sessionRequired": "Faça login para acessar esta página"
+      }
+    },
+    "provider": {
+      "continue": "Continuar com {{provider}}"
+    }
+  },
+  "chat": {
+    "input": {
+      "placeholder": "Sua mensagem...",
+      "archived": "Este chat pertence a um agente arquivado. Desarquive o agente para continuar este chat ou selecione outro agente para iniciar um novo chat.",
+      "actions": {
+        "send": "Enviar mensagem",
+        "stop": "Parar tarefa",
+        "attachFiles": "Anexar arquivos"
+      },
+      "no_results": "Nenhum resultado encontrado",
+      "commands": "Navegue e insira prompts salvos; você também pode pesquisá-los com o comando / no campo de entrada do chat."
+    },
+    "speech": {
+      "start": "Iniciar gravação",
+      "stop": "Cancelar",
+      "submit": "Enviar gravação",
+      "connecting": "Conectando",
+      "voiceMode": "Usar modo de voz",
+      "speechText": "Usar modo de fala para texto"
+    },
+    "fileUpload": {
+      "dragDrop": "Arraste e solte arquivos aqui",
+      "browse": "Procurar arquivos",
+      "sizeLimit": "Limite:",
+      "errors": {
+        "failed": "Falha ao fazer upload",
+        "cancelled": "Upload cancelado de"
+      }
+    },
+    "messages": {
+      "status": {
+        "using": "Usando",
+        "used": "Usado"
+      },
+      "actions": {
+        "copy": {
+          "button": "Copiar para a área de transferência",
+          "success": "Copiado!"
+        },
+        "download": {
+          "button": "Baixar esta imagem"
+        }
+      },
+      "feedback": {
+        "positive": "Útil",
+        "negative": "Não útil",
+        "edit": "Editar feedback",
+        "dialog": {
+          "title": "Adicionar um comentário",
+          "submit": "Enviar feedback"
+        },
+        "status": {
+          "updating": "Atualizando",
+          "updated": "Feedback atualizado"
+        }
+      }
+    },
+    "history": {
+      "title": "Últimas entradas",
+      "empty": "Ainda não há entradas...",
+      "show": "Mostrar histórico"
+    },
+    "settings": {
+      "title": "Painel de configurações"
+    },
+    "watermark": "A IA pode cometer erros. Verifique informações importantes.",
+    "context": {
+      "title": "CTX",
+      "modal_title_tip": "Ver contexto",
+      "modal_title": "Contexto do chat"
+    },
+    "evoya": {
+      "cot": {
+        "thinking": "Pensando",
+        "using_tool": "Usando",
+        "processing_document": "Processando documento"
+      }
+    }
+  },
+  "navigation": {
+    "header": {
+      "chat": "Chat",
+      "readme": "Leia-me",
+      "session": {
+        "description": "Mostrar ou ocultar sessões de chat"
+      }
+    },
+    "newChat": {
+      "button": "Novo chat",
+      "dialog": {
+        "title": "Criar novo chat",
+        "description": "Isso limpará o histórico atual do chat. Tem certeza de que deseja continuar?",
+        "tooltip": "Novo chat"
+      }
+    },
+    "user": {
+      "menu": {
+        "settings": "Configurações",
+        "settingsKey": "S",
+        "apiKeys": "Chaves de API",
+        "logout": "Sair"
+      }
+    }
+  },
+  "threadHistory": {
+    "sidebar": {
+      "title": "Chats anteriores",
+      "filters": {
+        "search": "Pesquisar"
+      },
+      "timeframes": {
+        "today": "Hoje",
+        "yesterday": "Ontem",
+        "previous7days": "Últimos 7 dias",
+        "previous30days": "Últimos 30 dias"
+      },
+      "empty": "Nenhuma conversa encontrada",
+      "actions": {
+        "close": "Fechar barra lateral",
+        "open": "Abrir barra lateral"
+      }
+    },
+    "thread": {
+      "untitled": "Conversa sem título",
+      "menu": {
+        "rename": "Renomear",
+        "delete": "Excluir"
+      },
+      "actions": {
+        "delete": {
+          "title": "Confirmar exclusão",
+          "description": "Isso excluirá a conversa, bem como suas mensagens e elementos. Esta ação não pode ser desfeita",
+          "success": "Chat excluído",
+          "inProgress": "Excluindo chat"
+        },
+        "rename": {
+          "title": "Renomear conversa",
+          "description": "Digite um novo nome para esta conversa",
+          "form": {
+            "name": {
+              "label": "Nome",
+              "placeholder": "Digite o novo nome"
+            }
+          },
+          "success": "Conversa renomeada!",
+          "inProgress": "Renomeando conversa"
+        }
+      }
+    }
+  },
+  "apiKeys": {
+    "title": "Chaves de API necessárias",
+    "description": "Para usar este aplicativo, as seguintes chaves de API são necessárias. As chaves são armazenadas no armazenamento local do seu dispositivo.",
+    "success": {
+      "saved": "Salvo com sucesso"
+    }
+  }
+}

@@ -13,6 +13,7 @@ import NewChatButton from '@chainlit/app/src/components/header/NewChat';
 import { Button } from '@chainlit/app/src/components/ui/button';
 import { ChainlitContext } from '@chainlit/react-client';
 import {
+  chatArchived,
   evoyaCreatorEnabledState,
   firstUserInteraction
 } from '@chainlit/react-client';
@@ -85,6 +86,7 @@ const Header = ({
   const { audioConnection } = useAudio();
 
   const creatorEnabled = useRecoilValue(evoyaCreatorEnabledState);
+  const isChatArchived = useRecoilValue(chatArchived);
 
   const apiClient = useContext(ChainlitContext);
   const { accessToken, evoya } = useContext(WidgetContext);
@@ -461,6 +463,7 @@ const Header = ({
             <ShareSessionButton
               sessionUuid={sessionUuid}
               restrictSharedSessionsToOrg={restrictSharedSessionsToOrg}
+              isChatArchived={isChatArchived}
             />
           </>
         )}

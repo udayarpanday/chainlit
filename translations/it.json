@@ -395,7 +395,7 @@
     "chat": {
         "input": {
             "placeholder": "Scrivi il tuo messaggio qui...",
-            "archived": "Questa chat è archiviata. Seleziona un agente diverso per continuare.",
+            "archived": "Questa chat appartiene a un agente archiviato. Rimuovi l’agente dall’archivio per continuare questa chat oppure seleziona un altro agente per avviare una nuova chat.",
             "actions": {
                 "send": "Invia messaggio",
                 "stop": "Ferma Attività",
