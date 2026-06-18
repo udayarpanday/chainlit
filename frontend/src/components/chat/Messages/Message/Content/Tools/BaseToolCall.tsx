@@ -49,7 +49,7 @@ export const BaseToolCall = ({
           </ItemMedia>
           <ItemContent className="overflow-hidden">
             <ItemTitle className="overflow-hidden whitespace-nowrap w-full">
-              <span className="text-ellipsis overflow-hidden">{title}</span>
+              <span className="text-ellipsis overflow-hidden capitalize">{title}</span>
             </ItemTitle>
           </ItemContent>
           <ItemActions>

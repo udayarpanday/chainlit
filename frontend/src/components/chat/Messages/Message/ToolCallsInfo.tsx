@@ -9,6 +9,8 @@ import { CustomTool } from './Content/Tools/CustomTool';
 import { ImageAnalyzer } from './Content/Tools/ImageAnalyzer';
 import { CodeInterpreter } from './Content/Tools/CodeInterpreter';
 import { SessionFiles } from './Content/Tools/SessionFiles';
+import { ProjectsList } from './Content/Tools/ProjectsList';
+import { ProjectFile } from './Content/Tools/ProjectFile';
 
 interface Props {
   toolCalls: IStep[];
@@ -105,6 +107,10 @@ export default function ToolCallsInfo({
           return <SessionFiles step={tool} />
         case "tool_Code_Interpreter":
           return <CodeInterpreter step={tool} />
+        case "write_project_file":
+          return <ProjectFile step={tool} />
+        case "list_selected_projects":
+          return <ProjectsList step={tool} />
         default:
           return <CustomTool step={tool} />
       }

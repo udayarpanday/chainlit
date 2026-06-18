@@ -18,10 +18,10 @@ export const CustomTool = ({ step }: { step: StepIO }) => {
   const toolName = useMemo(() => {
     const toolNameArr = step.inputParsed.tool_call.name.split("_");
     toolNameArr.shift();
-    if (isNaN(parseInt(toolNameArr[toolNameArr.length - 1]))) {
+    if (!isNaN(parseInt(toolNameArr[toolNameArr.length - 1]))) {
       toolNameArr.pop();
     }
-    return toolNameArr.join("_");
+    return toolNameArr.join(" ");
   }, [step]);
 
   return (
