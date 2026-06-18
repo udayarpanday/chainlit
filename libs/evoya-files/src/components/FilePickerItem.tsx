@@ -91,6 +91,7 @@ export default function FilePickerItem({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState('');
+  const [folderPickerPath, setFolderPickerPath] = useState('');
   const [moveOpen, setMoveOpen] = useState(false);
   const [moveDestination, setMoveDestination] = useState<FilePickerItem[]>([]);
   const { t } = useTranslation();
@@ -136,7 +137,11 @@ export default function FilePickerItem({
   const moveItemHandler = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMoveOpen(false);
-    moveItem(item, moveDestination[0].path)
+    if (moveDestination.length > 0) {
+      moveItem(item, moveDestination[0].path);
+    } else {
+      moveItem(item, folderPickerPath)
+    }
   }
 
   const deleteItemHandler = () => {
@@ -279,6 +284,7 @@ export default function FilePickerItem({
                       <FilePicker 
                         initialPath='/'
                         selectedItemsChange={setMoveDestination}
+                        setSelectedPath={setFolderPickerPath}
                         destinationMode
                       />
                     </form>
@@ -287,7 +293,7 @@ export default function FilePickerItem({
                     <Button variant="secondary" onClick={() => setMoveOpen(false)}>
                       <Translator path="common.actions.cancel" />
                     </Button>
-                    <Button type="submit" form="#move-file-form">
+                    <Button type="submit" form="move-file-form">
                       <Translator path="common.actions.confirm" />
                     </Button>
                   </DialogFooter>
@@ -312,7 +318,7 @@ export default function FilePickerItem({
                     <Button variant="secondary" onClick={() => setRenameOpen(false)}>
                       <Translator path="common.actions.cancel" />
                     </Button>
-                    <Button type="submit" form="#rename-file-form">
+                    <Button type="submit" form="rename-file-form">
                       <Translator path="common.actions.confirm" />
                     </Button>
                   </DialogFooter>

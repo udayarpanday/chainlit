@@ -191,16 +191,18 @@ export function ViewerWrapper({
           </div>
         )}
       </div>
-      <FolderBreadcrumbs
-        pathData={{path: pathLoaded, items: []}}
-        fetchDirectory={(path) => {
-          setOpenFile(null);
-          setSelectedPath(path);
-        }}
-        isLoading={pathLoaded.length === 0}
-        attachmentMode={false}
-        destinationMode={false}
-      />
+      <div className="mb-4">
+        <FolderBreadcrumbs
+          pathData={{path: pathLoaded, items: []}}
+          fetchDirectory={(path) => {
+            setOpenFile(null);
+            setSelectedPath(path);
+          }}
+          isLoading={pathLoaded.length === 0}
+          attachmentMode={false}
+          destinationMode={false}
+        />
+      </div>
       <Dialog
         open={leavePageOpen}
         onOpenChange={setLeavePageOpen}

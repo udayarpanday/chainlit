@@ -42,6 +42,7 @@ import {
 import {
   ScrollArea
 } from '@chainlit/app/src/components/ui/scroll-area';
+import FileSearch from './FileSearch';
 
 type Props = {
   initialPath: string;
@@ -78,12 +79,16 @@ export default function FilePicker({
   const [currentPath, setCurrentPath] = useState(initialPath);
   const [pathData, setPathData] = useState<FilePickerData>({ path: [], items: []});
   const [folderFiles, setFolderFiles] = useState<FilePickerItem[]>([]);
+  const [searchItems, setSearchItems] = useState<FilePickerItem[]>([]);
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
+  const [isSearch, setIsSearch] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const fetchDirectory = async (path: string) => {
+    setIsSearch(false);
+    setSearchItems([]);
     setSelectedPath(path)
     setIsLoading(true);
     const response = await fetch(`${apiBaseUrl}/api/files?path=${path}`);
@@ -125,6 +130,37 @@ export default function FilePicker({
       ]
     });
     setIsLoading(false);
+  }
+
+  const searchFilesHandler = async (query: string) => {
+    setIsLoading(true);
+    setIsSearch(true);
+    try {
+      // const response = await fetch(`${apiBaseUrl}/api/files?path=${currentPath}&search=${query}`);
+      const response = await fetch(`${apiBaseUrl}/api/files?path=${currentPath}&search=${query}`);
+      const json = await response.json();
+
+      const sFiles = (destinationMode ? [] : json.documents)
+        .filter(selectFilter)
+        .map((document) => ({
+          ...document,
+          created: document.created ? new Date(document.created) : null,
+          modified: document.modified ? new Date(document.modified) : null,
+          id: uuidv4(),
+        }));
+      const sFolders = json.folders
+        .map((folder) => ({
+          ...folder,
+          created: folder.created ? new Date(folder.created) : null,
+          modified: folder.modified ? new Date(folder.modified) : null,
+          id: uuidv4(),
+        }));
+      setSearchItems([...sFolders, ...sFiles]);
+    } catch(err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   const itemClick = (item: FilePickerItem) => {
@@ -395,19 +431,30 @@ export default function FilePicker({
         onFileUpload={onFileUpload}
         currentPath={currentPath}
         loadCurrentPath={loadCurrentPath}
+        isSearch={isSearch}
       />
     )}
     <div className='relative flex flex-col overflow-hidden'>
       {!compact && (
-        <FolderBreadcrumbs
-          pathData={pathData}
-          fetchDirectory={fetchDirectory}
-          isLoading={isLoading}
-          attachmentMode={attachmentMode}
-          destinationMode={destinationMode}
-        />
+        <div className='flex justify-between items-center mb-2 pt-2'>
+          <FolderBreadcrumbs
+            pathData={pathData}
+            fetchDirectory={fetchDirectory}
+            isLoading={isLoading}
+            attachmentMode={attachmentMode}
+            destinationMode={destinationMode}
+            isSearch={isSearch}
+          />
+          <FileSearch
+            isLoading={isLoading}
+            searchFiles={searchFilesHandler}
+            attachmentMode={attachmentMode}
+            destinationMode={destinationMode}
+            clearSearch={() => setIsSearch(false)}
+          />
+        </div>
       )}
-      <div className={cn("rounded-lg border min-h-24 relative overflow-hidden flex", isDragActive && hasUpload ? 'bg-primary/20 [.contents>div]:bg-primary/20' : 'bg-white')} {...(hasUpload ? getRootProps() : {})}>
+      <div className={cn("rounded-lg border min-h-24 relative overflow-hidden flex", isDragActive && hasUpload ? 'bg-primary/20 [.contents>div]:bg-primary/20!' : 'bg-white')} {...(hasUpload ? getRootProps() : {})}>
         {hasUpload && <input {...getInputProps()} />}
         <ScrollArea className='w-full' type='auto'>
           <div className="pb-2 px-4">
@@ -451,7 +498,7 @@ export default function FilePicker({
                 )}
                 {showActions && <div className="sticky top-0 bg-white"></div>}
               </div>
-              {pathData.items.length > 0 && pathData.items.map((item) => (
+              {!isSearch && pathData.items.length > 0 && pathData.items.map((item) => (
                 <FilePickerItemComponent
                   item={item}
                   selected={selectedElements.includes(item.id)}
@@ -469,7 +516,25 @@ export default function FilePicker({
                   downloadItems={downloadItems}
                 />
               ))}
-              {(pathData.items.length === 0 && !isLoading) && (
+              {isSearch && searchItems.length > 0 && searchItems.map((item) => (
+                <FilePickerItemComponent
+                  item={item}
+                  selected={selectedElements.includes(item.id)}
+                  setSelectedState={(value) => setItemSelected(item.id, value)}
+                  onClick={() => itemClick(item)}
+                  showActions={showActions}
+                  singleMode={singleMode}
+                  attachmentMode={attachmentMode}
+                  compact={compact}
+                  onFileUpload={onFileUpload}
+                  hasUpload={hasUpload}
+                  deleteItems={deleteItems}
+                  moveItem={moveItem}
+                  renameItem={renameItem}
+                  downloadItems={downloadItems}
+                />
+              ))}
+              {(!isSearch && pathData.items.length === 0 && !isLoading) || (isSearch && !isLoading && searchItems.length === 0) && (
                 <div className='col-span-full p-2 flex justify-center text-sm text-gray-400'>
                   <Translator path="evoyaFiles.common.no_entries" />
                 </div>

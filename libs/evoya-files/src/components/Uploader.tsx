@@ -33,6 +33,7 @@ import { Input } from '@chainlit/app/src/components/ui/input';
 type Props = {
   currentPath: string;
   isLoading: boolean;
+  isSearch?: boolean;
   onFileUpload: (files: File[]) => void;
   setIsLoading: (value: boolean) => void;
   loadCurrentPath: () => void;
@@ -41,6 +42,7 @@ type Props = {
 export default function Uploader({
   currentPath,
   isLoading,
+  isSearch = false,
   setIsLoading,
   onFileUpload,
   loadCurrentPath,
@@ -106,7 +108,7 @@ export default function Uploader({
           </a>
         </div>
       )}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-2">
         <div className={cn("font-bold", type === 'compact' ? 'text-xl' : 'text-2xl')}>
           <Translator path="evoyaFiles.common.files" />
         </div>
@@ -120,7 +122,7 @@ export default function Uploader({
             <Button
               variant="outline"
               id='upload-button'
-              disabled={isLoading}
+              disabled={isLoading || isSearch}
               size={type === 'compact' ? 'sm' : 'default'}
               className="text-[#7b809a] border-[#7b809a] hover:bg-[#7b809a]/10"
               {...upload2.getRootProps()}
@@ -131,7 +133,7 @@ export default function Uploader({
             {type !== 'compact' && (
               <Button
                 id='create-folder-button'
-                disabled={isLoading}
+                disabled={isLoading || isSearch}
                 onClick={() => setNewFolderOpen(true)}
               >
                 <FolderPlus className="h-5" />
@@ -174,7 +176,7 @@ export default function Uploader({
             <Button variant="secondary" onClick={() => setNewFolderOpen(false)}>
               <Translator path="common.actions.cancel" />
             </Button>
-            <Button type="submit" form="#create-foler-form">
+            <Button type="submit" form="create-foler-form">
               <Translator path="common.actions.confirm" />
             </Button>
           </DialogFooter>

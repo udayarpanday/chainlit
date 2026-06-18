@@ -579,6 +579,9 @@
             "download": {
                 "label": "Herunterladen"
             },
+            "search": {
+                "label": "Suchen"
+            },
             "back_to_project": {
                 "label": "zurück zum Projekt"
             },
