@@ -125,31 +125,4 @@ export const EvoyaBlockTypeSelect = () => {
       </DropdownMenu>
     </div>
   );
-
-  return (
-    <Select<BlockType>
-      value={currentBlockType}
-      onChange={(blockType) => {
-        switch (blockType) {
-          case 'quote':
-            convertSelectionToNode(() => $createQuoteNode())
-            break
-          case 'paragraph':
-            convertSelectionToNode(() => $createParagraphNode())
-            break
-          case '':
-            break
-          default:
-            if (blockType.startsWith('h')) {
-              convertSelectionToNode(() => $createHeadingNode(blockType))
-            } else {
-              throw new Error(`Unknown block type: ${blockType}`)
-            }
-        }
-      }}
-      triggerTitle={t('toolbar.blockTypeSelect.selectBlockTypeTooltip', 'Select block type')}
-      placeholder={t('toolbar.blockTypeSelect.placeholder', 'Block type')}
-      items={items}
-    />
-  )
 }

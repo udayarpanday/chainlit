@@ -3,7 +3,6 @@ import {
   iconComponentFor$,
   useTranslation,
   markdownSourceEditorValue$,
-  editorRootElementRef$,
 } from '@mdxeditor/editor';
 import React, { useCallback, useState, useContext } from 'react';
 import { useCellValue, } from '@mdxeditor/gurx';
@@ -31,7 +30,6 @@ import { FilePickerContext } from '@evoya/file-picker/src/context/file-context';
 import { WidgetContext } from '@/context';
 
 export const SaveContent: React.FC = () => {
-  const editorRootElementRef = useCellValue(editorRootElementRef$);
   const { config } = useContext(WidgetContext);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -77,6 +75,8 @@ export const SaveContent: React.FC = () => {
       setSaving(false);
     });
   };
+  
+  if (!config?.isSuperUser) return null;
 
   return (
     <>

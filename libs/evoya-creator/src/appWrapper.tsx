@@ -8,6 +8,7 @@ import CreatorFrame from './components/CreatorFrame';
 import { ThemeProvider } from './components/ThemeProvider';
 import { useEffect } from 'react';
 import { useTranslation } from '@chainlit/app/src/components/i18n/Translator';
+import { Toaster } from 'sonner';
 
 i18nSetupLocalization();
 interface Props {
@@ -38,12 +39,17 @@ export default function AppWrapper({ config }: Props) {
 
   return (
     <RecoilRoot>
-      <ThemeProvider storageKey="vite-ui-theme" defaultTheme={defaultTheme}>
+      <ThemeProvider
+        storageKey="vite-ui-theme"
+        defaultTheme={defaultTheme}
+        brandColor={config.brand_color}
+      >
         <WidgetContext.Provider
           value={{
             config
           }}
         >
+          <Toaster richColors className="toast" position="top-right" />
           <CreatorFrame />
         </WidgetContext.Provider>
       </ThemeProvider>

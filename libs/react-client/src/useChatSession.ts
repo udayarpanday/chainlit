@@ -1,4 +1,4 @@
-import { debounce } from 'lodash';
+import { debounce, set } from 'lodash';
 import { useCallback, useContext, useEffect, useRef } from 'react';
 import {
   useRecoilState,
@@ -14,6 +14,7 @@ import {
   askUserState,
   audioConnectionState,
   callFnState,
+  chatArchived,
   chatProfileState,
   chatSettingsInputsState,
   chatSettingsValueState,
@@ -39,6 +40,7 @@ import {
 import {
   ChatInputSocketPayload,
   IAction,
+  IChatArchived,
   ICommand,
   IElement,
   IMessageElement,
@@ -59,12 +61,15 @@ import { OutputAudioChunk } from './types/audio';
 
 import { ChainlitContext } from './context';
 import {
+  getChainlitTabId,
+  getScopedSessionStorageItem
+} from './storage';
+import type { IToken } from './useChatData';
+import {
   markTaskEnded,
   markTaskStarted,
   resetTaskLoading
 } from './taskLoading';
-import type { IToken } from './useChatData';
-
 
 const useChatSession = () => {
   const client = useContext(ChainlitContext);
@@ -95,8 +100,10 @@ const useChatSession = () => {
   const idToResume = useRecoilValue(threadIdToResumeState);
   const setThreadResumeError = useSetRecoilState(resumeThreadErrorState);
   const setInitialTranscript = useSetRecoilState(initialTranscriptState);
+  const setChatArchived = useSetRecoilState(chatArchived);
 
-  const token = localStorage.getItem('chainlit_token') || '';
+  const token = getScopedSessionStorageItem('chainlit_token') || '';
+  const tabId = getChainlitTabId();
 
   const [currentThreadId, setCurrentThreadId] =
     useRecoilState(currentThreadIdState);
@@ -151,16 +158,20 @@ const useChatSession = () => {
             userEnv: JSON.stringify(userEnv),
             Authorization: token,
             chatProfile: chatProfile ? encodeURIComponent(chatProfile) : '',
+            clientTabId: tabId,
             socketReconnection: isReconnectingRef.current ? 'true' : 'false',
             reconnectAttempt: String(reconnectAttemptRef.current),
             chatSessionUuid:
-              evoya?.session_uuid || localStorage.getItem('session_token') || '' // Pass the Evoya session UUID to the server,
+              evoya?.session_uuid ||
+              getScopedSessionStorageItem('session_token') ||
+              '' // Pass the Evoya session UUID to the server,
           });
         },
         extraHeaders: {
           Authorization: `Bearer ${token}` || '',
           'X-Chainlit-Client-Type': client.type,
           'X-Chainlit-Session-Id': sessionId,
+          'X-Chainlit-Tab-Id': tabId,
           'X-Chainlit-Thread-Id': idToResume || '',
           'user-env': JSON.stringify(userEnv),
           'X-Chainlit-Chat-Profile': chatProfile
@@ -426,7 +437,7 @@ const useChatSession = () => {
           }
         }
       );
-      
+
       socket.on('initial_transcript', (payload: ChatInputSocketPayload) => {
         const text = typeof payload === 'string' ? payload : payload?.text;
 
@@ -436,9 +447,14 @@ const useChatSession = () => {
 
         setInitialTranscript({
           text,
-          mode: typeof payload === 'string' ? 'replace' : payload.mode || 'replace',
+          mode:
+            typeof payload === 'string' ? 'replace' : payload.mode || 'replace',
           receivedAt: Date.now()
         });
+      });
+
+      socket.on('chat_archived', (payload:IChatArchived) => {
+        setChatArchived(payload.is_chat_archived);
       });
 
       socket.on('set_sidebar_elements', (elements: IMessageElement[]) => {

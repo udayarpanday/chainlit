@@ -8,9 +8,11 @@ export interface EvoyaCreatorConfig {
   enabled: boolean;
   container: HTMLElement;
   theme?: 'light' | 'dark';
+  brand_color?: string | null;
   apiBaseUrl?: string;
   csrfToken?: string;
   workspaceId?: string;
+  isSuperUser?: boolean;
 }
 
 export type SelectionContext = {

@@ -12,6 +12,7 @@ import { WidgetContext } from '@chainlit/copilot/src/context';
 import EvoyaCreatorButton from '@chainlit/copilot/src/evoya/EvoyaCreatorButton';
 import PrivacyShieldToggle from '@chainlit/copilot/src/evoya/privacyShield/PrivacyShieldToggle';
 import {
+  chatArchived,
   FileSpec,
   ICommand,
   IStep,
@@ -20,6 +21,7 @@ import {
   useChatData,
   useChatInteract
 } from '@chainlit/react-client';
+import { Archive } from 'lucide-react';
 
 import { Settings } from '@/components/icons/Settings';
 import { Button } from '@/components/ui/button';
@@ -35,6 +37,7 @@ import Projects from './Projects';
 import SubmitButton from './SubmitButton';
 import UploadButton from './UploadButton';
 import UploadButtonDropdown from './UploadButtonDropdown';
+import { promptState } from '@chainlit/react-client';
 
 interface Props {
   fileSpec: FileSpec;
@@ -51,6 +54,7 @@ export default function MessageComposer({
   setAutoScroll,
   submitProxy
 }: Props) {
+  const context = useRecoilValue(promptState);
   const { evoya } = useContext(WidgetContext);
   const inputRef = useRef<InputMethods>(null);
   const [value, setValue] = useState('');
@@ -60,6 +64,7 @@ export default function MessageComposer({
   const [attachments, setAttachments] = useRecoilState(attachmentsState);
   const [evoyaAttachments, setEvoyaAttachments] = useRecoilState(evoyaAttachmentsState);
   const initialTranscript = useRecoilValue(initialTranscriptState);
+  const isChatArchived = useRecoilValue(chatArchived);
   const resetInitialTranscript = useResetRecoilState(initialTranscriptState);
   const { t } = useTranslation();
 
@@ -211,8 +216,14 @@ export default function MessageComposer({
         (evoya && evoya.type == 'dashboard') || evoya == undefined
           ? 'min-h-24 rounded-3xl'
           : 'rounded-full'
-      } flex flex-col`}
+      } flex flex-col ${isChatArchived ? 'border border-primary' : ''}`}
     >
+      {isChatArchived ? (
+        <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
+          <Archive className="!size-4 shrink-0" />
+          <p>{t('chat.input.archived')}</p>
+        </div>
+      ) : null}
       {(attachments.length > 0 || evoyaAttachments.length > 0) ? (
         <div className="mb-1">
           <Attachments />
@@ -223,6 +234,7 @@ export default function MessageComposer({
           ref={inputRef}
           id="chat-input"
           autoFocus
+          disabled={disabled}
           selectedCommand={selectedCommand}
           setSelectedCommand={setSelectedCommand}
           onChange={setValue}
@@ -236,7 +248,7 @@ export default function MessageComposer({
       )}
       <div className="flex items-center justify-between">
         <div className="flex items-center -ml-1.5">
-          {(evoya && evoya?.type != 'dashboard') && (
+          {((evoya && evoya?.type != 'dashboard') || !context?.is_superuser) && (
             <UploadButton
               disabled={disabled}
               fileSpec={fileSpec}
@@ -244,7 +256,7 @@ export default function MessageComposer({
               onFileUpload={onFileUpload}
             />
           )}
-          {(evoya && evoya?.type == 'dashboard') && (
+          {(evoya && evoya?.type == 'dashboard' && context?.is_superuser) && (
             <UploadButtonDropdown
               disabled={disabled}
               fileSpec={fileSpec}
@@ -259,12 +271,14 @@ export default function MessageComposer({
                 selectedCommand={selectedCommand}
                 onCommandSelect={setSelectedCommand}
               />
-              <Projects disabled={disabled} />
+              {context?.is_superuser && <Projects disabled={disabled} />}
             </>
           )}
-          {evoya?.evoyaCreator?.enabled && <EvoyaCreatorButton />}
+          {evoya?.evoyaCreator?.enabled && (
+            <EvoyaCreatorButton disabled={disabled} />
+          )}
           {evoya?.api?.privacyShield?.enabled && (
-            <PrivacyShieldToggle evoya={evoya} />
+            <PrivacyShieldToggle disabled={disabled} evoya={evoya} />
           )}
           {chatSettingsInputs.length > 0 && (
             <Button
@@ -284,6 +298,7 @@ export default function MessageComposer({
             ref={inputRef}
             id="chat-input"
             autoFocus
+            disabled={disabled}
             selectedCommand={selectedCommand}
             setSelectedCommand={setSelectedCommand}
             onChange={setValue}

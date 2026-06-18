@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import FilePicker from './components/FilePicker';
 import { FilePickerContext } from './context/file-context';
-import { FilePickerItem, EvoyaFile } from './types';
+import { FilePickerItem, EvoyaFile, PathItem } from './types';
 import { ViewerWrapper } from './components/viewer';
 import { downloadBlob } from './utils/file';
 
@@ -13,6 +13,7 @@ interface Props {
   projectId?: string;
   file?: string;
   mime?: string;
+  brandColor?: string | null;
 }
 
 const customFileRenderer = [
@@ -24,8 +25,9 @@ const customFileRenderer = [
   'application/pdf',
 ];
 
-export default function Widget({ initialPath, apiBaseUrl, csrfToken, workspaceId, projectId, file, mime }: Props) {
+export default function Widget({ initialPath, apiBaseUrl, csrfToken, workspaceId, projectId, file, mime, brandColor }: Props) {
   const [selectedPath, setSelectedPath] = useState(initialPath);
+  const [pathItems, setPathItems] = useState<PathItem[]>([]);
   const [openFile, setOpenFile] = useState<EvoyaFile | null>((file && mime) ? { path: initialPath + file, name: file, mime: mime, owner: '', size: 0, showActions: false, modified: new Date(), created: new Date() } : null);
   const handleItemClick = (item: FilePickerItem) => {
     const isFile = "size" in item;
@@ -57,7 +59,8 @@ export default function Widget({ initialPath, apiBaseUrl, csrfToken, workspaceId
       csrfToken,
       workspaceId,
       projectId,
-      type: 'default'
+      type: 'default',
+      brandColor
     }}>
       {!openFile && (
         <FilePicker
@@ -65,13 +68,14 @@ export default function Widget({ initialPath, apiBaseUrl, csrfToken, workspaceId
           handleItemClick={handleItemClick}
           selectedItemsChange={selectedItemsChange}
           setSelectedPath={setSelectedPathHandler}
+          setPathItems={setPathItems}
           showActions
           multiselect
           hasUpload
         />
       )}
       {openFile && (
-        <ViewerWrapper file={openFile} setOpenFile={setOpenFile} />
+        <ViewerWrapper file={openFile} setOpenFile={setOpenFile} pathItems={pathItems} setSelectedPath={setSelectedPath} />
       )}
     </FilePickerContext.Provider>
   );

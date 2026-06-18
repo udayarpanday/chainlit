@@ -14,10 +14,6 @@ import {
   MDXEditor,
   diffSourcePlugin,
   markdownShortcutPlugin,
-  AdmonitionDirectiveDescriptor,
-  DirectiveDescriptor,
-  directivesPlugin,
-  frontmatterPlugin,
   headingsPlugin,
   imagePlugin,
   linkDialogPlugin,
@@ -58,10 +54,6 @@ import {
 import {
   evoyaMathDialogPlugin,
 } from './plugins/math/mathDialog';
-
-import {
-  evoyaRootPlugin,
-} from './plugins/extend/root';
 
 import {
   CodeSelectionContext,
@@ -225,6 +217,7 @@ export default function MDXEditorWrapper() {
         {mdxCustomCss}
       </style>
       <MDXEditor
+        suppressHtmlProcessing
         className="evoya-creator-editor"
         readOnly={isReadOnly}
         ref={mdxEditorRef}
@@ -274,7 +267,6 @@ export const MDX_PLUGINS = [
   linkDialogPlugin(),
   tablePlugin(),
   thematicBreakPlugin(),
-  // frontmatterPlugin(),
   codeBlockPlugin({
     codeBlockEditorDescriptors: [
       MermaidCodeEditorDescriptor,

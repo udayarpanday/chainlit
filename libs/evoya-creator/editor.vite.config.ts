@@ -62,6 +62,7 @@ export default defineConfig({
     alias: {
       react: path.resolve(__dirname, './node_modules/react'),
       "@mdxeditor/editor/dist/styles/ui.module.css.js": path.resolve(__dirname, "./node_modules/@mdxeditor/editor/dist/styles/ui.module.css.js"),
+      "@mdxeditor/editor/dist/plugins/core/SharedHistoryPlugin.js": path.resolve(__dirname, "./node_modules/@mdxeditor/editor/dist/plugins/core/SharedHistoryPlugin.js"),
       // "./TableEditor.js": path.resolve(__dirname, "./src/components/markdownEditor/plugins/extend/table/TableEditorWrapper.tsx"),
       // "SourceTableEditor": path.resolve(__dirname, "./node_modules/@mdxeditor/editor/dist/plugins/table/TableEditor.js"),
     }

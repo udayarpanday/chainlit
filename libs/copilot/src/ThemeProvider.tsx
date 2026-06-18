@@ -1,11 +1,13 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
 type Theme = 'dark' | 'light' | 'system';
+type ThemeVariant = Exclude<Theme, 'system'>;
 
 type ThemeProviderProps = {
   children: React.ReactNode;
   defaultTheme?: Theme;
   storageKey?: string;
+  brandColor?: string | null;
 };
 
 type ThemeProviderState = {
@@ -20,25 +22,108 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
-function applyThemeVariables(variant: 'dark' | 'light') {
-  if (!window.theme) return;
+const getSystemTheme = (): ThemeVariant =>
+  window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 
-  const variables = window.theme[variant];
-  if (!variables) return;
+const getThemeVariant = (theme: Theme): ThemeVariant =>
+  theme === 'system' ? getSystemTheme() : theme;
 
-  const shadowContainer = window.cl_shadowRootElement;
-  if (!shadowContainer) return;
+const rgbToHslValue = (red: number, green: number, blue: number) => {
+  const r = red / 255;
+  const g = green / 255;
+  const b = blue / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let hue = 0;
+  let saturation = 0;
+  const lightness = (max + min) / 2;
 
-  // Apply new theme variables
-  Object.entries(variables).forEach(([key, value]) => {
-    shadowContainer.style.setProperty(key, value);
-  });
-}
+  if (max !== min) {
+    const delta = max - min;
+    saturation =
+      lightness > 0.5 ? delta / (2 - max - min) : delta / (max + min);
+
+    switch (max) {
+      case r:
+        hue = (g - b) / delta + (g < b ? 6 : 0);
+        break;
+      case g:
+        hue = (b - r) / delta + 2;
+        break;
+      default:
+        hue = (r - g) / delta + 4;
+    }
+
+    hue /= 6;
+  }
+
+  return `${Math.round(hue * 360)} ${Math.round(
+    saturation * 100
+  )}% ${Math.round(lightness * 100)}%`;
+};
+
+const hexToHslValue = (color?: string | null) => {
+  const match = color?.trim().match(/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if (!match) return undefined;
+
+  const value = match[1];
+  const normalized =
+    value.length === 3
+      ? value
+          .split('')
+          .map((char) => char + char)
+          .join('')
+      : value;
+
+  return rgbToHslValue(
+    parseInt(normalized.slice(0, 2), 16),
+    parseInt(normalized.slice(2, 4), 16),
+    parseInt(normalized.slice(4, 6), 16)
+  );
+};
+
+const applyBrandColorVariables = (
+  shadowContainer: HTMLDivElement,
+  brandColor?: string | null
+) => {
+  const hslBrandColor = hexToHslValue(brandColor);
+  if (!hslBrandColor) return;
+
+  shadowContainer.style.setProperty('--primary', hslBrandColor);
+  shadowContainer.style.setProperty('--ring', hslBrandColor);
+};
+
+const applyThemeVariables = (
+  shadowContainer: HTMLDivElement,
+  variant: ThemeVariant,
+  brandColor?: string | null
+) => {
+  const variables = window.theme?.[variant];
+
+  if (variables) {
+    Object.entries(variables).forEach(([key, value]) => {
+      shadowContainer.style.setProperty(key, value);
+    });
+  }
+
+  applyBrandColorVariables(shadowContainer, brandColor);
+};
+
+const applyTheme = (
+  shadowContainer: HTMLDivElement,
+  variant: ThemeVariant,
+  brandColor?: string | null
+) => {
+  shadowContainer.classList.remove('light', 'dark');
+  shadowContainer.classList.add(variant);
+  applyThemeVariables(shadowContainer, variant, brandColor);
+};
 
 export function ThemeProvider({
   children,
   defaultTheme = 'system',
   storageKey = 'vite-ui-theme',
+  brandColor,
   ...props
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(
@@ -49,25 +134,9 @@ export function ThemeProvider({
     const shadowContainer = window.cl_shadowRootElement;
     if (!shadowContainer) return;
 
-    // Remove existing theme classes
-    shadowContainer.classList.remove('light', 'dark');
+    applyTheme(shadowContainer, getThemeVariant(theme), brandColor);
+  }, [theme, brandColor]);
 
-    if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-        .matches
-        ? 'dark'
-        : 'light';
-
-      shadowContainer.classList.add(systemTheme);
-      applyThemeVariables(systemTheme);
-      return;
-    }
-
-    shadowContainer.classList.add(theme);
-    applyThemeVariables(theme);
-  }, [theme]);
-
-  // Listen for system theme changes
   useEffect(() => {
     if (theme !== 'system') return;
 
@@ -77,15 +146,12 @@ export function ThemeProvider({
       const shadowContainer = window.cl_shadowRootElement;
       if (!shadowContainer) return;
 
-      const newTheme = mediaQuery.matches ? 'dark' : 'light';
-      shadowContainer.classList.remove('light', 'dark');
-      shadowContainer.classList.add(newTheme);
-      applyThemeVariables(newTheme);
+      applyTheme(shadowContainer, getSystemTheme(), brandColor);
     };
 
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme]);
+  }, [theme, brandColor]);
 
   const value = {
     theme,
@@ -108,11 +174,7 @@ export const useTheme = () => {
   if (context === undefined)
     throw new Error('useTheme must be used within a ThemeProvider');
 
-  const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light';
-
-  const variant = context.theme === 'system' ? systemTheme : context.theme;
+  const variant = getThemeVariant(context.theme);
 
   return { ...context, variant };
 };

@@ -4,7 +4,7 @@
             "buttons": {
                 "userButton": {
                     "menu": {
-                        "settings": "Einstellungen",
+                        "settings": "Settings",
                         "settingsKey": "S",
                         "APIKeys": "API Keys",
                         "logout": "Logout"
@@ -14,99 +14,99 @@
         },
         "molecules": {
             "newChatButton": {
-                "newChat": "Neu",
-                "newChatSession": "Sitzung"
+                "newChat": "New",
+                "newChatSession": "Session"
             },
             "maximizeChatButton": {
                 "maximizeChat": "Chat Overlay"
             },
             "evoyaCreatorButton": {
-                "label": "Creator Öffnen"
+                "label": "Open Creator"
             },
             "shareSession": {
-                "openButton": "Chat teilen",
-                "inactiveButton": "Aktiv, sobald der Chat gestartet wurde",
-                "closeButton": "Schließen",
-                "copyButton": "Kopieren",
-                "copyCreateButton": "Link erstellen",
-                "copyUpdateButton": "Aktualisieren und Link kopieren",
-                "revokeLinkButton": "Link widerrufen",
-                "generateShareableLinkButton": "Teilbaren Link erstellen",
+                "openButton": "Share Chat",
+                "inactiveButton": "Active once the chat started",
+                "closeButton": "Close",
+                "copyButton": "Copy",
+                "copyCreateButton": "Create Link",
+                "copyUpdateButton": "Update and copy link",
+                "revokeLinkButton": "Revoke link",
+                "generateShareableLinkButton": "Generate shareable link",
                 "dialog": {
-                    "title": "Diesen Chat teilen",
-                    "description": "Erstelle einen teilbaren Link für diese Unterhaltung."
+                    "title": "Share this chat",
+                    "description": "Create a shareable link for this conversation."
                 },
                 "access": {
-                    "title": "Wer kann auf diesen Link zugreifen?",
-                    "public": "Öffentlich",
+                    "title": "Who can access this link?",
+                    "public": "Public",
                     "organization": "Organisation",
-                    "publicDescription": "Jeder mit dem Link kann auf diesen Chat zugreifen.",
-                    "organizationDescription": "Nur Mitglieder Ihrer Organisation mit dem Link können auf diesen Chat zugreifen."
+                    "publicDescription": "Anyone with the link can access this chat.",
+                    "organizationDescription": "Only members of your organisation who have the link can access this chat."
                 },
                 "continuation": {
-                    "title": "Fortsetzung erlauben",
-                    "description": "Empfänger können diese Unterhaltung kopieren und mit ihrem eigenen Agenten fortsetzen"
+                    "title": "Allow continuation",
+                    "description": "Recipient can copy this conversation and continue it with their own agent"
                 },
                 "includeNewMessages": {
-                    "title": "Neue Nachrichten einschließen",
-                    "description": "Zukünftige Nachrichten in diesem Chat werden eingeschlossen, wenn der Empfänger den Link öffnet"
+                    "title": "Include new messages",
+                    "description": "Future messages in this chat will be included when the recipient opens the link"
                 },
                 "types": {
-                    "static": "Erstellen Sie einen Link, um eine Kopie dieses Chats zu teilen. Der Link ist gültig für:",
-                    "dynamic": "Ermöglicht laufenden Nur-Lesen-Zugriff auf zukünftige Nachrichten."
+                    "static": "Create a link to share a copy of this chat. The link is valid for:",
+                    "dynamic": "Allow ongoing read-only access to future messages."
                 },
                 "messages": {
-                    "success": "Link kopiert",
-                    "successRemove": "Link widerrufen",
-                    "created": "Hier ist Ihr teilbarer Link:",
-                    "neverExpires": "Sie haben einen Link zu dieser Chat-Sitzung erstellt, der",
-                    "error": "Ein Fehler ist aufgetreten"
+                    "success": "Link copied",
+                    "successRemove": "Link revoked",
+                    "created": "Here is your shareable link:",
+                    "neverExpires": "You have created a link to this chat session that",
+                    "error": "An Error occurred"
                 },
                 "expire": {
-                    "expiresIn": "Ablauf",
-                    "expiresAfter": "Link läuft ab nach",
-                    "expires": "läuft ab",
-                    "1day": "in einem Tag",
-                    "7days": "7 Tage",
-                    "1month": "1 Monat",
-                    "30days": "in 30 Tagen",
-                    "xDays": "in <days/> Tagen",
-                    "never": "nie",
-                    "no_expiry": "Kein Ablaufdatum",
-                    "days": "Tage"
+                    "expiresIn": "Expire",
+                    "expiresAfter": "Link expires after",
+                    "expires": "expires",
+                    "1day": "in one day",
+                    "7days": "7 days",
+                    "1month": "1 month",
+                    "30days": "in 30 days",
+                    "xDays": "in <days/> days",
+                    "never": "never",
+                    "no_expiry": "No expiry",
+                    "days": "days"
                 }
             },
             "favoriteSession": {
                 "favoriteButton": "Favorite Chat",
                 "messages": {
-                    "success": "Chatsitzung wurde den Favoriten hinzugefügt",
-                    "successRemove": "Chatsitzung wurde von den Favoriten entfernt",
-                    "error": "Ein Fehler ist aufgetreten"
+                    "success": "Chat session added to favorites",
+                    "successRemove": "Chat session removed from favorites",
+                    "error": "An Error occurred"
                 }
             },
             "project": {
-                "title": "Projekte",
-                "empty": "Keine Projekte gefunden"
+                "title": "Projects",
+                "empty": "No projects found"
             },
             "tasklist": {
                 "TaskList": {
-                    "title": "\ud83d\uddd2\ufe0f Aufgabenliste",
-                    "loading": "Laden...",
-                    "error": "Ein Fehler ist aufgetreten"
+                    "title": "\ud83d\uddd2\ufe0f Task List",
+                    "loading": "Loading...",
+                    "error": "An error occured"
                 }
             },
             "attachments": {
-                "cancelUpload": "Upload abbrechen",
-                "removeAttachment": "Anhang entfernen"
+                "cancelUpload": "Cancel upload",
+                "removeAttachment": "Remove attachment"
             },
             "newChatDialog": {
-                "createNewChat": "Neuen Chat erstellen?",
-                "clearChat": "Dies wird die aktuellen Nachrichten leeren und einen neuen Chat starten.",
-                "cancel": "Abbrechen",
-                "confirm": "Bestätigen"
+                "createNewChat": "Create new chat?",
+                "clearChat": "This will clear the current messages and start a new chat.",
+                "cancel": "Cancel",
+                "confirm": "Confirm"
             },
             "settingsModal": {
-                "expandMessages": "Nachrichten aufklappen",
+                "expandMessages": "Expand Messages",
                 "hideChainOfThought": "Hide Chain of Thought",
                 "darkMode": "Dark Mode"
             },
@@ -181,13 +181,13 @@
         },
         "organisms": {
             "privacyShield": {
-                "showPrivacyTable": "Anonymisierte Wörter einblenden",
-                "hidePrivacyTable": "Anonymisierte Wörter ausblenden",
-                "info": "Privacy Shield anonymisiert sensible Details (z. B. Namen), bevor der Text an die KI gesendet wird. Es funktioniert nur für Text, nicht für hochgeladene Dokumente.",
+                "showPrivacyTable": "Show anonymized words table",
+                "hidePrivacyTable": "Hide anonymized words table",
+                "info": "Privacy Shield anonymizes sensitive details (e.g. names) before text is sent to the AI. It works only for text, not for uploaded documents.",
                 "actions": {
-                    "cancel": "Abbrechen",
-                    "submit": "Senden",
-                    "createSection": "Sektion erstellen"
+                    "cancel": "Cancel",
+                    "submit": "Submit",
+                    "createSection": "Create section"
                 },
                 "word": {
                     "anon": "Anonymized by Privacy Shield",
@@ -195,22 +195,22 @@
                 },
                 "createSection": {
                     "title": {
-                        "edit": "Privacy Sektion bearbeiten",
-                        "create": "Privacy Sektion erstellen"
+                        "edit": "Edit Privacy Section",
+                        "create": "Create Privacy Section"
                     },
                     "actions": {
-                        "close": "Schliessen",
-                        "save": "Speichern",
-                        "create": "Erstellen"
+                        "close": "Close",
+                        "save": "Save",
+                        "create": "Create"
                     },
                     "typefield": {
-                        "label": "Typ",
+                        "label": "Type",
                         "options": {
                             "name": "Name",
-                            "location": "Ort",
-                            "phone": "Telefonnummer",
-                            "email": "Emailadresse",
-                            "other": "Anderes"
+                            "location": "Location",
+                            "phone": "Phone Number",
+                            "email": "Email address",
+                            "other": "Other"
                         }
                     }
                 }
@@ -218,99 +218,99 @@
             "chat": {
                 "history": {
                     "index": {
-                        "showHistory": "Verlauf anzeigen",
-                        "lastInputs": "Letzte Eingaben",
-                        "noInputs": "Sooo leer...",
-                        "loading": "Laden..."
+                        "showHistory": "Show history",
+                        "lastInputs": "Last Inputs",
+                        "noInputs": "Such empty...",
+                        "loading": "Loading..."
                     }
                 },
                 "inputBox": {
                     "input": {
-                        "placeholder": "Nachricht hier eingeben..."
+                        "placeholder": "Your input..."
                     },
                     "speechButton": {
-                        "start": "Aufnahme starten",
-                        "stop": "Aufnahme stoppen"
+                        "start": "Start recording",
+                        "stop": "Stop recording"
                     },
                     "SubmitButton": {
-                        "sendMessage": "Nachricht senden",
-                        "stopTask": "Aufgabe stoppen"
+                        "sendMessage": "Send message",
+                        "stopTask": "Stop Task"
                     },
                     "UploadButton": {
-                        "attachFiles": "Dateien anhängen"
+                        "attachFiles": "Attach files"
                     },
                     "waterMark": {
-                        "text": "KI kann Fehler machen. Bitte überprüfen Sie wichtige Informationen."
+                        "text": "AI can make mistakes. Please verify important information."
                     },
                     "additionalInfo": {
-                        "defaultText": "Geben Sie / für Prompts oder @ ein, um andere Agenten einzubeziehen",
+                        "defaultText": "Type / for prompts or @ to involve other agents",
                         "text": "All information provided without warranty. Please verify the accuracy of the information provided."
                     },
                     "view_agent_details": {
-                        "text": "Wählen Sie einen Agenten aus, um dessen Details anzuzeigen."
+                        "text": "Select an agent to view its details"
                     }
                 },
                 "Messages": {
                     "index": {
-                        "running": "Läuft",
-                        "executedSuccessfully": "erfolgreich ausgeführt",
-                        "failed": "fehlgeschlagen",
-                        "feedbackUpdated": "Feedback aktualisiert",
-                        "updating": "Aktualisieren"
+                        "running": "Running",
+                        "executedSuccessfully": "executed successfully",
+                        "failed": "failed",
+                        "feedbackUpdated": "Feedback updated",
+                        "updating": "Updating"
                     }
                 },
                 "dropScreen": {
-                    "dropYourFilesHere": "Dateien hierher ziehen"
+                    "dropYourFilesHere": "Drop your files here"
                 },
                 "index": {
-                    "failedToUpload": "Hochladen fehlgeschlagen",
-                    "cancelledUploadOf": "Upload abbrechen von",
-                    "couldNotReachServer": "Server konnte nicht erreicht werden",
+                    "failedToUpload": "Failed to upload",
+                    "cancelledUploadOf": "Cancelled upload of",
+                    "couldNotReachServer": "Could not reach the server",
                     "continuingChat": "Continuing previous chat"
                 },
                 "settings": {
-                    "settingsPanel": "Einstellungen",
-                    "reset": "Zurücksetzen",
-                    "cancel": "Abbrechen",
-                    "confirm": "Bestätigen"
+                    "settingsPanel": "Settings panel",
+                    "reset": "Reset",
+                    "cancel": "Cancel",
+                    "confirm": "Confirm"
                 }
             },
             "threadHistory": {
                 "sidebar": {
                     "filters": {
                         "FeedbackSelect": {
-                            "feedbackAll": "Feedback: Alle",
-                            "feedbackPositive": "Feedback: Positiv",
-                            "feedbackNegative": "Feedback: Negativ"
+                            "feedbackAll": "Feedback: All",
+                            "feedbackPositive": "Feedback: Positive",
+                            "feedbackNegative": "Feedback: Negative"
                         },
                         "SearchBar": {
-                            "search": "Suche"
+                            "search": "Search"
                         }
                     },
                     "DeleteThreadButton": {
-                        "confirmMessage": "Dies löscht den ganzen Thread und dessen Nachrichten und Elemente.",
-                        "cancel": "Abbrechen",
-                        "confirm": "Bestätigen",
-                        "deletingChat": "Chat wird gelöscht",
-                        "chatDeleted": "Chat gelöscht"
+                        "confirmMessage": "This will delete the thread as well as it's messages and elements.",
+                        "cancel": "Cancel",
+                        "confirm": "Confirm",
+                        "deletingChat": "Deleting chat",
+                        "chatDeleted": "Chat deleted"
                     },
                     "index": {
-                        "pastChats": "Vergangene Chats"
+                        "pastChats": "Past Chats"
                     },
                     "ThreadList": {
-                        "empty": "Leer...",
-                        "today": "Heute",
-                        "yesterday": "Gestern",
-                        "previous7days": "letzte 7 Tage",
-                        "previous30days": "letzte 30 Tage"
+                        "empty": "Empty...",
+                        "today": "Today",
+                        "yesterday": "Yesterday",
+                        "previous7days": "Previous 7 days",
+                        "previous30days": "Previous 30 days"
                     },
                     "TriggerButton": {
-                        "closeSidebar": "Sidebar schliessen",
-                        "openSidebar": "Sidebar öffnen"
+                        "closeSidebar": "Close sidebar",
+                        "openSidebar": "Open sidebar"
                     }
                 },
                 "Thread": {
-                    "backToChat": "Zurück zum Chat",
+                    "backToChat": "Go back to chat",
                     "chatCreatedOn": "This chat was created on"
                 }
             },
@@ -336,186 +336,186 @@
             "notPartOfProject": "You are not part of this project."
         },
         "ResumeButton": {
-            "resumeChat": "Chat wieder aufnehmen"
+            "resumeChat": "Resume Chat"
         }
     },
     "common": {
         "actions": {
-            "cancel": "Abbrechen",
-            "confirm": "Bestätigen",
-            "continue": "Weiter",
-            "goBack": "Zurück",
-            "reset": "Zurücksetzen",
-            "submit": "Absenden"
+            "cancel": "Cancel",
+            "confirm": "Confirm",
+            "continue": "Continue",
+            "goBack": "Go Back",
+            "reset": "Reset",
+            "submit": "Submit"
         },
         "status": {
-            "loading": "Lädt...",
+            "loading": "Loading...",
             "error": {
-                "default": "Ein Fehler ist aufgetreten",
-                "serverConnection": "Verbindung zum Server konnte nicht hergestellt werden"
+                "default": "An error occurred",
+                "serverConnection": "Could not reach the server"
             }
         }
     },
     "auth": {
         "login": {
-            "title": "Melde dich an, um auf die App zuzugreifen",
+            "title": "Login to access the app",
             "form": {
                 "email": {
-                    "label": "E-Mail-Adresse",
-                    "required": "E-Mail ist ein Pflichtfeld"
+                    "label": "Email address",
+                    "required": "email is a required field"
                 },
                 "password": {
-                    "label": "Passwort",
-                    "required": "Passwort ist ein Pflichtfeld"
+                    "label": "Password",
+                    "required": "password is a required field"
                 },
                 "actions": {
-                    "signin": "Anmelden"
+                    "signin": "Sign In"
                 },
                 "alternativeText": {
-                    "or": "ODER"
+                    "or": "OR"
                 }
             },
             "errors": {
-                "default": "Anmeldung fehlgeschlagen",
-                "signin": "Versuche es mit einem anderen Konto",
-                "oauthSignin": "Versuche es mit einem anderen Konto",
-                "redirectUriMismatch": "Die Weiterleitungs-URI stimmt nicht mit der OAuth-App-Konfiguration überein",
-                "oauthCallback": "Versuche es mit einem anderen Konto",
-                "oauthCreateAccount": "Versuche es mit einem anderen Konto",
-                "emailCreateAccount": "Versuche es mit einem anderen Konto",
-                "callback": "Versuche es mit einem anderen Konto",
-                "oauthAccountNotLinked": "Um deine Identität zu bestätigen, melde dich mit demselben Konto an",
-                "emailSignin": "Die E-Mail konnte nicht gesendet werden",
-                "emailVerify": "Bitte bestätige deine E-Mail. Eine neue E-Mail wurde gesendet",
-                "credentialsSignin": "Anmeldung fehlgeschlagen. Überprüfe deine Angaben",
-                "sessionRequired": "Bitte melde dich an, um diese Seite zu nutzen"
+                "default": "Unable to sign in",
+                "signin": "Try signing in with a different account",
+                "oauthSignin": "Try signing in with a different account",
+                "redirectUriMismatch": "The redirect URI is not matching the oauth app configuration",
+                "oauthCallback": "Try signing in with a different account",
+                "oauthCreateAccount": "Try signing in with a different account",
+                "emailCreateAccount": "Try signing in with a different account",
+                "callback": "Try signing in with a different account",
+                "oauthAccountNotLinked": "To confirm your identity, sign in with the same account you used originally",
+                "emailSignin": "The e-mail could not be sent",
+                "emailVerify": "Please verify your email, a new email has been sent",
+                "credentialsSignin": "Sign in failed. Check the details you provided are correct",
+                "sessionRequired": "Please sign in to access this page"
             }
         },
         "provider": {
-            "continue": "Weiter mit {{provider}}"
+            "continue": "Continue with {{provider}}"
         }
     },
     "chat": {
         "input": {
-            "placeholder": "Ihre Eingabe...",
-            "archived": "Dieser Chat gehört zu einem archivierten Agenten. Archivieren Sie den Agenten wieder aus, um diesen Chat fortzusetzen, oder wählen Sie einen anderen Agenten aus, um einen neuen Chat zu starten.",
+            "placeholder": "Your input...",
+            "archived": "This chat belongs to an archived agent. Unarchive the agent to continue this chat, or select another agent to start a new chat.",
             "actions": {
-                "send": "Nachricht senden",
-                "stop": "Aufgabe stoppen",
-                "attachFiles": "Dateien anhängen"
+                "send": "Send message",
+                "stop": "Stop Task",
+                "attachFiles": "Attach files"
             },
-            "no_results": "Keine Ergebnisse gefunden",
-            "commands": "Gespeicherte Prompts durchsuchen und einfügen; Sie können sie auch mit dem /-Befehl im Chat-Eingabefeld suchen."
+            "no_results": "No results found",
+            "commands": "Browse and insert saved prompts; you can also search them with the / command in the chat input."
         },
         "speech": {
-            "start": "Aufnahme starten",
-            "stop": "Abbrechen",
-            "submit": "Aufnahme übermitteln",
-            "connecting": "Verbinde...",
-            "voiceMode": "Sprachmodus verwenden",
-            "speechText": "Sprache-zu-Text-Modus verwenden"
+            "start": "Start recording",
+            "stop": "Cancel",
+            "submit": "Submit recording",
+            "connecting": "Connecting",
+            "voiceMode": "Use Voice Mode",
+            "speechText": "Use Speech to Text Mode"
         },
         "fileUpload": {
-            "dragDrop": "Ziehe die Dateien hierhin",
-            "browse": "Dateien durchsuchen",
+            "dragDrop": "Drag and drop files here",
+            "browse": "Browse Files",
             "sizeLimit": "Limit:",
             "errors": {
-                "failed": "Hochladen fehlgeschlagen",
-                "cancelled": "Hochladen abgebrochen"
+                "failed": "Failed to upload",
+                "cancelled": "Cancelled upload of"
             }
         },
         "messages": {
             "status": {
-                "using": "Verwendet",
-                "used": "Verwendet"
+                "using": "Using",
+                "used": "Used"
             },
             "actions": {
                 "copy": {
-                    "button": "In die Zwischenablage kopieren",
-                    "success": "Kopiert!"
+                    "button": "Copy to clipboard",
+                    "success": "Copied!"
                 },
                 "download": {
-                    "button": "Dieses Bild herunterladen."
+                    "button": "Download this image"
                 }
             },
             "feedback": {
-                "positive": "Hilfreich",
-                "negative": "Nicht hilfreich",
-                "edit": "Feedback bearbeiten",
+                "positive": "Helpful",
+                "negative": "Not helpful",
+                "edit": "Edit feedback",
                 "dialog": {
-                    "title": "Kommentar hinzufügen",
-                    "submit": "Feedback absenden"
+                    "title": "Add a comment",
+                    "submit": "Submit feedback"
                 },
                 "status": {
-                    "updating": "Aktualisieren...",
-                    "updated": "Feedback aktualisiert"
+                    "updating": "Updating",
+                    "updated": "Feedback updated"
                 }
             }
         },
         "history": {
-            "title": "Letzte Eingaben",
-            "empty": "Ganz leer...",
-            "show": "Verlauf anzeigen"
+            "title": "Last Inputs",
+            "empty": "Such empty...",
+            "show": "Show history"
         },
         "settings": {
-            "title": "Einstellungen"
+            "title": "Settings panel"
         },
-        "watermark": "KI kann Fehler machen. Bitte überprüfen Sie wichtige Informationen.",
+        "watermark": "AI can make mistakes. Please verify important information.",
         "context": {
             "title": "CTX",
-            "modal_title_tip": "Kontext anzeigen",
-            "modal_title": "Chat-Kontext"
+            "modal_title_tip": "View Context",
+            "modal_title": "Chat Context"
         },
         "evoya": {
             "cot": {
-                "thinking": "Denken",
-                "using_tool": "Verwendet",
-                "processing_document": "Dokument wird verarbeitet"
+                "thinking": "Thinking",
+                "using_tool": "Using",
+                "processing_document": "Processing Document"
             }
         }
     },
     "threadHistory": {
         "sidebar": {
-            "title": "Frühere Chats",
+            "title": "Past Chats",
             "filters": {
-                "search": "Suchen"
+                "search": "Search"
             },
             "timeframes": {
-                "today": "Heute",
-                "yesterday": "Gestern",
-                "previous7days": "Letzte 7 Tage",
-                "previous30days": "Letzte 30 Tage"
+                "today": "Today",
+                "yesterday": "Yesterday",
+                "previous7days": "Previous 7 days",
+                "previous30days": "Previous 30 days"
             },
-            "empty": "Keine Unterhaltungen gefunden",
+            "empty": "No threads found",
             "actions": {
-                "close": "Seitenleiste schließen",
-                "open": "Seitenleiste öffnen"
+                "close": "Close sidebar",
+                "open": "Open sidebar"
             }
         },
         "thread": {
-            "untitled": "Unbenannte Unterhaltung",
+            "untitled": "Untitled Conversation",
             "menu": {
-                "rename": "Umbenennen",
-                "delete": "Löschen"
+                "rename": "Rename",
+                "delete": "Delete"
             },
             "actions": {
                 "delete": {
-                    "title": "Löschen bestätigen",
-                    "description": "Dadurch werden der Chat sowie alle Nachrichten und Elemente gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
-                    "success": "Chat gelöscht",
-                    "inProgress": "Chat wird gelöscht"
+                    "title": "Confirm deletion",
+                    "description": "This will delete the thread as well as its messages and elements. This action cannot be undone",
+                    "success": "Chat deleted",
+                    "inProgress": "Deleting chat"
                 },
                 "rename": {
-                    "title": "Unterhaltung umbenennen",
-                    "description": "Geben Sie einen neuen Namen für diese Unterhaltung ein",
+                    "title": "Rename Thread",
+                    "description": "Enter a new name for this thread",
                     "form": {
                         "name": {
                             "label": "Name",
-                            "placeholder": "Neuen Namen eingeben"
+                            "placeholder": "Enter new name"
                         }
                     },
-                    "success": "Unterhaltung umbenannt!",
-                    "inProgress": "Unterhaltung wird umbenannt"
+                    "success": "Thread renamed!",
+                    "inProgress": "Renaming thread"
                 }
             }
         }
@@ -525,31 +525,31 @@
             "chat": "Chat",
             "readme": "Readme",
             "session": {
-                "description": "Chatsitzungen anzeigen oder ausblenden"
+                "description": "Show or hide chat sessions"
             }
         },
         "newChat": {
-            "button": "Neuer Chat",
+            "button": "New Chat",
             "dialog": {
-                "title": "Neuen Chat erstellen",
-                "description": "Dadurch wird Ihr aktueller Chatverlauf gelöscht. Möchten Sie wirklich fortfahren?",
-                "tooltip": "Neuer Chat"
+                "title": "Create New Chat",
+                "description": "This will clear your current chat history. Are you sure you want to continue?",
+                "tooltip": "New Chat"
             }
         },
         "user": {
             "menu": {
-                "settings": "Einstellungen",
+                "settings": "Settings",
                 "settingsKey": "S",
-                "apiKeys": "API-Schlüssel",
-                "logout": "Abmelden"
+                "apiKeys": "API Keys",
+                "logout": "Logout"
             }
         }
     },
     "apiKeys": {
-        "title": "Erforderliche API-Schlüssel",
-        "description": "Um diese App zu verwenden, sind die folgenden API-Schlüssel erforderlich. Die Schlüssel werden im lokalen Speicher Ihres Geräts gespeichert.",
+        "title": "Required API Keys",
+        "description": "To use this app, the following API keys are required. The keys are stored on your device's local storage.",
         "success": {
-            "saved": "Erfolgreich gespeichert"
+            "saved": "Saved successfully"
         }
     },
     "evoyaFiles": {
@@ -578,9 +578,6 @@
             },
             "download": {
                 "label": "Herunterladen"
-            },
-            "search": {
-                "label": "Suchen"
             },
             "back_to_project": {
                 "label": "zurück zum Projekt"
@@ -693,16 +690,16 @@
         }
     },
     "agentList": {
-        "title": "Agentenliste",
-        "default": "Standard",
-        "edit_agent": "Agent bearbeiten",
-        "set_default_agent": "Als Standard-Agent festlegen",
-        "remove_agent": "Standard-Agent entfernen",
-        "open_test_chat": "Test-Chat öffnen",
-        "all_agents": "Alle Agenten",
-        "no_agents": "Keine Agenten gefunden",
-        "recent": "Zuletzt verwendete Agenten",
-        "no_recent": "Keine zuletzt verwendeten Agenten gefunden",
-        "search": "Agenten suchen..."
+        "title": "Agent List",
+        "default": "Default",
+        "edit_agent": "Edit Agent",
+        "set_default_agent": "Set as Default Agent",
+        "remove_agent": "Remove Default Agent",
+        "open_test_chat": "Open Test Chat",
+        "all_agents": "All Agents",
+        "no_agents": "No agents found",
+        "recent": "Recent Agents",
+        "no_recent": "No recent agents found",
+        "search": "Search Agents..."
     }
 }

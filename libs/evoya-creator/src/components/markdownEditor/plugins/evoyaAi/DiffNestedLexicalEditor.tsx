@@ -16,9 +16,11 @@ import {
   createEditor,
   COMMAND_PRIORITY_LOW
 } from 'lexical'
+import type { HistoryState } from '@lexical/history'
 import * as Mdast from 'mdast'
 import { Node } from 'unist'
 import React from 'react'
+import * as MdxEditor from '@mdxeditor/editor'
 import {
   NESTED_EDITOR_UPDATED_COMMAND,
   codeBlockEditorDescriptors$,
@@ -40,17 +42,25 @@ import {
   toMarkdownOptions$,
   toMarkdownExtensions$,
 } from '@mdxeditor/editor'
-import { SharedHistoryPlugin } from '@mdxeditor/editor/dist/plugins/core/SharedHistoryPlugin.js'
 import { ContentEditable } from '@lexical/react/LexicalContentEditable'
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary'
+import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin'
 import { LexicalNestedComposer } from '@lexical/react/LexicalNestedComposer'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import classNames from 'classnames'
 import styles from '@mdxeditor/editor/dist/styles/ui.module.css.js';
 import { mergeRegister } from '@lexical/utils'
-import { useCellValues, usePublisher, useRealm } from '@mdxeditor/gurx'
+import { NodeRef, useCellValue, useCellValues, usePublisher, useRealm } from '@mdxeditor/gurx'
 import { DifferenceNode } from './DiffNode'
 import { toMarkdown } from 'mdast-util-to-markdown'
+
+const { historyState$ } = MdxEditor as typeof MdxEditor & {
+  historyState$: NodeRef<HistoryState>
+}
+
+const SharedHistoryPlugin = () => (
+  <HistoryPlugin externalHistoryState={useCellValue(historyState$)} />
+)
 
 /**
  * The value of the {@link NestedEditorsContext} React context.

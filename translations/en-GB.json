@@ -240,9 +240,10 @@
                         "attachFiles": "Attach files"
                     },
                     "waterMark": {
-                        "text": "Powered By"
+                        "text": "AI can make mistakes. Please verify important information."
                     },
                     "additionalInfo": {
+                        "defaultText": "Type / for prompts or @ to involve other agents",
                         "text": "All information provided without warranty. Please verify the accuracy of the information provided."
                     },
                     "view_agent_details": {
@@ -397,6 +398,7 @@
     "chat": {
         "input": {
             "placeholder": "Your input...",
+            "archived": "This chat belongs to an archived agent. Unarchive the agent to continue this chat, or select another agent to start a new chat.",
             "actions": {
                 "send": "Send message",
                 "stop": "Stop Task",
@@ -458,7 +460,7 @@
         "settings": {
             "title": "Settings panel"
         },
-        "watermark": "Built with",
+        "watermark": "AI can make mistakes. Please verify important information.",
         "context": {
             "title": "CTX",
             "modal_title_tip": "View Context",
@@ -555,104 +557,122 @@
             "attachments": {
                 "label": "Cloud Storage",
                 "description": "Platform, OneDrive, etc.",
-                "title": "Attach Files"
+                "title": "Dateien anhängen"
             },
             "open": {
-                "title": "Open file"
+                "title": "Datei öffnen"
             },
             "upload": {
-                "title": "Upload",
-                "label": "Upload from Computer",
-                "description": "Browse local files"
+                "title": "Hochladen",
+                "label": "Von meinem Computer hochladen",
+                "description": "Lokale Dateien durchsuchen"
             },
             "create_folder": {
-                "title": "Create Folder"
+                "title": "Ordner erstellen"
+            },
+            "open_folder": {
+                "title": "Ordner öffnen"
             },
             "clear": {
-                "label": "Clear"
+                "label": "Zurücksetzten"
             },
             "download": {
-                "label": "Download"
+                "label": "Herunterladen"
+            },
+            "search": {
+                "label": "Search"
+            },
+            "back_to_project": {
+                "label": "zurück zum Projekt"
             },
             "rename": {
-                "label": "Rename",
-                "title": "Rename File",
-                "description": "New Name"
+                "label": "Umbenennen",
+                "title": "Datei umbenennen",
+                "description": "Neuer Name"
             },
             "move": {
-                "label": "Move to",
-                "title": "Move File",
-                "description": "Select destination"
+                "label": "Verschieben nach",
+                "title": "Datei verschieben",
+                "description": "Ziel auswählen"
             },
             "rename_folder": {
-                "label": "Rename",
-                "title": "Rename Folder",
-                "description": "New Name"
+                "label": "Umbenennen",
+                "title": "Ordner umbenennen",
+                "description": "Neuer Name"
             },
             "move_folder": {
-                "label": "Move to",
-                "title": "Move Folder",
-                "description": "Select destination"
+                "label": "Verschieben nach",
+                "title": "Ordner verschieben",
+                "description": "Ziel auswählen"
+            },
+            "leave_page": {
+                "title": "Seite verlassen?",
+                "description": "Möchten Sie diese Seite wirklich verlassen? Nicht gespeicherte Änderungen gehen verloren."
             },
             "delete": {
-                "label": "Delete",
-                "title": "Delete File",
-                "description": "Are you sure you want to delete this file?"
+                "label": "Löschen",
+                "title": "Datei löschen",
+                "description": "Sind sie sicher, dass Sie diese Datei löschen möchten?"
             },
             "delete_folder": {
-                "label": "Delete",
-                "title": "Delete Folder",
-                "description": "Are you sure you want to delete this folder?"
+                "label": "Löschen",
+                "title": "Ordner löschen",
+                "description": "Sind sie sicher, dass Sie diesen Ordner löschen möchten?"
             },
             "delete_bulk": {
-                "label": "Delete",
-                "title": "Delete Items",
-                "description": "Are you sure you want to delete those items?"
+                "label": "Löschen",
+                "title": "Auswahl löschen",
+                "description": "Sind sie sicher, dass Sie die Auswahl löschen möchten?"
+            },
+            "save": {
+                "label": "Speichern"
             }
         },
         "common": {
-            "selected": "selected"
+            "selected": "ausgewählt",
+            "files": "Dateien",
+            "no_entries": "Keine Einträge"
         },
         "headers": {
             "name": "Name",
-            "owner": "Owner",
-            "modified": "Modified",
-            "size": "Size"
+            "owner": "Ersteller",
+            "modified": "Bearbeitet",
+            "size": "Grösse"
         }
     },
     "evoyaCreator": {
         "toolbar": {
             "newDocument": {
-                "label": "Start a new Document",
-                "description": "Clear the editor and begin fresh"
+                "label": "Neues Dokument starten",
+                "description": "Den Editor zurücksetzten und von neu beginnen"
             },
             "selectAll": {
-                "label": "Select all text",
-                "description": "AI will edit the entire document, not just a part"
+                "label": "Ganzen Text auswählen",
+                "description": "AI wird das ganze Dokument bearbeiten und nicht nur einen Teil"
             },
             "downloadText": {
-                "label": "Download as Text (.txt)",
-                "description": "Plain text, no formatting"
+                "label": "Herunterladen als Text (.txt)",
+                "description": "Nur Text, keine Formattierung"
             },
             "downloadMd": {
-                "label": "Download as Markdown (.md)",
-                "description": "Text with Markdown formatting"
+                "label": "Herunterladen als Markdown (.md)",
+                "description": "Text mit Markdown formattierung"
             },
             "diffSource": {
-                "label": "Save as compare baseline",
-                "description": "Saves the current content from Edit view as the reference version. Future edits are compared to it in Compare view."
+                "label": "Als Vergleichsbasis speichern",
+                "description": "Speichert den aktuellen Inhalt als Referenzversion. Änderungen werden damit verglichen in der Vergleichsansicht."
             },
             "editMode": {
-                "label": "Edit",
-                "description": "Write and format your document"
+                "label": "Bearbeiten",
+                "description": "Schreibe und formattiere den Dokument"
             },
             "compareMode": {
-                "label": "Compare",
-                "description": "See changes vs. saved baseline"
+                "label": "Vergleichen",
+                "description": "Änderungen zur Referenzversion"
             },
             "sourceMode": {
-                "label": "Source view",
-                "description": "Advanced — view raw Markdown"
+                "label": "Quellenansicht",
+                "description": "Advanced — rohes Markdown anzeigen"
             },
             "advancedView": {
                 "label": "Advanced View"
@@ -662,14 +682,14 @@
             },
             "save": {
                 "label": "Speichern",
-                "input": "File name"
+                "input": "Dateiname"
             },
             "open": {
-                "label": "Open file..."
+                "label": "Datei öffnen..."
             }
         },
         "action": {
-            "cancel": "Cancel"
+            "cancel": "Abbrechen"
         }
     },
     "agentList": {

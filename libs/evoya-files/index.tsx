@@ -21,6 +21,7 @@ type EvoyaFilesConfig = {
   type?: string;
   file?: string;
   mime?: string;
+  brand_color?: string | null;
 }
 
 declare global {
@@ -93,6 +94,7 @@ window.mountEvoyaFilesWidget = (config: EvoyaFilesConfig) => {
         type={config.type ?? 'default'}
         file={config.file}
         mime={config.mime}
+        brandColor={config.brand_color}
       />
     </React.StrictMode>
   );

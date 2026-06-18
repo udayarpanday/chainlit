@@ -12,12 +12,20 @@ import { EvoyaFile } from '@evoya/file-picker/src/types';
 import { FilePickerContext } from '@evoya/file-picker/src/context/file-context';
 
 interface Props {
+  initialPath?: string;
   open: boolean;
   setOpen: (val: boolean) => void;
-  selectFile: (val: EvoyaFile) => void
+  selectFile: (val: EvoyaFile) => void;
+  selectFilter?: (val: EvoyaFile) => boolean;
 }
 
-const FilePickerDialog = ({ open, setOpen, selectFile }: Props): JSX.Element => {
+const FilePickerDialog = ({
+  initialPath = '/',
+  open,
+  setOpen,
+  selectFile,
+  selectFilter = () => true
+}: Props): JSX.Element => {
   return (
     <Dialog
       open={open}
@@ -36,8 +44,9 @@ const FilePickerDialog = ({ open, setOpen, selectFile }: Props): JSX.Element => 
             type: "default"
           }}>
             <FilePicker 
-              initialPath='/'
+              initialPath={initialPath}
               handleItemClick={(item) => selectFile(item)}
+              selectFilter={selectFilter}
               singleMode
             />
           </FilePickerContext.Provider>

@@ -4,7 +4,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { RecoilRoot } from 'recoil';
 
-import { ChainlitContext } from '@chainlit/react-client';
+import {
+  ChainlitContext,
+  removeScopedSessionStorageItem,
+  setScopedSessionStorageItem
+} from '@chainlit/react-client';
 
 import './index.css';
 
@@ -15,12 +19,16 @@ i18nSetupLocalization();
 const EVOYA_JWT_STORAGE_KEY = 'token';
 const EVOYA_SESSION_STORAGE_KEY = 'session_token';
 const searchParams = new URLSearchParams(location.search);
+const accessToken = searchParams.get('access_token');
 
-if (searchParams.get('access_token')) {
-  localStorage.setItem('chainlit_token', searchParams.get('access_token'))
-  localStorage.setItem('chainlit_token_iframe', searchParams.get('access_token'))
+if (accessToken) {
+  setScopedSessionStorageItem('chainlit_token', accessToken);
+  setScopedSessionStorageItem('chainlit_token_iframe', accessToken);
+  localStorage.removeItem('chainlit_token');
+  localStorage.removeItem('chainlit_token_iframe');
   localStorage.removeItem(EVOYA_JWT_STORAGE_KEY);
   localStorage.removeItem(EVOYA_SESSION_STORAGE_KEY);
+  removeScopedSessionStorageItem(EVOYA_SESSION_STORAGE_KEY);
   localStorage.removeItem('input_history');
 }
 

@@ -1,4 +1,5 @@
 import { IElement, IThread, IUser } from 'src/types';
+import { getScopedSessionStorageItem } from 'src/storage';
 
 import { IAction } from 'src/types/action';
 import { IFeedback } from 'src/types/feedback';
@@ -140,7 +141,7 @@ export class APIBase {
   }
 
   async get(endpoint: string) {
-    const token = localStorage.getItem('chainlit_token');
+    const token = getScopedSessionStorageItem('chainlit_token');
     const headers: Record<string, string> = {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };

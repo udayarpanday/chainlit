@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { Check, FolderKanban, Search } from 'lucide-react';
+import { Check, FolderOpen, Search } from 'lucide-react';
 import {
   useCallback,
   useContext,
@@ -11,6 +11,7 @@ import {
 
 import { WidgetContext } from '@chainlit/copilot/src/context';
 
+import Translator from '@/components/i18n/Translator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -24,7 +25,8 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from '@/components/ui/tooltip';
-import Translator from '@/components/i18n/Translator';
+
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type ProjectId = string | number;
 
@@ -121,7 +123,7 @@ const ProjectRow = ({
       selected ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/70'
     )}
   >
-    <FolderKanban className="h-4 w-4 shrink-0 text-foreground" />
+    <FolderOpen className="h-4 w-4 shrink-0 text-foreground" />
     <span className="min-w-0 flex-1 truncate font-medium">
       {truncateProjectName(project.name, 36)}
     </span>
@@ -135,6 +137,7 @@ interface Props {
 
 export default function Projects({ disabled = false }: Props) {
   const { evoya } = useContext(WidgetContext);
+  const isMobile = useIsMobile();
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
   const [bridgeFilteredProjects, setBridgeFilteredProjects] = useState<
     ProjectListItem[]
@@ -245,10 +248,7 @@ export default function Projects({ disabled = false }: Props) {
     setIsOpen(false);
   };
 
-  if (
-    evoya?.type !== 'dashboard' ||
-    (!projects.length && !selectedProjects.length)
-  ) {
+  if (evoya?.type !== 'dashboard') {
     return null;
   }
 
@@ -265,12 +265,11 @@ export default function Projects({ disabled = false }: Props) {
                 className={cn(
                   'relative',
                   'hover:bg-muted',
-                  selectedProjects.length
-                    &&'text-primary hover:text-primary'
+                  selectedProjects.length && 'text-primary hover:text-primary'
                 )}
                 disabled={disabled}
               >
-                <FolderKanban className="!size-5" />
+                <FolderOpen className="!size-5" />
               </Button>
             </PopoverTrigger>
           </TooltipTrigger>
@@ -281,13 +280,17 @@ export default function Projects({ disabled = false }: Props) {
       </TooltipProvider>
 
       <PopoverContent
-        side="top"
-        align="start"
-        sideOffset={14}
-        className="z-[9999] w-[350px] max-w-[calc(100vw-24px)] overflow-hidden rounded-xl border border-slate-200 bg-white p-2 shadow-[0_12px_32px_rgba(15,23,42,0.18)]"
-        onOpenAutoFocus={(event) => {
-          event.preventDefault();
-          searchInputRef.current?.focus();
+        align={isMobile ? 'center' : 'start'}
+        side={isMobile ? 'top' : undefined}
+        sideOffset={isMobile ? 5 : 12}
+        className="focus:outline-none w-[57vw] min-w-[320px] w-md-[820px] w-lg-[950px] p-0"
+        style={{
+          position: isMobile ? 'fixed' : 'relative',
+          bottom: isMobile ? '-82vh' : '42px',
+          right: isMobile ? 'auto' : '48px',
+          left: isMobile ? '45px' : 'auto',
+          transform: 'none',
+          zIndex: 50
         }}
       >
         <div className="relative">
@@ -298,7 +301,7 @@ export default function Projects({ disabled = false }: Props) {
             onChange={(event) => handleSearch(event.target.value)}
             placeholder="Search projects..."
             className="h-10 rounded-xl border-slate-200 bg-white pl-9 pr-3 text-base shadow-none focus-visible:ring-1 focus-visible:ring-primary/25 focus-visible:ring-offset-0 md:text-base"
-            autoFocus
+            autoFocus={!isMobile}
           />
         </div>
 

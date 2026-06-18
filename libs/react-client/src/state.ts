@@ -100,6 +100,11 @@ export const initialTranscriptState = atom<InitialTranscriptStateValue | null>({
   default: null
 });
 
+export const chatArchived = atom<boolean>({
+  key: 'ChatArchived',
+  default: false
+});
+
 export const agentState = atom<IAgents[]>({
   key: 'Agent',
   default: []

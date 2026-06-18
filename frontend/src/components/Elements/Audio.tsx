@@ -1,7 +1,10 @@
 import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 
-import { IAudioElement } from '@chainlit/react-client';
+import {
+  getScopedSessionStorageItem,
+  IAudioElement
+} from '@chainlit/react-client';
 
 const AudioElement = ({ element }: { element: IAudioElement }) => {
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
@@ -10,7 +13,7 @@ const AudioElement = ({ element }: { element: IAudioElement }) => {
     if (!element.url) return;
 
     const fetchAudio = async () => {
-      const token = localStorage.getItem('chainlit_token');
+      const token = getScopedSessionStorageItem('chainlit_token');
       const headers: Record<string, string> = {
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       };

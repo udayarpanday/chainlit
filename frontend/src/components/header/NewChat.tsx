@@ -1,9 +1,13 @@
 import { WidgetContext } from 'context';
 import { Plus } from 'lucide-react';
 import React, { useContext } from 'react';
+import { useRecoilValue } from 'recoil';
 
 import {
   ChainlitContext,
+  chatArchived,
+  removeScopedSessionStorageItem,
+  setScopedSessionStorageItem,
   useAudio,
   useAuth,
   useChatInteract,
@@ -19,18 +23,21 @@ interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   newSession?: (sessionUuid?: string) => void;
 }
 
-const NewChatButton = ({ newSession }: Props) => {
+const NewChatButton = ({ disabled, newSession }: Props) => {
   const { clear } = useChatInteract();
   const { evoya, setAccessToken } = useContext(WidgetContext);
   const apiClient = useContext(ChainlitContext);
   const { setUserFromAPI } = useAuth();
+  const isChatArchived = useRecoilValue(chatArchived);
 
   const { endConversation, audioConnection } = useAudio();
   const isAudioOn = audioConnection === 'on';
   const isMobile = useIsMobile();
+  const isDisabled = disabled || isChatArchived;
 
   const handleClickOpen = async () => {
     localStorage.removeItem('session_token');
+    removeScopedSessionStorageItem('session_token');
     document.cookie =
       'session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     window.dispatchEvent(new CustomEvent('copilot-new-session'));
@@ -53,9 +60,10 @@ const NewChatButton = ({ newSession }: Props) => {
           {}
         );
         if (newAccessToken) {
-          localStorage.setItem('chainlit_token', newAccessToken);
+          setScopedSessionStorageItem('chainlit_token', newAccessToken);
+          localStorage.removeItem('chainlit_token');
           setAccessToken(newAccessToken);
-           apiClient
+          apiClient
             .jwtAuth(newAccessToken)
             .then((res) => setUserFromAPI())
             .catch((err) => console.log(err));
@@ -74,6 +82,7 @@ const NewChatButton = ({ newSession }: Props) => {
         variant="outline"
         id="new-chat-button"
         onClick={handleClickOpen}
+        disabled={isDisabled}
         className="text-[#7b809a] border-[#7b809a] hover:bg-[#7b809a]/10"
       >
         <Plus className="w-4 h-4" />

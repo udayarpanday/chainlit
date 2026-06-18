@@ -31,10 +31,6 @@ import {
 } from "@mdxeditor/gurx";
 
 import {
-  $wrapNodes,
-} from "@lexical/selection";
-
-import {
   LexicalNode,
   $isRangeSelection,
   $getRoot,
@@ -61,13 +57,6 @@ import { CreatorLock } from "./CreatorLock";
 import { tryImportingMarkdown } from "@/components/markdownEditor/utils/markdown";
 
 import {
-  $createComparisonNode,
-  $createComparisonSideNode,
-  ComparisonActionsPortal,
-  ComparisonNode,
-  ComparisonSideNode,
-  LexicalComparisonSideVisitor,
-  LexicalComparisonVisitor,
   DifferenceNode,
   LexicalDifferenceVisitor,
   $createDifferenceNode,
@@ -188,53 +177,6 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
       const newMdast = importMarkdownToMdast(value.message.content ?? '', syntaxExtensions, mdastExtensions);
 
       if (selectionType === 'node') {
-        /*activeEditor?.update(() => {
-          const lexicalNodes = lexicalSelection?.getNodes() ?? [];
-          console.log(lexicalNodes);
-
-          const comparisonNode = $createComparisonNode(insertType !== 'replace');
-          
-          // Create new side
-          const newSide = $createComparisonSideNode('new');
-
-          const importPoint = {
-            children: [] as LexicalNode[],
-            append(node: LexicalNode) {
-              this.children.push(node)
-            },
-            getType() {
-              // return lexicalSelection.getNodes()[0].getType();
-              return 'importroot';
-            }
-          }
-
-          tryImportingMarkdown(realm, importPoint, value.message.content);
-          console.log('importPoint', importPoint);
-          const importChildren = importPoint.children;
-          console.log('importChildren', importChildren);
-
-          newSide.append(...importChildren);
-
-          if (insertType === 'replace') {
-            lexicalNodes[lexicalNodes.length - 1].insertAfter(comparisonNode);
-            // Create current side
-            const currentSide = $createComparisonSideNode('current');
-            currentSide.append(...(lexicalNodes ?? []));
-            comparisonNode.append(currentSide, newSide);
-          } else if (insertType === 'after') {
-            lexicalNodes[lexicalNodes.length - 1].insertAfter(comparisonNode);
-            comparisonNode.append(newSide);
-          } else if (insertType === 'before') {
-            lexicalNodes[0].insertBefore(comparisonNode);
-            comparisonNode.append(newSide);
-          }
-
-          realm.pub(resetSelection$);
-
-          $setSelection(null);
-        }, {
-          onUpdate: () => realm.pub(updateComparisonNodeKeys$)
-        });*/
         activeEditor?.update(() => {
           const lexicalNodes = lexicalSelection?.getNodes() ?? [];
           console.log(lexicalNodes);
@@ -253,8 +195,6 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
           if (insertType === 'replace') {
             lexicalNodes[lexicalNodes.length - 1].insertAfter(differenceNode);
             lexicalNodes.forEach((node) => node.remove());
-            // lexicalNodes.forEach((node) => removeFromParent(node));
-            // currentSide.remove();
           } else if (insertType === 'after') {
             lexicalNodes[lexicalNodes.length - 1].insertAfter(differenceNode);
           } else if (insertType === 'before') {
@@ -274,53 +214,6 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
         // } else if (insertType === 'before') {
         // }
       } else if (selectionType === 'document') {
-        /*activeEditor?.update(() => {
-          const lexicalNodes = $getRoot().getChildren() ?? [];
-          console.log($getRoot(), lexicalNodes);
-
-          const comparisonNode = $createComparisonNode(insertType !== 'replace');
-          
-          // Create new side
-          const newSide = $createComparisonSideNode('new');
-
-          const importPoint = {
-            children: [] as LexicalNode[],
-            append(node: LexicalNode) {
-              this.children.push(node)
-            },
-            getType() {
-              // return lexicalSelection.getNodes()[0].getType();
-              return 'importroot';
-            }
-          }
-
-          tryImportingMarkdown(realm, importPoint, value.message.content);
-          console.log('importPoint', importPoint);
-          const importChildren = importPoint.children;
-          console.log('importChildren', importChildren);
-
-          newSide.append(...importChildren);
-
-          if (insertType === 'replace') {
-            lexicalNodes[lexicalNodes.length - 1].insertAfter(comparisonNode);
-            // Create current side
-            const currentSide = $createComparisonSideNode('current');
-            currentSide.append(...(lexicalNodes ?? []));
-            comparisonNode.append(currentSide, newSide);
-          } else if (insertType === 'after') {
-            lexicalNodes[lexicalNodes.length - 1].insertAfter(comparisonNode);
-            comparisonNode.append(newSide);
-          } else if (insertType === 'before') {
-            lexicalNodes[0].insertBefore(comparisonNode);
-            comparisonNode.append(newSide);
-          }
-
-          realm.pub(resetSelection$);
-
-          $setSelection(null);
-        }, {
-          onUpdate: () => realm.pub(updateComparisonNodeKeys$)
-        });*/
         activeEditor?.update(() => {
           const lexicalNodes = $getRoot().getChildren() ?? [];
           console.log(lexicalNodes);
@@ -328,7 +221,6 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
           const differenceNode = $createDifferenceNode({
             onlyInsert: insertType !== 'replace',
             currentNodes: [],
-            // currentNodes: lexicalNodes,
             currentMarkdown: selectionContext.markdown ?? '',
             newMarkdown: value.message.content,
             currentMdast: currentMdast,
@@ -338,10 +230,6 @@ export const replaceSelectionContent$ = Signal<{ message: CreatorMessage, contex
 
           if (insertType === 'replace') {
             lexicalNodes[lexicalNodes.length - 1].insertAfter(differenceNode);
-            // const currentSide = $createComparisonSideNode('current');
-            // currentSide.append(...(lexicalNodes ?? []));
-            // currentSide.remove();
-            // lexicalNodes.forEach((node) => removeFromParent(node));
             lexicalNodes.forEach((node) => node.remove());
           } else if (insertType === 'after') {
             lexicalNodes[lexicalNodes.length - 1].insertAfter(differenceNode);
@@ -389,7 +277,7 @@ export const resetDocument$ = Action((r) => {});
 export const updateComparisonNodeKeys$ = Action((r) => {});
 export const creatorType$ = Cell<string>('', (r) => {});
 export const evoyaViewType$ = Cell<"default" | "approve">('default', (r) => {});
-export const evoyaAutoApprove$ = Cell<boolean>(false, (r) => {});
+export const evoyaAutoApprove$ = Cell<boolean>(true, (r) => {});
 export const comparisonNodeKeys$ = Cell<string[]>([], (r) => {});
 
 export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
@@ -436,13 +324,12 @@ export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
       [addActivePlugin$]: 'evoyaAi',
       [creatorType$]: params?.creatorType,
       [editorContainerRef$]: params?.containerRef,
-      [addLexicalNode$]: [ComparisonNode, ComparisonSideNode, DifferenceNode],
-      [addExportVisitor$]: [LexicalComparisonVisitor, LexicalComparisonSideVisitor, LexicalDifferenceVisitor],
+      [addLexicalNode$]: [DifferenceNode],
+      [addExportVisitor$]: [LexicalDifferenceVisitor],
     });
 
     realm.pub(addComposerChild$, TextSelection);
     realm.pub(addComposerChild$, CreatorLock);
-    // realm.pub(addComposerChild$, ComparisonActionsPortal);
 
     realm.sub(realm.pipe(updateComparisonNodeKeys$, withLatestFrom(rootEditor$)), ([__, rootEditor]) => {
       if (rootEditor) {
@@ -520,17 +407,6 @@ export const evoyaAiPlugin = realmPlugin<EvoyaAiPluginParams>({
             scrollOffset = params?.containerRef.current.scrollTop;
           }
           if ($isRangeSelection(selection)) {
-            // $ensureForwardRangeSelection(selection);
-
-
-            // const startEnd = selection.getStartEndPoints();
-            // const restoredSelection = $createRangeSelection();
-            // const startOffset = startEnd[0].offset;
-            // const endOffset = startEnd[1].offset;
-            // restoredSelection.anchor.set(startEnd[0].key, startOffset, 'text');
-            // restoredSelection.focus.set(startEnd[1].key, endOffset, 'text');
-            // console.log(restoredSelection);
-
             const startPoint = selection.anchor;
             const endPoint = selection.focus;
 

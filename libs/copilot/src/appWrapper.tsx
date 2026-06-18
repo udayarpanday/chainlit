@@ -4,7 +4,10 @@ import { RecoilRoot } from 'recoil';
 import { IWidgetConfig } from 'types';
 
 import { i18nSetupLocalization } from '@chainlit/app/src/i18n';
-import { ChainlitContext } from '@chainlit/react-client';
+import {
+  ChainlitContext,
+  setScopedSessionStorageItem
+} from '@chainlit/react-client';
 
 import App from './app';
 import { WidgetContext } from './context';
@@ -22,7 +25,8 @@ export default function AppWrapper({ widgetConfig, evoya }: Props) {
   const [customThemeLoaded, setCustomThemeLoaded] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem('chainlit_token', accessToken || '');
+    setScopedSessionStorageItem('chainlit_token', accessToken || '');
+    localStorage.removeItem('chainlit_token');
   }, [accessToken]);
 
   function completeInitialization() {

@@ -40,6 +40,7 @@ export interface AgentListItem {
   isDefault?: boolean;
   sessionUuid?: string;
   isFavorite?: boolean;
+  isArchived?: boolean;
 }
 
 interface AgentListProps {
@@ -79,7 +80,8 @@ const AgentRow = ({
   onOpenTestChat?: (agent: AgentListItem) => void;
   onClick: () => void;
 }) => {
-  const canShowMenu = agent.showAgentMenu !== false;
+  const canShowMenu =
+    selected && agent.showAgentMenu !== false && !agent.isArchived;
   const canEditAgent =
     !!onEditAgent &&
     canShowMenu &&
@@ -189,18 +191,24 @@ export default function AgentList({
 
   const normalizedQuery = query.trim().toLowerCase();
 
+  const visibleAgents = useMemo(
+    () => agents.filter((agent) => !agent.isArchived),
+    [agents]
+  );
+
   const filteredAgents = useMemo(() => {
-    if (!normalizedQuery) return agents;
-    return agents.filter((agent) =>
+    if (!normalizedQuery) return visibleAgents;
+    return visibleAgents.filter((agent) =>
       agent.name.toLowerCase().includes(normalizedQuery)
     );
-  }, [agents, normalizedQuery]);
+  }, [visibleAgents, normalizedQuery]);
 
-  const recentSource = recentAgents ?? agents.filter((agent) => agent.isRecent);
+  const recentSource =
+    recentAgents ?? visibleAgents.filter((agent) => agent.isRecent);
   const recentList = recentSource.filter(
     (agent) =>
-      !normalizedQuery ||
-      agent.name.toLowerCase().includes(normalizedQuery)
+      !agent.isArchived &&
+      (!normalizedQuery || agent.name.toLowerCase().includes(normalizedQuery))
   );
   const allAgents = filteredAgents.filter((agent) => !agent.isPinned);
 
@@ -224,8 +232,8 @@ export default function AgentList({
             }}
           >
             <UserRound className="h-4 w-4 text-primary" />
-            <span className="md:max-w-[170px] max-w-0 md:block hidden truncate">
-              {selectedAgent?.name ? truncateAgentName(selectedAgent.name,20) : ''}
+            <span className="md:max-w-[400px] max-w-0 md:block hidden truncate">
+              {selectedAgent?.name ? selectedAgent.name : ''}
             </span>
             <ChevronDown className="h-4 w-4 text-primary" />
           </Button>

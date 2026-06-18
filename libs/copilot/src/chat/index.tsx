@@ -1,7 +1,11 @@
 import { WidgetContext } from '@/context';
 import { useContext, useEffect } from 'react';
 
-import { useChatInteract, useChatSession } from '@chainlit/react-client';
+import {
+  setScopedSessionStorageItem,
+  useChatInteract,
+  useChatSession
+} from '@chainlit/react-client';
 
 import ChatBody from './body';
 
@@ -12,7 +16,10 @@ export default function ChatWrapper() {
 
   useEffect(() => {
     if (evoya?.session_uuid) {
-      localStorage.setItem('session_token', evoya.session_uuid);
+      setScopedSessionStorageItem('session_token', evoya.session_uuid);
+      localStorage.removeItem('session_token');
+      document.cookie =
+        'session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     }
   }, [evoya?.session_uuid]);
 
