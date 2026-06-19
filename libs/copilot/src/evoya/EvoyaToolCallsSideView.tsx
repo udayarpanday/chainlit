@@ -16,7 +16,7 @@ export default function EvoyaToolCallsSideView() {
     <Sheet open={evoyaToolCalls.isOpen} onOpenChange={(open) => !open && setEvoyaToolCalls({ isOpen: false, toolCalls: []})}>
       <SheetContent className="flex flex-col md:max-w-lg">
         <SheetHeader>
-          <SheetTitle>Tool Calls</SheetTitle>
+          <SheetTitle>Sources & Tools</SheetTitle>
         </SheetHeader>
         <div className="mt-4 overflow-y-auto flex-grow flex flex-col gap-4">
           <ToolCallsInfo toolCalls={evoyaToolCalls.toolCalls} />

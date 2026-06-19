@@ -6,7 +6,7 @@ import {
   type IStep,
 } from '@chainlit/react-client';
 
-import { Hammer  } from 'lucide-react';
+import { Info } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -44,12 +44,12 @@ export function EvoyaToolCallsButton({ toolCalls }: Props) {
               size="icon"
               className={`text-muted-foreground`}
             >
-              <Hammer className="h-4 w-4" />
+              <Info className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
             <p>
-              Show Tool Use
+              Sources & Tools
             </p>
           </TooltipContent>
         </Tooltip>

@@ -29,6 +29,7 @@ export const CustomTool = ({ step }: { step: StepIO }) => {
       title={toolName}
       icon={<Hammer />}
       hasError={hasError}
+      titleClass='capitalize'
     >
       <ReactJsonView src={step.inputParsed.tool_call.args} />
       {!jsonResponse && (

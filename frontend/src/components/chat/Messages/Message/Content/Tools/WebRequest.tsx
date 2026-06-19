@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemSeparator, ItemTitle } from '@/components/ui/item';
 import type { IStep } from '@chainlit/react-client';
-import { ChevronRight, Globe } from 'lucide-react';
+import { ChevronRight, Globe, SquareArrowOutUpRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { StepIO } from '../../ToolCallsInfo';
 import { cn } from '@/lib/utils';
@@ -40,6 +40,13 @@ export const WebRequest = ({ step }: { step: StepIO }) => {
       title={step.inputParsed.tool_call.args.url ?? 'no url data for web request'}
       icon={<Globe />}
       hasError={hasError}
+      additionalActions={
+        <Button size="xs" variant="ghost" className="-my-2" asChild>
+          <a href={step.inputParsed.tool_call.args.url} target="_blank">
+            <SquareArrowOutUpRight />
+          </a>
+        </Button>
+      }
     >
       {!jsonResponse && (
         <Markdown
@@ -51,38 +58,4 @@ export const WebRequest = ({ step }: { step: StepIO }) => {
       {jsonResponse && <ReactJsonView src={jsonResponse} />}
     </BaseToolCall>
   );
-
-  return (
-    <Card className={cn(hasError && 'bg-destructive/20 border-destructive')}>
-      <ItemGroup>
-        <Item size="sm">
-          <ItemMedia variant="icon">
-            <Globe />
-          </ItemMedia>
-          <ItemContent className="overflow-hidden">
-            <ItemTitle className="overflow-hidden whitespace-nowrap w-full">
-              <span className="text-ellipsis overflow-hidden">{step.inputParsed.tool_call.args.url ?? 'no url data for web request'}</span>
-            </ItemTitle>
-          </ItemContent>
-          <ItemActions>
-            <Button size="xs" variant="ghost" className="-my-2" onClick={() => setIsOpen(!isOpen)}>
-              <ChevronRight className={cn(isOpen ? 'rotate-90' : '')} />
-            </Button>
-          </ItemActions>
-        </Item>
-        {isOpen && (
-          <>
-            <ItemSeparator className={cn(hasError && 'bg-destructive')} />
-            <Item size="sm">
-              <ItemContent className="overflow-hidden">
-                <ItemDescription>
-                  {step.outputParsed.messages[0].kwargs.content}
-                </ItemDescription>
-              </ItemContent>
-            </Item>
-          </>
-        )}
-      </ItemGroup>
-    </Card>
-  )
 }
