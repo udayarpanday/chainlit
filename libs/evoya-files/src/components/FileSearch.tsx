@@ -52,7 +52,7 @@ export default function FileSearch({
           className={(attachmentMode || destinationMode) ? 'text-xs h-9' : ''}
           readOnly={isLoading}
         />
-        <Button type='submit' className='ml-2' size={(attachmentMode || destinationMode) ? 'sm' : 'default'} disabled={isLoading}>
+        <Button type='submit' variant={attachmentMode ? "secondary" : "outline"} className={cn('ml-2', attachmentMode ? '' : 'text-[#7b809a] border-[#7b809a] hover:bg-[#7b809a]/10')} size={(attachmentMode || destinationMode) ? 'sm' : 'default'} disabled={isLoading}>
           {isLoading ? 
             <LoaderCircle className="animate-spin h-4 w-4 mr-1" />
             : <Search className='h-4 w-4 mr-1' />

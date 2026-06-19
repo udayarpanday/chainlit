@@ -434,7 +434,7 @@ export default function FilePicker({
         isSearch={isSearch}
       />
     )}
-    <div className='relative flex flex-col overflow-hidden'>
+    <div className={cn('relative flex flex-col overflow-hidden', compact ? 'max-h-[300px]' : 'h-full')}>
       {!compact && (
         <div className='flex justify-between items-center mb-2 pt-2'>
           <FolderBreadcrumbs

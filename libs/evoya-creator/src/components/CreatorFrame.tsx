@@ -18,6 +18,7 @@ import {
   DialogContent,
 } from '@chainlit/app/src/components/ui/dialog';
 import CreatorChat from './CreatorChat';
+import { cn } from '@chainlit/app/src/lib/utils';
 
 export default function CreatorFrame() {
   const {
@@ -46,20 +47,11 @@ export default function CreatorFrame() {
   }, [creatorType]);
 
   return (
-    <Dialog
-      open={active}
-      onOpenChange={() => closeCreatorOverlay()}
-    >
-      <DialogContent
-        className="z-[9999] h-full p-0 overflow-hidden border-0"
-        style={{
-          maxHeight: 'calc(100% - 1rem)',
-          maxWidth: 'calc(100% - 1rem)',
-        }}
-        // @ts-expect-error is not a valid prop
-        container={window.mdx_shadowRootElement}
+    <div className={cn("fixed top-0 left-0 bottom-0 right-0 z-[9999] p-2 transition-colors", active ? 'bg-black/50 visible' : 'bg-transparent invisible pointer-events-none')}>
+      <div
+        className={cn("bg-white rounded-md w-full h-full overflow-hidden transition-transform", active ? 'scale-100' : 'scale-90')}
       >
-        <ResizablePanelGroup
+        {active && <ResizablePanelGroup
           direction="horizontal"
           autoSaveId="creator-panel-sizes"
         >
@@ -73,8 +65,8 @@ export default function CreatorFrame() {
               {CreatorRenderer}
             </div>
           </ResizablePanel>
-        </ResizablePanelGroup>
-      </DialogContent>
-    </Dialog>
-  )
+        </ResizablePanelGroup>}
+      </div>
+    </div>
+  );
 }
