@@ -146,15 +146,15 @@ export const CommandButton = ({
         style={{
           position: isMobile ? 'fixed' : 'relative',
           bottom: isMobile ? '-82vh' : '42px',
-          right: isMobile ? 'auto' : '48px',
+          right: isMobile ? 'auto' : '35px',
           left: isMobile ? '45px' : 'auto',
           transform: 'none',
           zIndex: 50
         }}
       >
         <div className="w-full">
-          <Command className="rounded-lg border shadow-md">
-            <div className="flex items-center pb-0">
+          <Command className="border rounded-lg p-2 shadow-md">
+            <div className="flex items-center pb-0 rounded-lg border">
               <CommandInput
                 placeholder="Search prompts..."
                 className="h-12"

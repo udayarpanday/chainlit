@@ -19,7 +19,8 @@ import {
   initialTranscriptState,
   useAuth,
   useChatData,
-  useChatInteract
+  useChatInteract,
+  projectAccess
 } from '@chainlit/react-client';
 import { Archive } from 'lucide-react';
 
@@ -65,14 +66,28 @@ export default function MessageComposer({
   const [evoyaAttachments, setEvoyaAttachments] = useRecoilState(evoyaAttachmentsState);
   const initialTranscript = useRecoilValue(initialTranscriptState);
   const isChatArchived = useRecoilValue(chatArchived);
+  const isProjectAccessible = useRecoilValue(projectAccess);
   const resetInitialTranscript = useResetRecoilState(initialTranscriptState);
   const { t } = useTranslation();
 
   const { user } = useAuth();
   const { sendMessage, replyMessage } = useChatInteract();
-  const { askUser, chatSettingsInputs, disabled: _disabled } = useChatData();
+  const {
+    askUser,
+    chatArchived: isDisabledByArchive,
+    chatSettingsInputs,
+    connected,
+    disabled: _disabled
+  } = useChatData();
 
-  const disabled = _disabled || !!attachments.find((a) => !a.uploaded);
+  const hasUploadingAttachment = !!attachments.find((a) => !a.uploaded);
+  const disabled = _disabled || hasUploadingAttachment;
+  const inputDisabled =
+    isDisabledByArchive ||
+    !connected ||
+    askUser?.spec.type === 'file' ||
+    askUser?.spec.type === 'action' ||
+    hasUploadingAttachment;
 
   useEffect(() => {
     if (!initialTranscript || !inputRef.current) return;
@@ -163,6 +178,10 @@ export default function MessageComposer({
   );
 
   const submit = async () => {
+    if (disabled) {
+      return;
+    }
+
     if (submitProxy) {
       submitProxy(value, (text: string) => {
         if (askUser) {
@@ -234,7 +253,7 @@ export default function MessageComposer({
           ref={inputRef}
           id="chat-input"
           autoFocus
-          disabled={disabled}
+          disabled={inputDisabled}
           selectedCommand={selectedCommand}
           setSelectedCommand={setSelectedCommand}
           onChange={setValue}
@@ -271,7 +290,7 @@ export default function MessageComposer({
                 selectedCommand={selectedCommand}
                 onCommandSelect={setSelectedCommand}
               />
-              {context?.is_superuser && <Projects disabled={disabled} />}
+              {isProjectAccessible && <Projects disabled={disabled} />}
             </>
           )}
           {evoya?.evoyaCreator?.enabled && (
@@ -298,7 +317,7 @@ export default function MessageComposer({
             ref={inputRef}
             id="chat-input"
             autoFocus
-            disabled={disabled}
+            disabled={inputDisabled}
             selectedCommand={selectedCommand}
             setSelectedCommand={setSelectedCommand}
             onChange={setValue}
