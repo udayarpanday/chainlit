@@ -557,87 +557,87 @@
             "attachments": {
                 "label": "Cloud Storage",
                 "description": "Platform, OneDrive, etc.",
-                "title": "Dateien anhängen"
+                "title": "Attach files"
             },
             "open": {
-                "title": "Datei öffnen"
+                "title": "Open file"
             },
             "upload": {
-                "title": "Hochladen",
-                "label": "Von meinem Computer hochladen",
-                "description": "Lokale Dateien durchsuchen"
+                "title": "Upload",
+                "label": "Upload from my computer",
+                "description": "Browse local files"
             },
             "create_folder": {
-                "title": "Ordner erstellen"
+                "title": "Create folder"
             },
             "open_folder": {
-                "title": "Ordner öffnen"
+                "title": "Open folder"
             },
             "clear": {
-                "label": "Zurücksetzten"
+                "label": "Reset"
             },
             "download": {
-                "label": "Herunterladen"
+                "label": "Download"
             },
             "search": {
                 "label": "Search"
             },
             "back_to_project": {
-                "label": "zurück zum Projekt"
+                "label": "Back to project"
             },
             "rename": {
-                "label": "Umbenennen",
-                "title": "Datei umbenennen",
-                "description": "Neuer Name"
+                "label": "Rename",
+                "title": "Rename file",
+                "description": "New name"
             },
             "move": {
-                "label": "Verschieben nach",
-                "title": "Datei verschieben",
-                "description": "Ziel auswählen"
+                "label": "Move to",
+                "title": "Move file",
+                "description": "Select destination"
             },
             "rename_folder": {
-                "label": "Umbenennen",
-                "title": "Ordner umbenennen",
-                "description": "Neuer Name"
+                "label": "Rename",
+                "title": "Rename folder",
+                "description": "New name"
             },
             "move_folder": {
-                "label": "Verschieben nach",
-                "title": "Ordner verschieben",
-                "description": "Ziel auswählen"
+                "label": "Move to",
+                "title": "Move folder",
+                "description": "Select destination"
             },
             "leave_page": {
-                "title": "Seite verlassen?",
-                "description": "Möchten Sie diese Seite wirklich verlassen? Nicht gespeicherte Änderungen gehen verloren."
+                "title": "Leave page?",
+                "description": "Are you sure you want to leave this page? Unsaved changes will be lost."
             },
             "delete": {
-                "label": "Löschen",
-                "title": "Datei löschen",
-                "description": "Sind sie sicher, dass Sie diese Datei löschen möchten?"
+                "label": "Delete",
+                "title": "Delete file",
+                "description": "Are you sure you want to delete this file?"
             },
             "delete_folder": {
-                "label": "Löschen",
-                "title": "Ordner löschen",
-                "description": "Sind sie sicher, dass Sie diesen Ordner löschen möchten?"
+                "label": "Delete",
+                "title": "Delete folder",
+                "description": "Are you sure you want to delete this folder?"
             },
             "delete_bulk": {
-                "label": "Löschen",
-                "title": "Auswahl löschen",
-                "description": "Sind sie sicher, dass Sie die Auswahl löschen möchten?"
+                "label": "Delete",
+                "title": "Delete selection",
+                "description": "Are you sure you want to delete the selection?"
             },
             "save": {
-                "label": "Speichern"
+                "label": "Save"
             }
         },
         "common": {
-            "selected": "ausgewählt",
-            "files": "Dateien",
-            "no_entries": "Keine Einträge"
+            "selected": "selected",
+            "files": "Files",
+            "no_entries": "No entries"
         },
         "headers": {
             "name": "Name",
-            "owner": "Ersteller",
-            "modified": "Bearbeitet",
-            "size": "Grösse"
+            "owner": "Owner",
+            "modified": "Modified",
+            "size": "Size"
         }
     },
     "evoyaCreator": {

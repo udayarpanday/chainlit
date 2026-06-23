@@ -26,6 +26,7 @@ import {
   isAiSpeakingState,
   loadingState,
   messagesState,
+  projectAccess,
   promptState,
   resumeThreadErrorState,
   sessionIdState,
@@ -101,6 +102,7 @@ const useChatSession = () => {
   const setThreadResumeError = useSetRecoilState(resumeThreadErrorState);
   const setInitialTranscript = useSetRecoilState(initialTranscriptState);
   const setChatArchived = useSetRecoilState(chatArchived);
+  const setProjectAccess = useSetRecoilState(projectAccess);
 
   const token = getScopedSessionStorageItem('chainlit_token') || '';
   const tabId = getChainlitTabId();
@@ -455,6 +457,10 @@ const useChatSession = () => {
 
       socket.on('chat_archived', (payload:IChatArchived) => {
         setChatArchived(payload.is_chat_archived);
+      });
+      
+      socket.on('is_project_accessible', (payload:boolean) => {
+        setProjectAccess(payload);
       });
 
       socket.on('set_sidebar_elements', (elements: IMessageElement[]) => {

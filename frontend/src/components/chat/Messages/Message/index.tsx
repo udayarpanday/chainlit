@@ -129,7 +129,8 @@ const Message = memo(
                       />
                     </div>
                   ) : null}
-                  {(isRunning || (toolCalls && toolCalls.length > 0)) &&
+                  {!isStep &&
+                  (isRunning || (toolCalls && toolCalls.length > 0)) &&
                   !hasVisibleOutput(message.output) &&
                   evoyaMode !== 'default' ? (
                     <ToolStepInfo toolCalls={toolCalls ?? []} />

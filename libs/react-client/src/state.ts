@@ -105,6 +105,11 @@ export const chatArchived = atom<boolean>({
   default: false
 });
 
+export const projectAccess = atom<boolean>({
+  key: 'ProjectAccess',
+  default: false
+});
+
 export const agentState = atom<IAgents[]>({
   key: 'Agent',
   default: []

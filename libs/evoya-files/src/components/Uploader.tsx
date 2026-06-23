@@ -124,7 +124,7 @@ export default function Uploader({
               id='upload-button'
               disabled={isLoading || isSearch}
               size={type === 'compact' ? 'sm' : 'default'}
-              className="text-[#7b809a] border-[#7b809a] hover:bg-[#7b809a]/10"
+              className="text-[#7b809a] border-[#7b809a] hover:bg-[#7b809a]/10 hover:text-[#7b809a]"
               {...upload2.getRootProps()}
             >
               <Upload className="h-5" />
@@ -143,14 +143,17 @@ export default function Uploader({
             {type === 'compact' && (
               <Button
                 asChild
-                size="sm"
+                variant="outline"
+                className="text-[#7b809a] hover:text-[#7b809a] border-[#7b809a] hover:bg-[#7b809a]/10"
+                size={type === 'compact' ? 'sm' : 'default'}
               >
                 <a
                   href={`/files/manage/?path=${currentPath}&projectId=${projectId}`}
                   target="_blank"
+                  className="text-[#7b809a]"
                 >
                   <ExternalLink className="h-5" />
-                  <Translator path="evoyaFiles.actions.open_folder.title" />
+                  <Translator className="text-[#7b809a]" path="evoyaFiles.actions.open_folder.title" />
                 </a>
               </Button>
             )}
