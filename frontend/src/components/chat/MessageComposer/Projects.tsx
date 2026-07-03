@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { Check, FolderOpen, Search } from 'lucide-react';
+import { Check, FolderOpen, Search, ExternalLink } from 'lucide-react';
 import {
   useCallback,
   useContext,
@@ -128,6 +128,9 @@ const ProjectRow = ({
       {truncateProjectName(project.name, 36)}
     </span>
     {selected ? <Check className="h-4 w-4 shrink-0 text-primary" /> : null}
+    <a href={`/projects/${project.id}/`} onClick={(e) => e.stopPropagation()} className="hover:text-primary" target="_blank">
+      <ExternalLink className="h-4 w-4 shrink-0" />
+    </a>
   </button>
 );
 
