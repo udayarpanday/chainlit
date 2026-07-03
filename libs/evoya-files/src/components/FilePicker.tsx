@@ -39,6 +39,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@chainlit/app/src/components/ui/dialog';
+import {
+  ScrollArea
+} from '@chainlit/app/src/components/ui/scroll-area';
 import FileSearch from './FileSearch';
 
 type Props = {
@@ -163,7 +166,7 @@ export default function FilePicker({
   const itemClick = (item: FilePickerItem) => {
     const isFile = "size" in item;
     handleItemClick(item);
-    if (!isFile && !compact) {
+    if (!isFile) {
       fetchDirectory(item.path);
     }
   }
@@ -287,6 +290,7 @@ export default function FilePicker({
       const json = await response.json();
       if (json.success) {
         toast.success('Items deleted!');
+        setDeleteOpen(false);
         loadCurrentPath();
       } else {
         toast.error('Failed to delete items!');
@@ -338,7 +342,7 @@ export default function FilePicker({
             toast.error(json.error);
           }
         })
-        .catch((_e) => {
+        .catch((e) => {
           toast.error('Download not possible');
         });
     }
@@ -357,7 +361,7 @@ export default function FilePicker({
         }
         loadCurrentPath();
       }
-    } catch(_err) {
+    } catch(err) {
       if (files.length > 1) {
         toast.error('Failed to upload files!');
       } else {
@@ -418,7 +422,6 @@ export default function FilePicker({
   const { getRootProps, getInputProps, isDragActive } = upload ?? {};
 
   const selectableItemsLength = attachmentMode ? folderFiles.length : pathData.items.length;
-  const shouldConstrainList = attachmentMode || destinationMode || singleMode;
 
   return (
     <>
@@ -432,41 +435,32 @@ export default function FilePicker({
         isSearch={isSearch}
       />
     )}
-    <div className='relative flex min-h-0 flex-col overflow-hidden'>
-      {!compact && (
-        <div className='flex justify-between items-center mb-2 pt-2'>
-          <FolderBreadcrumbs
-            pathData={pathData}
-            fetchDirectory={fetchDirectory}
-            isLoading={isLoading}
-            attachmentMode={attachmentMode}
-            destinationMode={destinationMode}
-            isSearch={isSearch}
-          />
+    <div className={cn('relative flex flex-col overflow-hidden', compact ? 'max-h-[300px]' : 'h-full')}>
+      <div className='flex justify-between items-center mb-2 pt-2 overflow-hidden flex-shrink-0'>
+        <FolderBreadcrumbs
+          pathData={pathData}
+          fetchDirectory={fetchDirectory}
+          isLoading={isLoading}
+          attachmentMode={attachmentMode}
+          destinationMode={destinationMode}
+          singleMode={singleMode}
+          isSearch={isSearch}
+          compact={compact}
+        />
+        {!compact && (
           <FileSearch
             isLoading={isLoading}
             searchFiles={searchFilesHandler}
             attachmentMode={attachmentMode}
             destinationMode={destinationMode}
             clearSearch={() => setIsSearch(false)}
+            singleMode={singleMode}
           />
-        </div>
-      )}
+        )}
+      </div>
       <div className={cn("rounded-lg border min-h-24 relative overflow-hidden flex", isDragActive && hasUpload ? 'bg-primary/20 [.contents>div]:bg-primary/20!' : 'bg-white')} {...(hasUpload ? getRootProps() : {})}>
         {hasUpload && <input {...getInputProps()} />}
-        <div
-          className="w-full"
-          style={shouldConstrainList ? {
-            height: 320,
-            overflowY: 'auto',
-            overscrollBehavior: 'contain'
-          } : undefined}
-          onWheel={(event) => {
-            if (shouldConstrainList) {
-              event.stopPropagation();
-            }
-          }}
-        >
+        <ScrollArea className='w-full' type='auto'>
           <div className="pb-2 px-4">
             {(isLoading || isUploading) && (
               <div className='absolute rounded-lg top-0 right-0 bottom-0 left-0 bg-white/50 flex items-center justify-center z-10'>
@@ -551,10 +545,10 @@ export default function FilePicker({
               )}
             </div>
           </div>
-        </div>
+        </ScrollArea>
       </div>
       {(selectedElements.length > 0 || attachmentMode) && !destinationMode && !singleMode && !compact && (
-        <div className="rounded-lg border bg-white flex shrink-0 justify-between items-center mt-4 pl-4 pr-1 py-1">
+        <div className="rounded-lg border bg-white flex justify-between items-center mt-4 pl-4 pr-1 py-1">
           <div className="text-sm">{selectedElements.length} <Translator path="evoyaFiles.common.selected" /></div>
           <div className="flex items-center gap-1">
             {showActions && (
@@ -591,7 +585,7 @@ export default function FilePicker({
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
       >
-        <DialogContent className="z-[9999]">
+        <DialogContent container={window.cl_files_shadowRootElement} className="z-[9999]">
           <DialogHeader>
             <DialogTitle>
               <Translator path="evoyaFiles.actions.delete_bulk.title" />

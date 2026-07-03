@@ -570,11 +570,17 @@
             "create_folder": {
                 "title": "Create folder"
             },
+            "create_md": {
+                "title": "Create Markdown file"
+            },
             "open_folder": {
                 "title": "Open folder"
             },
             "clear": {
                 "label": "Reset"
+            },
+            "new": {
+                "label": "New"
             },
             "download": {
                 "label": "Download"
@@ -683,6 +689,9 @@
             "save": {
                 "label": "Speichern",
                 "input": "Dateiname"
+            },
+            "save_as": {
+                "label": "Save as"
             },
             "open": {
                 "label": "Datei öffnen..."

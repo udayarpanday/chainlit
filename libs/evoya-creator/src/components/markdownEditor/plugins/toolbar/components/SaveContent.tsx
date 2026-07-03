@@ -3,6 +3,7 @@ import {
   iconComponentFor$,
   useTranslation,
   markdownSourceEditorValue$,
+  TooltipWrap
 } from '@mdxeditor/editor';
 import React, { useCallback, useState, useContext } from 'react';
 import { useCellValue, } from '@mdxeditor/gurx';
@@ -25,9 +26,17 @@ import {
 import {
   Spinner
 } from '@chainlit/app/src/components/ui/spinner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@chainlit/app/src/components/ui/dropdown-menu';
 import FilePicker from '@evoya/file-picker/src/components/FilePicker';
 import { FilePickerContext } from '@evoya/file-picker/src/context/file-context';
 import { WidgetContext } from '@/context';
+import styles from '@mdxeditor/editor/dist/styles/ui.module.css.js';
+import { cn } from '@chainlit/app/src/lib/utils';
 
 export const SaveContent: React.FC = () => {
   const { config } = useContext(WidgetContext);
@@ -45,8 +54,8 @@ export const SaveContent: React.FC = () => {
     setFileInfo,
   } = useEvoyaCreator();
 
-  const saveDocument = useCallback(() => {
-    if (fileInfo) {
+  const saveDocument = useCallback((forceModal: boolean = false) => {
+    if (fileInfo && !forceModal) {
       saveCreatorContent();
     } else {
       setFileName('');
@@ -64,12 +73,13 @@ export const SaveContent: React.FC = () => {
     setFileInfo({
       name: newFileName,
       mime: "text/markdown",
-      path: newPath + newFileName
+      path: newPath + newFileName,
+      folderPath: newPath
     })
     saveCreatorContent({
       name: newFileName,
       mime: "text/markdown",
-      path: newPath + newFileName
+      path: newPath + '/' + newFileName
     }).then(() => {
       setOpen(false);
       setSaving(false);
@@ -79,15 +89,41 @@ export const SaveContent: React.FC = () => {
   if (!config?.isSuperUser) return null;
 
   return (
-    <>
-      <ButtonWithTooltip
+    <div className={cn('flex items-center gap-1 [&>span]:flex')} style={{
+      '--accent': '230 10.71% 89.02%'
+    } as React.CSSProperties}>
+      {/* <ButtonWithTooltip
         title={t('toolbar.save.label', 'Save Document')}
         onClick={() => {
           saveDocument();
         }}
       >
         {iconComponentFor('floppy')}
-      </ButtonWithTooltip>
+      </ButtonWithTooltip> */}
+      <DropdownMenu>
+        <TooltipWrap title={t('toolbar.save.label', 'Save Document')}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn("!w-auto text-sm !h-7 [&_svg]:!size-6 rounded-xs", styles.toolbarButton)}
+            >
+              <div className="flex">
+                {iconComponentFor('floppy')}
+                <span className='-ml-1'>{iconComponentFor('arrow_drop_down')}</span>
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipWrap>
+        <DropdownMenuContent align="end" className="max-w-[300px]">
+          <DropdownMenuItem onClick={() => saveDocument(false)}>
+            {t('toolbar.save.label', 'Save')}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => saveDocument(true)}>
+            {t('toolbar.save_as.label', 'Save as')}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <Dialog
         open={open}
         onOpenChange={setOpen}
@@ -98,7 +134,7 @@ export const SaveContent: React.FC = () => {
               {t('toolbar.save.label', 'Save')}
             </DialogTitle>
           </DialogHeader>
-          <div>
+          <div className="max-h-[450px] flex flex-col">
             <InputGroup className="mb-4">
               <InputGroupInput
                 placeholder={t('toolbar.save.input', 'File name')}
@@ -108,21 +144,23 @@ export const SaveContent: React.FC = () => {
               />
               <InputGroupAddon align="inline-end">.md</InputGroupAddon>
             </InputGroup>
-            <FilePickerContext.Provider value={{
-              apiBaseUrl: window.location.origin,
-              csrfToken: config?.csrfToken,
-              type: 'default'
-            }}>
-              <FilePicker 
-                initialPath='/'
-                selectedItemsChange={(item) => setFilePath(item[0] ? item[0].path : '')}
-                setSelectedPath={(path) => {
-                  console.log(path)
-                  setCurrentPath(path)
-                }}
-                destinationMode
-              />
-            </FilePickerContext.Provider>
+            <div className='grow'>
+              <FilePickerContext.Provider value={{
+                apiBaseUrl: window.location.origin,
+                csrfToken: config?.csrfToken,
+                type: 'default'
+              }}>
+                <FilePicker 
+                  initialPath={fileInfo?.folderPath ?? '/'}
+                  selectedItemsChange={(item) => setFilePath(item[0] ? item[0].path : '')}
+                  setSelectedPath={(path) => {
+                    console.log(path)
+                    setCurrentPath(path)
+                  }}
+                  destinationMode
+                />
+              </FilePickerContext.Provider>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="secondary" onClick={() => setOpen(false)}>
@@ -135,6 +173,6 @@ export const SaveContent: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   )
 }

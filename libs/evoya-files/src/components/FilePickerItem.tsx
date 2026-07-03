@@ -16,7 +16,7 @@ import {
   FolderInput,
   Trash2,
   FileImage,
-  PencilLine,
+  WandSparkles,
 } from 'lucide-react';
 
 import { cn } from '@chainlit/app/src/lib/utils';
@@ -220,27 +220,25 @@ export default function FilePickerItem({
           </TooltipProvider>
           {item.showActions && (
             <>
-              {(item.mime ?? '').includes('markdown') && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 -my-2 rounded-full text-gray-400"
-                        onClick={openCreator}
-                      >
-                        <PencilLine />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>
-                        <Translator path="components.molecules.evoyaCreatorButton.label" />
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 -my-2 rounded-full text-gray-400"
+                      onClick={() => {setRenameOpen(true); setRenameValue(item.name)}}
+                    >
+                      <Pencil />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      <Translator path="evoyaFiles.actions.rename.label" />
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -251,11 +249,13 @@ export default function FilePickerItem({
                     <EllipsisVertical />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => {setRenameOpen(true); setRenameValue(item.name)}}>
-                    <Pencil />
-                    <Translator path="evoyaFiles.actions.rename.label" />
-                  </DropdownMenuItem>
+                <DropdownMenuContent container={window.cl_files_shadowRootElement} align="end">
+                  {(item.mime ?? '').includes('markdown') && (
+                    <DropdownMenuItem onClick={openCreator}>
+                      <WandSparkles />
+                      <Translator path="components.molecules.evoyaCreatorButton.label" />
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={() => setMoveOpen(true)}>
                     <FolderInput />
                     <Translator path="evoyaFiles.actions.move.label" />
@@ -270,7 +270,7 @@ export default function FilePickerItem({
                 open={moveOpen}
                 onOpenChange={setMoveOpen}
               >
-                <DialogContent className="z-[9999] max-w-screen-sm">
+                <DialogContent container={window.cl_files_shadowRootElement} className="z-[9999] max-w-screen-sm">
                   <DialogHeader>
                     <DialogTitle>
                       {isFile ? <Translator path="evoyaFiles.actions.move.title" /> : <Translator path="evoyaFiles.actions.move_folder.title" />}
@@ -303,10 +303,10 @@ export default function FilePickerItem({
                 open={renameOpen}
                 onOpenChange={setRenameOpen}
               >
-                <DialogContent className="z-[9999]" onOpenAutoFocus={() => setTimeout(() => renameInputRef.current?.focus(), 200)}>
+                <DialogContent container={window.cl_files_shadowRootElement} className="z-[9999]" onOpenAutoFocus={() => setTimeout(() => renameInputRef.current?.focus(), 200)}>
                   <DialogHeader>
                     <DialogTitle>
-                      {isFile ? <Translator path="evoyaFiles.actions.rename.title" /> : <Translator path="evoyaFiles.actions.rename_folder.title" />}11
+                      {isFile ? <Translator path="evoyaFiles.actions.rename.title" /> : <Translator path="evoyaFiles.actions.rename_folder.title" />}
                     </DialogTitle>
                   </DialogHeader>
                   <div>
@@ -328,7 +328,7 @@ export default function FilePickerItem({
                 open={deleteOpen}
                 onOpenChange={setDeleteOpen}
               >
-                <DialogContent className="z-[9999]">
+                <DialogContent container={window.cl_files_shadowRootElement} className="z-[9999]">
                   <DialogHeader>
                     <DialogTitle>
                       {isFile ? <Translator path="evoyaFiles.actions.delete.title" /> : <Translator path="evoyaFiles.actions.delete_folder.title" />}

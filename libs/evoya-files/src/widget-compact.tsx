@@ -38,7 +38,7 @@ export default function WidgetCompact({ initialPath, apiBaseUrl, csrfToken, work
           });
       }
     } else {
-      window.location.href = `/files/manage/?path=${item.path}&projectId=${projectId}`
+      // window.location.href = `/files/manage/?path=${item.path}&projectId=${projectId}`
     }
   }
 

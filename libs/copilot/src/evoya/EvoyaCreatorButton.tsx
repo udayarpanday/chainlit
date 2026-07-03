@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { PencilLine  } from 'lucide-react';
+import { WandSparkles  } from 'lucide-react';
 import { Translator } from '@chainlit/app/src/components/i18n';
 import {
   Tooltip,
@@ -84,7 +84,7 @@ const EvoyaCreatorButton = ({ disabled = false }: Props): JSX.Element => {
               className={`hover:bg-muted ${hasContent ? 'text-primary hover:text-primary' : ''}`}
               disabled={disabled}
             >
-              <PencilLine className="!size-5" />
+              <WandSparkles className="!size-5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
