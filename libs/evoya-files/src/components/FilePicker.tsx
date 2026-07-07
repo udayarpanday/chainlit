@@ -166,7 +166,7 @@ export default function FilePicker({
   const itemClick = (item: FilePickerItem) => {
     const isFile = "size" in item;
     handleItemClick(item);
-    if (!isFile && !compact) {
+    if (!isFile) {
       fetchDirectory(item.path);
     }
   }
@@ -290,6 +290,7 @@ export default function FilePicker({
       const json = await response.json();
       if (json.success) {
         toast.success('Items deleted!');
+        setDeleteOpen(false);
         loadCurrentPath();
       } else {
         toast.error('Failed to delete items!');
@@ -434,26 +435,29 @@ export default function FilePicker({
         isSearch={isSearch}
       />
     )}
-    <div className='relative flex flex-col overflow-hidden'>
-      {!compact && (
-        <div className='flex justify-between items-center mb-2 pt-2'>
-          <FolderBreadcrumbs
-            pathData={pathData}
-            fetchDirectory={fetchDirectory}
-            isLoading={isLoading}
-            attachmentMode={attachmentMode}
-            destinationMode={destinationMode}
-            isSearch={isSearch}
-          />
+    <div className={cn('relative flex flex-col overflow-hidden', compact ? 'max-h-[300px]' : 'h-full')}>
+      <div className='flex justify-between items-center mb-2 pt-2 overflow-hidden flex-shrink-0'>
+        <FolderBreadcrumbs
+          pathData={pathData}
+          fetchDirectory={fetchDirectory}
+          isLoading={isLoading}
+          attachmentMode={attachmentMode}
+          destinationMode={destinationMode}
+          singleMode={singleMode}
+          isSearch={isSearch}
+          compact={compact}
+        />
+        {!compact && (
           <FileSearch
             isLoading={isLoading}
             searchFiles={searchFilesHandler}
             attachmentMode={attachmentMode}
             destinationMode={destinationMode}
             clearSearch={() => setIsSearch(false)}
+            singleMode={singleMode}
           />
-        </div>
-      )}
+        )}
+      </div>
       <div className={cn("rounded-lg border min-h-24 relative overflow-hidden flex", isDragActive && hasUpload ? 'bg-primary/20 [.contents>div]:bg-primary/20!' : 'bg-white')} {...(hasUpload ? getRootProps() : {})}>
         {hasUpload && <input {...getInputProps()} />}
         <ScrollArea className='w-full' type='auto'>
@@ -581,7 +585,7 @@ export default function FilePicker({
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
       >
-        <DialogContent className="z-[9999]">
+        <DialogContent container={window.cl_files_shadowRootElement} className="z-[9999]">
           <DialogHeader>
             <DialogTitle>
               <Translator path="evoyaFiles.actions.delete_bulk.title" />

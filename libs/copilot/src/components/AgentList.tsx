@@ -244,13 +244,13 @@ export default function AgentList({
         side="bottom"
         align="start"
         sideOffset={8}
-        className="z-[9999] w-[850px] max-w-[95vw] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-0 shadow-[0_20px_60px_rgba(15,23,42,0.16)] max-md:fixed max-md:inset-0 max-md:h-[100dvh] max-md:w-screen max-md:max-w-none max-md:rounded-none"
+        className="z-[9999] w-[850px] max-w-[95vw] overflow-hidden rounded-2xl border p-0 shadow-[0_20px_60px_rgba(15,23,42,0.16)] max-md:fixed max-md:inset-0 max-md:h-[100dvh] max-md:w-screen max-md:max-w-none max-md:rounded-none"
         onOpenAutoFocus={(event) => {
           event.preventDefault();
           searchInputRef.current?.focus();
         }}
       >
-        <div className="border-b border-slate-200 bg-slate-50 px-3 py-2.5">
+        <div className="border-b  px-3 py-2.5">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -278,7 +278,7 @@ export default function AgentList({
 
         <div className="max-h-[560px] overflow-x-hidden overflow-y-auto max-md:max-h-[calc(100dvh-62px)] [scrollbar-color:rgba(148,163,184,0.8)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-0 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-slate-50 [&::-webkit-scrollbar-thumb]:bg-slate-300">
           <div className="grid min-w-0 grid-cols-1 md:grid-cols-[1.75fr_1fr]">
-            <div className="space-y-4 p-3 md:border-r md:border-slate-200">
+            <div className="space-y-4 p-3 md:border-r md">
               <div className="space-y-1">
                 <div className={cn(sectionTitleClassName, 'px-1')}>
                   <Translator path="agentList.all_agents" />

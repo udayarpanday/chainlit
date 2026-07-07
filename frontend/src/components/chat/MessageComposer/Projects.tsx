@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { Check, FolderOpen, Search } from 'lucide-react';
+import { Check, FolderOpen, Search, ExternalLink } from 'lucide-react';
 import {
   useCallback,
   useContext,
@@ -128,6 +128,9 @@ const ProjectRow = ({
       {truncateProjectName(project.name, 36)}
     </span>
     {selected ? <Check className="h-4 w-4 shrink-0 text-primary" /> : null}
+    <a href={`/projects/${project.id}/`} onClick={(e) => e.stopPropagation()} className="hover:text-primary" target="_blank">
+      <ExternalLink className="h-4 w-4 shrink-0" />
+    </a>
   </button>
 );
 
@@ -283,11 +286,11 @@ export default function Projects({ disabled = false }: Props) {
         align={isMobile ? 'center' : 'start'}
         side={isMobile ? 'top' : undefined}
         sideOffset={isMobile ? 5 : 12}
-        className="focus:outline-none w-[57vw] min-w-[320px] w-md-[820px] w-lg-[950px] p-0"
+        className="focus:outline-none w-[27vw] min-w-[320px] p-2"
         style={{
           position: isMobile ? 'fixed' : 'relative',
-          bottom: isMobile ? '-82vh' : '42px',
-          right: isMobile ? 'auto' : '48px',
+          bottom: isMobile ? '-82vh' : '45px',
+          right: isMobile ? 'auto' : '80px',
           left: isMobile ? '45px' : 'auto',
           transform: 'none',
           zIndex: 50

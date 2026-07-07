@@ -26,6 +26,7 @@ type EvoyaFilesConfig = {
 
 declare global {
   interface Window {
+    cl_files_shadowRootElement: HTMLDivElement;
     cl_shadowRootElement: HTMLDivElement;
     theme?: {
       light: Record<string, string>;
@@ -54,6 +55,7 @@ window.mountEvoyaFilesWidget = (config: EvoyaFilesConfig) => {
   shadowContainer.appendChild(shadowRootElement);
 
   window.cl_shadowRootElement = shadowRootElement;
+  window.cl_files_shadowRootElement = shadowRootElement;
 
   window.theme = themejson.variables;
 

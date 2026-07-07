@@ -16,11 +16,11 @@ interface Props {
   projectId?: string;
   file?: string;
   mime?: string;
-  brand_color?: string | null;
+  brandColor?: string | null;
   type: string;
 }
 
-export default function App({ initialPath, apiBaseUrl, csrfToken, workspaceId, projectId, type, file, mime, brand_color }: Props) {
+export default function App({ initialPath, apiBaseUrl, csrfToken, workspaceId, projectId, type, file, mime, brandColor }: Props) {
   const { i18n } = useTranslation();
   const languageInUse = navigator.language || 'en-US';
 
@@ -45,7 +45,7 @@ export default function App({ initialPath, apiBaseUrl, csrfToken, workspaceId, p
       <ThemeProvider
         storageKey="vite-ui-theme"
         defaultTheme={'light'}
-        brandColor={brand_color}
+        brandColor={brandColor}
       >
         <Toaster richColors className="toast" position="top-right" />
         {/* <FilePicker apiBaseUrl={apiBaseUrl} initialPath={initialPath} /> */}
@@ -55,7 +55,7 @@ export default function App({ initialPath, apiBaseUrl, csrfToken, workspaceId, p
           csrfToken={csrfToken}
           workspaceId={workspaceId}
           projectId={projectId}
-          brandColor={brand_color}
+          brandColor={brandColor}
         />
       </ThemeProvider>
     );
@@ -65,7 +65,7 @@ export default function App({ initialPath, apiBaseUrl, csrfToken, workspaceId, p
     <ThemeProvider
       storageKey="vite-ui-theme"
       defaultTheme={'light'}
-      brandColor={brand_color}
+      brandColor={brandColor}
     >
       <Toaster richColors className="toast" position="top-right" />
       {/* <FilePicker apiBaseUrl={apiBaseUrl} initialPath={initialPath} /> */}
@@ -77,7 +77,7 @@ export default function App({ initialPath, apiBaseUrl, csrfToken, workspaceId, p
         projectId={projectId}
         file={file}
         mime={mime}
-        brandColor={brand_color}
+        brandColor={brandColor}
       />
     </ThemeProvider>
   );

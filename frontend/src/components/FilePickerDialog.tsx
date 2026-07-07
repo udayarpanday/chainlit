@@ -37,7 +37,7 @@ const FilePickerDialog = ({
             <Translator path="evoyaFiles.actions.open.title" />
           </DialogTitle>
         </DialogHeader>
-        <div>
+        <div className="max-h-[400px]">
           <FilePickerContext.Provider value={{
             apiBaseUrl: window.location.origin,
             csrfToken: '',
