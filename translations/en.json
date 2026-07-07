@@ -273,6 +273,17 @@
                     "reset": "Reset",
                     "cancel": "Cancel",
                     "confirm": "Confirm"
+                },
+                "dataProcessing": {
+                    "button": "Data processing",
+                    "title": "Where your data is processed",
+                    "categories": {
+                        "language_model": "Language model",
+                        "image_generation": "Image generation",
+                        "image_analysis": "Image analysis",
+                        "document_ocr": "Document OCR",
+                        "voice_speech_to_text": "Voice speech-to-text"
+                    }
                 }
             },
             "threadHistory": {

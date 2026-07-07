@@ -273,6 +273,17 @@
                     "reset": "Zurücksetzen",
                     "cancel": "Abbrechen",
                     "confirm": "Bestätigen"
+                },
+                "dataProcessing": {
+                    "button": "Datenverarbeitung",
+                    "title": "Wo Ihre Daten verarbeitet werden",
+                    "categories": {
+                        "language_model": "Sprachmodell",
+                        "image_generation": "Bildgenerierung",
+                        "image_analysis": "Bildanalyse",
+                        "document_ocr": "Dokument-OCR",
+                        "voice_speech_to_text": "Sprache-zu-Text"
+                    }
                 }
             },
             "threadHistory": {

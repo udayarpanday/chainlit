@@ -270,6 +270,17 @@
                     "reset": "Reimposta",
                     "cancel": "Annulla",
                     "confirm": "Conferma"
+                },
+                "dataProcessing": {
+                    "button": "Trattamento dei dati",
+                    "title": "Dove vengono trattati i tuoi dati",
+                    "categories": {
+                        "language_model": "Modello linguistico",
+                        "image_generation": "Generazione di immagini",
+                        "image_analysis": "Analisi delle immagini",
+                        "document_ocr": "OCR dei documenti",
+                        "voice_speech_to_text": "Voce in testo"
+                    }
                 }
             },
             "threadHistory": {
