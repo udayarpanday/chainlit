@@ -47,6 +47,17 @@ export interface EvoyaAdditionalInfo {
   link?: string;
   linkText?: string;
   defaultText?: boolean;
+  dataProcessing?: boolean;
+  dataProcessingCategories?: EvoyaDataProcessingCategory[];
+}
+
+export type EvoyaDataProcessingRegion = 'CH' | 'EU' | 'US' | 'OTHER';
+
+export interface EvoyaDataProcessingCategory {
+  key: string;
+  label: string;
+  region: EvoyaDataProcessingRegion;
+  flag: string;
 }
 
 export interface EvoyaChatBubble {

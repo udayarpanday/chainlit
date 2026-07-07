@@ -1,9 +1,12 @@
 import { cn, hasMessage } from '@/lib/utils';
+import { useContext } from 'react';
 
+import { WidgetContext } from '@chainlit/copilot/src/context';
 import { FileSpec, useChatMessages } from '@chainlit/react-client';
 
 import WaterMark from '@/components/WaterMark';
 
+import DataProcessingPopover from './DataProcessingPopover';
 import MessageComposer from './MessageComposer';
 import ScrollDownButton from './ScrollDownButton';
 
@@ -23,6 +26,14 @@ export default function ChatFooter({
   ...props
 }: Props) {
   const { messages } = useChatMessages();
+  const { evoya } = useContext(WidgetContext);
+  const dataProcessingCategories =
+    evoya?.additionalInfo?.dataProcessingCategories ?? [];
+  const showDataProcessing =
+    evoya?.type === 'dashboard' &&
+    evoya?.additionalInfo?.dataProcessing !== false &&
+    dataProcessingCategories.length > 0;
+
   if (!hasMessage(messages) && !showIfEmptyThread) return null;
 
   return (
@@ -31,7 +42,14 @@ export default function ChatFooter({
         <ScrollDownButton onClick={() => props.setAutoScroll(true)} />
       ) : null}
       <MessageComposer {...props} />
-      <WaterMark />
+      <div className="relative flex min-h-4 w-full items-center justify-center">
+        <WaterMark />
+        {showDataProcessing ? (
+          <div className="absolute right-0 top-1/2 -translate-y-1/2">
+            <DataProcessingPopover categories={dataProcessingCategories} />
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
