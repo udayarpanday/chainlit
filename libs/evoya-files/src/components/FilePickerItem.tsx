@@ -64,6 +64,7 @@ type Props = {
   hasUpload?: boolean;
   singleMode?: boolean;
   attachmentMode?: boolean;
+  destinationMode?: boolean;
   compact?: boolean;
   onFileUpload?: (files: File[], forcePath?: string) => void;
   deleteItems?: (items: FilePickerItem[]) => Promise<void>;
@@ -81,6 +82,7 @@ export default function FilePickerItem({
   hasUpload = false,
   singleMode = false,
   attachmentMode = false,
+  destinationMode = false,
   compact = false,
   onFileUpload = () => {},
   deleteItems = async () => {},
@@ -190,11 +192,11 @@ export default function FilePickerItem({
         {getItemIcon(item)}
         <span className="ml-1 overflow-hidden overflow-ellipsis whitespace-nowrap">{item.name}</span>
       </div>
-      {!compact && (
+      {(!compact && !attachmentMode && !destinationMode) && (
         <>
-          <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20" onClick={clickItem}>{item.owner}</div>
-          <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20" onClick={clickItem}>{item.modified ? getDateDisplay(item.modified) : ''}</div>
-          <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20" onClick={clickItem}>{"size" in item ? getSizeDisplay(item.size) : '--'}</div>
+          <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20 hidden md:block" onClick={clickItem}>{item.owner}</div>
+          <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20 hidden md:block" onClick={clickItem}>{item.modified ? getDateDisplay(item.modified) : ''}</div>
+          <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20 hidden md:block" onClick={clickItem}>{"size" in item ? getSizeDisplay(item.size) : '--'}</div>
         </>
       )}
       {showActions && (

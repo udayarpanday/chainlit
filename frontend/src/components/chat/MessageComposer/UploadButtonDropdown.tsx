@@ -183,7 +183,7 @@ export const UploadButton = ({
                 />
               </FilePickerContext.Provider>
             </div>
-            <DialogFooter>
+            <DialogFooter className="gap-y-2">
               <Button variant="secondary" onClick={() => setFilesOpen(false)}>
                 <Translator path="common.actions.cancel" />
               </Button>

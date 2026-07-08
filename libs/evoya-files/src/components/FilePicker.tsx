@@ -471,10 +471,10 @@ export default function FilePicker({
               className={cn(
                 "grid",
                 showActions ?
-                  (compact ? 'grid-cols-[auto_max-content]' : 'grid-cols-[max-content_auto_max-content_max-content_max-content_max-content]')
+                  ((compact || attachmentMode || destinationMode) ? 'grid-cols-[auto_max-content]' : 'grid-cols-[max-content_auto_max-content] md:grid-cols-[max-content_auto_max-content_max-content_max-content_max-content]')
                   : (singleMode ?
-                    'grid-cols-[auto_max-content_max-content_max-content]'
-                    : 'grid-cols-[max-content_auto_max-content_max-content_max-content]'
+                    ((compact || attachmentMode || destinationMode) ? 'grid-cols-[auto]' : 'grid-cols-[auto] md:grid-cols-[auto_max-content_max-content_max-content]')
+                    : ((compact || attachmentMode || destinationMode) ? 'grid-cols-[max-content_auto]' : 'grid-cols-[max-content_auto] md:grid-cols-[max-content_auto_max-content_max-content_max-content]')
                   )
               )
             }>
@@ -487,15 +487,15 @@ export default function FilePicker({
                 <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
                   <Translator path="evoyaFiles.headers.name" />
                 </div>
-                {!compact && (
+                {(!compact && !attachmentMode && !destinationMode) && (
                   <>
-                    <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
+                    <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white hidden md:block">
                       <Translator path="evoyaFiles.headers.owner" />
                     </div>
-                    <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
+                    <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white hidden md:block">
                       <Translator path="evoyaFiles.headers.modified" />
                     </div>
-                    <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
+                    <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white hidden md:block">
                       <Translator path="evoyaFiles.headers.size" />
                     </div>
                   </>
@@ -511,6 +511,7 @@ export default function FilePicker({
                   showActions={showActions}
                   singleMode={singleMode}
                   attachmentMode={attachmentMode}
+                  destinationMode={destinationMode}
                   compact={compact}
                   onFileUpload={onFileUpload}
                   hasUpload={hasUpload}
