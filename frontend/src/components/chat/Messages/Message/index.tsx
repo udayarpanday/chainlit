@@ -22,7 +22,8 @@ import ToolStepInfo from './ToolStepInfo';
 
 interface Props {
   message: IStep;
-  toolCalls?: IStep[] | null;
+  toolCalls?: IStep[];
+  runId?: string;
   evoyaMode?: string;
   elements: IMessageElement[];
   actions: IAction[];
@@ -44,6 +45,7 @@ const Message = memo(
   ({
     message,
     toolCalls,
+    runId,
     evoyaMode,
     elements,
     actions,
@@ -176,7 +178,8 @@ const Message = memo(
                         </>
                       ) : null}
                       <MessageButtons
-                        toolCalls={toolCalls ?? []}
+                        runId={runId}
+                        toolCalls={toolCalls}
                         message={message}
                         actions={actions}
                         run={

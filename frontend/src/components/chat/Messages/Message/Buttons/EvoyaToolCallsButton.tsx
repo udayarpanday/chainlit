@@ -20,16 +20,17 @@ import { evoyaToolCallsState } from '@chainlit/react-client';
 
 interface Props {
   toolCalls: IStep[];
+  runId: string;
 }
 
-export function EvoyaToolCallsButton({ toolCalls }: Props) {
+export function EvoyaToolCallsButton({ runId, toolCalls }: Props) {
   const [evoyaToolCalls, setEvoyaToolCalls] = useRecoilState(evoyaToolCallsState);
 
   const handleClick = () => {
-    setEvoyaToolCalls({ isOpen: true, toolCalls });
+    setEvoyaToolCalls({ isOpen: true, runId, toolCalls });
   };
 
-  if (toolCalls.length === 0) {
+  if (!runId) {
     return null;
   }
 

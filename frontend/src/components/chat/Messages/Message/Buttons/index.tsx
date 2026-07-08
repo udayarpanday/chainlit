@@ -20,9 +20,10 @@ interface Props {
   actions: IAction[];
   run?: IStep;
   toolCalls?: IStep[];
+  runId?: string;
 }
 
-const MessageButtons = ({ message, actions, run, toolCalls }: Props) => {
+const MessageButtons = ({ message, actions, run, toolCalls, runId }: Props) => {
   const { config } = useConfig();
   const { firstInteraction } = useChatMessages();
   const isMobile = useIsMobile();
@@ -54,7 +55,8 @@ const MessageButtons = ({ message, actions, run, toolCalls }: Props) => {
       {showDebugButton ? (
         <DebugButton debugUrl={config.debugUrl!} step={message} />
       ) : null}
-      {toolCalls && toolCalls.length > 0 && <EvoyaToolCallsButton toolCalls={toolCalls} />}
+      {/* {toolCalls && toolCalls.length > 0 && <EvoyaToolCallsButton toolCalls={toolCalls} />} */}
+      {runId && <EvoyaToolCallsButton runId={runId} toolCalls={toolCalls ?? []} />}
     </div>
   );
 };

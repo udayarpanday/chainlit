@@ -7,11 +7,12 @@ export const evoyaCreatorEnabledState = atom<boolean>({
 });
 
 export const evoyaToolCallsState = atom<
-  { isOpen: boolean; toolCalls: IStep[]; }
+  { isOpen: boolean; runId?: string; toolCalls: IStep[] }
 >({
   key: 'EvoyaToolCalls',
   default: {
     isOpen: false,
-    toolCalls: []
+    toolCalls: [],
+    runId: undefined
   }
 });

@@ -80,6 +80,14 @@ const Messages = memo(
 
     }, [messages]);
 
+    let langGraphRunId: string;
+    if (messages.find((message) => message.type === 'assistant_message')) {
+      const langGraphStep = messages.find((message) => message.type === 'run' && message.name === "LangGraph");
+      if (langGraphStep) {
+        langGraphRunId = langGraphStep.id;
+      }
+    }
+
     return (
       <>
         {messages.map((m) => {
@@ -147,6 +155,7 @@ const Messages = memo(
               <Message
                 message={m}
                 toolCalls={toolCalls}
+                runId={langGraphRunId}
                 evoyaMode={evoya?.type}
                 elements={elements}
                 actions={actions}
