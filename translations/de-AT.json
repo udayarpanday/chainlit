@@ -88,6 +88,18 @@
                 "title": "Projekte",
                 "empty": "Keine Projekte gefunden"
             },
+            "configurationMenu": {
+                "title": "Konfiguration",
+                "promptLibrary": "Prompt-Bibliothek",
+                "enabled": "Ein",
+                "searchPrompts": "Prompts durchsuchen...",
+                "promptPreview": "Wählen Sie einen Prompt aus, um seinen Inhalt anzuzeigen",
+                "searchProjects": "Projekte durchsuchen...",
+                "untitledProject": "Unbenanntes Projekt",
+                "privacyActive": "Datenschutzschild aktiv",
+                "hideAnonymizedText": "Anonymisierten Text ausblenden",
+                "showAnonymizedText": "Anonymisierten Text anzeigen"
+            },
             "tasklist": {
                 "TaskList": {
                     "title": "\ud83d\uddd2\ufe0f Aufgabenliste",
@@ -181,6 +193,7 @@
         },
         "organisms": {
             "privacyShield": {
+                "title": "Datenschutzschild",
                 "showPrivacyTable": "Anonymisierte Wörter einblenden",
                 "hidePrivacyTable": "Anonymisierte Wörter ausblenden",
                 "info": "Privacy Shield anonymisiert sensible Details (z. B. Namen), bevor der Text an die KI gesendet wird. Es funktioniert nur für Text, nicht für hochgeladene Dokumente.",

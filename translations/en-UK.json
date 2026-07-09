@@ -88,6 +88,18 @@
                 "title": "Projects",
                 "empty": "No projects found"
             },
+            "configurationMenu": {
+                "title": "Configuration",
+                "promptLibrary": "Prompt library",
+                "enabled": "On",
+                "searchPrompts": "Search prompts...",
+                "promptPreview": "Select a prompt to view its content",
+                "searchProjects": "Search projects...",
+                "untitledProject": "Untitled Project",
+                "privacyActive": "Privacy shield active",
+                "hideAnonymizedText": "Hide anonymized text",
+                "showAnonymizedText": "Show anonymized text"
+            },
             "tasklist": {
                 "TaskList": {
                     "title": "\ud83d\uddd2\ufe0f Task List",
@@ -181,6 +193,7 @@
         },
         "organisms": {
             "privacyShield": {
+                "title": "Privacy Shield",
                 "showPrivacyTable": "Show anonymized words table",
                 "hidePrivacyTable": "Hide anonymized words table",
                 "info": "Privacy Shield anonymizes sensitive details (e.g. names) before text is sent to the AI. It works only for text, not for uploaded documents.",

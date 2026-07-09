@@ -67,7 +67,7 @@ export default function WaterMark() {
         </a>
       )}
       {evoya?.additionalInfo && (
-        <div className="text-center leading-[1.25]">
+        <div className="text-left leading-[1.25]">
           <p className="text-xs text-muted-foreground tracking-normal">
             {evoya?.additionalInfo?.text ? (
               evoya?.additionalInfo?.text
