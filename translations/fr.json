@@ -88,6 +88,18 @@
                 "title": "Projets",
                 "empty": "Aucun projet trouvé"
             },
+            "configurationMenu": {
+                "title": "Configuration",
+                "promptLibrary": "Bibliothèque de prompts",
+                "enabled": "Activé",
+                "searchPrompts": "Rechercher des prompts...",
+                "promptPreview": "Sélectionnez un prompt pour afficher son contenu",
+                "searchProjects": "Rechercher des projets...",
+                "untitledProject": "Projet sans titre",
+                "privacyActive": "Bouclier de confidentialité activé",
+                "hideAnonymizedText": "Masquer le texte anonymisé",
+                "showAnonymizedText": "Afficher le texte anonymisé"
+            },
             "tasklist": {
                 "TaskList": {
                     "title": "🗒️ Liste des Tâches",
@@ -181,6 +193,7 @@
         },
         "organisms": {
             "privacyShield": {
+                "title": "Bouclier de confidentialité",
                 "showPrivacyTable": "Afficher le tableau des mots anonymisés",
                 "hidePrivacyTable": "Cacher le tableau des mots anonymisés",
                 "info": "Privacy Shield anonymise les informations sensibles (par ex. les noms) avant que le texte ne soit envoyé à l’IA. Il fonctionne uniquement pour le texte, pas pour les documents téléversés.",

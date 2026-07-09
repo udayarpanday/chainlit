@@ -9,8 +9,6 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 
 import { WidgetContext } from '@chainlit/copilot/src/context';
-import EvoyaCreatorButton from '@chainlit/copilot/src/evoya/EvoyaCreatorButton';
-import PrivacyShieldToggle from '@chainlit/copilot/src/evoya/privacyShield/PrivacyShieldToggle';
 import {
   chatArchived,
   FileSpec,
@@ -22,7 +20,7 @@ import {
   useChatInteract,
   projectAccess
 } from '@chainlit/react-client';
-import { Archive } from 'lucide-react';
+import { Archive, FolderOpen, Plus, X } from 'lucide-react';
 
 import { Settings } from '@/components/icons/Settings';
 import { Button } from '@/components/ui/button';
@@ -32,9 +30,11 @@ import { IAttachment, attachmentsState } from 'state/chat';
 import { evoyaAttachmentsState, EvoyaAttachment } from '@/state/evoya';
 
 import { Attachments } from './Attachments';
-import CommandButton from './CommandButton';
+import ConfigurationMenu, {
+  ProjectListItem,
+  removeDashboardProject
+} from './ConfigurationMenu';
 import Input, { InputMethods } from './Input';
-import Projects from './Projects';
 import SubmitButton from './SubmitButton';
 import UploadButton from './UploadButton';
 import UploadButtonDropdown from './UploadButtonDropdown';
@@ -61,12 +61,17 @@ export default function MessageComposer({
   const [value, setValue] = useState('');
   const [selectedCommand, setSelectedCommand] = useState<ICommand>();
   const [selectedAgents, setSelectedAgents] = useState<any[]>([]);
+  const [selectedProjects, setSelectedProjects] = useState<ProjectListItem[]>(
+    []
+  );
+  const [openProjectsRequest, setOpenProjectsRequest] = useState(0);
   const setChatSettingsOpen = useSetRecoilState(chatSettingsOpenState);
   const [attachments, setAttachments] = useRecoilState(attachmentsState);
   const [evoyaAttachments, setEvoyaAttachments] = useRecoilState(evoyaAttachmentsState);
   const initialTranscript = useRecoilValue(initialTranscriptState);
   const isChatArchived = useRecoilValue(chatArchived);
   const isProjectAccessible = useRecoilValue(projectAccess);
+  console.log(isProjectAccessible)
   const resetInitialTranscript = useResetRecoilState(initialTranscriptState);
   const { t } = useTranslation();
 
@@ -229,6 +234,13 @@ export default function MessageComposer({
     onSubmit
   ]);
 
+  const removeProject = (project: ProjectListItem) => {
+    removeDashboardProject(project);
+    setSelectedProjects((current) =>
+      current.filter((item) => item.id !== project.id)
+    );
+  };
+
   return (
     <div
       className={`bg-accent p-3 px-4 w-full ${
@@ -246,6 +258,37 @@ export default function MessageComposer({
       {(attachments.length > 0 || evoyaAttachments.length > 0) ? (
         <div className="mb-1">
           <Attachments />
+        </div>
+      ) : null}
+      {evoya?.type === 'dashboard' && selectedProjects.length > 0 ? (
+        <div className="mb-2 flex min-h-7 flex-wrap items-center gap-1.5">
+          {selectedProjects.map((project) => (
+            <div
+              key={project.id}
+              className="flex h-7 max-w-full items-center gap-1.5 rounded-md bg-primary/10 px-2 text-xs font-medium text-primary"
+            >
+              <FolderOpen className="size-3 shrink-0" />
+              <span className="max-w-64 truncate">{project.name}</span>
+              <button
+                type="button"
+                onClick={() => removeProject(project)}
+                disabled={disabled}
+                className="ml-0.5 rounded-sm p-0.5 hover:bg-primary/10 disabled:opacity-50"
+                aria-label={`Remove ${project.name}`}
+              >
+                <X className="size-3" />
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => setOpenProjectsRequest((request) => request + 1)}
+            disabled={disabled}
+            className="flex size-7 items-center justify-center rounded-full border border-dashed border-primary/40 text-primary hover:bg-primary/10 disabled:opacity-50"
+            aria-label="Open projects"
+          >
+            <Plus className="size-4" />
+          </button>
         </div>
       ) : null}
       {((evoya && evoya?.type == 'dashboard') || evoya == undefined) && (
@@ -283,22 +326,14 @@ export default function MessageComposer({
               onFileUpload={onFileUpload}
             />
           )}
-          {evoya && evoya?.type == 'dashboard' && (
-            <>
-              <CommandButton
-                disabled={disabled}
-                selectedCommand={selectedCommand}
-                onCommandSelect={setSelectedCommand}
-              />
-              {isProjectAccessible && <Projects disabled={disabled} />}
-            </>
-          )}
-          {evoya?.evoyaCreator?.enabled && (
-            <EvoyaCreatorButton disabled={disabled} />
-          )}
-          {evoya?.api?.privacyShield?.enabled && (
-            <PrivacyShieldToggle disabled={disabled} evoya={evoya} />
-          )}
+          <ConfigurationMenu
+            disabled={disabled}
+            isProjectAccessible={isProjectAccessible}
+            openProjectsRequest={openProjectsRequest}
+            onSelectedProjectsChange={setSelectedProjects}
+            selectedCommand={selectedCommand}
+            onCommandSelect={setSelectedCommand}
+          />
           {chatSettingsInputs.length > 0 && (
             <Button
               id="chat-settings-open-modal"

@@ -5,7 +5,7 @@ import {
   type IStep,
 } from '@chainlit/react-client';
 
-import { WandSparkles } from 'lucide-react';
+import { FilePen } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { WidgetContext } from '@chainlit/copilot/src/context';
@@ -66,7 +66,7 @@ export function EvoyaCreatorButton({ message }: Props) {
               size="icon"
               className={`text-muted-foreground`}
             >
-              <WandSparkles className="h-4 w-4" />
+              <FilePen  className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>

@@ -88,6 +88,18 @@
                 "title": "Progetti",
                 "empty": "Nessun progetto trovato"
             },
+            "configurationMenu": {
+                "title": "Configurazione",
+                "promptLibrary": "Libreria dei prompt",
+                "enabled": "Attivo",
+                "searchPrompts": "Cerca prompt...",
+                "promptPreview": "Seleziona un prompt per visualizzarne il contenuto",
+                "searchProjects": "Cerca progetti...",
+                "untitledProject": "Progetto senza titolo",
+                "privacyActive": "Protezione della privacy attiva",
+                "hideAnonymizedText": "Nascondi il testo anonimizzato",
+                "showAnonymizedText": "Mostra il testo anonimizzato"
+            },
             "tasklist": {
                 "TaskList": {
                     "title": "\ud83d\uddd2\ufe0f Elenco Attività",
@@ -181,6 +193,7 @@
         },
         "organisms": {
             "privacyShield": {
+                "title": "Protezione della privacy",
                 "showPrivacyTable": "Mostra tabella parole anonimizzate",
                 "hidePrivacyTable": "Nascondi tabella parole anonimizzate",
                 "info": "Privacy Shield anonimizza i dettagli sensibili (ad es. i nomi) prima che il testo venga inviato all'IA. Funziona solo per il testo, non per i documenti caricati.",

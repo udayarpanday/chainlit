@@ -112,11 +112,11 @@ export const UploadButton = ({
                 align={isMobile ? 'center' : 'start'}
                 side={isMobile ? 'top' : undefined}
                 sideOffset={isMobile ? 5 : 12}
-                className="focus:outline-none w-[16vw] p-1"
+                className="focus:outline-none w-[16vw] min-w-[250px] p-1"
                 style={{
                   position: isMobile ? 'fixed' : 'relative',
-                  bottom: isMobile ? '-82vh' : '45px',
-                  right: isMobile ? 'auto' : '10px',
+                  bottom: isMobile ? '-82vh' : '-10px',
+                  right: isMobile ? 'auto' : '-5px',
                   left: isMobile ? '45px' : 'auto',
                   transform: 'none',
                   zIndex: 50

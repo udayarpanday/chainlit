@@ -42,7 +42,7 @@ export default function ChatFooter({
         <ScrollDownButton onClick={() => props.setAutoScroll(true)} />
       ) : null}
       <MessageComposer {...props} />
-      <div className="relative flex min-h-4 w-full items-center justify-center">
+      <div className="relative flex min-h-4 w-full items-center justify-start">
         <WaterMark />
         {showDataProcessing ? (
           <div className="absolute right-0 top-1/2 -translate-y-1/2">

@@ -16,7 +16,7 @@ import {
   FolderInput,
   Trash2,
   FileImage,
-  WandSparkles,
+  FilePen,
 } from 'lucide-react';
 
 import { cn } from '@chainlit/app/src/lib/utils';
@@ -252,7 +252,7 @@ export default function FilePickerItem({
                 <DropdownMenuContent container={window.cl_files_shadowRootElement} align="end">
                   {(item.mime ?? '').includes('markdown') && (
                     <DropdownMenuItem onClick={openCreator}>
-                      <WandSparkles />
+                      <FilePen />
                       <Translator path="components.molecules.evoyaCreatorButton.label" />
                     </DropdownMenuItem>
                   )}
