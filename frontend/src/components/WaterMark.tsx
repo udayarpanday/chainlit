@@ -1,5 +1,9 @@
+import { cn } from '@/lib/utils';
 import { useContext } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { WidgetContext } from '@chainlit/copilot/src/context';
+
 import { Translator } from 'components/i18n';
 
 import 'assets/evoya_light.svg';
@@ -8,7 +12,6 @@ import LogoLight from 'assets/evoya_light.svg?react';
 
 import { Kbd } from './Kbd';
 import { useTheme } from './ThemeProvider';
-import { WidgetContext } from '@chainlit/copilot/src/context';
 
 const DEFAULT_ADDITIONAL_INFO_PATH =
   'components.organisms.chat.inputBox.additionalInfo.defaultText';
@@ -67,7 +70,12 @@ export default function WaterMark() {
         </a>
       )}
       {evoya?.additionalInfo && (
-        <div className="text-left leading-[1.25]">
+        <div
+          className={cn(
+            ' leading-[1.25]',
+            evoya?.type === 'dashboard' ? 'text-left' : 'text-center'
+          )}
+        >
           <p className="text-xs text-muted-foreground tracking-normal">
             {evoya?.additionalInfo?.text ? (
               evoya?.additionalInfo?.text
@@ -90,4 +98,3 @@ export default function WaterMark() {
     </>
   );
 }
-

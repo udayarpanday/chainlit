@@ -42,7 +42,7 @@ export default function ChatFooter({
         <ScrollDownButton onClick={() => props.setAutoScroll(true)} />
       ) : null}
       <MessageComposer {...props} />
-      <div className="relative flex min-h-4 w-full items-center justify-start">
+      <div className={cn("relative flex min-h-4 w-full items-center flex-wrap gap-2", evoya?.type === 'dashboard' ? 'justify-start' : 'justify-center flex-col')}>
         <WaterMark />
         {showDataProcessing ? (
           <div className="absolute right-0 top-1/2 -translate-y-1/2">
