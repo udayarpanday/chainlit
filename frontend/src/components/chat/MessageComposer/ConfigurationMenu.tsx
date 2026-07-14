@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils';
 import {
   Eye,
   EyeOff,
+  FilePen,
   FolderOpen,
   Lock,
   type LucideIcon,
@@ -9,7 +10,6 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   StickyNote,
-  FilePen,
   X
 } from 'lucide-react';
 import {
@@ -236,6 +236,8 @@ export default function ConfigurationMenu({
     sections
   } = usePrivacyShield();
   const [open, setOpen] = useState(false);
+  const [configurationTooltipOpen, setConfigurationTooltipOpen] =
+    useState(false);
   const [panel, setPanel] = useState<Panel>('menu');
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
   const [bridgeFilteredProjects, setBridgeFilteredProjects] = useState<
@@ -375,7 +377,10 @@ export default function ConfigurationMenu({
   const displayedCommand =
     hoveredCommand || selectedCommand || searchResults[0] || null;
 
+  const dismissConfigurationTooltip = () => setConfigurationTooltipOpen(false);
+
   const openPanel = (nextPanel: Panel) => {
+    dismissConfigurationTooltip();
     setPanel(nextPanel);
     setOpen(true);
     if (nextPanel === 'projects') {
@@ -384,6 +389,7 @@ export default function ConfigurationMenu({
   };
 
   const handleOpenChange = (nextOpen: boolean) => {
+    dismissConfigurationTooltip();
     setOpen(nextOpen);
     if (!nextOpen) {
       setPanel('menu');
@@ -422,6 +428,7 @@ export default function ConfigurationMenu({
   };
 
   const handleToggleProject = (project: ProjectListItem) => {
+    dismissConfigurationTooltip();
     const data = getBridgeData();
     data?.toggleProject?.(project.raw);
     data?.syncProjectContext?.();
@@ -430,6 +437,7 @@ export default function ConfigurationMenu({
   };
 
   const handleOpenCreator = () => {
+    dismissConfigurationTooltip();
     const restoreContent = localStorage.getItem('evoya-creator');
     const creatorWindow = window as Window & {
       openEvoyaCreator?: (
@@ -463,7 +471,12 @@ export default function ConfigurationMenu({
     <div className="flex items-center">
       <Popover open={open} onOpenChange={handleOpenChange}>
         <TooltipProvider delayDuration={100}>
-          <Tooltip>
+          <Tooltip
+            open={configurationTooltipOpen && !open}
+            onOpenChange={(nextOpen) =>
+              setConfigurationTooltipOpen(nextOpen && !open)
+            }
+          >
             <TooltipTrigger asChild>
               <PopoverTrigger asChild>
                 <Button
@@ -473,19 +486,26 @@ export default function ConfigurationMenu({
                   size="icon"
                   className="hover:bg-muted"
                   disabled={disabled}
-                  onClick={() => setPanel('menu')}
+                  onPointerDown={dismissConfigurationTooltip}
+                  onClick={() => {
+                    dismissConfigurationTooltip();
+                    setPanel('menu');
+                  }}
                 >
                   <SlidersHorizontal className="!size-5" />
                 </Button>
               </PopoverTrigger>
             </TooltipTrigger>
-            <TooltipContent>
-              {t('components.molecules.configurationMenu.title')}
-            </TooltipContent>
+            {configurationTooltipOpen && !open ? (
+              <TooltipContent>
+                {t('components.molecules.configurationMenu.title')}
+              </TooltipContent>
+            ) : null}
           </Tooltip>
         </TooltipProvider>
 
         <PopoverContent
+          onCloseAutoFocus={(event) => event.preventDefault()}
           align={isMobile ? 'center' : 'start'}
           side="top"
           sideOffset={12}
@@ -543,7 +563,10 @@ export default function ConfigurationMenu({
                     : undefined
                 }
                 disabled={!hasPrivacy || disabled}
-                onClick={() => setPrivacyEnabled(!privacyEnabled)}
+                onClick={() => {
+                  dismissConfigurationTooltip();
+                  setPrivacyEnabled(!privacyEnabled);
+                }}
               />
             </div>
           ) : null}
@@ -570,6 +593,7 @@ export default function ConfigurationMenu({
                         <CommandItem
                           key={command.id}
                           onSelect={() => {
+                            dismissConfigurationTooltip();
                             onCommandSelect(command);
                             setPanel('menu');
                             setHoveredCommand(null);
@@ -692,9 +716,17 @@ export default function ConfigurationMenu({
           <TooltipProvider delayDuration={100}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="flex size-9 items-center justify-center rounded-md text-primary">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="text-primary hover:bg-muted hover:text-primary"
+                  onClick={() => setPrivacyEnabled(false)}
+                  disabled={disabled}
+                  aria-pressed={privacyEnabled}
+                >
                   <Lock className="!size-5" />
-                </span>
+                </Button>
               </TooltipTrigger>
               <TooltipContent>
                 {t('components.molecules.configurationMenu.privacyActive')}
