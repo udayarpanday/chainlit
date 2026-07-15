@@ -8,6 +8,7 @@ export interface EvoyaConfig {
     chat_uuid: string,
     session_uuid: string | undefined
   ) => string | undefined;
+  locale?: string;
   api?: EvoyaApiConfig;
   logo?: string | null;
   hideWaterMark?: boolean;
