@@ -246,21 +246,36 @@ const Header = ({
     }
   };
 
-  const getSessionUuid = async () => {
-    try {
-      const sessionResponse = await apiClient.get(
-        `/chat_session_uuid/${sessionId}/`,
-        accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined
-      );
-      const sessionJson = await sessionResponse.json();
-      setSessionUuid(sessionJson.session_uuid);
-      setScopedSessionStorageItem(sessionTokenKey, sessionJson.session_uuid);
-      localStorage.removeItem(sessionTokenKey);
-      document.cookie =
-        `${sessionTokenKey}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-    } catch (_e) {
-      return;
+  const getSessionUuid = async (maxRetries = 3, retryDelay = 2000) => {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await apiClient.get(
+          `/chat_session_uuid/${sessionId}/`,
+          accessToken
+        );
+
+        const data = await response.json();
+
+        if (data?.session_uuid) {
+          setSessionUuid(data.session_uuid);
+          setScopedSessionStorageItem(sessionTokenKey, data.session_uuid);
+
+          localStorage.removeItem(sessionTokenKey);
+          document.cookie =
+            `${sessionTokenKey}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+
+          return data.session_uuid;
+        }
+
+        if (attempt < maxRetries) {
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        }
+      } catch (_error) {
+        return null;
+      }
     }
+
+    return null;
   };
 
   useEffect(() => {
