@@ -58,7 +58,11 @@ type Props = {
   singleMode?: boolean;
   compact?: boolean;
   selectFilter?: (val: EvoyaFile) => boolean;
+  selectedItemPaths?: string[];
+  onItemSelectionChange?: (item: FilePickerItem, checked: boolean) => void;
 }
+
+const selectionKey = (path: string) => path.replace(/^\/+|\/+$/g, '');
 
 export default function FilePicker({
   initialPath,
@@ -74,6 +78,8 @@ export default function FilePicker({
   selectedItemsChange = () => {},
   setSelectedPath = () => {},
   selectFilter = () => true,
+  selectedItemPaths,
+  onItemSelectionChange,
 }: Props) {
   const { apiBaseUrl, csrfToken } = useContext(FilePickerContext);
   const [currentPath, setCurrentPath] = useState(initialPath);
@@ -85,6 +91,7 @@ export default function FilePicker({
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const isSelectionControlled = selectedItemPaths !== undefined && onItemSelectionChange !== undefined;
 
   const fetchDirectory = async (path: string) => {
     setIsSearch(false);
@@ -94,8 +101,10 @@ export default function FilePicker({
     const response = await fetch(`${apiBaseUrl}/api/files?path=${path}`);
     const json = await response.json()
     setCurrentPath(path);
-    setSelectedElements([]);
-    selectedItemsChange([]);
+    if (!isSelectionControlled) {
+      setSelectedElements([]);
+      selectedItemsChange([]);
+    }
     const folderFiles = (destinationMode ? [] : json.documents)
       .filter(selectFilter)
       .map((document) => ({
@@ -179,7 +188,13 @@ export default function FilePicker({
     fetchDirectory(currentPath);
   }
 
-  const setItemSelected = (id: string, value: boolean) => {
+  const setItemSelected = (item: FilePickerItem, value: boolean) => {
+    if (isSelectionControlled) {
+      onItemSelectionChange(item, value);
+      return;
+    }
+
+    const id = item.id;
     let newItems: string[] = [];
     if (value) {
       if (multiselect) {
@@ -201,7 +216,15 @@ export default function FilePicker({
   }
 
   const onCheckedChange = (val: boolean) => {
-    const items = attachmentMode ? folderFiles : pathData.items;
+    const items = isSelectionControlled
+      ? (isSearch ? searchItems : pathData.items)
+      : (attachmentMode ? folderFiles : pathData.items);
+
+    if (isSelectionControlled) {
+      items.forEach((item) => onItemSelectionChange(item, val));
+      return;
+    }
+
     console.log(items);
     if (val) {
       setSelectedElements(items.map((item) => item.id));
@@ -342,7 +365,7 @@ export default function FilePicker({
             toast.error(json.error);
           }
         })
-        .catch((e) => {
+        .catch((_error) => {
           toast.error('Download not possible');
         });
     }
@@ -361,7 +384,7 @@ export default function FilePicker({
         }
         loadCurrentPath();
       }
-    } catch(err) {
+    } catch(_error) {
       if (files.length > 1) {
         toast.error('Failed to upload files!');
       } else {
@@ -421,7 +444,14 @@ export default function FilePicker({
   });
   const { getRootProps, getInputProps, isDragActive } = upload ?? {};
 
-  const selectableItemsLength = attachmentMode ? folderFiles.length : pathData.items.length;
+  const selectableItems = isSelectionControlled
+    ? (isSearch ? searchItems : pathData.items)
+    : (attachmentMode ? folderFiles : pathData.items);
+  const selectableItemsLength = selectableItems.length;
+  const selectedPathKeys = new Set((selectedItemPaths ?? []).map(selectionKey));
+  const allSelectableItemsSelected = isSelectionControlled
+    ? selectableItemsLength > 0 && selectableItems.every((item) => selectedPathKeys.has(selectionKey(item.path)))
+    : selectableItemsLength > 0 && selectedElements.length === selectableItemsLength;
 
   return (
     <>
@@ -481,7 +511,7 @@ export default function FilePicker({
               <div className="contents text-xs">
                 {!singleMode && 
                   <div className="flex items-center p-2 pt-4 sticky top-0 bg-white">
-                    {multiselect && <Checkbox checked={!isLoading && selectableItemsLength > 0 && selectedElements.length === selectableItemsLength} disabled={selectableItemsLength === 0} onCheckedChange={onCheckedChange} />}
+                    {multiselect && <Checkbox checked={!isLoading && allSelectableItemsSelected} disabled={selectableItemsLength === 0} onCheckedChange={onCheckedChange} />}
                   </div>
                 }
                 <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
@@ -505,8 +535,8 @@ export default function FilePicker({
               {!isSearch && pathData.items.length > 0 && pathData.items.map((item) => (
                 <FilePickerItemComponent
                   item={item}
-                  selected={selectedElements.includes(item.id)}
-                  setSelectedState={(value) => setItemSelected(item.id, value)}
+                  selected={isSelectionControlled ? selectedPathKeys.has(selectionKey(item.path)) : selectedElements.includes(item.id)}
+                  setSelectedState={(value) => setItemSelected(item, value)}
                   onClick={() => itemClick(item)}
                   showActions={showActions}
                   singleMode={singleMode}
@@ -524,8 +554,8 @@ export default function FilePicker({
               {isSearch && searchItems.length > 0 && searchItems.map((item) => (
                 <FilePickerItemComponent
                   item={item}
-                  selected={selectedElements.includes(item.id)}
-                  setSelectedState={(value) => setItemSelected(item.id, value)}
+                  selected={isSelectionControlled ? selectedPathKeys.has(selectionKey(item.path)) : selectedElements.includes(item.id)}
+                  setSelectedState={(value) => setItemSelected(item, value)}
                   onClick={() => itemClick(item)}
                   showActions={showActions}
                   singleMode={singleMode}
