@@ -1,5 +1,5 @@
 import { IElement, IThread, IUser } from 'src/types';
-import { getScopedSessionStorageItem } from 'src/storage';
+import { getScopedSessionId, getScopedSessionStorageItem } from 'src/storage';
 
 import { IAction } from 'src/types/action';
 import { IFeedback } from 'src/types/feedback';
@@ -42,6 +42,22 @@ export class ClientError extends Error {
 }
 
 type Payload = FormData | any;
+type RequestHeaders = Record<string, string>;
+type RequestHeadersInput = RequestHeaders | string | undefined;
+
+const normalizeHeaders = (headers: RequestHeadersInput): RequestHeaders => {
+  if (!headers) {
+    return {};
+  }
+
+  if (typeof headers === 'string') {
+    return {
+      Authorization: headers.startsWith('Bearer ') ? headers : `Bearer ${headers}`
+    };
+  }
+
+  return headers;
+};
 
 export class APIBase {
   constructor(
@@ -107,21 +123,25 @@ export class APIBase {
     path: string,
     data?: Payload,
     signal?: AbortSignal,
-    headers: { Authorization?: string; 'Content-Type'?: string } = {}
+    headers: RequestHeadersInput = {}
   ): Promise<Response> {
     try {
       let body;
+      const requestHeaders: RequestHeaders = {
+        'X-Chainlit-Session-Id': getScopedSessionId(),
+        ...normalizeHeaders(headers)
+      };
 
       if (data instanceof FormData) {
         body = data;
       } else {
-        headers['Content-Type'] = 'application/json';
+        requestHeaders['Content-Type'] = 'application/json';
         body = data ? JSON.stringify(data) : null;
       }
       const res = await fetch(this.buildEndpoint(path), {
         method,
         credentials: 'include',
-        headers,
+        headers: requestHeaders,
         signal,
         body,
         mode: 'cors'
@@ -140,12 +160,13 @@ export class APIBase {
     }
   }
 
-  async get(endpoint: string) {
+  async get(endpoint: string, headers: RequestHeadersInput = {}) {
     const token = getScopedSessionStorageItem('chainlit_token');
-    const headers: Record<string, string> = {
+    const requestHeaders: RequestHeaders = {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...normalizeHeaders(headers)
     };
-    return await this.fetch('GET', endpoint, undefined, undefined, headers);
+    return await this.fetch('GET', endpoint, undefined, undefined, requestHeaders);
   }
 
   async post(endpoint: string, data: Payload, signal?: AbortSignal) {

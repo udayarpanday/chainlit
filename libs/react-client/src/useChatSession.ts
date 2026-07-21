@@ -63,7 +63,8 @@ import { OutputAudioChunk } from './types/audio';
 import { ChainlitContext } from './context';
 import {
   getChainlitTabId,
-  getScopedSessionStorageItem
+  getScopedSessionStorageItem,
+  setScopedSessionStorageItem
 } from './storage';
 import type { IToken } from './useChatData';
 import {
@@ -72,10 +73,15 @@ import {
   resetTaskLoading
 } from './taskLoading';
 
+type EvoyaCreatorWindow = Window &
+  typeof globalThis & {
+    evoyaCreatorEnabled?: boolean;
+    updateEvoyaCreator?: (message: IStep, parent?: IStep) => string | undefined;
+  };
+
 const useChatSession = () => {
   const client = useContext(ChainlitContext);
   const sessionId = useRecoilValue(sessionIdState);
-  const stickyCookieCalledRef = useRef(false);
 
   const [session, setSession] = useRecoilState(sessionState);
   const setIsAiSpeaking = useSetRecoilState(isAiSpeakingState);
@@ -119,6 +125,17 @@ const useChatSession = () => {
   const isReconnectingRef = useRef(false);
   const reconnectAttemptRef = useRef(0);
 
+  const refreshStickyCookie = useCallback(
+    async (stickySessionId: string) => {
+      try {
+        await client.stickyCookie(stickySessionId);
+      } catch (err) {
+        console.error(`Failed to set sticky session cookie: ${err}`);
+      }
+    },
+    [client]
+  );
+
   const _connect = useCallback(
     async ({
       transports,
@@ -136,14 +153,7 @@ const useChatSession = () => {
           ? `${pathname}/ws/socket.io`
           : '/ws/socket.io';
 
-      if (!stickyCookieCalledRef.current) {
-        stickyCookieCalledRef.current = true;
-        try {
-          await client.stickyCookie(sessionId);
-        } catch (err) {
-          console.error(`Failed to set sticky session cookie: ${err}`);
-        }
-      }
+      await refreshStickyCookie(sessionId);
 
       isReconnectingRef.current = false;
       reconnectAttemptRef.current = 0;
@@ -152,6 +162,9 @@ const useChatSession = () => {
         path,
         withCredentials: true,
         transports,
+        query: {
+          chainlit_session_id: sessionId,
+        },
         auth: (cb) => {
           cb({
             clientType: client.type,
@@ -185,6 +198,7 @@ const useChatSession = () => {
       socket.io.on('reconnect_attempt', (attempt: number) => {
         isReconnectingRef.current = true;
         reconnectAttemptRef.current = attempt;
+        void refreshStickyCookie(sessionId);
       });
 
       socket.io.on('reconnect', (attempt: number) => {
@@ -298,15 +312,20 @@ const useChatSession = () => {
         }*/
         setMessages((oldMessages) => {
           let newOutput = message.output;
-          // @ts-expect-error is not a valid prop
-          if (message.type === 'assistant_message' && message.output !== "" && window.evoyaCreatorEnabled) {
-            const directParent = findMessageById(oldMessages, message.parentId || '');
-            let messageParent = directParent;
-            if (directParent?.parentId) {
-              messageParent = findMessageById(oldMessages, directParent.parentId);
-            }
-            // @ts-expect-error is not a valid prop
-            newOutput = window.updateEvoyaCreator(message, findMessageById(oldMessages, message.parentId)) || message.output;
+          const evoyaWindow = window as EvoyaCreatorWindow;
+
+          if (
+            message.type === 'assistant_message' &&
+            message.output !== '' &&
+            evoyaWindow.evoyaCreatorEnabled
+          ) {
+            const parentMessage = message.parentId
+              ? findMessageById(oldMessages, message.parentId)
+              : undefined;
+
+            newOutput =
+              evoyaWindow.updateEvoyaCreator?.(message, parentMessage) ||
+              message.output;
             // window.updateEvoyaCreator(message.output);
           }
 
@@ -326,7 +345,7 @@ const useChatSession = () => {
 
       socket.on('update_message', (message: IStep) => {
         setMessages((oldMessages) => {
-          let newMessages = oldMessages;
+          const newMessages = oldMessages;
           /* // @ts-expect-error is not a valid prop
           if (message.type === 'run' && message.name === 'on_message' && message.end && window.evoyaCreatorEnabled) {
             const oldMsg = findMessageById(oldMessages, message.id)
@@ -346,7 +365,7 @@ const useChatSession = () => {
               })
             }
           }*/
-          return updateMessageById(newMessages, message.id, message)
+          return updateMessageById(newMessages, message.id, message);
         });
       });
 
@@ -463,6 +482,13 @@ const useChatSession = () => {
         setProjectAccess(payload);
       });
 
+      socket.on("chat_session_uuid", (data: { session_uuid: string }) => {
+        if (data?.session_uuid) {
+          sessionStorage.setItem("chat_session_uuid", data.session_uuid);
+          setScopedSessionStorageItem('session_token', data.session_uuid);
+        }
+      });
+
       socket.on('set_sidebar_elements', (elements: IMessageElement[]) => {
         if (!elements.length) {
           setSideView(undefined);
@@ -563,7 +589,7 @@ const useChatSession = () => {
         }
       });
     },
-    [setSession, sessionId, idToResume, chatProfile]
+    [setSession, sessionId, idToResume, chatProfile, refreshStickyCookie]
   );
 
   const connect = useCallback(debounce(_connect, 200), [_connect]);

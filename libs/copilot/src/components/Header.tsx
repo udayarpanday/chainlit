@@ -11,15 +11,15 @@ import AudioPresence from '@chainlit/app/src/components/AudioPresence';
 import ChatProfiles from '@chainlit/app/src/components/header/ChatProfiles';
 import NewChatButton from '@chainlit/app/src/components/header/NewChat';
 import { Button } from '@chainlit/app/src/components/ui/button';
-import { ChainlitContext } from '@chainlit/react-client';
+import { ChainlitContext, getScopedSessionStorageItem } from '@chainlit/react-client';
 import {
   chatArchived,
   evoyaCreatorEnabledState,
   firstUserInteraction
 } from '@chainlit/react-client';
 import {
-  setScopedSessionStorageItem,
   sessionIdState,
+  setScopedSessionStorageItem,
   useAudio,
   useChatData,
   useConfig
@@ -250,14 +250,14 @@ const Header = ({
     try {
       const sessionResponse = await apiClient.get(
         `/chat_session_uuid/${sessionId}/`,
-        accessToken
+        accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined
       );
       const sessionJson = await sessionResponse.json();
+      if(!sessionJson.session_uuid) return;
       setSessionUuid(sessionJson.session_uuid);
       setScopedSessionStorageItem(sessionTokenKey, sessionJson.session_uuid);
       localStorage.removeItem(sessionTokenKey);
-      document.cookie =
-        `${sessionTokenKey}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+      document.cookie = `${sessionTokenKey}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
     } catch (_e) {
       return;
     }
@@ -404,7 +404,7 @@ const Header = ({
         {hasChatProfiles ? <ChatProfiles /> : ''}
         {evoya?.type === 'dashboard' ? (
           <>
-            {!creatorEnabled && <DashboardSidebarButton/>}
+            {!creatorEnabled && <DashboardSidebarButton />}
             {creatorEnabled && (
               <div className="h-9 flex items-center font-bold">Chat</div>
             )}
@@ -456,12 +456,12 @@ const Header = ({
             barSpacing={2}
           />
         ) : null}
-        {(evoya?.type === 'dashboard' && !creatorEnabled) && (
+        {evoya?.type === 'dashboard' && !creatorEnabled && (
           <>
             <ViewContext />
-            <FavoriteSessionButton sessionUuid={sessionUuid} />
+            <FavoriteSessionButton sessionUuid={sessionUuid || getScopedSessionStorageItem('session_token')} />
             <ShareSessionButton
-              sessionUuid={sessionUuid}
+              sessionUuid={sessionUuid || getScopedSessionStorageItem('session_token')}
               restrictSharedSessionsToOrg={restrictSharedSessionsToOrg}
               isChatArchived={isChatArchived}
             />
