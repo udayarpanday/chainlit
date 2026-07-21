@@ -63,7 +63,8 @@ import { OutputAudioChunk } from './types/audio';
 import { ChainlitContext } from './context';
 import {
   getChainlitTabId,
-  getScopedSessionStorageItem
+  getScopedSessionStorageItem,
+  setScopedSessionStorageItem
 } from './storage';
 import type { IToken } from './useChatData';
 import {
@@ -479,6 +480,13 @@ const useChatSession = () => {
       
       socket.on('is_project_accessible', (payload:boolean) => {
         setProjectAccess(payload);
+      });
+
+      socket.on("chat_session_uuid", (data: { session_uuid: string }) => {
+        if (data?.session_uuid) {
+          sessionStorage.setItem("chat_session_uuid", data.session_uuid);
+          setScopedSessionStorageItem('session_token', data.session_uuid);
+        }
       });
 
       socket.on('set_sidebar_elements', (elements: IMessageElement[]) => {

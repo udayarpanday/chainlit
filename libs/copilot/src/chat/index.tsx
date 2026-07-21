@@ -16,7 +16,7 @@ export default function ChatWrapper() {
   const evoyaSessionUuid = evoya?.session_uuid || '';
 
   useEffect(() => {
-    if (evoyaSessionUuid) {
+    if (evoyaSessionUuid !== undefined || evoyaSessionUuid !== '') {
       setScopedSessionStorageItem('session_token', evoyaSessionUuid);
       localStorage.removeItem('session_token');
       document.cookie =
