@@ -14,7 +14,7 @@ import { Checkbox } from '@chainlit/app/src/components/ui/checkbox';
 import { Translator } from '@chainlit/app/src/components/i18n';
 import { Button } from '@chainlit/app/src/components/ui/button';
 
-import FilePickerItemComponent from './FilePickerItem'
+import FilePickerItemComponent, { PickerCheckedState } from './FilePickerItem'
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from '@chainlit/app/src/lib/evoya-toast';
 
@@ -449,9 +449,37 @@ export default function FilePicker({
     : (attachmentMode ? folderFiles : pathData.items);
   const selectableItemsLength = selectableItems.length;
   const selectedPathKeys = new Set((selectedItemPaths ?? []).map(selectionKey));
+  const getControlledSelectionState = (item: FilePickerItem): PickerCheckedState => {
+    const itemKey = selectionKey(item.path);
+    if (selectedPathKeys.has(itemKey)) {
+      return true;
+    }
+
+    const isFolder = !("size" in item);
+    if (
+      isFolder &&
+      [...selectedPathKeys].some((path) => path.startsWith(`${itemKey}/`))
+    ) {
+      return 'indeterminate';
+    }
+
+    return false;
+  };
+  const visibleControlledStates = isSelectionControlled
+    ? selectableItems.map(getControlledSelectionState)
+    : [];
   const allSelectableItemsSelected = isSelectionControlled
-    ? selectableItemsLength > 0 && selectableItems.every((item) => selectedPathKeys.has(selectionKey(item.path)))
+    ? selectableItemsLength > 0 && visibleControlledStates.every((state) => state === true)
     : selectableItemsLength > 0 && selectedElements.length === selectableItemsLength;
+  const headerCheckedState: PickerCheckedState = isSelectionControlled
+    ? (
+      allSelectableItemsSelected
+        ? true
+        : visibleControlledStates.some((state) => state !== false)
+          ? 'indeterminate'
+          : false
+    )
+    : allSelectableItemsSelected;
 
   return (
     <>
@@ -511,7 +539,13 @@ export default function FilePicker({
               <div className="contents text-xs">
                 {!singleMode && 
                   <div className="flex items-center p-2 pt-4 sticky top-0 bg-white">
-                    {multiselect && <Checkbox checked={!isLoading && allSelectableItemsSelected} disabled={selectableItemsLength === 0} onCheckedChange={onCheckedChange} />}
+                    {multiselect && (
+                      <Checkbox
+                        checked={isLoading ? false : headerCheckedState}
+                        disabled={selectableItemsLength === 0}
+                        onCheckedChange={(value) => onCheckedChange(value === true)}
+                      />
+                    )}
                   </div>
                 }
                 <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
@@ -535,7 +569,7 @@ export default function FilePicker({
               {!isSearch && pathData.items.length > 0 && pathData.items.map((item) => (
                 <FilePickerItemComponent
                   item={item}
-                  selected={isSelectionControlled ? selectedPathKeys.has(selectionKey(item.path)) : selectedElements.includes(item.id)}
+                  selected={isSelectionControlled ? getControlledSelectionState(item) : selectedElements.includes(item.id)}
                   setSelectedState={(value) => setItemSelected(item, value)}
                   onClick={() => itemClick(item)}
                   showActions={showActions}
@@ -554,7 +588,7 @@ export default function FilePicker({
               {isSearch && searchItems.length > 0 && searchItems.map((item) => (
                 <FilePickerItemComponent
                   item={item}
-                  selected={isSelectionControlled ? selectedPathKeys.has(selectionKey(item.path)) : selectedElements.includes(item.id)}
+                  selected={isSelectionControlled ? getControlledSelectionState(item) : selectedElements.includes(item.id)}
                   setSelectedState={(value) => setItemSelected(item, value)}
                   onClick={() => itemClick(item)}
                   showActions={showActions}

@@ -54,10 +54,12 @@ import { useUpload } from '@chainlit/app/src/hooks/useUpload';
 import FilePicker from './FilePicker';
 import { FilePickerContext } from '../context/file-context';
 
+export type PickerCheckedState = boolean | 'indeterminate';
+
 type Props = {
   item: FilePickerItem;
   isSelectable?: boolean;
-  selected: boolean;
+  selected: PickerCheckedState;
   setSelectedState: (value: boolean) => void;
   onClick?: () => void;
   showActions?: boolean;
@@ -179,7 +181,7 @@ export default function FilePickerItem({
       {!isFile && hasUpload && <input {...getInputProps()} />}
       {!singleMode &&
         <div className="p-2 border-t flex items-center group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20">
-          {!(!isFile && attachmentMode) && <Checkbox checked={selected} onCheckedChange={(val: boolean) => setSelectedState(val)} />}
+          {!(!isFile && attachmentMode) && <Checkbox checked={selected} onCheckedChange={(value) => setSelectedState(value === true)} />}
         </div>
       }
       <div

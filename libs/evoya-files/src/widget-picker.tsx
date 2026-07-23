@@ -47,6 +47,13 @@ export default function WidgetPicker({
     const next = new Map(selectionsRef.current);
     const path = selectionKey(selection.path);
     if (checked) {
+      if (selection.isFolder) {
+        for (const key of next.keys()) {
+          if (key.startsWith(`${path}/`)) {
+            next.delete(key);
+          }
+        }
+      }
       next.set(path, { ...selection, path });
     } else {
       next.delete(path);
