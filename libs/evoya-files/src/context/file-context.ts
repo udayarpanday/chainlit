@@ -11,7 +11,8 @@ interface FilePickerContext {
 
 const defaultContext = {
   apiBaseUrl: 'http://localhost:800',
-  csrfToken: ''
+  csrfToken: '',
+  type: 'default'
 };
 
 const FilePickerContext = createContext<FilePickerContext>(defaultContext);

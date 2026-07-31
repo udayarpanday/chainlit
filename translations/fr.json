@@ -599,6 +599,15 @@
             "download": {
                 "label": "Download"
             },
+            "menu": {
+                "label": "Actions du fichier"
+            },
+            "open_recent_file": {
+                "label": "Ouvrir {{name}}"
+            },
+            "open_location": {
+                "label": "Ouvrir l’emplacement {{location}}"
+            },
             "search": {
                 "label": "Search"
             },
@@ -654,13 +663,28 @@
         "common": {
             "selected": "selected",
             "files": "Files",
-            "no_entries": "No entries"
+            "no_entries": "No entries",
+            "recent_files": "Fichiers récents",
+            "no_recent_files": "Aucun fichier récent généré par l’IA",
+            "load_error": "Impossible de charger les fichiers",
+            "search_error": "Impossible de rechercher les fichiers",
+            "search_truncated": "D’autres résultats sont disponibles. Affinez votre recherche.",
+            "load_more": "Charger plus"
         },
+        "shortcuts": {
+            "title": "Raccourcis",
+            "generated": { "title": "Fichiers générés", "description": "Fichiers générés par l’IA", "empty": "Aucun fichier généré" },
+            "images": { "title": "Images", "description": "Images générées par l’IA", "empty": "Aucune image générée" },
+            "projects": { "title": "Projets", "description": "Accéder à vos dossiers de projet", "empty": "Aucun projet" }
+        },
+        "activity": { "opened": "Ouvert par", "modified": "Modifié par" },
         "headers": {
             "name": "Name",
             "owner": "Owner",
             "modified": "Modified",
-            "size": "Size"
+            "size": "Size",
+            "location": "Emplacement",
+            "actions": "Actions"
         }
     },
     "evoyaCreator": {

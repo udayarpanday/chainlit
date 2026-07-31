@@ -1,7 +1,7 @@
 import FilePicker from './components/FilePicker';
 import { FilePickerContext } from './context/file-context';
 import { FilePickerItem } from './types';
-import { downloadBlob } from './utils/file';
+import { downloadBlob, isPreviewSupported } from './utils/file';
 
 interface Props {
   initialPath: string;
@@ -12,20 +12,11 @@ interface Props {
   brandColor?: string | null;
 }
 
-const customFileRenderer = [
-  'text/',
-  'image/',
-  'audio/',
-  'video/webm',
-  'application/json',
-  'application/pdf',
-];
-
 export default function WidgetCompact({ initialPath, apiBaseUrl, csrfToken, workspaceId, projectId, brandColor }: Props) {
   const handleItemClick = (item: FilePickerItem) => {
     const isFile = "size" in item;
     if (isFile) {
-      if (customFileRenderer.some((renderer) => item.mime.includes(renderer))) {
+      if (isPreviewSupported(item.mime)) {
         const filePathArr = item.path.split('/');
         filePathArr.pop();
         const filePath = filePathArr.join('/') + "/"

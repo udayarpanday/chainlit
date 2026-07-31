@@ -579,6 +579,15 @@
             "download": {
                 "label": "Herunterladen"
             },
+            "menu": {
+                "label": "Ações do ficheiro"
+            },
+            "open_recent_file": {
+                "label": "Abrir {{name}}"
+            },
+            "open_location": {
+                "label": "Abrir localização {{location}}"
+            },
             "back_to_project": {
                 "label": "zurück zum Projekt"
             },
@@ -628,13 +637,28 @@
         "common": {
             "selected": "ausgewählt",
             "files": "Dateien",
-            "no_entries": "Keine Einträge"
+            "no_entries": "Keine Einträge",
+            "recent_files": "Ficheiros recentes",
+            "no_recent_files": "Ainda não existem ficheiros recentes gerados por IA",
+            "load_error": "Não foi possível carregar os ficheiros",
+            "search_error": "Não foi possível pesquisar os ficheiros",
+            "search_truncated": "Existem mais resultados. Refine a pesquisa.",
+            "load_more": "Carregar mais"
         },
+        "shortcuts": {
+            "title": "Atalhos",
+            "generated": { "title": "Ficheiros gerados", "description": "Ficheiros gerados por IA", "empty": "Ainda não existem ficheiros gerados" },
+            "images": { "title": "Imagens", "description": "Imagens geradas por IA", "empty": "Ainda não existem imagens geradas" },
+            "projects": { "title": "Projetos", "description": "Ir para as pastas dos projetos", "empty": "Ainda não existem projetos" }
+        },
+        "activity": { "opened": "Aberto por", "modified": "Modificado por" },
         "headers": {
             "name": "Name",
             "owner": "Ersteller",
             "modified": "Bearbeitet",
-            "size": "Grösse"
+            "size": "Grösse",
+            "location": "Localização",
+            "actions": "Ações"
         }
     },
     "evoyaCreator": {

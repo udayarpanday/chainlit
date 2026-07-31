@@ -4,6 +4,7 @@ import { useContext, useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Translator } from '@chainlit/app/src/components/i18n';
+import { useTranslation } from '@chainlit/app/src/components/i18n/Translator';
 import { Button } from '@chainlit/app/src/components/ui/button';
 import { Checkbox } from '@chainlit/app/src/components/ui/checkbox';
 import {
@@ -22,14 +23,30 @@ import { cn } from '@chainlit/app/src/lib/utils';
 import { FilePickerContext } from '../context/file-context';
 import type {
   EvoyaFile,
+  FilesApiResponse,
   FilePickerData,
   FilePickerItem,
-  PathItem
+  PathItem,
+  RecentFile,
+  ShortcutApiResponse,
+  ShortcutItem,
+  ShortcutKey
 } from '../types';
 import { downloadBlob } from '../utils/file';
+import {
+  buildFilesUrl,
+  buildShortcutUrl,
+  isShortcutKey,
+  shouldShowRecentFiles
+} from '../utils/files-api';
+import { normalizeRecentFiles } from '../utils/recent-files';
+import { normalizeShortcutItems } from '../utils/shortcuts';
 import FilePickerItemComponent, { PickerCheckedState } from './FilePickerItem';
 import FileSearch from './FileSearch';
 import FolderBreadcrumbs from './FolderBreadcrumbs';
+import RecentFilesSection from './RecentFilesSection';
+import ShortcutFilesView from './ShortcutFilesView';
+import ShortcutsSection from './ShortcutsSection';
 import Uploader from './Uploader';
 
 type Props = {
@@ -49,6 +66,8 @@ type Props = {
   selectedItemPaths?: string[];
   onItemSelectionChange?: (item: FilePickerItem, checked: boolean) => void;
   searchTrailingAction?: ReactNode;
+  initialView?: string;
+  setSelectedView?: (view?: ShortcutKey) => void;
 };
 
 const selectionKey = (path: string) => path.replace(/^\/+|\/+$/g, '');
@@ -69,9 +88,12 @@ export default function FilePicker({
   selectFilter = () => true,
   selectedItemPaths,
   onItemSelectionChange,
-  searchTrailingAction
+  searchTrailingAction,
+  initialView,
+  setSelectedView = () => {}
 }: Props) {
-  const { apiBaseUrl, csrfToken } = useContext(FilePickerContext);
+  const { apiBaseUrl, csrfToken, type: pickerType } = useContext(FilePickerContext);
+  const { t } = useTranslation();
   const [currentPath, setCurrentPath] = useState(initialPath);
   const [pathData, setPathData] = useState<FilePickerData>({
     path: [],
@@ -79,6 +101,11 @@ export default function FilePicker({
   });
   const [folderFiles, setFolderFiles] = useState<FilePickerItem[]>([]);
   const [searchItems, setSearchItems] = useState<FilePickerItem[]>([]);
+  const [recentFiles, setRecentFiles] = useState<RecentFile[]>([]);
+  const [activeShortcut, setActiveShortcut] = useState<ShortcutKey | null>(null);
+  const [shortcutItems, setShortcutItems] = useState<ShortcutItem[]>([]);
+  const [shortcutCursor, setShortcutCursor] = useState<string | null>(null);
+  const [searchTruncated, setSearchTruncated] = useState(false);
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [isSearch, setIsSearch] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -88,79 +115,153 @@ export default function FilePicker({
     selectedItemPaths !== undefined && onItemSelectionChange !== undefined;
 
   const fetchDirectory = async (path: string) => {
-    setIsSearch(false);
-    setSearchItems([]);
-    setSelectedPath(path);
     setIsLoading(true);
-    const response = await fetch(`${apiBaseUrl}/api/files?path=${path}`);
-    const json = await response.json();
-    setCurrentPath(path);
-    if (!isSelectionControlled) {
-      setSelectedElements([]);
-      selectedItemsChange([]);
-    }
-    const folderFiles = (destinationMode ? [] : json.documents)
-      .filter(selectFilter)
-      .map((document) => ({
-        ...document,
-        created: document.created ? new Date(document.created) : null,
-        modified: document.modified ? new Date(document.modified) : null,
-        id: uuidv4()
-      }));
-    const pathItems = [
-      {
-        name: 'Home',
-        path: '/',
-        canOpen: true
-      },
-      ...json.breadcrumbs
-    ];
-    setFolderFiles(folderFiles);
-    setPathItems(pathItems);
-    setPathData({
-      // path: dummyPathItems,
-      path: pathItems,
-      // items: dummyItems.filter((item) => !destinationMode || !("size" in item))
-      items: [
-        ...json.folders.map((folder) => ({
-          ...folder,
-          created: folder.created ? new Date(folder.created) : null,
-          modified: folder.modified ? new Date(folder.modified) : null,
-          id: uuidv4()
-        })),
-        ...folderFiles
-      ]
-    });
-    setIsLoading(false);
-  };
-
-  const searchFilesHandler = async (query: string) => {
-    setIsLoading(true);
-    setIsSearch(true);
     try {
-      // const response = await fetch(`${apiBaseUrl}/api/files?path=${currentPath}&search=${query}`);
-      const response = await fetch(
-        `${apiBaseUrl}/api/files?path=${currentPath}&search=${query}`
-      );
-      const json = await response.json();
+      const response = await fetch(buildFilesUrl(apiBaseUrl, path));
+      if (!response.ok) throw new Error(`Files request failed (${response.status})`);
 
-      const sFiles = (destinationMode ? [] : json.documents)
-        .filter(selectFilter)
+      const json = (await response.json()) as FilesApiResponse;
+      if (!json.success) throw new Error(json.error || 'Files request failed');
+
+      const documents = Array.isArray(json.documents) ? json.documents : [];
+      const folders = Array.isArray(json.folders) ? json.folders : [];
+      const normalizedDocuments = documents
+        .filter((document) => 'size' in document)
         .map((document) => ({
           ...document,
           created: document.created ? new Date(document.created) : null,
           modified: document.modified ? new Date(document.modified) : null,
           id: uuidv4()
-        }));
-      const sFolders = json.folders.map((folder) => ({
+        })) as Array<FilePickerItem & EvoyaFile>;
+      const nextFolderFiles = (destinationMode ? [] : normalizedDocuments)
+        .filter(selectFilter);
+      const nextPathItems = [
+        { name: 'Home', path: '/', canOpen: true },
+        ...(Array.isArray(json.breadcrumbs) ? json.breadcrumbs : [])
+      ];
+
+      setCurrentPath(path);
+      setActiveShortcut(null);
+      setShortcutItems([]);
+      setShortcutCursor(null);
+      setSelectedView(undefined);
+      setSelectedPath(path);
+      setIsSearch(false);
+      setSearchItems([]);
+      setSearchTruncated(false);
+      if (!isSelectionControlled) {
+        setSelectedElements([]);
+        selectedItemsChange([]);
+      }
+      setFolderFiles(nextFolderFiles);
+      setRecentFiles(normalizeRecentFiles(json.recent_files, uuidv4));
+      setPathItems(nextPathItems);
+      setPathData({
+        path: nextPathItems,
+        items: [
+          ...folders.map((folder) => ({
+            ...folder,
+            created: folder.created ? new Date(folder.created) : null,
+            modified: folder.modified ? new Date(folder.modified) : null,
+            id: uuidv4()
+          })),
+          ...nextFolderFiles
+        ] as FilePickerItem[]
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error(t('evoyaFiles.common.load_error'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchShortcut = async (
+    shortcut: ShortcutKey,
+    cursor?: string | null,
+    append = false
+  ) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(buildShortcutUrl(apiBaseUrl, shortcut, cursor));
+      if (!response.ok) throw new Error(`Shortcut request failed (${response.status})`);
+      const json = (await response.json()) as ShortcutApiResponse;
+      if (!json.success) throw new Error(json.error || 'Shortcut request failed');
+
+      const items = normalizeShortcutItems(json.items);
+      setShortcutItems((current) => append ? [...current, ...items] : items);
+      setShortcutCursor(json.nextCursor || null);
+      setPathData({
+        path: Array.isArray(json.breadcrumbs) && json.breadcrumbs.length > 0
+          ? json.breadcrumbs
+          : [
+              { name: 'Home', path: '/', canOpen: true },
+              { name: t(`evoyaFiles.shortcuts.${shortcut}.title`), canOpen: false }
+            ],
+        items: []
+      });
+    } catch (error) {
+      // The Phase 2 backend may not be deployed yet. Keep the UI usable and
+      // show the shortcut's normal empty state instead of failing the page.
+      console.info(error);
+      if (!append) {
+        setShortcutItems([]);
+        setShortcutCursor(null);
+        setPathData({
+          path: [
+            { name: 'Home', path: '/', canOpen: true },
+            { name: t(`evoyaFiles.shortcuts.${shortcut}.title`), canOpen: false }
+          ],
+          items: []
+        });
+      }
+    } finally {
+      setCurrentPath('');
+      setIsSearch(false);
+      setActiveShortcut(shortcut);
+      setSelectedView(shortcut);
+      setIsLoading(false);
+    }
+  };
+
+  const searchFilesHandler = async (query: string) => {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        buildFilesUrl(apiBaseUrl, currentPath, trimmedQuery)
+      );
+      if (!response.ok) throw new Error(`Search request failed (${response.status})`);
+
+      const json = (await response.json()) as FilesApiResponse;
+      if (!json.success) throw new Error(json.error || 'Search request failed');
+
+      const documents = Array.isArray(json.documents) ? json.documents : [];
+      const folders = Array.isArray(json.folders) ? json.folders : [];
+      const normalizedDocuments = documents
+        .filter((document) => 'size' in document)
+        .map((document) => ({
+          ...document,
+          created: document.created ? new Date(document.created) : null,
+          modified: document.modified ? new Date(document.modified) : null,
+          id: uuidv4()
+        })) as Array<FilePickerItem & EvoyaFile>;
+      const sFiles = (destinationMode ? [] : normalizedDocuments)
+        .filter(selectFilter);
+      const sFolders = folders.map((folder) => ({
         ...folder,
         created: folder.created ? new Date(folder.created) : null,
         modified: folder.modified ? new Date(folder.modified) : null,
         id: uuidv4()
       }));
-      setSearchItems([...sFolders, ...sFiles]);
+      setSearchItems([...sFolders, ...sFiles] as FilePickerItem[]);
+      setSearchTruncated(Boolean(json.searchTruncated));
+      setIsSearch(true);
     } catch (err) {
       console.error(err);
+      toast.error(t('evoyaFiles.common.search_error'));
     } finally {
       setIsLoading(false);
     }
@@ -174,12 +275,34 @@ export default function FilePicker({
     }
   };
 
+  const recentItemClick = (item: RecentFile) => {
+    setPathItems([]);
+    handleItemClick(item);
+  };
+
+  const shortcutItemClick = (item: ShortcutItem) => {
+    if ('size' in item) {
+      setPathItems([]);
+      handleItemClick(item as FilePickerItem);
+    } else {
+      void fetchDirectory(item.path);
+    }
+  };
+
   useEffect(() => {
-    loadCurrentPath();
+    if (isShortcutKey(initialView)) {
+      void fetchShortcut(initialView);
+    } else {
+      if (initialView) setSelectedView(undefined);
+      loadCurrentPath();
+    }
   }, []);
 
   const loadCurrentPath = () => {
-    fetchDirectory(currentPath);
+    if (activeShortcut) {
+      return fetchShortcut(activeShortcut);
+    }
+    return fetchDirectory(currentPath);
   };
 
   const setItemSelected = (item: FilePickerItem, value: boolean) => {
@@ -250,9 +373,9 @@ export default function FilePicker({
         }
       });
       const json = await response.json();
-      if (json.success) {
+      if (response.ok && json.success) {
         toast.success('File moved!');
-        loadCurrentPath();
+        await loadCurrentPath();
       } else {
         toast.error('Failed to move file!');
       }
@@ -279,9 +402,9 @@ export default function FilePicker({
         }
       });
       const json = await response.json();
-      if (json.success) {
+      if (response.ok && json.success) {
         toast.success('File renamed!');
-        loadCurrentPath();
+        await loadCurrentPath();
       } else {
         toast.error('Failed to rename file!');
       }
@@ -313,10 +436,10 @@ export default function FilePicker({
         }
       });
       const json = await response.json();
-      if (json.success) {
+      if (response.ok && json.success) {
         toast.success('Items deleted!');
         setDeleteOpen(false);
-        loadCurrentPath();
+        await loadCurrentPath();
       } else {
         toast.error('Failed to delete items!');
       }
@@ -330,7 +453,11 @@ export default function FilePicker({
 
   const downloadItems = (items: FilePickerItem[]) => {
     if (items.length === 1 && 'size' in items[0]) {
-      fetch(`${apiBaseUrl}/api/files/download/?path=${items[0].path}`)
+      const params = new URLSearchParams({
+        path: items[0].path,
+        intent: 'download'
+      });
+      fetch(`${apiBaseUrl}/api/files/download/?${params.toString()}`)
         .then((response) => response.blob())
         .then((blob) => {
           downloadBlob(blob, items[0].name);
@@ -499,7 +626,7 @@ export default function FilePicker({
 
   return (
     <>
-      {showActions && hasUpload && (
+      {showActions && hasUpload && !activeShortcut && (
         <Uploader
           setIsLoading={setIsLoading}
           isLoading={isLoading}
@@ -511,7 +638,7 @@ export default function FilePicker({
       )}
       <div
         className={cn(
-          'relative flex flex-col overflow-hidden',
+          'relative flex flex-col overflow-y-auto',
           compact ? 'max-h-[300px]' : 'h-full'
         )}
       >
@@ -526,18 +653,22 @@ export default function FilePicker({
             isSearch={isSearch}
             compact={compact}
           />
-          {!compact && (
+          {!compact && !activeShortcut && (
             <FileSearch
               isLoading={isLoading}
               searchFiles={searchFilesHandler}
               attachmentMode={attachmentMode}
               destinationMode={destinationMode}
-              clearSearch={() => setIsSearch(false)}
+              clearSearch={() => {
+                setIsSearch(false);
+                setSearchTruncated(false);
+              }}
               singleMode={singleMode}
               trailingAction={searchTrailingAction}
             />
           )}
         </div>
+        {!activeShortcut && (
         <div
           className={cn(
             'rounded-lg border min-h-24 relative overflow-hidden flex',
@@ -652,17 +783,71 @@ export default function FilePicker({
                       downloadItems={downloadItems}
                     />
                   ))}
-                {(!isSearch && pathData.items.length === 0 && !isLoading) ||
-                  (isSearch && !isLoading && searchItems.length === 0 && (
+                {((!isSearch && pathData.items.length === 0 && !isLoading) ||
+                  (isSearch && !isLoading && searchItems.length === 0)) && (
                     <div className="col-span-full p-2 flex justify-center text-sm text-gray-400">
                       <Translator path="evoyaFiles.common.no_entries" />
                     </div>
-                  ))}
+                  )}
+                {isSearch && searchTruncated && !isLoading && (
+                  <div className="col-span-full border-t p-2 text-center text-sm text-amber-700">
+                    <Translator path="evoyaFiles.common.search_truncated" />
+                  </div>
+                )}
               </div>
             </div>
           </ScrollArea>
         </div>
-        {(selectedElements.length > 0 || attachmentMode) &&
+        )}
+        {activeShortcut && (
+          <ShortcutFilesView
+            shortcut={activeShortcut}
+            items={shortcutItems}
+            nextCursor={shortcutCursor}
+            isLoading={isLoading}
+            onOpen={shortcutItemClick}
+            onLoadMore={() => void fetchShortcut(activeShortcut, shortcutCursor, true)}
+            onDownload={(item) => downloadItems([item as FilePickerItem])}
+            onRename={(item, newName) => renameItem(item as FilePickerItem, newName)}
+            onMove={(item, destination) => moveItem(item as FilePickerItem, destination)}
+            onDelete={(item) => deleteItems([item as FilePickerItem])}
+          />
+        )}
+        {!activeShortcut && shouldShowRecentFiles({
+          path: currentPath,
+          isSearch,
+          pickerType,
+          compact,
+          attachmentMode,
+          destinationMode,
+          singleMode
+        }) && (
+          <ShortcutsSection onOpen={(shortcut) => void fetchShortcut(shortcut)} />
+        )}
+        {shouldShowRecentFiles({
+          path: currentPath,
+          isSearch,
+          pickerType,
+          compact,
+          attachmentMode,
+          destinationMode,
+          singleMode
+        }) &&
+          !activeShortcut &&
+          (
+            <RecentFilesSection
+              files={recentFiles}
+              isLoading={isLoading}
+              onOpenFile={recentItemClick}
+              onOpenLocation={fetchDirectory}
+              onDownload={(file) => downloadItems([file])}
+              onRename={(file, newName) => renameItem(file, newName)}
+              onMove={(file, destination) => moveItem(file, destination)}
+              onDelete={(file) => deleteItems([file])}
+            />
+          )}
+        {!activeShortcut &&
+          (selectedElements.length > 0 || attachmentMode) &&
           !destinationMode &&
           !singleMode &&
           !compact && (

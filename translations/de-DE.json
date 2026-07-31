@@ -609,6 +609,15 @@
             "download": {
                 "label": "Herunterladen"
             },
+            "menu": {
+                "label": "Dateiaktionen"
+            },
+            "open_recent_file": {
+                "label": "{{name}} öffnen"
+            },
+            "open_location": {
+                "label": "Speicherort {{location}} öffnen"
+            },
             "search": {
                 "label": "Suchen"
             },
@@ -661,13 +670,28 @@
         "common": {
             "selected": "ausgewählt",
             "files": "Dateien",
-            "no_entries": "Keine Einträge"
+            "no_entries": "Keine Einträge",
+            "recent_files": "Zuletzt erstellte Dateien",
+            "no_recent_files": "Noch keine kürzlich von KI generierten Dateien",
+            "load_error": "Dateien konnten nicht geladen werden",
+            "search_error": "Dateien konnten nicht durchsucht werden",
+            "search_truncated": "Weitere Ergebnisse sind verfügbar. Verfeinern Sie die Suche.",
+            "load_more": "Mehr laden"
         },
+        "shortcuts": {
+            "title": "Verknüpfungen",
+            "generated": { "title": "Generierte Dateien", "description": "Von KI generierte Dateien", "empty": "Noch keine generierten Dateien" },
+            "images": { "title": "Bilder", "description": "Von KI generierte Bilder", "empty": "Noch keine generierten Bilder" },
+            "projects": { "title": "Projekte", "description": "Zu Ihren Projektordnern springen", "empty": "Noch keine Projekte" }
+        },
+        "activity": { "opened": "Geöffnet von", "modified": "Bearbeitet von" },
         "headers": {
             "name": "Name",
             "owner": "Ersteller",
             "modified": "Bearbeitet",
-            "size": "Grösse"
+            "size": "Grösse",
+            "location": "Speicherort",
+            "actions": "Aktionen"
         }
     },
     "evoyaCreator": {

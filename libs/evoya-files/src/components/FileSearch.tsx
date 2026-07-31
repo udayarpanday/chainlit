@@ -74,7 +74,7 @@ export default function FileSearch({
           size={
             attachmentMode || destinationMode || singleMode ? 'sm' : 'default'
           }
-          disabled={isLoading}
+          disabled={isLoading || !searchQuery.trim()}
         >
           {isLoading ? (
             <LoaderCircle

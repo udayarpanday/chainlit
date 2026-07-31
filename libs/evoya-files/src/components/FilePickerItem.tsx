@@ -1,64 +1,18 @@
-import type { FilePickerItem } from '@/types';
-import {
-  useContext,
-  useRef,
-  useState,
-} from 'react';
-
-import {
-  FolderOpen,
-  FileText,
-  FileBraces,
-  File,
-  EllipsisVertical,
-  Download,
-  Pencil,
-  FolderInput,
-  Trash2,
-  FileImage,
-  FilePen,
-} from 'lucide-react';
-
-import { cn } from '@chainlit/app/src/lib/utils';
+import type { ReactNode } from 'react';
+import { File, FileBraces, FileImage, FileText, FolderOpen } from 'lucide-react';
 
 import { Checkbox } from '@chainlit/app/src/components/ui/checkbox';
-import { getSizeDisplay, getDateDisplay } from '../utils/file';
-
-import { Button } from '@chainlit/app/src/components/ui/button';
-import { Input } from '@chainlit/app/src/components/ui/input';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@chainlit/app/src/components/ui/dropdown-menu';
-import { Translator } from '@chainlit/app/src/components/i18n';
-import { useTranslation } from '@chainlit/app/src/components/i18n/Translator';
-
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogTitle,
-  DialogDescription,
-} from '@chainlit/app/src/components/ui/dialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from '@chainlit/app/src/components/ui/tooltip';
-
 import { useUpload } from '@chainlit/app/src/hooks/useUpload';
-import FilePicker from './FilePicker';
-import { FilePickerContext } from '../context/file-context';
+import { cn } from '@chainlit/app/src/lib/utils';
+
+import type { FilePickerItem } from '../types';
+import { getDateDisplay, getSizeDisplay } from '../utils/file';
+import FileItemActions from './FileItemActions';
 
 export type PickerCheckedState = boolean | 'indeterminate';
 
 type Props = {
   item: FilePickerItem;
-  isSelectable?: boolean;
   selected: PickerCheckedState;
   setSelectedState: (value: boolean) => void;
   onClick?: () => void;
@@ -73,9 +27,29 @@ type Props = {
   moveItem?: (item: FilePickerItem, destination: string) => Promise<void>;
   renameItem?: (item: FilePickerItem, newName: string) => Promise<void>;
   downloadItems?: (items: FilePickerItem[]) => void;
-}
+};
 
-export default function FilePickerItem({
+export const getItemIcon = (item: FilePickerItem): ReactNode => {
+  if (!('size' in item)) return <FolderOpen className="h-4 shrink-0" />;
+
+  const extension = item.name.split('.').pop()?.toLowerCase();
+  switch (extension) {
+    case 'png':
+    case 'jpg':
+    case 'jpeg':
+      return <FileImage className="h-4 shrink-0" />;
+    case 'pdf':
+    case 'txt':
+    case 'md':
+      return <FileText className="h-4 shrink-0" />;
+    case 'json':
+      return <FileBraces className="h-4 shrink-0" />;
+    default:
+      return <File className="h-4 shrink-0" />;
+  }
+};
+
+export default function FilePickerItemComponent({
   item,
   selected = false,
   showActions = false,
@@ -90,269 +64,83 @@ export default function FilePickerItem({
   deleteItems = async () => {},
   moveItem = async () => {},
   renameItem = async () => {},
-  downloadItems = async () => {},
+  downloadItems = () => {}
 }: Props) {
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [renameOpen, setRenameOpen] = useState(false);
-  const [renameValue, setRenameValue] = useState('');
-  const [folderPickerPath, setFolderPickerPath] = useState('');
-  const [moveOpen, setMoveOpen] = useState(false);
-  const [moveDestination, setMoveDestination] = useState<FilePickerItem[]>([]);
-  const { t } = useTranslation();
-  const renameInputRef = useRef<HTMLInputElement>(null)
-
-  const isFile = "size" in item;
-
-  const getItemIcon = (item: FilePickerItem) => {
-    if ("size" in item) {
-      const fileNameArray = item.name.split('.');
-      const extension = fileNameArray[fileNameArray.length - 1];
-
-      switch (extension.toLowerCase()) {
-        case 'png':
-        case 'jpg':
-        case 'jpeg':
-          return <FileImage className="h-4 shrink-0" />
-        case 'pdf':
-        case 'txt':
-        case 'md':
-          return <FileText className="h-4 shrink-0" />;
-        case 'json':
-          return <FileBraces className="h-4 shrink-0" />
-        default:
-          return <File className="h-4 shrink-0" />
-      }
-    }
-    return <FolderOpen className="h-4 shrink-0" />
-  }
-
-  const { brandColor } = useContext(FilePickerContext);
-
-  const openCreator = () => {
-    // @ts-expect-error is not a valid prop
-    window.openEvoyaCreatorWithFile(item, { type: item.mime.indexOf('markdown') > -1 ? 'markdown' : 'text', brand_color: brandColor });
-  }
-
-  const renameItemHandler = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setRenameOpen(false);
-    renameItem(item, renameValue)
-  }
-  const moveItemHandler = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setMoveOpen(false);
-    if (moveDestination.length > 0) {
-      moveItem(item, moveDestination[0].path);
-    } else {
-      moveItem(item, folderPickerPath)
-    }
-  }
-
-  const deleteItemHandler = () => {
-    setDeleteOpen(false);
-    deleteItems([item])
-  }
-
-  const clickItem = () => {
-    onClick();
-    if (isFile && !showActions) {
-      setSelectedState(!selected);
-    }
-  }
-
-  const onFileUploadError = () => {}
-
-  const fileSpec = {
-    max_size_mb: 500,
-    max_files: 20,
-    accept: ['*/*']
-  };
-
+  const isFile = 'size' in item;
   const upload = useUpload({
-    spec: fileSpec,
-    onResolved: (payloads: File[]) => hasUpload && onFileUpload(payloads, item.path),
-    onError: onFileUploadError,
-    options: { noDrag: false, noClick: true, noDragEventsBubbling: true, multiple: true }
+    spec: { max_size_mb: 500, max_files: 20, accept: ['*/*'] },
+    onResolved: (payloads: File[]) =>
+      hasUpload && onFileUpload(payloads, item.path),
+    onError: () => {},
+    options: {
+      noDrag: false,
+      noClick: true,
+      noDragEventsBubbling: true,
+      multiple: true
+    }
   });
   const { getRootProps, getInputProps, isDragActive } = upload ?? {};
 
+  const clickItem = () => {
+    onClick();
+    if (isFile && !showActions) setSelectedState(selected !== true);
+  };
+
+  const rowCellClass =
+    'p-2 border-t flex items-center group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20';
+
   return (
-    <div className="contents text-sm group" {...(!isFile && hasUpload ? getRootProps() : {})}>
+    <div
+      className="contents text-sm group"
+      {...(!isFile && hasUpload ? getRootProps() : {})}
+    >
       {!isFile && hasUpload && <input {...getInputProps()} />}
-      {!singleMode &&
-        <div className="p-2 border-t flex items-center group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20">
-          {!(!isFile && attachmentMode) && <Checkbox checked={selected} onCheckedChange={(value) => setSelectedState(value === true)} />}
+      {!singleMode && (
+        <div className={rowCellClass}>
+          {!(!isFile && attachmentMode) && (
+            <Checkbox
+              checked={selected}
+              onCheckedChange={(value) => setSelectedState(value === true)}
+            />
+          )}
         </div>
-      }
+      )}
       <div
         className={cn(
-          "p-2 border-t flex items-center group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20 cursor-pointer overflow-hidden",
-          isDragActive && hasUpload ? 'drag-over' : '',
+          rowCellClass,
+          'cursor-pointer overflow-hidden',
+          isDragActive && hasUpload ? 'drag-over' : ''
         )}
         onClick={clickItem}
       >
         {getItemIcon(item)}
-        <span className="ml-1 overflow-hidden overflow-ellipsis whitespace-nowrap">{item.name}</span>
+        <span className="ml-1 overflow-hidden overflow-ellipsis whitespace-nowrap">
+          {item.name}
+        </span>
       </div>
-      {(!compact && !attachmentMode && !destinationMode) && (
+      {!compact && !attachmentMode && !destinationMode && (
         <>
-          <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20 hidden md:block" onClick={clickItem}>{item.owner}</div>
-          <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20 hidden md:block" onClick={clickItem}>{item.modified ? getDateDisplay(item.modified) : ''}</div>
-          <div className="p-2 border-t flex items-center text-gray-400 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20 hidden md:block" onClick={clickItem}>{"size" in item ? getSizeDisplay(item.size) : '--'}</div>
+          <div className={cn(rowCellClass, 'text-gray-400 hidden md:block')} onClick={clickItem}>
+            {item.owner}
+          </div>
+          <div className={cn(rowCellClass, 'text-gray-400 hidden md:block')} onClick={clickItem}>
+            {item.modified ? getDateDisplay(item.modified) : ''}
+          </div>
+          <div className={cn(rowCellClass, 'text-gray-400 hidden md:block')} onClick={clickItem}>
+            {'size' in item ? getSizeDisplay(item.size) : '--'}
+          </div>
         </>
       )}
       {showActions && (
-        <div className="p-2 border-t flex items-center justify-end gap-1 group-has-[>div:hover]:bg-gray-100 group-has-[.drag-over]:bg-primary/20">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 -my-2 rounded-full text-gray-400"
-                  onClick={() => downloadItems([item])}
-                >
-                  <Download />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  <Translator path="evoyaFiles.actions.download.label" />
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          {item.showActions && (
-            <>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 -my-2 rounded-full text-gray-400"
-                      onClick={() => {setRenameOpen(true); setRenameValue(item.name)}}
-                    >
-                      <Pencil />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      <Translator path="evoyaFiles.actions.rename.label" />
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 -my-2 rounded-full text-gray-400"
-                  >
-                    <EllipsisVertical />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent container={window.cl_files_shadowRootElement} align="end">
-                  {(item.mime ?? '').includes('markdown') && (
-                    <DropdownMenuItem onClick={openCreator}>
-                      <FilePen />
-                      <Translator path="components.molecules.evoyaCreatorButton.label" />
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onClick={() => setMoveOpen(true)}>
-                    <FolderInput />
-                    <Translator path="evoyaFiles.actions.move.label" />
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setDeleteOpen(true)} className="text-destructive hover:!text-destructive hover:!bg-destructive/10">
-                    <Trash2 />
-                    <Translator path="evoyaFiles.actions.delete.label" />
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Dialog
-                open={moveOpen}
-                onOpenChange={setMoveOpen}
-              >
-                <DialogContent container={window.cl_files_shadowRootElement} className="z-[9999] max-w-screen-sm">
-                  <DialogHeader>
-                    <DialogTitle>
-                      {isFile ? <Translator path="evoyaFiles.actions.move.title" /> : <Translator path="evoyaFiles.actions.move_folder.title" />}
-                    </DialogTitle>
-                    <DialogDescription>
-                      {isFile ? <Translator path="evoyaFiles.actions.move.description" /> : <Translator path="evoyaFiles.actions.move_folder.description" />}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div>
-                    <form onSubmit={moveItemHandler} id="move-file-form">
-                      <FilePicker 
-                        initialPath='/'
-                        selectedItemsChange={setMoveDestination}
-                        setSelectedPath={setFolderPickerPath}
-                        destinationMode
-                      />
-                    </form>
-                  </div>
-                  <DialogFooter>
-                    <Button variant="secondary" onClick={() => setMoveOpen(false)}>
-                      <Translator path="common.actions.cancel" />
-                    </Button>
-                    <Button type="submit" form="move-file-form">
-                      <Translator path="common.actions.confirm" />
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-              <Dialog
-                open={renameOpen}
-                onOpenChange={setRenameOpen}
-              >
-                <DialogContent container={window.cl_files_shadowRootElement} className="z-[9999]" onOpenAutoFocus={() => setTimeout(() => renameInputRef.current?.focus(), 200)}>
-                  <DialogHeader>
-                    <DialogTitle>
-                      {isFile ? <Translator path="evoyaFiles.actions.rename.title" /> : <Translator path="evoyaFiles.actions.rename_folder.title" />}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div>
-                    <form onSubmit={renameItemHandler} id="rename-file-form">
-                      <Input value={renameValue} ref={renameInputRef} onChange={(e) => setRenameValue(e.target.value)} placeholder={t('evoyaFiles.actions.rename.description')} autoFocus />
-                    </form>
-                  </div>
-                  <DialogFooter>
-                    <Button variant="secondary" onClick={() => setRenameOpen(false)}>
-                      <Translator path="common.actions.cancel" />
-                    </Button>
-                    <Button type="submit" form="rename-file-form">
-                      <Translator path="common.actions.confirm" />
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-              <Dialog
-                open={deleteOpen}
-                onOpenChange={setDeleteOpen}
-              >
-                <DialogContent container={window.cl_files_shadowRootElement} className="z-[9999]">
-                  <DialogHeader>
-                    <DialogTitle>
-                      {isFile ? <Translator path="evoyaFiles.actions.delete.title" /> : <Translator path="evoyaFiles.actions.delete_folder.title" />}
-                    </DialogTitle>
-                    <DialogDescription>
-                      {isFile ? <Translator path="evoyaFiles.actions.delete.description" /> : <Translator path="evoyaFiles.actions.delete_folder.description" />}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <Button variant="secondary" onClick={() => setDeleteOpen(false)}>
-                      <Translator path="common.actions.cancel" />
-                    </Button>
-                    <Button variant="primary" onClick={deleteItemHandler}>
-                      <Translator path="common.actions.confirm" />
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </>
-          )}
+        <div className={cn(rowCellClass, 'justify-end')}>
+          <FileItemActions
+            item={item}
+            mode="standard-row"
+            deleteItems={deleteItems}
+            moveItem={moveItem}
+            renameItem={renameItem}
+            downloadItems={downloadItems}
+          />
         </div>
       )}
     </div>
