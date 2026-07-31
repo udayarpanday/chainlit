@@ -529,6 +529,13 @@
             }
         }
     },
+    "evoyaFiles": {
+        "actions": {
+            "open_in_file_manager": {
+                "label": "Apri nel file manager"
+            }
+        }
+    },
     "navigation": {
         "header": {
             "chat": "Chat",

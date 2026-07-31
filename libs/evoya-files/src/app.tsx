@@ -6,6 +6,7 @@ import { i18nSetupLocalization } from '@chainlit/app/src/i18n';
 import { ThemeProvider } from '../../copilot/src/ThemeProvider';
 import Widget from './widget';
 import WidgetCompact from './widget-compact';
+import WidgetPicker, { EvoyaFilesSelection } from './widget-picker';
 
 i18nSetupLocalization();
 interface Props {
@@ -17,10 +18,12 @@ interface Props {
   file?: string;
   mime?: string;
   brandColor?: string | null;
-  type: string;
+  type: 'default' | 'compact' | 'picker';
+  initialSelections?: EvoyaFilesSelection[];
+  onSelectionChange?: (selections: EvoyaFilesSelection[]) => void;
 }
 
-export default function App({ initialPath, apiBaseUrl, csrfToken, workspaceId, projectId, type, file, mime, brandColor }: Props) {
+export default function App({ initialPath, apiBaseUrl, csrfToken, workspaceId, projectId, type, file, mime, brandColor, initialSelections, onSelectionChange }: Props) {
   const { i18n } = useTranslation();
   const languageInUse = navigator.language || 'en-US';
 
@@ -39,6 +42,27 @@ export default function App({ initialPath, apiBaseUrl, csrfToken, workspaceId, p
       console.error(`Could not load translations for ${languageInUse}:`, error);
     }
   };
+
+  if (type === 'picker') {
+    return (
+      <ThemeProvider
+        storageKey="vite-ui-theme"
+        defaultTheme="light"
+        brandColor={brandColor}
+      >
+        <Toaster richColors className="toast" position="top-right" />
+        <WidgetPicker
+          apiBaseUrl={apiBaseUrl}
+          initialPath={initialPath}
+          csrfToken={csrfToken}
+          workspaceId={workspaceId}
+          brandColor={brandColor}
+          initialSelections={initialSelections}
+          onSelectionChange={onSelectionChange}
+        />
+      </ThemeProvider>
+    );
+  }
 
   if (type === "compact") {
     return (

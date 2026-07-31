@@ -602,6 +602,9 @@
             "search": {
                 "label": "Search"
             },
+            "open_in_file_manager": {
+                "label": "Ouvrir dans le gestionnaire de fichiers"
+            },
             "back_to_project": {
                 "label": "Back to project"
             },

@@ -612,6 +612,9 @@
             "search": {
                 "label": "Suchen"
             },
+            "open_in_file_manager": {
+                "label": "Im Dateimanager öffnen"
+            },
             "back_to_project": {
                 "label": "zurück zum Projekt"
             },

@@ -11,6 +11,11 @@ import themejson from './theme.json';
 const id = 'evoya-file-picker';
 let root: ReactDOM.Root | null = null;
 
+export type EvoyaFilesSelection = {
+  path: string;
+  isFolder: boolean;
+};
+
 type EvoyaFilesConfig = {
   initialPath: string;
   container: HTMLElement;
@@ -18,10 +23,12 @@ type EvoyaFilesConfig = {
   csrfToken: string;
   workspaceId?: string;
   projectId?: string;
-  type?: string;
+  type?: 'default' | 'compact' | 'picker';
   file?: string;
   mime?: string;
   brand_color?: string | null;
+  initialSelections?: EvoyaFilesSelection[];
+  onSelectionChange?: (selections: EvoyaFilesSelection[]) => void;
 }
 
 declare global {
@@ -97,6 +104,8 @@ window.mountEvoyaFilesWidget = (config: EvoyaFilesConfig) => {
         file={config.file}
         mime={config.mime}
         brandColor={config.brand_color}
+        initialSelections={config.initialSelections}
+        onSelectionChange={config.onSelectionChange}
       />
     </React.StrictMode>
   );
