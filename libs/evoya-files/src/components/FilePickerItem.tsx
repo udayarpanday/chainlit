@@ -345,7 +345,7 @@ export default function FilePickerItem({
                     <Button variant="secondary" onClick={() => setDeleteOpen(false)}>
                       <Translator path="common.actions.cancel" />
                     </Button>
-                    <Button variant="destructive" onClick={deleteItemHandler}>
+                    <Button variant="primary" onClick={deleteItemHandler}>
                       <Translator path="common.actions.confirm" />
                     </Button>
                   </DialogFooter>
