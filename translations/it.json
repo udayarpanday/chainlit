@@ -533,7 +533,35 @@
         "actions": {
             "open_in_file_manager": {
                 "label": "Apri nel file manager"
+            },
+            "menu": {
+                "label": "Azioni file"
+            },
+            "open_recent_file": {
+                "label": "Apri {{name}}"
+            },
+            "open_location": {
+                "label": "Apri posizione {{location}}"
             }
+        },
+        "common": {
+            "recent_files": "File recenti",
+            "no_recent_files": "Nessun file recente generato dall'IA",
+            "load_error": "Impossibile caricare i file",
+            "search_error": "Impossibile cercare i file",
+            "search_truncated": "Sono disponibili altri risultati. Affina la ricerca.",
+            "load_more": "Carica altro"
+        },
+        "shortcuts": {
+            "title": "Scorciatoie",
+            "generated": { "title": "File generati", "description": "File generati dall'IA", "empty": "Nessun file generato" },
+            "images": { "title": "Immagini", "description": "Immagini generate dall'IA", "empty": "Nessuna immagine generata" },
+            "projects": { "title": "Progetti", "description": "Vai alle cartelle dei progetti", "empty": "Nessun progetto" }
+        },
+        "activity": { "opened": "Aperto da", "modified": "Modificato da" },
+        "headers": {
+            "location": "Posizione",
+            "actions": "Azioni"
         }
     },
     "navigation": {

@@ -4,8 +4,9 @@ export type EvoyaDirectory = {
   owner: string;
   // permissions: EvoyaPermission[],
   showActions: boolean;
-  modified: Date;
-  created: Date;
+  readOnly?: boolean;
+  modified: Date | null;
+  created: Date | null;
   path: string;
 }
 

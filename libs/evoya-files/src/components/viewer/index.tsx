@@ -55,7 +55,11 @@ export function ViewerWrapper({
     }
 
     setFileLoaded(false);
-    fetch(`${apiBaseUrl}/api/files/download/?path=${file.path}`).then(async (response) => {
+    const previewParams = new URLSearchParams({
+      path: file.path,
+      intent: 'preview'
+    });
+    fetch(`${apiBaseUrl}/api/files/download/?${previewParams.toString()}`).then(async (response) => {
       const blob = await response.blob();
       setBlobUrl(URL.createObjectURL(blob));
       const text = await blob.text();
