@@ -813,7 +813,7 @@ export default function FilePicker({
             onDelete={(item) => deleteItems([item as FilePickerItem])}
           />
         )}
-        {!activeShortcut && shouldShowRecentFiles({
+        {/* {!activeShortcut && shouldShowRecentFiles({
           path: currentPath,
           isSearch,
           pickerType,
@@ -823,7 +823,7 @@ export default function FilePicker({
           singleMode
         }) && (
           <ShortcutsSection onOpen={(shortcut) => void fetchShortcut(shortcut)} />
-        )}
+        )} */}
         {shouldShowRecentFiles({
           path: currentPath,
           isSearch,

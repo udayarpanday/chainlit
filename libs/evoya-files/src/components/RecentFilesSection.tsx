@@ -1,5 +1,5 @@
 import type { KeyboardEvent, MouseEvent } from 'react';
-import { LoaderCircle, PackageOpen } from 'lucide-react';
+import { Folder, LoaderCircle, PackageOpen } from 'lucide-react';
 
 import { Translator } from '@chainlit/app/src/components/i18n';
 import { useTranslation } from '@chainlit/app/src/components/i18n/Translator';
@@ -46,6 +46,11 @@ export default function RecentFilesSection({
     if (path) onOpenLocation(path);
   };
 
+  const getLocationLabel = (file: RecentFile) => {
+    const location = file.locationName || file.location;
+    return location.split('/').filter(Boolean)[0] || location;
+  };
+
   return (
     <section className="mt-6 flex-shrink-0" aria-labelledby="recent-files-title">
       <h2 id="recent-files-title" className="mb-2 text-base font-semibold">
@@ -54,12 +59,12 @@ export default function RecentFilesSection({
       <div className="overflow-x-auto rounded-2xl border border-gray-100 bg-white shadow-sm">
         <table className="w-full min-w-[720px] border-collapse text-sm">
           <thead>
-            <tr className="text-left text-sm text-foreground">
-              <th className="px-5 py-5 font-semibold"><Translator path="evoyaFiles.headers.name" /></th>
-              <th className="px-5 py-5 font-semibold"><Translator path="evoyaFiles.headers.modified" /></th>
-              <th className="px-5 py-5 font-semibold"><Translator path="evoyaFiles.headers.owner" /></th>
-              <th className="px-5 py-5 font-semibold"><Translator path="evoyaFiles.headers.location" /></th>
-              <th className="px-5 py-5 text-right font-semibold"><Translator path="evoyaFiles.headers.actions" /></th>
+            <tr className="text-left text-xs text-foreground">
+              <th className="px-5 py-4 font-semibold text-gray-400"><Translator path="evoyaFiles.headers.name" /></th>
+              <th className="px-5 py-4 font-semibold text-gray-400"><Translator path="evoyaFiles.headers.modified" /></th>
+              <th className="px-5 py-4 font-semibold text-gray-400"><Translator path="evoyaFiles.headers.owner" /></th>
+              <th className="px-5 py-4 font-semibold text-gray-400"><Translator path="evoyaFiles.headers.location" /></th>
+              <th className="px-5 py-4 text-right font-semibold text-gray-400"><Translator path="evoyaFiles.headers.actions" /></th>
             </tr>
           </thead>
           <tbody>
@@ -108,13 +113,15 @@ export default function RecentFilesSection({
                     <Button
                       type="button"
                       variant="link"
-                      className="h-auto max-w-[260px] justify-start truncate p-0 text-left"
+                      className="h-auto max-w-[260px] justify-start gap-2 truncate p-0 text-left"
                       onClick={(event) => openLocation(event, file.location)}
+                      title={file.locationName || file.location}
                       aria-label={t('evoyaFiles.actions.open_location.label', {
                         location: file.locationName || file.location
                       })}
                     >
-                      {file.locationName || file.location}
+                      <Folder className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      <span className="truncate">{getLocationLabel(file)}</span>
                     </Button>
                   ) : (
                     <span className="text-gray-400">—</span>
