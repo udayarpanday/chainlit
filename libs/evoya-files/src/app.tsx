@@ -13,6 +13,8 @@ interface Props {
   initialPath: string;
   apiBaseUrl: string;
   csrfToken: string;
+  isSuperuser?: boolean;
+  showConnectButton?: boolean;
   workspaceId?: string;
   projectId?: string;
   file?: string;
@@ -23,7 +25,7 @@ interface Props {
   onSelectionChange?: (selections: EvoyaFilesSelection[]) => void;
 }
 
-export default function App({ initialPath, apiBaseUrl, csrfToken, workspaceId, projectId, type, file, mime, brandColor, initialSelections, onSelectionChange }: Props) {
+export default function App({ initialPath, apiBaseUrl, csrfToken, isSuperuser = false, showConnectButton = false, workspaceId, projectId, type, file, mime, brandColor, initialSelections, onSelectionChange }: Props) {
   const { i18n } = useTranslation();
   const languageInUse = navigator.language || 'en-US';
 
@@ -97,6 +99,8 @@ export default function App({ initialPath, apiBaseUrl, csrfToken, workspaceId, p
         apiBaseUrl={apiBaseUrl}
         initialPath={initialPath}
         csrfToken={csrfToken}
+        isSuperuser={isSuperuser}
+        showConnectButton={showConnectButton}
         workspaceId={workspaceId}
         projectId={projectId}
         file={file}

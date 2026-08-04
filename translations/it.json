@@ -531,6 +531,9 @@
     },
     "evoyaFiles": {
         "actions": {
+            "connect": {
+                "label": "Connetti"
+            },
             "open_in_file_manager": {
                 "label": "Apri nel file manager"
             },

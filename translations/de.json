@@ -606,6 +606,9 @@
             "new": {
                 "label": "Neu"
             },
+            "connect": {
+                "label": "Verbinden"
+            },
             "download": {
                 "label": "Herunterladen"
             },

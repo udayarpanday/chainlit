@@ -10,6 +10,8 @@ interface Props {
   initialPath: string;
   apiBaseUrl: string;
   csrfToken: string;
+  isSuperuser?: boolean;
+  showConnectButton?: boolean;
   workspaceId?: string;
   projectId?: string;
   file?: string;
@@ -17,7 +19,7 @@ interface Props {
   brandColor?: string | null;
 }
 
-export default function Widget({ initialPath, apiBaseUrl, csrfToken, workspaceId, projectId, file, mime, brandColor }: Props) {
+export default function Widget({ initialPath, apiBaseUrl, csrfToken, isSuperuser = false, showConnectButton = false, workspaceId, projectId, file, mime, brandColor }: Props) {
   const requestedView = new URLSearchParams(window.location.search).get('view');
   const initialView = isShortcutKey(requestedView) ? requestedView : undefined;
   const [selectedPath, setSelectedPath] = useState(initialPath);
@@ -64,6 +66,8 @@ export default function Widget({ initialPath, apiBaseUrl, csrfToken, workspaceId
     <FilePickerContext.Provider value={{
       apiBaseUrl,
       csrfToken,
+      isSuperuser,
+      showConnectButton,
       workspaceId,
       projectId,
       type: 'default',
