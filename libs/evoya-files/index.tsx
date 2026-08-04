@@ -21,6 +21,9 @@ type EvoyaFilesConfig = {
   container: HTMLElement;
   apiBaseUrl: string;
   csrfToken: string;
+  isSuperUser?: boolean;
+  is_superuser?: boolean;
+  showConnectButton?: boolean;
   workspaceId?: string;
   projectId?: string;
   type?: 'default' | 'compact' | 'picker';
@@ -98,6 +101,8 @@ window.mountEvoyaFilesWidget = (config: EvoyaFilesConfig) => {
         initialPath={config.initialPath}
         apiBaseUrl={config.apiBaseUrl}
         csrfToken={config.csrfToken}
+        isSuperuser={config.isSuperUser ?? config.is_superuser ?? false}
+        showConnectButton={config.showConnectButton ?? false}
         projectId={config.projectId}
         workspaceId={config.workspaceId}
         type={config.type ?? 'default'}

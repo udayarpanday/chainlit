@@ -554,6 +554,9 @@
     },
     "evoyaFiles": {
         "actions": {
+            "connect": {
+                "label": "Conectar"
+            },
             "attachments": {
                 "label": "Cloud Storage",
                 "description": "Platform, OneDrive, etc.",

@@ -1,5 +1,5 @@
 export type EvoyaFile = {
-  // type: 'file';
+  type?: string;
   name: string;
   owner: string;
   // permissions: [

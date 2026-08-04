@@ -60,7 +60,7 @@ export default function Uploader({
   onFileUpload,
   loadCurrentPath,
 }: Props) {
-  const { apiBaseUrl, csrfToken, projectId, type } = useContext(FilePickerContext);
+  const { apiBaseUrl, csrfToken, isSuperuser, showConnectButton, projectId, type } = useContext(FilePickerContext);
   const [newFolderName, setNewFolderName] = useState('');
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const folderNameInput = useRef<HTMLInputElement>(null);
@@ -161,6 +161,13 @@ export default function Uploader({
         <div className={cn("font-bold", type === 'compact' ? 'text-xl' : 'text-2xl')}>
           <Translator path="evoyaFiles.common.files" />
         </div>
+        {currentPath === '/' && isSuperuser && showConnectButton && (
+          <Button asChild>
+            <a href="/files/manage/sharepoint/mounts/">
+              <Translator path="evoyaFiles.actions.connect.label" />
+            </a>
+          </Button>
+        )}
         {currentPath !== '/' && (
           <div className="flex gap-2">
             <input

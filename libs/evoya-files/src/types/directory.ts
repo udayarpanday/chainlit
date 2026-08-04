@@ -1,5 +1,5 @@
 export type EvoyaDirectory = {
-  // type: 'dir';
+  type?: string;
   name: string;
   owner: string;
   // permissions: EvoyaPermission[],

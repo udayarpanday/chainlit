@@ -67,6 +67,7 @@ export default function FilePickerItemComponent({
   downloadItems = () => {}
 }: Props) {
   const isFile = 'size' in item;
+  const isNonLocal = Boolean(item.path && item.path.toLowerCase().includes('sharepoint'));
   const upload = useUpload({
     spec: { max_size_mb: 500, max_files: 20, accept: ['*/*'] },
     onResolved: (payloads: File[]) =>
@@ -114,7 +115,12 @@ export default function FilePickerItemComponent({
         onClick={clickItem}
       >
         {getItemIcon(item)}
-        <span className="ml-1 overflow-hidden overflow-ellipsis whitespace-nowrap">
+        <span
+          className={cn(
+            'ml-1 overflow-hidden overflow-ellipsis whitespace-nowrap',
+            isNonLocal && 'text-sky-700'
+          )}
+        >
           {item.name}
         </span>
       </div>

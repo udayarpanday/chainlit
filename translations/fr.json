@@ -596,6 +596,9 @@
             "new": {
                 "label": "New"
             },
+            "connect": {
+                "label": "Connecter"
+            },
             "download": {
                 "label": "Download"
             },
