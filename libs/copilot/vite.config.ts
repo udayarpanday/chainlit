@@ -25,6 +25,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      // Resolve cross-project workspace source imports (evoya frontend -> copilot/evoya-files source)
+      '@chainlit/copilot/src': path.resolve(__dirname, './src'),
+      '@evoya/file-picker/src': path.resolve(__dirname, '../evoya-files/src'),
       // To prevent conflicts with packages in @chainlit/app, we need to specify the resolution paths for these dependencies.
       react: path.resolve(__dirname, './node_modules/react'),
       '@chainlit': path.resolve(__dirname, './node_modules/@chainlit'),

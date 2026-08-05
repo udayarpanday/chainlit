@@ -292,3 +292,13 @@ export const agentState = atom<IAgents[]>({
   key: 'Agent',
   default: []
 });
+
+export const initialTranscriptState = atom<{ text?: string; mode?: string }>({
+  key: 'InitialTranscript',
+  default: {}
+});
+
+export const promptState = atom<{ text?: string; mode?: string }>({
+  key: 'Prompt',
+  default: {}
+});

@@ -334,3 +334,4 @@ const Markdown = ({
 };
 
 export { Markdown };
+export default Markdown;
