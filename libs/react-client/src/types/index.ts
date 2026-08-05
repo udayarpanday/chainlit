@@ -11,3 +11,4 @@ export * from './history';
 export * from './config';
 export * from './mcp';
 export * from './agents';
+export type { IAgent } from './agents';

@@ -17,4 +17,6 @@ export interface IUser {
   identifier: string;
   display_name?: string;
   metadata: IUserMetadata;
+  is_superuser?: boolean;
+  role?: string;
 }

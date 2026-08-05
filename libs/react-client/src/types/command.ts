@@ -5,4 +5,8 @@ export interface ICommand {
   button?: boolean;
   persistent?: boolean;
   selected?: boolean;
+  prompt_content?: string;
+  content?: string;
+  for?: string;
+  args?: Record<string, any>;
 }
