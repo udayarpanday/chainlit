@@ -18,12 +18,23 @@ if TYPE_CHECKING:
     from chainlit.element import ElementDict
     from chainlit.step import StepDict
 
+from dataclasses import field
+
 from dataclasses_json import DataClassJsonMixin
 from pydantic import BaseModel
 from pydantic.dataclasses import dataclass
 
 InputWidgetType = Literal[
-    "switch", "slider", "select", "textinput", "tags", "numberinput"
+    "switch",
+    "slider",
+    "select",
+    "textinput",
+    "tags",
+    "numberinput",
+    "multiselect",
+    "checkbox",
+    "radio",
+    "datepicker",
 ]
 ToastType = Literal["info", "success", "warning", "error"]
 
@@ -46,9 +57,9 @@ class Pagination(BaseModel):
 
 
 class ThreadFilter(BaseModel):
-    feedback: Optional[Literal[0, 1]] = None
-    userId: Optional[str] = None
-    search: Optional[str] = None
+    feedback: Literal[0, 1] | None = None
+    userId: str | None = None
+    search: str | None = None
 
 
 @dataclass
@@ -125,7 +136,8 @@ class AskSpec(DataClassJsonMixin):
     """Specification for asking the user."""
 
     timeout: int
-    type: Literal["text", "file", "action"]
+    type: Literal["text", "file", "action", "element"]
+    step_id: str
 
 
 @dataclass
@@ -136,6 +148,13 @@ class AskFileSpec(FileSpec, AskSpec, DataClassJsonMixin):
 @dataclass
 class AskActionSpec(ActionSpec, AskSpec, DataClassJsonMixin):
     """Specification for asking the user an action"""
+
+
+@dataclass
+class AskElementSpec(AskSpec, DataClassJsonMixin):
+    """Specification for asking the user a custom element"""
+
+    element_id: str
 
 
 class FileReference(TypedDict):
@@ -194,9 +213,18 @@ class AskActionResponse(TypedDict):
     id: str
 
 
+class AskElementResponse(TypedDict, total=False):
+    submitted: bool
+
+
 class UpdateThreadRequest(BaseModel):
     threadId: str
     name: str
+
+
+class ShareThreadRequest(BaseModel):
+    threadId: str
+    isShared: bool
 
 
 class DeleteThreadRequest(BaseModel):
@@ -217,6 +245,41 @@ class CallActionRequest(BaseModel):
     sessionId: str
 
 
+class ConnectStdioMCPRequest(BaseModel):
+    sessionId: str
+    clientType: Literal["stdio"]
+    name: str
+    fullCommand: str
+
+
+class ConnectSseMCPRequest(BaseModel):
+    sessionId: str
+    clientType: Literal["sse"]
+    name: str
+    url: str
+    # Optional HTTP headers to forward to the MCP transport (e.g. Authorization)
+    headers: Optional[Dict[str, str]] = None
+
+
+class ConnectStreamableHttpMCPRequest(BaseModel):
+    sessionId: str
+    clientType: Literal["streamable-http"]
+    name: str
+    url: str
+    # Optional HTTP headers to forward to the MCP transport (e.g. Authorization)
+    headers: Dict[str, str] | None = None
+
+
+ConnectMCPRequest = Union[
+    ConnectStdioMCPRequest, ConnectSseMCPRequest, ConnectStreamableHttpMCPRequest
+]
+
+
+class DisconnectMCPRequest(BaseModel):
+    sessionId: str
+    name: str
+
+
 class ElementRequest(BaseModel):
     element: Dict
     sessionId: str
@@ -233,7 +296,17 @@ class Starter(DataClassJsonMixin):
 
     label: str
     message: str
+    command: Optional[str] = None
     icon: Optional[str] = None
+
+
+@dataclass
+class StarterCategory(DataClassJsonMixin):
+    """A category/group of starters with an optional icon."""
+
+    label: str
+    icon: Optional[str] = None
+    starters: List[Starter] = field(default_factory=list)
 
 
 @dataclass
@@ -243,8 +316,10 @@ class ChatProfile(DataClassJsonMixin):
     name: str
     markdown_description: str
     icon: Optional[str] = None
+    display_name: Optional[str] = None
     default: bool = False
     starters: Optional[List[Starter]] = None
+    config_overrides: Any = None
 
 
 FeedbackStrategy = Literal["BINARY"]
@@ -257,6 +332,12 @@ class CommandDict(TypedDict):
     description: str
     # The lucide icon name
     icon: str
+    # Display the command as a button in the composer
+    button: Optional[bool]
+    # Whether the command will be persistent unless the user toggles it
+    persistent: Optional[bool]
+    # Whether the command should be pre-selected when loaded
+    selected: Optional[bool]
 
 
 class FeedbackDict(TypedDict):
@@ -277,3 +358,4 @@ class Feedback:
 
 class UpdateFeedbackRequest(BaseModel):
     feedback: Feedback
+    sessionId: str

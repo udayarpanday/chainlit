@@ -53,7 +53,7 @@ class AzureStorageClient(BaseStorageClient):
             self.sas_token = sas_token
             logger.info("AzureStorageClient initialized")
         except Exception as e:
-            logger.warn(f"AzureStorageClient initialization error: {e}")
+            logger.warning(f"AzureStorageClient initialization error: {e}")
 
     async def upload_file(
         self,
@@ -61,12 +61,15 @@ class AzureStorageClient(BaseStorageClient):
         data: Union[bytes, str],
         mime: str = "application/octet-stream",
         overwrite: bool = True,
+        content_disposition: str | None = None,
     ) -> Dict[str, Any]:
         try:
             file_client: DataLakeFileClient = self.container_client.get_file_client(
                 object_key
             )
-            content_settings = ContentSettings(content_type=mime)
+            content_settings = ContentSettings(
+                content_type=mime, content_disposition=content_disposition
+            )
             file_client.upload_data(
                 data, overwrite=overwrite, content_settings=content_settings
             )
@@ -77,5 +80,9 @@ class AzureStorageClient(BaseStorageClient):
             )
             return {"object_key": object_key, "url": url}
         except Exception as e:
-            logger.warn(f"AzureStorageClient, upload_file error: {e}")
+            logger.warning(f"AzureStorageClient, upload_file error: {e}")
             return {}
+
+    async def close(self) -> None:
+        self.container_client.close()
+        self.data_lake_client.close()

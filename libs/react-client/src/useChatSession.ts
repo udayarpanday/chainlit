@@ -1,5 +1,5 @@
-import { debounce, set } from 'lodash';
-import { useCallback, useContext, useEffect, useRef } from 'react';
+import { debounce } from 'lodash';
+import { useCallback, useContext, useEffect } from 'react';
 import {
   useRecoilState,
   useRecoilValue,
@@ -10,24 +10,22 @@ import io from 'socket.io-client';
 import { toast } from 'sonner';
 import {
   actionState,
-  agentState,
   askUserState,
   audioConnectionState,
   callFnState,
-  chatArchived,
   chatProfileState,
   chatSettingsInputsState,
   chatSettingsValueState,
   commandsState,
   currentThreadIdState,
   elementState,
+  favoriteMessagesState,
   firstUserInteraction,
-  initialTranscriptState,
   isAiSpeakingState,
   loadingState,
+  mcpState,
   messagesState,
-  projectAccess,
-  promptState,
+  modesState,
   resumeThreadErrorState,
   sessionIdState,
   sessionState,
@@ -39,12 +37,11 @@ import {
   wavStreamPlayerState
 } from 'src/state';
 import {
-  ChatInputSocketPayload,
   IAction,
-  IChatArchived,
   ICommand,
   IElement,
   IMessageElement,
+  IMode,
   IStep,
   ITasklistElement,
   IThread
@@ -52,32 +49,14 @@ import {
 import {
   addMessage,
   deleteMessageById,
-  findMessageById,
   updateMessageById,
   updateMessageContentById
 } from 'src/utils/message';
 
-import { IAgents } from './types/agents';
 import { OutputAudioChunk } from './types/audio';
 
 import { ChainlitContext } from './context';
-import {
-  getChainlitTabId,
-  getScopedSessionStorageItem,
-  setScopedSessionStorageItem
-} from './storage';
 import type { IToken } from './useChatData';
-import {
-  markTaskEnded,
-  markTaskStarted,
-  resetTaskLoading
-} from './taskLoading';
-
-type EvoyaCreatorWindow = Window &
-  typeof globalThis & {
-    evoyaCreatorEnabled?: boolean;
-    updateEvoyaCreator?: (message: IStep, parent?: IStep) => string | undefined;
-  };
 
 const useChatSession = () => {
   const client = useContext(ChainlitContext);
@@ -87,16 +66,17 @@ const useChatSession = () => {
   const setIsAiSpeaking = useSetRecoilState(isAiSpeakingState);
   const setAudioConnection = useSetRecoilState(audioConnectionState);
   const resetChatSettingsValue = useResetRecoilState(chatSettingsValueState);
+  const setChatSettingsValue = useSetRecoilState(chatSettingsValueState);
   const setFirstUserInteraction = useSetRecoilState(firstUserInteraction);
   const setLoading = useSetRecoilState(loadingState);
+  const setMcps = useSetRecoilState(mcpState);
   const wavStreamPlayer = useRecoilValue(wavStreamPlayerState);
   const wavRecorder = useRecoilValue(wavRecorderState);
   const setMessages = useSetRecoilState(messagesState);
   const setAskUser = useSetRecoilState(askUserState);
   const setCallFn = useSetRecoilState(callFnState);
   const setCommands = useSetRecoilState(commandsState);
-  const setContextPrompt = useSetRecoilState(promptState);
-  const setAgents = useSetRecoilState(agentState);
+  const setModes = useSetRecoilState(modesState);
   const setSideView = useSetRecoilState(sideViewState);
   const setElements = useSetRecoilState(elementState);
   const setTasklists = useSetRecoilState(tasklistState);
@@ -106,45 +86,25 @@ const useChatSession = () => {
   const [chatProfile, setChatProfile] = useRecoilState(chatProfileState);
   const idToResume = useRecoilValue(threadIdToResumeState);
   const setThreadResumeError = useSetRecoilState(resumeThreadErrorState);
-  const setInitialTranscript = useSetRecoilState(initialTranscriptState);
-  const setChatArchived = useSetRecoilState(chatArchived);
-  const setProjectAccess = useSetRecoilState(projectAccess);
-
-  const token = getScopedSessionStorageItem('chainlit_token') || '';
-  const tabId = getChainlitTabId();
+  const setFavoriteMessages = useSetRecoilState(favoriteMessagesState);
 
   const [currentThreadId, setCurrentThreadId] =
     useRecoilState(currentThreadIdState);
 
+  // Use currentThreadId as thread id in websocket header
   useEffect(() => {
     if (session?.socket) {
       session.socket.auth['threadId'] = currentThreadId || '';
     }
   }, [currentThreadId]);
 
-  const isReconnectingRef = useRef(false);
-  const reconnectAttemptRef = useRef(0);
-
-  const refreshStickyCookie = useCallback(
-    async (stickySessionId: string) => {
-      try {
-        await client.stickyCookie(stickySessionId);
-      } catch (err) {
-        console.error(`Failed to set sticky session cookie: ${err}`);
-      }
-    },
-    [client]
-  );
-
   const _connect = useCallback(
     async ({
       transports,
-      userEnv,
-      evoya
+      userEnv
     }: {
       transports?: string[];
       userEnv: Record<string, string>;
-      evoya: { session_uuid: string };
     }) => {
       const { protocol, host, pathname } = new URL(client.httpEndpoint);
       const uri = `${protocol}//${host}`;
@@ -153,63 +113,24 @@ const useChatSession = () => {
           ? `${pathname}/ws/socket.io`
           : '/ws/socket.io';
 
-      await refreshStickyCookie(sessionId);
-
-      isReconnectingRef.current = false;
-      reconnectAttemptRef.current = 0;
+      try {
+        await client.stickyCookie(sessionId);
+      } catch (err) {
+        console.error(`Failed to set sticky session cookie: ${err}`);
+      }
 
       const socket = io(uri, {
         path,
         withCredentials: true,
         transports,
-        query: {
-          chainlit_session_id: sessionId,
-        },
-        auth: (cb) => {
-          cb({
-            clientType: client.type,
-            sessionId,
-            threadId: idToResume || '',
-            userEnv: JSON.stringify(userEnv),
-            Authorization: token,
-            chatProfile: chatProfile ? encodeURIComponent(chatProfile) : '',
-            clientTabId: tabId,
-            socketReconnection: isReconnectingRef.current ? 'true' : 'false',
-            reconnectAttempt: String(reconnectAttemptRef.current),
-            chatSessionUuid:
-              evoya?.session_uuid ||
-              getScopedSessionStorageItem('session_token') ||
-              '' // Pass the Evoya session UUID to the server,
-          });
-        },
-        extraHeaders: {
-          Authorization: `Bearer ${token}` || '',
-          'X-Chainlit-Client-Type': client.type,
-          'X-Chainlit-Session-Id': sessionId,
-          'X-Chainlit-Tab-Id': tabId,
-          'X-Chainlit-Thread-Id': idToResume || '',
-          'user-env': JSON.stringify(userEnv),
-          'X-Chainlit-Chat-Profile': chatProfile
-            ? encodeURIComponent(chatProfile)
-            : ''
+        auth: {
+          clientType: client.type,
+          sessionId,
+          threadId: idToResume || '',
+          userEnv: JSON.stringify(userEnv),
+          chatProfile: chatProfile ? encodeURIComponent(chatProfile) : ''
         }
       });
-
-      socket.io.on('reconnect_attempt', (attempt: number) => {
-        isReconnectingRef.current = true;
-        reconnectAttemptRef.current = attempt;
-        void refreshStickyCookie(sessionId);
-      });
-
-      socket.io.on('reconnect', (attempt: number) => {
-        reconnectAttemptRef.current = attempt;
-      });
-
-      socket.io.on('reconnect_failed', () => {
-        isReconnectingRef.current = false;
-        reconnectAttemptRef.current = 0;
-      });
-
       setSession((old) => {
         old?.socket?.removeAllListeners();
         old?.socket?.close();
@@ -220,9 +141,58 @@ const useChatSession = () => {
 
       socket.on('connect', () => {
         socket.emit('connection_successful');
-        setLoading(resetTaskLoading());
         setSession((s) => ({ ...s!, error: false }));
-        isReconnectingRef.current = false;
+        socket.emit('fetch_favorites');
+        setMcps((prev) =>
+          prev.map((mcp) => {
+            let promise;
+            if (mcp.clientType === 'sse') {
+              promise = client.connectSseMCP(sessionId, mcp.name, mcp.url!);
+            } else if (mcp.clientType === 'streamable-http') {
+              promise = client.connectStreamableHttpMCP(
+                sessionId,
+                mcp.name,
+                mcp.url!,
+                mcp.headers || {}
+              );
+            } else {
+              promise = client.connectStdioMCP(
+                sessionId,
+                mcp.name,
+                mcp.command!
+              );
+            }
+            promise
+              .then(async ({ success, mcp }) => {
+                setMcps((prev) =>
+                  prev.map((existingMcp) => {
+                    if (existingMcp.name === mcp.name) {
+                      return {
+                        ...existingMcp,
+                        status: success ? 'connected' : 'failed',
+                        tools: mcp ? mcp.tools : existingMcp.tools
+                      };
+                    }
+                    return existingMcp;
+                  })
+                );
+              })
+              .catch(() => {
+                setMcps((prev) =>
+                  prev.map((existingMcp) => {
+                    if (existingMcp.name === mcp.name) {
+                      return {
+                        ...existingMcp,
+                        status: 'failed'
+                      };
+                    }
+                    return existingMcp;
+                  })
+                );
+              });
+            return { ...mcp, status: 'connecting' };
+          })
+        );
       });
 
       socket.on('connect_error', (_) => {
@@ -230,11 +200,11 @@ const useChatSession = () => {
       });
 
       socket.on('task_start', () => {
-        setLoading(markTaskStarted());
+        setLoading(true);
       });
 
       socket.on('task_end', () => {
-        setLoading(markTaskEnded());
+        setLoading(false);
       });
 
       socket.on('reload', () => {
@@ -247,20 +217,31 @@ const useChatSession = () => {
           let isFirstChunk = true;
           const startTime = Date.now();
           const mimeType = 'pcm16';
-          // Connect to microphone
-          await wavRecorder.begin();
-          await wavStreamPlayer.connect();
-          await wavRecorder.record(async (data) => {
-            const elapsedTime = Date.now() - startTime;
-            socket.emit('audio_chunk', {
-              isStart: isFirstChunk,
-              mimeType,
-              elapsedTime,
-              data: data.mono
+          try {
+            await wavRecorder.begin();
+            await wavStreamPlayer.connect();
+            await wavRecorder.record(async (data) => {
+              const elapsedTime = Date.now() - startTime;
+              socket.emit('audio_chunk', {
+                isStart: isFirstChunk,
+                mimeType,
+                elapsedTime,
+                data: data.mono
+              });
+              isFirstChunk = false;
             });
-            isFirstChunk = false;
-          });
-          wavStreamPlayer.onStop = () => setIsAiSpeaking(false);
+            wavStreamPlayer.onStop = () => setIsAiSpeaking(false);
+          } catch {
+            try {
+              await wavRecorder.end();
+            } catch {
+              // ignored
+            }
+            await wavStreamPlayer.interrupt();
+            socket.emit('audio_end');
+            setAudioConnection('off');
+            return;
+          }
         } else {
           await wavRecorder.end();
           await wavStreamPlayer.interrupt();
@@ -278,12 +259,24 @@ const useChatSession = () => {
       });
 
       socket.on('resume_thread', (thread: IThread) => {
+        const isReadOnlyView = Boolean(
+          (thread as any)?.metadata?.viewer_read_only
+        );
+        if (!isReadOnlyView && idToResume && thread.id !== idToResume) {
+          window.location.href = `/thread/${thread.id}`;
+        }
+        if (!isReadOnlyView && idToResume) {
+          setCurrentThreadId(thread.id);
+        }
         let messages: IStep[] = [];
         for (const step of thread.steps) {
           messages = addMessage(messages, step);
         }
         if (thread.metadata?.chat_profile) {
           setChatProfile(thread.metadata?.chat_profile);
+        }
+        if (thread.metadata?.chat_settings) {
+          setChatSettingsValue(thread.metadata?.chat_settings);
         }
         setMessages(messages);
         const elements = thread.elements || [];
@@ -301,38 +294,8 @@ const useChatSession = () => {
         setThreadResumeError(error);
       });
 
-      // socket.on('new_message', (message: IStep) => {
-      //   setMessages((oldMessages) => addMessage(oldMessages, message));
-      // });
       socket.on('new_message', (message: IStep) => {
-        /*if (message.type === 'assistant_message' && message.output !== "") {
-          // @ts-expect-error is not a valid prop
-          window.updateEvoyaCreator(message, findMessageById(oldMessages, message.parentId));
-          // window.updateEvoyaCreator(message.output);
-        }*/
-        setMessages((oldMessages) => {
-          let newOutput = message.output;
-          const evoyaWindow = window as EvoyaCreatorWindow;
-
-          if (
-            message.type === 'assistant_message' &&
-            message.output !== '' &&
-            evoyaWindow.evoyaCreatorEnabled
-          ) {
-            const parentMessage = message.parentId
-              ? findMessageById(oldMessages, message.parentId)
-              : undefined;
-
-            newOutput =
-              evoyaWindow.updateEvoyaCreator?.(message, parentMessage) ||
-              message.output;
-            // window.updateEvoyaCreator(message.output);
-          }
-
-          // console.log('feedback', newOutput);
-          return addMessage(oldMessages, { ...message, output: newOutput });
-          // return addMessage(oldMessages, message);
-        });
+        setMessages((oldMessages) => addMessage(oldMessages, message));
       });
 
       socket.on(
@@ -344,29 +307,9 @@ const useChatSession = () => {
       );
 
       socket.on('update_message', (message: IStep) => {
-        setMessages((oldMessages) => {
-          const newMessages = oldMessages;
-          /* // @ts-expect-error is not a valid prop
-          if (message.type === 'run' && message.name === 'on_message' && message.end && window.evoyaCreatorEnabled) {
-            const oldMsg = findMessageById(oldMessages, message.id)
-            console.log(oldMsg)
-            // const directParent = findMessageById(oldMessages, message.parentId || '');
-            // let messageParent = directParent;
-            // if (directParent?.parentId) {
-              // messageParent = findMessageById(oldMessages, directParent.parentId);
-            // }
-            if (oldMsg?.steps?.length && oldMsg.steps[0].output) {
-              // @ts-expect-error is not a valid prop
-              const newOutput = window.updateEvoyaCreator(oldMsg.steps[0], message) || oldMsg.steps[0].output;
-              // window.updateEvoyaCreator(message.output);
-              newMessages = updateMessageById(oldMessages, oldMsg.steps[0].id, {
-                ...oldMsg.steps[0],
-                output: newOutput
-              })
-            }
-          }*/
-          return updateMessageById(newMessages, message.id, message);
-        });
+        setMessages((oldMessages) =>
+          updateMessageById(oldMessages, message.id, message)
+        );
       });
 
       socket.on('delete_message', (message: IStep) => {
@@ -382,27 +325,22 @@ const useChatSession = () => {
       socket.on(
         'stream_token',
         ({ id, token, isSequence, isInput }: IToken) => {
-          setMessages((oldMessages) => {
-            const newMessages = updateMessageContentById(
+          setMessages((oldMessages) =>
+            updateMessageContentById(
               oldMessages,
               id,
               token,
               isSequence,
               isInput
-            );
-            // @ts-expect-error is not a valid prop
-            if (window.evoyaCreatorEnabled) {
-              // @ts-expect-error is not a valid prop
-              window.streamEvoyaCreator(findMessageById(newMessages, id));
-            }
-            return newMessages;
-          });
+            )
+          );
         }
       );
 
       socket.on('ask', ({ msg, spec }, callback) => {
         setAskUser({ spec, callback, parentId: msg.parentId });
         setMessages((oldMessages) => addMessage(oldMessages, msg));
+
         setLoading(false);
       });
 
@@ -436,76 +374,42 @@ const useChatSession = () => {
         setCommands(commands);
       });
 
-      socket.on('agents', (agents: IAgents[]) => {
-        setAgents(agents);
+      socket.on('set_modes', (modes: IMode[]) => {
+        setModes(modes);
+      });
+
+      socket.on('set_favorites', (steps: IStep[]) => {
+        setFavoriteMessages(steps);
       });
 
       socket.on('set_sidebar_title', (title: string) => {
         setSideView((prev) => {
+          if (prev?.title === title) return prev;
           return { title, elements: prev?.elements || [] };
         });
       });
 
       socket.on(
-        'context_prompt',
-        (context: {
-          context_prompt: string;
-          context_prompt_exact_sent_to_llm?: unknown;
-          is_superuser: boolean | undefined;
-        }) => {
-          if (context) {
-            setContextPrompt(context);
+        'set_sidebar_elements',
+        ({ elements, key }: { elements: IMessageElement[]; key?: string }) => {
+          if (!elements.length) {
+            setSideView(undefined);
+          } else {
+            elements.forEach((element) => {
+              if (!element.url && element.chainlitKey) {
+                element.url = client.getElementUrl(
+                  element.chainlitKey,
+                  sessionId
+                );
+              }
+            });
+            setSideView((prev) => {
+              if (prev?.key === key) return prev;
+              return { title: prev?.title || '', elements: elements, key };
+            });
           }
         }
       );
-
-      socket.on('initial_transcript', (payload: ChatInputSocketPayload) => {
-        const text = typeof payload === 'string' ? payload : payload?.text;
-
-        if (typeof text !== 'string') {
-          return;
-        }
-
-        setInitialTranscript({
-          text,
-          mode:
-            typeof payload === 'string' ? 'replace' : payload.mode || 'replace',
-          receivedAt: Date.now()
-        });
-      });
-
-      socket.on('chat_archived', (payload:IChatArchived) => {
-        setChatArchived(payload.is_chat_archived);
-      });
-      
-      socket.on('is_project_accessible', (payload:boolean) => {
-        setProjectAccess(payload);
-      });
-
-      socket.on("chat_session_uuid", (data: { session_uuid: string }) => {
-        if (data?.session_uuid) {
-          sessionStorage.setItem("chat_session_uuid", data.session_uuid);
-          setScopedSessionStorageItem('session_token', data.session_uuid);
-        }
-      });
-
-      socket.on('set_sidebar_elements', (elements: IMessageElement[]) => {
-        if (!elements.length) {
-          setSideView(undefined);
-        } else {
-          elements.forEach((element) => {
-            if (!element.url && element.chainlitKey) {
-              element.url = client.getElementUrl(
-                element.chainlitKey,
-                sessionId
-              );
-            }
-          });
-          setSideView((prev) => {
-            return { title: prev?.title || '', elements: elements };
-          });
-        }
-      });
 
       socket.on('element', (element: IElement) => {
         if (!element.url && element.chainlitKey) {
@@ -589,7 +493,7 @@ const useChatSession = () => {
         }
       });
     },
-    [setSession, sessionId, idToResume, chatProfile, refreshStickyCookie]
+    [setSession, sessionId, idToResume, chatProfile]
   );
 
   const connect = useCallback(debounce(_connect, 200), [_connect]);
@@ -599,8 +503,6 @@ const useChatSession = () => {
       session.socket.removeAllListeners();
       session.socket.close();
     }
-    resetTaskLoading();
-    setLoading(false);
   }, [session]);
 
   return {

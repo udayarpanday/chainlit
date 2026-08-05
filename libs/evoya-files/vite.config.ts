@@ -37,7 +37,7 @@ export default defineConfig({
       output: [
         {
           name: 'files',
-          dir: '../../../avaia-chat/src/avaia_chat/public/evoya-files',
+          dir: 'D:\\client_works\\avaia-chat\\src\\avaia_chat\\public\\evoya-files',
           format: 'iife',
           entryFileNames: 'index.js',
           inlineDynamicImports: true
@@ -46,9 +46,11 @@ export default defineConfig({
     }
   },
   resolve: {
+    dedupe: ['lucide-react'],
     alias: {
       // To prevent conflicts with packages in @chainlit/app, we need to specify the resolution paths for these dependencies.
       react: path.resolve(__dirname, './node_modules/react'),
+      'lucide-react': path.resolve(__dirname, '../../frontend/node_modules/lucide-react'),
       '@chainlit/copilot': path.resolve(__dirname, ''),
       '@chainlit': path.resolve(__dirname, './node_modules/@chainlit'),
       tailwindcss: path.resolve(__dirname, './node_modules/tailwindcss'),

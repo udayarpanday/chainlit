@@ -15,7 +15,7 @@ export default defineConfig({
       output: [
         {
           name: 'chatpage',
-          dir: '/mnt/d/client_works/avaia-chat/src/avaia_chat/public/chatpage',
+          dir: 'D:\\client_works\\avaia-chat\\src\\avaia_chat\\public\\chatpage',
           format: 'iife',
           entryFileNames: 'assets/index.js',
           inlineDynamicImports: true,

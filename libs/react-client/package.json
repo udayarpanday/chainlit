@@ -1,18 +1,17 @@
 {
   "name": "@chainlit/react-client",
   "description": "Websocket client to connect to your chainlit app.",
-  "version": "0.2.3",
+  "version": "0.4.2",
   "scripts": {
-    "build": "tsup src/index.ts --tsconfig tsconfig.build.json --clean --format esm,cjs --dts  --external react --external recoil --minify --sourcemap --treeshake",
     "dev": "tsup src/index.ts --clean --format esm,cjs --dts  --external react --external recoil --minify --sourcemap --treeshake",
-    "lint": "eslint ./src --ext ts,tsx --report-unused-disable-directives --max-warnings 0 && tsc --noemit",
-    "format": "prettier '**/*.{ts,tsx}' --write",
-    "test": "echo no tests yet",
-    "prepublishOnly": "pnpm run build"
+    "build": "tsup src/index.ts --tsconfig tsconfig.build.json --clean --format esm,cjs --dts  --external react --external recoil --minify --sourcemap --treeshake",
+    "type-check": "tsc --noemit",
+    "test": "echo no tests yet"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Chainlit/"
+    "url": "git+https://github.com/Chainlit/chainlit.git",
+    "directory": "libs/react-client"
   },
   "private": false,
   "keywords": [
@@ -52,7 +51,6 @@
     "recoil": "^0.7.7"
   },
   "dependencies": {
-    "js-cookie": "^3.0.5",
     "jwt-decode": "^3.1.2",
     "lodash": "^4.17.21",
     "socket.io-client": "^4.7.2",

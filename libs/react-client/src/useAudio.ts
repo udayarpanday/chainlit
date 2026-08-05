@@ -12,27 +12,22 @@ import { useChatInteract } from './useChatInteract';
 const useAudio = () => {
   const [audioConnection, setAudioConnection] =
     useRecoilState(audioConnectionState);
-
   const wavRecorder = useRecoilValue(wavRecorderState);
   const wavStreamPlayer = useRecoilValue(wavStreamPlayerState);
   const isAiSpeaking = useRecoilValue(isAiSpeakingState);
 
-  const { startAudioStream, endAudioStream,passAudioType } = useChatInteract();
+  const { startAudioStream, endAudioStream } = useChatInteract();
 
-  const startConversation = useCallback(async (type) => {
-    
-    await passAudioType(type)
+  const startConversation = useCallback(async () => {
     setAudioConnection('connecting');
     await startAudioStream();
   }, [startAudioStream]);
 
-  const endConversation = useCallback(async (end=true) => {
+  const endConversation = useCallback(async () => {
     setAudioConnection('off');
     await wavRecorder.end();
     await wavStreamPlayer.interrupt();
-    if (end) {
-      endAudioStream();
-    }
+    await endAudioStream();
   }, [endAudioStream, wavRecorder, wavStreamPlayer]);
 
   return {

@@ -22,7 +22,8 @@
       "form": {
         "email": {
           "label": "ईमेल पता",
-          "required": "ईमेल एक आवश्यक फ़ील्ड है"
+          "required": "ईमेल एक आवश्यक फ़ील्ड है",
+          "placeholder": "me@example.com"
         },
         "password": {
           "label": "पासवर्ड",
@@ -76,7 +77,25 @@
       "errors": {
         "failed": "अपलोड करने में विफल",
         "cancelled": "का अपलोड रद्द किया गया"
+      },
+      "actions": {
+        "cancelUpload": "अपलोड रद्द करें",
+        "removeAttachment": "संलग्नक हटाएं"
       }
+    },
+    "favorites": {
+      "use": "पसंदीदा संदेश का उपयोग करें",
+      "headline": "पसंदीदा संदेश",
+      "remove": "पसंदीदा हटाएं",
+      "empty": {
+        "title": "अभी तक कोई प्रॉम्प्ट सहेजा नहीं गया",
+        "description": "एक प्रॉम्प्ट भेजकर और उसे स्टार करके शुरू करें या पिछली चैट से किसी प्रॉम्प्ट को स्टार करें"
+      }
+    },
+    "commands": {
+      "button": "उपकरण",
+      "changeTool": "उपकरण बदलें",
+      "availableTools": "उपलब्ध उपकरण"
     },
     "messages": {
       "status": {
@@ -95,7 +114,8 @@
         "edit": "प्रतिक्रिया संपादित करें",
         "dialog": {
           "title": "टिप्पणी जोड़ें",
-          "submit": "प्रतिक्रिया जमा करें"
+          "submit": "प्रतिक्रिया जमा करें",
+          "yourFeedback": "आपकी प्रतिक्रिया..."
         },
         "status": {
           "updating": "अपडेट हो रहा है",
@@ -109,9 +129,10 @@
       "show": "इतिहास दिखाएं"
     },
     "settings": {
-      "title": "सेटिंग्स पैनल"
+      "title": "सेटिंग्स पैनल",
+      "customize": "अपने चैट सेटिंग्स को यहां अनुकूलित करें"
     },
-    "watermark": "के साथ बनाया गया"
+    "watermark": "एलएलएम गलतियां कर सकते हैं। महत्वपूर्ण जानकारी की जांच करने पर विचार करें।"
   },
   "threadHistory": {
     "sidebar": {
@@ -135,10 +156,24 @@
     "thread": {
       "untitled": "शीर्षकहीन वार्तालाप",
       "menu": {
-          "rename": "Rename",
-          "delete": "Delete"
-        },
+        "rename": "नाम बदलें",
+        "share": "साझा करें",
+        "delete": "Delete"
+      },
       "actions": {
+        "share": {
+          "title": "चैट का लिंक साझा करें",
+          "button": "साझा करें",
+          "status": {
+            "copied": "लिंक कॉपी किया गया",
+            "created": "शेयर लिंक बनाया गया!",
+            "unshared": "इस थ्रेड के लिए साझा करना निष्क्रिय है"
+          },
+          "error": {
+            "create": "शेयर लिंक बनाने में विफल",
+            "unshare": "थ्रेड को अनशेयर करने में विफल"
+          }
+        },
         "delete": {
           "title": "हटाने की पुष्टि करें",
           "description": "यह थ्रेड और इसके संदेशों और तत्वों को हटा देगा। यह क्रिया वापस नहीं की जा सकती",
@@ -210,5 +245,16 @@
     "security": "Security",
     "beta": "Beta",
     "best-practice": "Best Practice"
+  },
+  "components": {
+    "MultiSelectInput": {
+      "placeholder": "चुनें..."
+    },
+    "DatePickerInput": {
+      "placeholder": {
+        "single": "एक तारीख चुनें",
+        "range": "तारीख सीमा चुनें"
+      }
+    }
   }
 }

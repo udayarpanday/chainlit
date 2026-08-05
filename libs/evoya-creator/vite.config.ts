@@ -51,7 +51,7 @@ export default defineConfig({
       output: [
         {
           name: 'creator',
-          dir: '../../../avaia-chat/src/avaia_chat/public/evoya-creator',
+          dir: 'D:\\client_works\\avaia-chat\\src\\avaia_chat\\public\\evoya-creator',
           format: 'iife',
           entryFileNames: 'index.js',
           inlineDynamicImports: true
@@ -60,8 +60,10 @@ export default defineConfig({
     }
   },
   resolve: {
+    dedupe: ['lucide-react'],
     alias: {
       react: path.resolve(__dirname, './node_modules/react'),
+      'lucide-react': path.resolve(__dirname, '../../frontend/node_modules/lucide-react'),
       "@mdxeditor/editor/dist/styles/ui.module.css.js": path.resolve(__dirname, "./node_modules/@mdxeditor/editor/dist/styles/ui.module.css.js"),
       "@mdxeditor/editor/dist/plugins/core/SharedHistoryPlugin.js": path.resolve(__dirname, "./node_modules/@mdxeditor/editor/dist/plugins/core/SharedHistoryPlugin.js"),
       "./TableEditor.js": path.resolve(__dirname, "./src/components/markdownEditor/plugins/extend/table/TableEditorWrapper.tsx"),

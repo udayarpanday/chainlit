@@ -8,6 +8,7 @@ import {
   chatSettingsValueState,
   currentThreadIdState,
   elementState,
+  favoriteMessagesState,
   firstUserInteraction,
   loadingState,
   messagesState,
@@ -18,12 +19,11 @@ import {
   threadIdToResumeState,
   tokenCountState
 } from 'src/state';
-import { IFileRef, IStep, IEvoyaFileRef } from 'src/types';
+import { IFileRef, IEvoyaFileRef, IStep } from 'src/types';
 import { addMessage } from 'src/utils/message';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ChainlitContext } from './context';
-import { markTaskStopped, resetTaskLoading } from './taskLoading';
 
 type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
@@ -48,12 +48,11 @@ const useChatInteract = () => {
   const setIdToResume = useSetRecoilState(threadIdToResumeState);
   const setSideView = useSetRecoilState(sideViewState);
   const setCurrentThreadId = useSetRecoilState(currentThreadIdState);
+  const setFavoriteMessages = useSetRecoilState(favoriteMessagesState);
 
   const clear = useCallback(() => {
     session?.socket.emit('clear_session');
     session?.socket.disconnect();
-    resetTaskLoading();
-    setLoading(false);
     setIdToResume(undefined);
     resetSessionId();
     setFirstUserInteraction(undefined);
@@ -73,7 +72,7 @@ const useChatInteract = () => {
     (
       message: PartialBy<IStep, 'createdAt' | 'id'>,
       fileReferences: IFileRef[] = [],
-      evoyaAttachments: IEvoyaFileRef[] = [],
+      evoyaAttachments: IEvoyaFileRef[] = []
     ) => {
       if (!message.id) {
         message.id = uuidv4();
@@ -83,7 +82,11 @@ const useChatInteract = () => {
       }
       setMessages((oldMessages) => addMessage(oldMessages, message as IStep));
 
-      session?.socket.emit('client_message', { message, fileReferences, evoyaAttachments });
+      session?.socket.emit('client_message', {
+        message,
+        fileReferences,
+        evoyaAttachments
+      });
     },
     [session?.socket]
   );
@@ -95,6 +98,42 @@ const useChatInteract = () => {
     [session?.socket]
   );
 
+  const toggleMessageFavorite = useCallback(
+    (message: IStep) => {
+      const favorite = !(message.metadata?.favorite ?? false);
+      const updatedMetadata = {
+        ...(message.metadata || {}),
+        favorite
+      };
+
+      setMessages((oldMessages) =>
+        oldMessages.map((item) =>
+          item.id === message.id
+            ? { ...item, metadata: { ...(item.metadata || {}), favorite } }
+            : item
+        )
+      );
+
+      const nextMessage: IStep = {
+        ...message,
+        metadata: updatedMetadata
+      };
+
+      setFavoriteMessages((oldFavorites) => {
+        if (favorite) {
+          const filtered = oldFavorites.filter(
+            (step) => step.id !== message.id
+          );
+          return [nextMessage, ...filtered];
+        }
+        return oldFavorites.filter((step) => step.id !== message.id);
+      });
+
+      session?.socket.emit('message_favorite', { message: nextMessage });
+    },
+    [session?.socket, setFavoriteMessages, setMessages]
+  );
+
   const windowMessage = useCallback(
     (data: any) => {
       session?.socket.emit('window_message', data);
@@ -104,12 +143,6 @@ const useChatInteract = () => {
 
   const startAudioStream = useCallback(() => {
     session?.socket.emit('audio_start');
-  }, [session?.socket]);
-
-  const passAudioType = useCallback((type) => {
-    session?.socket.emit('audio_type',{
-      audioType:type,
-    });
   }, [session?.socket]);
 
   const sendAudioChunk = useCallback(
@@ -151,6 +184,13 @@ const useChatInteract = () => {
     [session?.socket]
   );
 
+  const editChatSettings = useCallback(
+    (values: object) => {
+      session?.socket.emit('chat_settings_edit', values);
+    },
+    [session?.socket]
+  );
+
   const stopTask = useCallback(() => {
     setMessages((oldMessages) =>
       oldMessages.map((m) => {
@@ -159,14 +199,14 @@ const useChatInteract = () => {
       })
     );
 
-    setLoading(markTaskStopped());
+    setLoading(false);
 
     session?.socket.emit('stop');
   }, [session?.socket]);
 
   const uploadFile = useCallback(
-    (file: File, onProgress: (progress: number) => void) => {
-      return client.uploadFile(file, onProgress, sessionId);
+    (file: File, onProgress: (progress: number) => void, parentId?: string) => {
+      return client.uploadFile(file, onProgress, sessionId, parentId);
     },
     [sessionId]
   );
@@ -179,12 +219,13 @@ const useChatInteract = () => {
     editMessage,
     windowMessage,
     startAudioStream,
-    passAudioType,
     sendAudioChunk,
     endAudioStream,
     stopTask,
     setIdToResume,
-    updateChatSettings
+    updateChatSettings,
+    editChatSettings,
+    toggleMessageFavorite
   };
 };
 

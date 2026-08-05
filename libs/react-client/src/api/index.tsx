@@ -1,5 +1,4 @@
 import { IElement, IThread, IUser } from 'src/types';
-import { getScopedSessionId, getScopedSessionStorageItem } from 'src/storage';
 
 import { IAction } from 'src/types/action';
 import { IFeedback } from 'src/types/feedback';
@@ -42,38 +41,33 @@ export class ClientError extends Error {
 }
 
 type Payload = FormData | any;
-type RequestHeaders = Record<string, string>;
-type RequestHeadersInput = RequestHeaders | string | undefined;
-
-const normalizeHeaders = (headers: RequestHeadersInput): RequestHeaders => {
-  if (!headers) {
-    return {};
-  }
-
-  if (typeof headers === 'string') {
-    return {
-      Authorization: headers.startsWith('Bearer ') ? headers : `Bearer ${headers}`
-    };
-  }
-
-  return headers;
-};
 
 export class APIBase {
   constructor(
     public httpEndpoint: string,
     public type: 'webapp' | 'copilot' | 'teams' | 'slack' | 'discord',
+    public additionalQueryParams?: Record<string, string>,
     public on401?: () => void,
     public onError?: (error: ClientError) => void
-  ) { }
+  ) {}
 
   buildEndpoint(path: string) {
+    let fullUrl = `${this.httpEndpoint}${path}`;
     if (this.httpEndpoint.endsWith('/')) {
       // remove trailing slash on httpEndpoint
-      return `${this.httpEndpoint.slice(0, -1)}${path}`;
-    } else {
-      return `${this.httpEndpoint}${path}`;
+      fullUrl = `${this.httpEndpoint.slice(0, -1)}${path}`;
     }
+
+    const url = new URL(fullUrl);
+
+    // Add additionalQueryParams for all API calls
+    if (this.additionalQueryParams) {
+      const params = new URLSearchParams(this.additionalQueryParams);
+      const separator = url.search ? '&' : '?';
+      url.search = url.search + `${separator}${params.toString()}`;
+    }
+
+    return url.toString();
   }
 
   private async getDetailFromErrorResponse(
@@ -123,28 +117,24 @@ export class APIBase {
     path: string,
     data?: Payload,
     signal?: AbortSignal,
-    headers: RequestHeadersInput = {}
+    headers: { Authorization?: string; 'Content-Type'?: string } = {}
   ): Promise<Response> {
     try {
       let body;
-      const requestHeaders: RequestHeaders = {
-        'X-Chainlit-Session-Id': getScopedSessionId(),
-        ...normalizeHeaders(headers)
-      };
 
       if (data instanceof FormData) {
         body = data;
       } else {
-        requestHeaders['Content-Type'] = 'application/json';
+        headers['Content-Type'] = 'application/json';
         body = data ? JSON.stringify(data) : null;
       }
+
       const res = await fetch(this.buildEndpoint(path), {
         method,
         credentials: 'include',
-        headers: requestHeaders,
+        headers,
         signal,
-        body,
-        mode: 'cors'
+        body
       });
 
       if (!res.ok) {
@@ -160,13 +150,8 @@ export class APIBase {
     }
   }
 
-  async get(endpoint: string, headers: RequestHeadersInput = {}) {
-    const token = getScopedSessionStorageItem('chainlit_token');
-    const requestHeaders: RequestHeaders = {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...normalizeHeaders(headers)
-    };
-    return await this.fetch('GET', endpoint, undefined, undefined, requestHeaders);
+  async get(endpoint: string) {
+    return await this.fetch('GET', endpoint);
   }
 
   async post(endpoint: string, data: Payload, signal?: AbortSignal) {
@@ -211,10 +196,8 @@ export class ChainlitAPI extends APIBase {
     return res.json();
   }
 
-  async getUser(token: string): Promise<IUser> {
-    const res = await this.fetch('GET', '/user', undefined, undefined, {
-      Authorization: `Bearer ${token}`
-    });
+  async getUser(): Promise<IUser> {
+    const res = await this.get(`/user`);
     return res.json();
   }
 
@@ -224,9 +207,10 @@ export class ChainlitAPI extends APIBase {
   }
 
   async setFeedback(
-    feedback: IFeedback
+    feedback: IFeedback,
+    sessionId: string
   ): Promise<{ success: boolean; feedbackId: string }> {
-    const res = await this.put(`/feedback`, { feedback });
+    const res = await this.put(`/feedback`, { feedback, sessionId });
     return res.json();
   }
 
@@ -262,7 +246,8 @@ export class ChainlitAPI extends APIBase {
   uploadFile(
     file: File,
     onProgress: (progress: number) => void,
-    sessionId: string
+    sessionId: string,
+    parentId?: string
   ) {
     const xhr = new XMLHttpRequest();
     xhr.withCredentials = true;
@@ -271,9 +256,12 @@ export class ChainlitAPI extends APIBase {
       const formData = new FormData();
       formData.append('file', file);
 
+      const ask_parent_id = parentId ? `&ask_parent_id=${parentId}` : '';
       xhr.open(
         'POST',
-        this.buildEndpoint(`/project/file?session_id=${sessionId}`),
+        this.buildEndpoint(
+          `/project/file?session_id=${sessionId}${ask_parent_id}`
+        ),
         true
       );
 
@@ -289,6 +277,12 @@ export class ChainlitAPI extends APIBase {
         if (xhr.status === 200) {
           const response = JSON.parse(xhr.responseText);
           resolve(response);
+          return;
+        }
+        const contentType = xhr.getResponseHeader('Content-Type');
+        if (contentType && contentType.includes('application/json')) {
+          const response = JSON.parse(xhr.responseText);
+          reject(response.detail);
         } else {
           reject('Upload failed');
         }
@@ -322,16 +316,74 @@ export class ChainlitAPI extends APIBase {
     return res.json();
   }
 
+  async connectStdioMCP(sessionId: string, name: string, fullCommand: string) {
+    const res = await this.post(`/mcp`, {
+      sessionId,
+      name,
+      fullCommand,
+      clientType: 'stdio'
+    });
+    return res.json();
+  }
+
+  async connectSseMCP(
+    sessionId: string,
+    name: string,
+    url: string,
+    headers?: Record<string, string>
+  ) {
+    const res = await this.post(`/mcp`, {
+      sessionId,
+      name,
+      url,
+      ...(headers ? { headers } : {}),
+      clientType: 'sse'
+    });
+    return res.json();
+  }
+
+  async connectStreamableHttpMCP(
+    sessionId: string,
+    name: string,
+    url: string,
+    headers?: Record<string, string>
+  ) {
+    const res = await this.post(`/mcp`, {
+      sessionId,
+      name,
+      url,
+      ...(headers ? { headers } : {}),
+      clientType: 'streamable-http'
+    });
+    return res.json();
+  }
+
+  async disconnectMcp(sessionId: string, name: string) {
+    const res = await this.delete(`/mcp`, { sessionId, name });
+    return res.json();
+  }
+
   getElementUrl(id: string, sessionId: string) {
     const queryParams = `?session_id=${sessionId}`;
     return this.buildEndpoint(`/project/file/${id}${queryParams}`);
   }
 
-  getLogoEndpoint(theme: string) {
+  getLogoEndpoint(theme: string, configuredLogoUrl?: string) {
+    if (configuredLogoUrl) return configuredLogoUrl;
     return this.buildEndpoint(`/logo?theme=${theme}`);
   }
 
   getOAuthEndpoint(provider: string) {
     return this.buildEndpoint(`/auth/oauth/${provider}`);
+  }
+  async shareThread(
+    threadId: string,
+    isShared: boolean
+  ): Promise<{ success: boolean }> {
+    const res = await this.put(`/project/thread/share`, {
+      threadId,
+      isShared
+    });
+    return res.json();
   }
 }
