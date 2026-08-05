@@ -3,12 +3,18 @@ import ReactDOM from 'react-dom/client';
 
 import { type IStep } from '@chainlit/react-client';
 
-// Change the imports to handle CSS properly
+// @ts-expect-error inline css
 import sonnercss from './sonner.css?inline';
+// @ts-expect-error inline css
 import tailwindcss from './src/index.css?inline';
+// @ts-expect-error inline css
 import hljscss from 'highlight.js/styles/monokai-sublime.css?inline';
 
 import AppWrapper from './src/appWrapper';
+import {
+  clearChainlitCopilotThreadId,
+  getChainlitCopilotThreadId
+} from './src/state';
 import { IWidgetConfig } from './src/types';
 import { EvoyaConfig } from './src/evoya/types';
 
@@ -27,6 +33,8 @@ declare global {
     unmountChainlitWidget: () => void;
     toggleChainlitCopilot: () => void;
     sendChainlitMessage: (message: IStep) => void;
+    getChainlitCopilotThreadId: () => string | null;
+    clearChainlitCopilotThreadId: (newThreadId?: string) => void;
   }
 }
 
@@ -67,21 +75,12 @@ window.mountChainlitWidget = (config: IWidgetConfig, evoya: EvoyaConfig) => {
   `;
   shadowContainer.appendChild(resetStyles);
 
-  const tailwindStyles = document.createElement('style');
-  tailwindStyles.textContent = tailwindcss.toString();
-  shadowContainer.appendChild(tailwindStyles);
-
-  const sonnerStyles = document.createElement('style');
-  sonnerStyles.textContent = sonnercss.toString();
-  shadowContainer.appendChild(sonnerStyles);
-
-  const hlStyles = document.createElement('style');
-  hlStyles.textContent = hljscss.toString();
-  shadowContainer.appendChild(hlStyles);
-
   root = ReactDOM.createRoot(shadowRootElement);
   root.render(
     <React.StrictMode>
+      <style type="text/css">{tailwindcss.toString()}</style>
+      <style type="text/css">{sonnercss.toString()}</style>
+      <style type="text/css">{hljscss.toString()}</style>
       <AppWrapper widgetConfig={config} evoya={evoya} />
     </React.StrictMode>
   );
@@ -89,9 +88,11 @@ window.mountChainlitWidget = (config: IWidgetConfig, evoya: EvoyaConfig) => {
 
 window.unmountChainlitWidget = () => {
   root?.unmount();
-  document.getElementById(id)?.remove();
 };
 
-window.sendChainlitMessage = (message: IStep) => {
+window.sendChainlitMessage = () => {
   console.info('Copilot is not active. Please check if the widget is mounted.');
 };
+
+window.getChainlitCopilotThreadId = getChainlitCopilotThreadId;
+window.clearChainlitCopilotThreadId = clearChainlitCopilotThreadId;

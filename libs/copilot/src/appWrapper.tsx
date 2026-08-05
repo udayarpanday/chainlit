@@ -21,9 +21,10 @@ interface Props {
 
 export default function AppWrapper({ widgetConfig, evoya }: Props) {
   const [accessToken, setAccessToken] = useState(widgetConfig.accessToken);
+  const additionalQueryParams = widgetConfig?.additionalQueryParamsForAPI;
   const apiClient = useMemo(
-    () => makeApiClient(widgetConfig.chainlitServer),
-    [widgetConfig.chainlitServer]
+    () => makeApiClient(widgetConfig.chainlitServer, additionalQueryParams || {}),
+    [widgetConfig.chainlitServer, additionalQueryParams]
   );
   const widgetContextValue = useMemo(
     () => ({
@@ -88,6 +89,7 @@ export default function AppWrapper({ widgetConfig, evoya }: Props) {
   }, []);
 
   if (!customThemeLoaded) return null;
+
   return (
     <ChainlitContext.Provider value={apiClient}>
       <WidgetContext.Provider value={widgetContextValue}>

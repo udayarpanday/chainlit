@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState,useContext } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
@@ -15,7 +15,6 @@ import { useLayoutMaxWidth } from '@chainlit/app/src/hooks/useLayoutMaxWidth';
 import { useUpload } from '@chainlit/app/src/hooks/useUpload';
 import { IAttachment, attachmentsState } from '@chainlit/app/src/state/chat';
 import {
-  threadHistoryState,
   useChatData,
   useChatInteract,
   useConfig
@@ -23,28 +22,15 @@ import {
 
 import WelcomeScreen from '@/components/WelcomeScreen';
 import ElementSideView from 'components/ElementSideView';
-import PrivacyShield from '@/evoya/privacyShield';
-import { usePrivacyShield } from '@/evoya/privacyShield/usePrivacyShield';
-import { WidgetContext } from '@/context';
-
-interface ChatFunctions {
-  submit: (text: string) => void;
-}
-const chatFunctions: ChatFunctions = {
-  submit: () => {}
-}
 
 const Chat = () => {
   const { config } = useConfig();
-  const { evoya } = useContext(WidgetContext);
   const layoutMaxWidth = useLayoutMaxWidth();
   const setAttachments = useSetRecoilState(attachmentsState);
-  const setThreads = useSetRecoilState(threadHistoryState);
-  const [autoScroll, setAutoScroll] = useState(true);
+  const autoScrollRef = useRef(true);
   const { error, disabled, callFn } = useChatData();
   const { uploadFile } = useChatInteract();
   const uploadFileRef = useRef(uploadFile);
-  const autoScrollRef = useRef(true);
 
   const fileSpec = useMemo(
     () => ({
@@ -150,29 +136,8 @@ const Chat = () => {
     options: { noClick: true }
   });
 
-  useEffect(() => {
-    setThreads((prev) => ({
-      ...prev,
-      currentThreadId: undefined
-    }));
-  }, []);
-
   const enableAttachments =
     !disabled && config?.features?.spontaneous_file_upload?.enabled;
-
-    const {
-      getPrivacySections,
-      enabled,
-      enabledVisual,
-      sections,
-    } = usePrivacyShield();
-    const submitFunction = (text: string) => {
-      chatFunctions.submit(text);
-    }
-    const submitProxy = async (text: string, submitFunc: (text: string) => void) => {
-      chatFunctions.submit = submitFunc;
-      getPrivacySections(text);
-    }
 
   return (
     <div
@@ -198,7 +163,10 @@ const Chat = () => {
         <ChatSettingsModal />
         <ErrorBoundary>
           <ScrollContainer
-            autoScrollUserMessage={true}
+            autoScrollUserMessage={config?.features?.user_message_autoscroll}
+            autoScrollAssistantMessage={
+              config?.features?.assistant_message_autoscroll
+            }
             autoScrollRef={autoScrollRef}
           >
             <div
@@ -218,22 +186,16 @@ const Chat = () => {
               maxWidth: layoutMaxWidth
             }}
           >
-            <div id="evoya-creator-context-ref"></div>
             <ChatFooter
               showIfEmptyThread
               fileSpec={fileSpec}
               onFileUpload={onFileUpload}
               onFileUploadError={onFileUploadError}
-              setAutoScroll={setAutoScroll}
-              autoScroll={autoScroll}
-              submitProxy={enabled ? submitProxy : undefined}
+              autoScrollRef={autoScrollRef}
             />
           </div>
         </ErrorBoundary>
       </div>
-      {evoya?.type === 'dashboard' && (
-        <PrivacyShield submit={submitFunction} />
-      )}
       <ElementSideView />
     </div>
   );
