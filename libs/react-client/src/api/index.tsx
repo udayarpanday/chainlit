@@ -150,8 +150,11 @@ export class APIBase {
     }
   }
 
-  async get(endpoint: string) {
-    return await this.fetch('GET', endpoint);
+  async get(
+    endpoint: string,
+    headers: { Authorization?: string; 'Content-Type'?: string } = {}
+  ) {
+    return await this.fetch('GET', endpoint, undefined, undefined, headers);
   }
 
   async post(endpoint: string, data: Payload, signal?: AbortSignal) {

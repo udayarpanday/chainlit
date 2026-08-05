@@ -1,63 +1,39 @@
-import { useEffect, useRef } from 'react';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { WidgetContext } from '@/context';
+import { useContext, useEffect } from 'react';
 
 import {
-  threadIdToResumeState,
+  setScopedSessionStorageItem,
   useChatInteract,
   useChatSession
 } from '@chainlit/react-client';
 
-import { copilotThreadIdState } from '../state';
 import ChatBody from './body';
 
 export default function ChatWrapper() {
-  const { connect, session, idToResume } = useChatSession();
+  const { accessToken, evoya } = useContext(WidgetContext);
+  const { connect, session } = useChatSession();
   const { sendMessage } = useChatInteract();
-  const copilotThreadId = useRecoilValue(copilotThreadIdState);
-  const setThreadIdToResume = useSetRecoilState(threadIdToResumeState);
-  const hasConnected = useRef<boolean>(false);
-  const lastConnectedThreadId = useRef<string | null>(null);
+  const evoyaSessionUuid = evoya?.session_uuid || '';
 
   useEffect(() => {
-    if (!copilotThreadId) {
-      return;
+    if (evoyaSessionUuid !== undefined || evoyaSessionUuid !== '') {
+      setScopedSessionStorageItem('session_token', evoyaSessionUuid);
+      localStorage.removeItem('session_token');
+      document.cookie =
+        'session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     }
-
-    setThreadIdToResume(copilotThreadId);
-  }, [copilotThreadId, setThreadIdToResume]);
+  }, [evoyaSessionUuid]);
 
   useEffect(() => {
-    if (
-      copilotThreadId &&
-      lastConnectedThreadId.current &&
-      copilotThreadId !== lastConnectedThreadId.current &&
-      hasConnected.current
-    ) {
-      if (session?.socket?.connected) {
-        session.socket.disconnect();
-      }
-      hasConnected.current = false;
-      lastConnectedThreadId.current = null;
-    }
-  }, [copilotThreadId]);
-
-  useEffect(() => {
-    if (!copilotThreadId || !idToResume || copilotThreadId !== idToResume) {
-      return;
-    }
-
-    if (hasConnected.current) {
-      return;
-    }
-
-    hasConnected.current = true;
-    lastConnectedThreadId.current = copilotThreadId;
+    if (session?.socket) return;
     connect({
       // @ts-expect-error window typing
       transports: window.transports,
-      userEnv: {}
+      userEnv: {},
+      accessToken: `Bearer ${accessToken}`,
+      evoya: { session_uuid: evoyaSessionUuid }
     });
-  }, [copilotThreadId, idToResume, connect]);
+  }, [accessToken, connect, evoyaSessionUuid, session?.socket]);
 
   useEffect(() => {
     // @ts-expect-error is not a valid prop

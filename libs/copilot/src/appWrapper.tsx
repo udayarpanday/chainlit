@@ -11,7 +11,7 @@ import {
 
 import App from './app';
 import { WidgetContext } from './context';
-import { EvoyaConfig } from './src/evoya/types';
+import { EvoyaConfig } from './evoya/types';
 
 i18nSetupLocalization();
 interface Props {
