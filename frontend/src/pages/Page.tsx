@@ -3,7 +3,6 @@ import { useRecoilValue } from 'recoil';
 
 import { sideViewState, useAuth, useConfig } from '@chainlit/react-client';
 
-import ChatSettingsSidebar from '@/components/ChatSettings/ChatSettingsSidebar';
 import ElementSideView from '@/components/ElementSideView';
 import LeftSidebar from '@/components/LeftSidebar';
 import { TaskList } from '@/components/Tasklist';
@@ -29,43 +28,34 @@ const Page = ({ children }: Props) => {
     }
   }
 
-  const showSettingsSidebar = config?.ui?.chat_settings_location === 'sidebar';
-
   const mainContent = (
     <div className="flex flex-col h-full w-full">
-      <Header />
       <ResizablePanelGroup
         direction="horizontal"
         className="flex flex-row flex-grow"
       >
         <ResizablePanel
           className="flex flex-col h-full w-full"
-          minSize={40}
-          defaultSize={60}
+          minSize={60}
+          defaultSize={50}
         >
           <div className="flex flex-row flex-grow overflow-auto">
             {children}
           </div>
         </ResizablePanel>
         {sideView ? <ElementSideView /> : <TaskList isMobile={false} />}
-        {showSettingsSidebar && <ChatSettingsSidebar />}
       </ResizablePanelGroup>
     </div>
   );
 
   const historyEnabled = config?.dataPersistence && data?.requireLogin;
-  const sidebarHidden = config?.ui?.default_sidebar_state === 'hidden';
 
   return (
-    <SidebarProvider
-      defaultOpen={config?.ui.default_sidebar_state !== 'closed'}
-    >
-      {historyEnabled && !sidebarHidden ? (
+    <SidebarProvider>
+      {historyEnabled ? (
         <>
           <LeftSidebar />
-          <SidebarInset className="max-h-svh min-w-0">
-            {mainContent}
-          </SidebarInset>
+          <SidebarInset className="max-h-svh">{mainContent}</SidebarInset>
         </>
       ) : (
         <div className="h-screen w-screen flex">{mainContent}</div>

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { LoginForm } from '@/components/LoginForm';
 import { Logo } from '@/components/Logo';
-import { useTheme } from '@/components/ThemeProvider';
 
 import { useQuery } from 'hooks/query';
 
@@ -19,13 +18,12 @@ export default function Login() {
   const [error, setError] = useState('');
   const apiClient = useContext(ChainlitContext);
   const navigate = useNavigate();
-  const { variant } = useTheme();
-  const isDarkMode = variant === 'dark';
 
   const handleCookieAuth = (json: any): void => {
     if (json?.success != true) throw LoginError;
 
     // Validate login cookie and get user data.
+
     setUserFromAPI();
   };
 
@@ -50,7 +48,7 @@ export default function Login() {
     const jsonPromise = apiClient.headerAuth();
 
     // Why does apiClient redirect to '/' but handlePasswordLogin to callbackUrl?
-    await handleAuth(jsonPromise, '/');
+    handleAuth(jsonPromise, '/');
   };
 
   const handlePasswordLogin = async (email: string, password: string) => {
@@ -59,7 +57,7 @@ export default function Login() {
     formData.append('password', password);
 
     const jsonPromise = apiClient.passwordAuth(formData);
-    await handleAuth(jsonPromise);
+    handleAuth(jsonPromise);
   };
 
   useEffect(() => {
@@ -73,7 +71,7 @@ export default function Login() {
     if (!config.requireLogin) {
       navigate('/');
     }
-    if (config.headerAuth && !user) {
+    if (config.headerAuth) {
       handleHeaderAuth();
     }
     if (user) {
@@ -104,19 +102,11 @@ export default function Login() {
         </div>
       </div>
       {!config?.headerAuth ? (
-        <div className="relative hidden bg-muted lg:block overflow-hidden">
+        <div className="relative hidden bg-muted lg:block">
           <img
-            src={
-              config?.ui?.login_page_image ||
-              apiClient.buildEndpoint('/favicon')
-            }
+            src={apiClient.buildEndpoint('/favicon')}
             alt="Image"
-            className={`absolute inset-0 h-full w-full object-cover ${
-              isDarkMode
-                ? config?.ui?.login_page_image_dark_filter ||
-                  'brightness-[0.2] grayscale'
-                : config?.ui?.login_page_image_filter || ''
-            }`}
+            className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
           />
         </div>
       ) : null}

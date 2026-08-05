@@ -1,8 +1,9 @@
 import { cn } from '@/lib/utils';
 import { omit } from 'lodash';
-import { useContext, useMemo } from 'react';
+import { isValidElement, useContext, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { PluggableList } from 'react-markdown/lib';
+import { VegaLite } from 'react-vega';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import remarkDirective from 'remark-directive';
@@ -10,6 +11,7 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import { visit } from 'unist-util-visit';
 
+import ResponseTextItem from '@chainlit/copilot/src/evoya/privacyShield/ResponseTextItem';
 import { ChainlitContext, type IMessageElement } from '@chainlit/react-client';
 
 import { AspectRatio } from '@/components/ui/aspect-ratio';
@@ -27,17 +29,13 @@ import {
 import BlinkingCursor from './BlinkingCursor';
 import CodeSnippet from './CodeSnippet';
 import { ElementRef } from './Elements/ElementRef';
-import {
-  type AlertProps,
-  MarkdownAlert,
-  alertComponents,
-  normalizeAlertType
-} from './MarkdownAlert';
+import { MarkdownAlert, alertComponents } from './MarkdownAlert';
+import { MermaidDiagram } from './Mermaid';
+import Step from './chat/Messages/Message/Step';
 
 interface Props {
   allowHtml?: boolean;
   latex?: boolean;
-  renderMarkdown?: boolean;
   refElements?: IMessageElement[];
   children: string;
   className?: string;
@@ -89,26 +87,35 @@ const cursorPlugin = () => {
   };
 };
 
+const fixDirectiveColonPlugin = () => {
+  return (tree: any) => {
+    visit(tree, (node: any, index: number, parent: any) => {
+      if (
+        (node.type === 'textDirective' ||
+         node.type === 'leafDirective' ||
+         node.type === 'containerDirective') &&
+        !node.data?.hName &&
+        /^[a-zA-Z0-9_-]+$/.test(node.name) 
+      ) {
+        const directiveText = `:${node.name}`;
+        parent.children.splice(index, 1, {
+          type: 'text',
+          value: directiveText
+        });
+      }
+    });
+  };
+};
+
 const Markdown = ({
   allowHtml,
   latex,
-  renderMarkdown,
   refElements,
   className,
   children
 }: Props) => {
+  const rawContent = children;
   const apiClient = useContext(ChainlitContext);
-
-  if (renderMarkdown === false) {
-    return (
-      <pre
-        className={cn('whitespace-pre-wrap break-words', className)}
-        style={{ fontFamily: 'inherit' }}
-      >
-        {children}
-      </pre>
-    );
-  }
 
   const rehypePlugins = useMemo(() => {
     let rehypePlugins: PluggableList = [];
@@ -116,7 +123,10 @@ const Markdown = ({
       rehypePlugins = [rehypeRaw as any, ...rehypePlugins];
     }
     if (latex) {
-      rehypePlugins = [rehypeKatex as any, ...rehypePlugins];
+      rehypePlugins = [
+        [rehypeKatex as any, { output: 'mathml' }],
+        ...rehypePlugins
+      ];
     }
     return rehypePlugins;
   }, [allowHtml, latex]);
@@ -126,6 +136,7 @@ const Markdown = ({
       cursorPlugin,
       remarkGfm as any,
       remarkDirective as any,
+      fixDirectiveColonPlugin,
       MarkdownAlert
     ];
 
@@ -141,7 +152,17 @@ const Markdown = ({
       remarkPlugins={remarkPlugins}
       rehypePlugins={rehypePlugins}
       components={{
-        ...alertComponents, // add alert components
+        ...alertComponents,
+        span({ children, ...props }) {
+          if (props.node?.properties.dataPrivacyComponent) {
+            return (
+              <ResponseTextItem
+                sectionId={props.node?.properties.dataPrivacyComponent.toString()}
+              />
+            );
+          }
+          return <span {...omit(props, ['node'])}>{children}</span>;
+        },
         code(props) {
           return (
             <code
@@ -151,6 +172,35 @@ const Markdown = ({
           );
         },
         pre({ children, ...props }: any) {
+          try {
+            if (children && isValidElement(children)) {
+              const { className, children: rawContent } = children?.props || {};
+        
+              if (className?.includes('-vega') || className?.includes('-json')) {
+                const parsed = JSON.parse(rawContent);
+                const isVega = parsed?.$schema?.includes('vega.github.io');
+        
+                if (isVega) {
+                  if (!parsed.width) parsed.width = 'container';
+                  if (!parsed.height) parsed.height = 'container';
+        
+                  return (
+                    <div style={{ width: '100%', height: '400px', position: 'relative' }}>
+                      <VegaLite spec={parsed} data={parsed.data} />
+                    </div>
+                  );
+                }
+              }
+        
+              if (className?.includes('-mermaid')) {
+                return <MermaidDiagram>{rawContent}</MermaidDiagram>;
+              }
+            }
+          } catch (e) {
+            console.error('Render error:', e);
+            return <CodeSnippet {...props} />;
+          }
+        
           return <CodeSnippet {...props} />;
         },
         a({ children, ...props }) {
@@ -171,46 +221,18 @@ const Markdown = ({
           }
         },
         img: (image: any) => {
-          // Check if the image source is actually a video file
-          const src = image.src.startsWith('/public')
-            ? apiClient.buildEndpoint(image.src)
-            : image.src;
-
-          const videoExtensions = [
-            '.mp4',
-            '.webm',
-            '.mov',
-            '.avi',
-            '.ogv',
-            '.m4v'
-          ];
-          const isVideo = videoExtensions.some((ext) =>
-            src.toLowerCase().split(/[?#]/)[0].endsWith(ext)
-          );
-
-          if (isVideo) {
-            return (
-              <div className="sm:max-w-sm md:max-w-md">
-                <video
-                  src={src}
-                  controls
-                  className="w-full h-auto rounded-md"
-                  style={{ maxWidth: '100%' }}
-                >
-                  Your browser does not support the video tag.
-                </video>
-              </div>
-            );
-          }
-
           return (
-            <div className="sm:max-w-sm md:max-w-md">
+            <div className="relative">
               <AspectRatio
                 ratio={16 / 9}
                 className="bg-muted rounded-md overflow-hidden"
               >
                 <img
-                  src={src}
+                  src={
+                    image.src && image.src.startsWith('/public')
+                      ? apiClient.buildEndpoint(image.src)
+                      : image.src
+                  }
                   alt={image.alt}
                   className="h-full w-full object-contain"
                 />
@@ -230,7 +252,16 @@ const Markdown = ({
           return <span {...omit(props, ['node'])} className="italic" />;
         },
         strong(props) {
-          return <span {...omit(props, ['node'])} className="font-bold" />;
+          // Check if the strong text contains an agent mention (starts with @)
+          const text = typeof props.children === 'string' ? props.children : '';
+          const isAgentMention = text.trim().startsWith('@');
+          
+          return (
+            <span
+              {...omit(props, ['node'])}
+              className={isAgentMention ? 'font-bold text-[#f00]' : 'font-bold'}
+            />
+          );
         },
         hr() {
           return <Separator />;
@@ -255,7 +286,7 @@ const Markdown = ({
           return (
             <h1
               {...omit(props, ['node'])}
-              className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mt-8 first:mt-0"
+              className="scroll-m-20 text-3xl font-extrabold tracking-tight lg:text-5xl mt-8 first:mt-0"
             />
           );
         },
@@ -263,7 +294,7 @@ const Markdown = ({
           return (
             <h2
               {...omit(props, ['node'])}
-              className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight mt-8 first:mt-0"
+              className="scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight mt-8 first:mt-0"
             />
           );
         },
@@ -271,7 +302,7 @@ const Markdown = ({
           return (
             <h3
               {...omit(props, ['node'])}
-              className="scroll-m-20 text-2xl font-semibold tracking-tight mt-6 first:mt-0"
+              className="scroll-m-20 text-xl font-semibold tracking-tight mt-6 first:mt-0"
             />
           );
         },
@@ -279,17 +310,30 @@ const Markdown = ({
           return (
             <h4
               {...omit(props, ['node'])}
-              className="scroll-m-20 text-xl font-semibold tracking-tight mt-6 first:mt-0"
+              className="scroll-m-20 text-lg font-semibold tracking-tight mt-6 first:mt-0"
             />
           );
         },
         p(props) {
+          const thinkEndIndex = rawContent.indexOf('</think>');
+          const isBeforeThink =
+            typeof props.children == 'string' &&
+            thinkEndIndex !== -1 &&
+            rawContent.indexOf(props.children) < thinkEndIndex;
           return (
             <div
               {...omit(props, ['node'])}
-              className="leading-7 [&:not(:first-child)]:mt-4 whitespace-pre-wrap break-words"
+              style={{
+                lineHeight: '28px',
+                color: isBeforeThink ? 'gray' : 'inherit',
+                fontStyle: isBeforeThink ? 'italic' : 'inherit',
+                fontSize: isBeforeThink ? '12px' : 'inherit'
+              }}
+              className="leading-7 [&:not(:first-child)]:mt-4 break-words"
               role="article"
-            />
+            >
+              {props.children}
+            </div>
           );
         },
         table({ children, ...props }) {
@@ -298,6 +342,9 @@ const Markdown = ({
               <Table {...(props as any)}>{children}</Table>
             </Card>
           );
+        },
+        li({ children, ...props }) {
+          return <li {...omit(props, ['node'])} className="mb-2">{children}</li>
         },
         thead({ children, ...props }) {
           return <TableHeader {...(props as any)}>{children}</TableHeader>;
@@ -315,15 +362,7 @@ const Markdown = ({
           return <TableBody {...(props as any)}>{children}</TableBody>;
         },
         // @ts-expect-error custom plugin
-        blinkingCursor: () => <BlinkingCursor whitespace />,
-        alert: ({
-          type,
-          children,
-          ...props
-        }: AlertProps & { type?: string }) => {
-          const alertType = normalizeAlertType(type || props.variant || 'info');
-          return alertComponents.Alert({ variant: alertType, children });
-        }
+        blinkingCursor: () => <BlinkingCursor whitespace />
       }}
     >
       {children}
@@ -331,4 +370,4 @@ const Markdown = ({
   );
 };
 
-export { Markdown };
+export default Markdown;

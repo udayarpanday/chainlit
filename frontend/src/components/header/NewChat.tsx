@@ -1,130 +1,97 @@
-import React, { useState } from 'react';
+import { WidgetContext } from 'context';
+import { Plus } from 'lucide-react';
+import React, { useContext } from 'react';
+import { useRecoilValue } from 'recoil';
 
-import { useChatInteract, useConfig } from '@chainlit/react-client';
+import {
+  ChainlitContext,
+  chatArchived,
+  removeScopedSessionStorageItem,
+  setScopedSessionStorageItem,
+  useAudio,
+  useAuth,
+  useChatInteract,
+  useChatSession
+} from '@chainlit/react-client';
 
 import { Translator } from '@/components/i18n';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from '@/components/ui/tooltip';
 
-import { EditSquare } from '../icons/EditSquare';
-
-type NewChatDialogProps = {
-  open: boolean;
-  handleClose: () => void;
-  handleConfirm: () => void;
-};
-
-export const NewChatDialog = ({
-  open,
-  handleClose,
-  handleConfirm
-}: NewChatDialogProps) => {
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    event.preventDefault();
-    if (event.key === 'Enter') {
-      handleConfirm();
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent
-        id="new-chat-dialog"
-        className="sm:max-w-md"
-        onKeyDown={handleKeyDown}
-      >
-        <DialogHeader>
-          <DialogTitle>
-            <Translator path="navigation.newChat.dialog.title" />
-          </DialogTitle>
-          <DialogDescription>
-            <Translator path="navigation.newChat.dialog.description" />
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={handleClose}>
-            <Translator path="common.actions.cancel" />
-          </Button>
-          <Button variant="default" onClick={handleConfirm} id="confirm">
-            <Translator path="common.actions.confirm" />
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  navigate?: (to: string) => void;
-  onConfirm?: () => void;
+  newSession?: (sessionUuid?: string) => void;
 }
 
-const NewChatButton = ({ navigate, onConfirm, ...buttonProps }: Props) => {
-  const [open, setOpen] = useState(false);
+const NewChatButton = ({ disabled, newSession }: Props) => {
   const { clear } = useChatInteract();
-  const { config } = useConfig();
+  const { evoya, setAccessToken } = useContext(WidgetContext);
+  const apiClient = useContext(ChainlitContext);
+  const { setUserFromAPI } = useAuth();
+  const isChatArchived = useRecoilValue(chatArchived);
 
-  const handleClickOpen = () => {
-    if (config?.ui?.confirm_new_chat === false) {
-      handleConfirm();
-    } else {
-      setOpen(true);
+  const { endConversation, audioConnection } = useAudio();
+  const isAudioOn = audioConnection === 'on';
+  const isMobile = useIsMobile();
+  const isDisabled = disabled || isChatArchived;
+
+  const handleClickOpen = async () => {
+    localStorage.removeItem('session_token');
+    removeScopedSessionStorageItem('session_token');
+    document.cookie =
+      'session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    window.dispatchEvent(new CustomEvent('copilot-new-session'));
+
+    if (isAudioOn) {
+      endConversation();
     }
-  };
 
-  const handleClose = () => {
-    setOpen(false);
-  };
+    clear();
 
-  const handleConfirm = () => {
-    if (onConfirm) {
-      onConfirm();
-    } else {
-      clear();
-      navigate?.('/');
+    if (evoya?.reset) {
+      return;
     }
-    handleClose();
+
+    if (evoya?.getEvoyaAccessToken && evoya?.chat_uuid) {
+      try {
+        const newAccessToken = await evoya.getEvoyaAccessToken(
+          evoya.chat_uuid,
+          undefined,
+          {}
+        );
+        if (newAccessToken) {
+          setScopedSessionStorageItem('chainlit_token', newAccessToken);
+          localStorage.removeItem('chainlit_token');
+          setAccessToken(newAccessToken);
+          apiClient
+            .jwtAuth(newAccessToken)
+            .then((res) => setUserFromAPI())
+            .catch((err) => console.log(err));
+        }
+      } catch (error) {
+        console.error('Failed to get new access token:', error);
+      }
+    }
+
+    newSession?.('');
   };
 
   return (
     <div>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              id="new-chat-button"
-              className="text-muted-foreground hover:text-muted-foreground"
-              onClick={handleClickOpen}
-              {...buttonProps}
-            >
-              <EditSquare className="!size-6" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <Translator path="navigation.newChat.dialog.tooltip" />
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      <NewChatDialog
-        open={open}
-        handleClose={handleClose}
-        handleConfirm={handleConfirm}
-      />
+      <Button
+        variant="outline"
+        id="new-chat-button"
+        onClick={handleClickOpen}
+        disabled={isDisabled}
+        className="text-[#7b809a] border-[#7b809a] hover:bg-[#7b809a]/10"
+      >
+        <Plus className="w-4 h-4" />
+        {isMobile ? (
+          <Translator path="components.molecules.newChatButton.newChat" />
+        ) : (
+          <Translator path="navigation.newChat.button" />
+        )}
+      </Button>
     </div>
   );
 };

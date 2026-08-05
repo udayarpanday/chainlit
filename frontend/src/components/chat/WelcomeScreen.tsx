@@ -1,11 +1,5 @@
 import { cn, hasMessage } from '@/lib/utils';
-import {
-  MutableRefObject,
-  useContext,
-  useEffect,
-  useMemo,
-  useState
-} from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 
 import {
   ChainlitContext,
@@ -16,7 +10,7 @@ import {
 } from '@chainlit/react-client';
 
 import { Logo } from '@/components/Logo';
-import { Markdown } from '@/components/Markdown';
+import Markdown from '@/components/Markdown';
 
 import MessageComposer from './MessageComposer';
 import Starters from './Starters';
@@ -25,7 +19,7 @@ interface Props {
   fileSpec: FileSpec;
   onFileUpload: (payload: File[]) => void;
   onFileUploadError: (error: string) => void;
-  autoScrollRef: MutableRefObject<boolean>;
+  setAutoScroll: (autoScroll: boolean) => void;
 }
 
 export default function WelcomeScreen(props: Props) {
@@ -61,11 +55,7 @@ export default function WelcomeScreen(props: Props) {
               }
             />
             {currentChatProfile?.markdown_description ? (
-              <Markdown
-                allowHtml={allowHtml}
-                latex={latex}
-                renderMarkdown={true}
-              >
+              <Markdown allowHtml={allowHtml} latex={latex}>
                 {currentChatProfile.markdown_description}
               </Markdown>
             ) : null}
@@ -81,13 +71,11 @@ export default function WelcomeScreen(props: Props) {
 
   return (
     <div
-      id="welcome-screen"
       className={cn(
-        'flex flex-col -mt-[60px] gap-4 w-full flex-grow items-center justify-center welcome-screen mx-auto transition-opacity duration-500 opacity-0 delay-100',
+        'flex flex-col -mt-[60px] gap-4 w-full flex-grow items-center justify-end welcome-screen mx-auto transition-opacity duration-500 opacity-0 delay-100',
         isVisible && 'opacity-100'
       )}
     >
-      {logo}
       <MessageComposer {...props} />
       <Starters />
     </div>

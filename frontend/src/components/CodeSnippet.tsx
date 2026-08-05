@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils';
 import hljs from 'highlight.js';
 import { useEffect, useRef } from 'react';
 
@@ -16,10 +15,6 @@ interface CodeSnippetProps {
 const HighlightedCode = ({ language, children }: CodeSnippetProps) => {
   const codeRef = useRef<HTMLElement>(null);
 
-  if (!hljs.getLanguage(language)) {
-    language = 'txt';
-  }
-
   useEffect(() => {
     if (codeRef.current) {
       const highlighted =
@@ -31,7 +26,7 @@ const HighlightedCode = ({ language, children }: CodeSnippetProps) => {
   }, []);
 
   return (
-    <pre className="m-0">
+    <pre className="m-0 whitespace-break-spaces">
       <code
         ref={codeRef}
         className={`language-${language} font-mono text-sm rounded-b-md block`}
@@ -69,15 +64,13 @@ export default function CodeSnippet({ ...props }: CodeProps) {
   ) : null;
 
   const nonHighlightedCode = showSyntaxHighlighter ? null : (
-    <div
-      className={cn('rounded-b-md overflow-x-auto bg-accent', code && 'p-2')}
-    >
+    <div className="p-2 rounded-b-md min-h-20 overflow-x-auto bg-accent">
       <code className="whitespace-pre-wrap">{code}</code>
     </div>
   );
 
   return (
-    <Card className="relative my-2">
+    <Card className="relative">
       <CardHeader className="flex flex-row items-center justify-between py-1 px-4">
         <span className="text-sm text-muted-foreground">
           {match?.[1] || 'Raw code'}

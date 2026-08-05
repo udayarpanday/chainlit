@@ -7,30 +7,33 @@ import {
 
 import CopyButton from '@/components/CopyButton';
 
+import { useIsMobile } from '@/hooks/use-mobile';
+
 import MessageActions from './Actions';
 import { DebugButton } from './DebugButton';
+import { EvoyaCreatorButton } from './EvoyaCreatorButton';
 import { FeedbackButtons } from './FeedbackButtons';
 
 interface Props {
   message: IStep;
   actions: IAction[];
   run?: IStep;
-  contentRef?: React.RefObject<HTMLDivElement>;
 }
 
-const MessageButtons = ({ message, actions, run, contentRef }: Props) => {
+const MessageButtons = ({ message, actions, run }: Props) => {
   const { config } = useConfig();
   const { firstInteraction } = useChatMessages();
+  const isMobile = useIsMobile();
 
   const isUser = message.type === 'user_message';
   const isAsk = message.waitForAnswer;
   const hasContent = !!message.output;
-  const showCopyButton = !!run && hasContent && !isUser && !isAsk;
+  const showCopyButton = hasContent && !isUser && !isAsk;
 
   const messageActions = actions.filter((a) => a.forId === message.id);
 
   const showDebugButton =
-    !!config?.debugUrl && !!message.threadId && !!firstInteraction && !!run;
+    !!config?.debugUrl && !!message.threadId && !!firstInteraction;
 
   const show = showCopyButton || showDebugButton || messageActions?.length;
 
@@ -40,9 +43,8 @@ const MessageButtons = ({ message, actions, run, contentRef }: Props) => {
 
   return (
     <div className="-ml-1.5 flex items-center flex-wrap">
-      {showCopyButton ? (
-        <CopyButton content={message.output} contentRef={contentRef} />
-      ) : null}
+      {showCopyButton ? <CopyButton content={message.output} /> : null}
+      {!isMobile ? <EvoyaCreatorButton message={message} /> : null}
       {run ? <FeedbackButtons message={run} /> : null}
       {messageActions.length ? (
         <MessageActions actions={messageActions} />

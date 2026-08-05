@@ -9,12 +9,10 @@ import {
 } from 'react';
 
 import { useChatMessages } from '@chainlit/react-client';
-
 import { Button } from '@/components/ui/button';
 
 interface Props {
   autoScrollUserMessage?: boolean;
-  autoScrollAssistantMessage?: boolean;
   autoScrollRef?: MutableRefObject<boolean>;
   children: React.ReactNode;
   className?: string;
@@ -23,7 +21,6 @@ interface Props {
 export default function ScrollContainer({
   autoScrollRef,
   autoScrollUserMessage,
-  autoScrollAssistantMessage,
   children,
   className
 }: Props) {
@@ -34,44 +31,79 @@ export default function ScrollContainer({
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
 
+  const scrollToPosition = useCallback(() => {
+    if (!ref.current || !lastUserMessageRef.current) return;
+
+    setIsScrolling(true);
+    const scrollPosition = lastUserMessageRef.current.offsetTop - 20;
+
+    ref.current.scrollTo({
+      top: scrollPosition,
+      behavior: 'smooth'
+    });
+
+    setShowScrollButton(false);
+    // We don't know when smooth scroll ends, so we just let handleScroll
+    // update state as the user interacts.
+  }, []);
+
+  const scrollToBottom = useCallback(() => {
+    if (!ref.current) return;
+
+    setIsScrolling(true);
+    ref.current.scrollTo({
+      top: ref.current.scrollHeight,
+      behavior: 'smooth'
+    });
+
+    if (autoScrollRef) {
+      autoScrollRef.current = true;
+    }
+
+    setShowScrollButton(false);
+  }, [autoScrollRef]);
+
   // Calculate and update spacer height
   const updateSpacerHeight = useCallback(() => {
     if (!ref.current) return;
 
+    // When focusing on the last user message
     if (autoScrollUserMessage && lastUserMessageRef.current) {
       const containerHeight = ref.current.clientHeight;
       const lastMessageHeight = lastUserMessageRef.current.offsetHeight;
 
-      // Calculate the height of all elements after the last user message
+      // Height of all elements after the last user message
       let afterMessagesHeight = 0;
       let currentElement = lastUserMessageRef.current.nextElementSibling;
 
-      // Iterate through all siblings after the last user message
       while (currentElement && currentElement !== spacerRef.current) {
         afterMessagesHeight += (currentElement as HTMLElement).offsetHeight;
         currentElement = currentElement.nextElementSibling;
       }
 
-      // Position the last user message at the top with some padding
-      // Subtract both the message height and the height of any messages after it
       const newSpacerHeight =
         containerHeight - lastMessageHeight - afterMessagesHeight - 32;
 
-      // Only set a positive spacer height
       if (spacerRef.current) {
         spacerRef.current.style.height = `${Math.max(0, newSpacerHeight)}px`;
       }
 
-      // Scroll to position the message at the top
+      // If nothing after the last user message, scroll to it.
       if (afterMessagesHeight === 0) {
         scrollToPosition();
-      } else if (autoScrollAssistantMessage && autoScrollRef?.current) {
+      } else {
+        // Otherwise, follow the normal auto-scroll behavior.
+        if (!autoScrollRef || autoScrollRef.current) {
+          ref.current.scrollTop = ref.current.scrollHeight;
+        }
+      }
+    } else {
+      // Normal behavior: keep at bottom if auto-scroll is enabled or no ref passed
+      if (!autoScrollRef || autoScrollRef.current) {
         ref.current.scrollTop = ref.current.scrollHeight;
       }
-    } else if (autoScrollAssistantMessage && autoScrollRef?.current) {
-      ref.current.scrollTop = ref.current.scrollHeight;
     }
-  }, [autoScrollUserMessage, autoScrollAssistantMessage, autoScrollRef]);
+  }, [autoScrollUserMessage, autoScrollRef, scrollToPosition]);
 
   // Find and set a ref to the last user message element
   useEffect(() => {
@@ -82,22 +114,28 @@ export default function ScrollContainer({
       return;
     }
 
-    // Get all message elements
     const userMessages = ref.current.querySelectorAll(
       '[data-step-type="user_message"]'
     );
+
     if (userMessages.length > 0) {
       const lastUserMessage = userMessages[
         userMessages.length - 1
       ] as HTMLDivElement;
+
       lastUserMessageRef.current = lastUserMessage;
 
-      // Update spacer height when last user message is found
-      updateSpacerHeight();
+      // Delay a bit to ensure DOM layout is updated
+      requestAnimationFrame(() => {
+        updateSpacerHeight();
+      });
+    } else if (autoScrollRef?.current && ref.current) {
+      // No user messages, just keep at bottom if needed
+      ref.current.scrollTop = ref.current.scrollHeight;
     }
-  }, [messages, updateSpacerHeight]);
+  }, [messages, updateSpacerHeight, autoScrollRef]);
 
-  // Add window resize listener to update spacer height
+  // Window resize listener to update spacer height
   useEffect(() => {
     if (!autoScrollUserMessage) return;
 
@@ -125,65 +163,15 @@ export default function ScrollContainer({
       const { scrollTop, scrollHeight, clientHeight } = ref.current;
       const atBottom = scrollTop + clientHeight >= scrollHeight - 10;
       setShowScrollButton(!atBottom);
-    }, 500);
-  }, []);
-
-  const checkScrollEnd = () => {
-    if (!ref.current) return;
-
-    const prevScrollTop = ref.current.scrollTop;
-
-    setTimeout(() => {
-      if (!ref.current) return;
-
-      const currentScrollTop = ref.current.scrollTop;
-      if (currentScrollTop === prevScrollTop) {
-        setIsScrolling(false);
-
-        const { scrollTop, scrollHeight, clientHeight } = ref.current;
-        const atBottom = scrollTop + clientHeight >= scrollHeight - 10;
-        setShowScrollButton(!atBottom);
-      } else {
-        checkScrollEnd();
+      if (autoScrollRef) {
+        autoScrollRef.current = atBottom;
       }
-    }, 100);
-  };
-
-  const scrollToBottom = () => {
-    if (!ref.current) return;
-
-    setIsScrolling(true);
-    ref.current.scrollTo({
-      top: ref.current.scrollHeight,
-      behavior: 'smooth'
-    });
-
-    if (autoScrollRef) {
-      autoScrollRef.current = true;
-    }
-
-    setShowScrollButton(false);
-    checkScrollEnd();
-  };
-
-  const scrollToPosition = () => {
-    if (!ref.current || !lastUserMessageRef.current) return;
-
-    setIsScrolling(true);
-    // Scroll to position the last user message at the top with some padding
-    const scrollPosition = lastUserMessageRef.current.offsetTop - 20;
-
-    ref.current.scrollTo({
-      top: scrollPosition,
-      behavior: 'smooth'
-    });
-
-    setShowScrollButton(false);
-    checkScrollEnd();
-  };
+    }, 300);
+  }, [autoScrollRef]);
 
   const handleScroll = () => {
-    if (!ref.current || isScrolling) return;
+    if (!ref.current) return;
+
     const { scrollTop, scrollHeight, clientHeight } = ref.current;
     const atBottom = scrollTop + clientHeight >= scrollHeight - 10;
 
@@ -192,13 +180,17 @@ export default function ScrollContainer({
     }
 
     setShowScrollButton(!atBottom);
+    setIsScrolling(false);
   };
 
   return (
-    <div className="relative flex flex-col flex-grow overflow-y-auto">
+    <div className="relative flex flex-col flex-grow min-h-0">
       <div
         ref={ref}
-        className={cn('flex flex-col flex-grow overflow-y-auto', className)}
+        className={cn(
+          'flex flex-col flex-grow overflow-y-auto min-h-0',
+          className
+        )}
         onScroll={handleScroll}
       >
         {children}

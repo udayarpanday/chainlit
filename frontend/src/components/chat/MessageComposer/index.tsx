@@ -1,182 +1,139 @@
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
-  MutableRefObject,
-  useCallback,
-  useEffect,
-  useRef,
-  useState
-} from 'react';
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
+  useRecoilState,
+  useRecoilValue,
+  useResetRecoilState,
+  useSetRecoilState
+} from 'recoil';
 import { v4 as uuidv4 } from 'uuid';
 
+import { WidgetContext } from '@chainlit/copilot/src/context';
 import {
+  chatArchived,
   FileSpec,
+  ICommand,
   IStep,
-  commandsState,
+  initialTranscriptState,
   useAuth,
   useChatData,
   useChatInteract,
-  useConfig
+  projectAccess
 } from '@chainlit/react-client';
-import type { IMode, IModeOption } from '@chainlit/react-client';
-import { modesState } from '@chainlit/react-client';
+import { Archive, FolderOpen, Plus, X } from 'lucide-react';
 
 import { Settings } from '@/components/icons/Settings';
 import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from '@/components/ui/tooltip';
-import { useTranslation } from 'components/i18n/Translator';
-
-import { useQuery } from '@/hooks/query';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 import { chatSettingsOpenState } from '@/state/project';
-import {
-  IAttachment,
-  attachmentsState,
-  persistentCommandState
-} from 'state/chat';
+import { IAttachment, attachmentsState } from 'state/chat';
+import { evoyaAttachmentsState, EvoyaAttachment } from '@/state/evoya';
 
 import { Attachments } from './Attachments';
-import CommandButtons from './CommandButtons';
-import CommandButton from './CommandPopoverButton';
-import FavoriteButton from './FavoriteButton';
+import ConfigurationMenu, {
+  ProjectListItem,
+  removeDashboardProject
+} from './ConfigurationMenu';
 import Input, { InputMethods } from './Input';
-import McpButton from './Mcp';
-import ModePicker from './ModePicker';
 import SubmitButton from './SubmitButton';
 import UploadButton from './UploadButton';
-import VoiceButton from './VoiceButton';
+import UploadButtonDropdown from './UploadButtonDropdown';
+import { promptState } from '@chainlit/react-client';
 
 interface Props {
   fileSpec: FileSpec;
   onFileUpload: (payload: File[]) => void;
   onFileUploadError: (error: string) => void;
-  autoScrollRef: MutableRefObject<boolean>;
+  setAutoScroll: (autoScroll: boolean) => void;
+  submitProxy?: (text: string, submitFunction: (text: string) => void) => void;
 }
 
 export default function MessageComposer({
   fileSpec,
   onFileUpload,
   onFileUploadError,
-  autoScrollRef
+  setAutoScroll,
+  submitProxy
 }: Props) {
+  const context = useRecoilValue(promptState);
+  const { evoya } = useContext(WidgetContext);
   const inputRef = useRef<InputMethods>(null);
   const [value, setValue] = useState('');
-  const [selectedCommand, setSelectedCommand] = useRecoilState(
-    persistentCommandState
+  const [selectedCommand, setSelectedCommand] = useState<ICommand>();
+  const [selectedAgents, setSelectedAgents] = useState<any[]>([]);
+  const [selectedProjects, setSelectedProjects] = useState<ProjectListItem[]>(
+    []
   );
-  const commands = useRecoilValue(commandsState);
+  const [openProjectsRequest, setOpenProjectsRequest] = useState(0);
   const setChatSettingsOpen = useSetRecoilState(chatSettingsOpenState);
-
-  // Pre-select the command marked as selected by the backend
-  useEffect(() => {
-    const defaultSelected = commands.find((c) => c.selected);
-    if (defaultSelected && !selectedCommand) {
-      setSelectedCommand(defaultSelected);
-    }
-  }, [commands]);
   const [attachments, setAttachments] = useRecoilState(attachmentsState);
+  const [evoyaAttachments, setEvoyaAttachments] = useRecoilState(evoyaAttachmentsState);
+  const initialTranscript = useRecoilValue(initialTranscriptState);
+  const isChatArchived = useRecoilValue(chatArchived);
+  const isProjectAccessible = useRecoilValue(projectAccess);
+  console.log(isProjectAccessible)
+  const resetInitialTranscript = useResetRecoilState(initialTranscriptState);
   const { t } = useTranslation();
 
   const { user } = useAuth();
   const { sendMessage, replyMessage } = useChatInteract();
-  const { askUser, chatSettingsInputs, disabled: _disabled } = useChatData();
+  const {
+    askUser,
+    chatArchived: isDisabledByArchive,
+    chatSettingsInputs,
+    connected,
+    disabled: _disabled
+  } = useChatData();
 
-  const disabled = _disabled || !!attachments.find((a) => !a.uploaded);
+  const hasUploadingAttachment = !!attachments.find((a) => !a.uploaded);
+  const disabled = _disabled || hasUploadingAttachment;
+  const inputDisabled =
+    isDisabledByArchive ||
+    !connected ||
+    askUser?.spec.type === 'file' ||
+    askUser?.spec.type === 'action' ||
+    hasUploadingAttachment;
 
-  const { config } = useConfig();
-  const showSettingsInComposer =
-    config?.ui?.chat_settings_location !== 'sidebar' &&
-    chatSettingsInputs.length > 0;
+  useEffect(() => {
+    if (!initialTranscript || !inputRef.current) return;
 
-  const isMobile = useIsMobile();
+    if (initialTranscript.mode === 'append') {
+      inputRef.current.appendContent(initialTranscript.text);
+    } else {
+      inputRef.current.setContent(initialTranscript.text);
+    }
 
-  // Get/set available modes from state - selections are tracked via the 'default' flag on options
-  const [modes, setModes] = useRecoilState(modesState);
+    resetInitialTranscript();
+  }, [initialTranscript, resetInitialTranscript]);
 
-  const handleModeSelect = useCallback(
-    (modeId: string, optionId: string) => {
-      setModes((prevModes) =>
-        prevModes.map((mode) => {
-          if (mode.id !== modeId) return mode;
-          return {
-            ...mode,
-            options: mode.options.map((opt: IModeOption) => ({
-              ...opt,
-              default: opt.id === optionId
-            }))
-          };
-        })
-      );
-    },
-    [setModes]
-  );
+  const onPaste = useCallback((event: ClipboardEvent) => {
+    if (event.clipboardData && event.clipboardData.items) {
+      const items = Array.from(event.clipboardData.items);
 
-  // Helper to get selected option for a mode (the one with default=true, or first option)
-  const getSelectedOptionId = useCallback((mode: IMode): string | undefined => {
-    const defaultOpt = mode.options.find((opt) => opt.default);
-    return defaultOpt?.id || mode.options[0]?.id;
-  }, []);
-
-  let promptValue = '';
-  try {
-    const query = useQuery();
-    promptValue = query.get('prompt') || '';
-  } catch {
-    console.warn('Could not parse query parameters');
-  }
-
-  const [promptUsed, setPromptUsed] = useState(false);
-
-  const onFavoriteSelect = useCallback((content: string) => {
-    setValue(content);
-    if (inputRef.current) {
-      inputRef.current.setValueExtern(content);
+      // If no text data, check for files (e.g., images)
+      items.forEach((item) => {
+        if (item.kind === 'file') {
+          const file = item.getAsFile();
+          if (file) {
+            onFileUpload([file]);
+          }
+        }
+      });
     }
   }, []);
-
-  const onPaste = useCallback(
-    (event: ClipboardEvent) => {
-      if (event.clipboardData && event.clipboardData.items) {
-        const items = Array.from(event.clipboardData.items);
-
-        // If no text data, check for files (e.g., images)
-        items.forEach((item) => {
-          if (item.kind === 'file') {
-            const file = item.getAsFile();
-            if (file) {
-              onFileUpload([file]);
-            }
-          }
-        });
-      }
-    },
-    [onFileUpload]
-  );
 
   const onSubmit = useCallback(
     async (
       msg: string,
       attachments?: IAttachment[],
-      selectedCommand?: string
+      evoyaAttachments?: EvoyaAttachment[],
+      selectedCommand?: string,
+      selectedAgents?: string[]
     ) => {
-      // Build modes dict: only include modes that have selections
-      const modesDict: Record<string, string> = {};
-      modes.forEach((mode) => {
-        const selectedId = getSelectedOptionId(mode);
-        if (selectedId) {
-          modesDict[mode.id] = selectedId;
-        }
-      });
-
       const message: IStep = {
         threadId: '',
         command: selectedCommand,
-        modes: Object.keys(modesDict).length > 0 ? modesDict : undefined,
+        agents: selectedAgents,
         id: uuidv4(),
         name: user?.identifier || 'User',
         type: 'user_message',
@@ -189,12 +146,22 @@ export default function MessageComposer({
         ?.filter((a) => !!a.serverId)
         .map((a) => ({ id: a.serverId! }));
 
-      if (autoScrollRef) {
-        autoScrollRef.current = true;
+      const evoyaReferences = evoyaAttachments
+        ?.map((a) => ({ path: a.path }));
+
+      if (setAutoScroll) {
+        setAutoScroll(true);
       }
-      sendMessage(message, fileReferences);
+
+      // @ts-expect-error is not a valid prop
+      if (window.sendCreatorMessage && window.evoyaCreatorEnabled) {
+        // @ts-expect-error is not a valid prop
+        window.sendCreatorMessage(message);
+      } else {
+        sendMessage(message, fileReferences, evoyaReferences);
+      }
     },
-    [user, sendMessage, autoScrollRef, modes, getSelectedOptionId]
+    [user, sendMessage]
   );
 
   const onReply = useCallback(
@@ -210,137 +177,196 @@ export default function MessageComposer({
       };
 
       replyMessage(message);
-      if (autoScrollRef) {
-        autoScrollRef.current = true;
-      }
+      setAutoScroll(true);
     },
-    [user, replyMessage, autoScrollRef]
+    [user, replyMessage]
   );
 
-  const submit = useCallback(() => {
-    if (
-      disabled ||
-      (value.trim() === '' && attachments.length === 0 && !selectedCommand)
-    ) {
+  const submit = async () => {
+    if (disabled) {
       return;
     }
 
-    if (askUser) {
-      onReply(value);
+    if (submitProxy) {
+      submitProxy(value, (text: string) => {
+        if (askUser) {
+          onReply(text);
+        } else {
+          onSubmit(text, attachments, evoyaAttachments);
+        }
+        setAttachments([]);
+        setValue('');
+        inputRef.current?.reset();
+      });
     } else {
-      onSubmit(value, attachments, selectedCommand?.id);
+      submitMessage();
+    }
+  };
+
+  const submitMessage = useCallback(() => {
+    if (disabled || (value === '' && attachments.length === 0 && evoyaAttachments.length === 0)) {
+      return;
     }
 
+    // Get full content including agents
+    const fullContent = inputRef.current?.getFullContent?.() || value;
+
+    if (askUser) {
+      onReply(fullContent);
+    } else {
+      onSubmit(fullContent, attachments, evoyaAttachments, selectedCommand?.id, selectedAgents);
+    }
     setAttachments([]);
-    setValue(''); // Clear the value state
+    setEvoyaAttachments([]);
+    setSelectedAgents([]);
     inputRef.current?.reset();
   }, [
     value,
     disabled,
+    setValue,
     askUser,
     attachments,
+    evoyaAttachments,
     selectedCommand,
+    selectedAgents,
     setAttachments,
-    onSubmit,
-    onReply
+    setSelectedAgents,
+    onSubmit
   ]);
 
-  useEffect(() => {
-    if (inputRef.current && promptValue && !promptUsed) {
-      const prompt = promptValue;
-      if (prompt) {
-        if (prompt.length > 1000) {
-          inputRef.current?.setValueExtern(prompt.slice(0, 1000));
-        } else {
-          inputRef.current?.setValueExtern(prompt);
-        }
-        setPromptUsed(true);
-      }
-    }
-  }, [promptValue, promptUsed]);
+  const removeProject = (project: ProjectListItem) => {
+    removeDashboardProject(project);
+    setSelectedProjects((current) =>
+      current.filter((item) => item.id !== project.id)
+    );
+  };
 
   return (
     <div
-      id="message-composer"
-      className="bg-accent dark:bg-card rounded-3xl p-3 px-4 w-full min-h-24 flex flex-col"
+      className={`bg-accent p-3 px-4 w-full ${
+        (evoya && evoya.type == 'dashboard') || evoya == undefined
+          ? 'min-h-24 rounded-3xl'
+          : 'rounded-full'
+      } flex flex-col ${isChatArchived ? 'border border-primary' : ''}`}
     >
-      {attachments.length > 0 ? (
+      {isChatArchived ? (
+        <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
+          <Archive className="!size-4 shrink-0" />
+          <p>{t('chat.input.archived')}</p>
+        </div>
+      ) : null}
+      {(attachments.length > 0 || evoyaAttachments.length > 0) ? (
         <div className="mb-1">
           <Attachments />
         </div>
       ) : null}
-      <Input
-        ref={inputRef}
-        id="chat-input"
-        autoFocus={!isMobile}
-        selectedCommand={selectedCommand}
-        setSelectedCommand={setSelectedCommand}
-        onChange={setValue}
-        onPaste={onPaste}
-        onEnter={submit}
-        placeholder={t('chat.input.placeholder')}
-      />
+      {evoya?.type === 'dashboard' && selectedProjects.length > 0 ? (
+        <div className="mb-2 flex min-h-7 flex-wrap items-center gap-1.5">
+          {selectedProjects.map((project) => (
+            <div
+              key={project.id}
+              className="flex h-7 max-w-full items-center gap-1.5 rounded-md bg-primary/10 px-2 text-xs font-medium text-primary"
+            >
+              <FolderOpen className="size-3 shrink-0" />
+              <span className="max-w-64 truncate">{project.name}</span>
+              <button
+                type="button"
+                onClick={() => removeProject(project)}
+                disabled={disabled}
+                className="ml-0.5 rounded-sm p-0.5 hover:bg-primary/10 disabled:opacity-50"
+                aria-label={`Remove ${project.name}`}
+              >
+                <X className="size-3" />
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => setOpenProjectsRequest((request) => request + 1)}
+            disabled={disabled}
+            className="flex size-7 items-center justify-center rounded-full border border-dashed border-primary/40 text-primary hover:bg-primary/10 disabled:opacity-50"
+            aria-label="Open projects"
+          >
+            <Plus className="size-4" />
+          </button>
+        </div>
+      ) : null}
+      {((evoya && evoya?.type == 'dashboard') || evoya == undefined) && (
+        <Input
+          ref={inputRef}
+          id="chat-input"
+          autoFocus
+          disabled={inputDisabled}
+          selectedCommand={selectedCommand}
+          setSelectedCommand={setSelectedCommand}
+          onChange={setValue}
+          onEnter={submit}
+          onPaste={onPaste}
+          submitProxy={submitProxy}
+          placeholder={t('chat.input.placeholder')}
+          selectedAgents={selectedAgents}
+          setSelectedAgents={setSelectedAgents}
+        />
+      )}
       <div className="flex items-center justify-between">
         <div className="flex items-center -ml-1.5">
-          <VoiceButton disabled={disabled} />
-          <UploadButton
-            disabled={disabled}
-            fileSpec={fileSpec}
-            onFileUploadError={onFileUploadError}
-            onFileUpload={onFileUpload}
-          />
-          {showSettingsInComposer && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    id="chat-settings-open-modal"
-                    disabled={disabled}
-                    onClick={() => setChatSettingsOpen(true)}
-                    className="hover:bg-muted rounded-full"
-                    variant="ghost"
-                    size="icon"
-                  >
-                    <Settings className="!size-6" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{t('navigation.user.menu.settings')}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          <McpButton disabled={disabled} />
-          {modes.map((mode) => (
-            <ModePicker
-              key={mode.id}
-              mode={mode}
+          {((evoya && evoya?.type != 'dashboard') || !context?.is_superuser) && (
+            <UploadButton
               disabled={disabled}
-              selectedOptionId={getSelectedOptionId(mode)}
-              onOptionSelect={handleModeSelect}
+              fileSpec={fileSpec}
+              onFileUploadError={onFileUploadError}
+              onFileUpload={onFileUpload}
             />
-          ))}
-          <CommandButton
+          )}
+          {(evoya && evoya?.type == 'dashboard' && context?.is_superuser) && (
+            <UploadButtonDropdown
+              disabled={disabled}
+              fileSpec={fileSpec}
+              onFileUploadError={onFileUploadError}
+              onFileUpload={onFileUpload}
+            />
+          )}
+          <ConfigurationMenu
             disabled={disabled}
-            selectedCommandId={selectedCommand?.id}
+            isProjectAccessible={isProjectAccessible}
+            openProjectsRequest={openProjectsRequest}
+            onSelectedProjectsChange={setSelectedProjects}
+            selectedCommand={selectedCommand}
             onCommandSelect={setSelectedCommand}
           />
-          <CommandButtons
-            disabled={disabled}
-            selectedCommandId={selectedCommand?.id}
-            onCommandSelect={setSelectedCommand}
-          />
-
-          <FavoriteButton disabled={disabled} onSelect={onFavoriteSelect} />
+          {chatSettingsInputs.length > 0 && (
+            <Button
+              id="chat-settings-open-modal"
+              disabled={disabled}
+              onClick={() => setChatSettingsOpen(true)}
+              className="hover:bg-muted"
+              variant="ghost"
+              size="icon"
+            >
+              <Settings className="!size-5" />
+            </Button>
+          )}
         </div>
-        <div className="flex items-center gap-1">
-          <SubmitButton
-            onSubmit={submit}
-            disabled={
-              disabled ||
-              (!value.trim() && !selectedCommand && attachments.length === 0)
-            }
+        {evoya && evoya?.type != 'dashboard' && (
+          <Input
+            ref={inputRef}
+            id="chat-input"
+            autoFocus
+            disabled={inputDisabled}
+            selectedCommand={selectedCommand}
+            setSelectedCommand={setSelectedCommand}
+            onChange={setValue}
+            onEnter={submit}
+            onPaste={onPaste}
+            submitProxy={submitProxy}
+            placeholder={t('chat.input.placeholder')}
+            className={'min-h-0'}
+            selectedAgents={selectedAgents}
+            setSelectedAgents={setSelectedAgents}
           />
+        )}
+        <div className="flex items-center gap-1">
+          <SubmitButton onSubmit={submit} disabled={disabled} value={value} />
         </div>
       </div>
     </div>
