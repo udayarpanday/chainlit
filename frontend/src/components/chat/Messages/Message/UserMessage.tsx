@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { MessageContext } from 'contexts/MessageContext';
+import { Star } from 'lucide-react';
 import { memo, useContext, useMemo, useState } from 'react';
 import { useSetRecoilState } from 'recoil';
 
@@ -28,11 +29,12 @@ const UserMessage = memo(function UserMessage({
   elements,
   children
 }: React.PropsWithChildren<Props>) {
-  const config = useConfig();
-  const { askUser, loading } = useContext(MessageContext);
-  const { editMessage } = useChatInteract();
+  const { askUser, loading, editable } = useContext(MessageContext);
+  const { editMessage, toggleMessageFavorite } = useChatInteract();
+  const { config } = useConfig();
   const setMessages = useSetRecoilState(messagesState);
   const disabled = loading || !!askUser;
+  const isFavorite = message.metadata?.favorite === true;
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState('');
 
@@ -41,8 +43,7 @@ const UserMessage = memo(function UserMessage({
       (el) => el.forId === message.id && el.display === 'inline'
     );
   }, [message.id, elements]);
-
-  const isEditable = !!config.config?.features.edit_message;
+  const favoritesEnabled = !!config?.features?.favorites;
 
   const handleEdit = () => {
     if (editValue) {
@@ -59,12 +60,13 @@ const UserMessage = memo(function UserMessage({
       editMessage({ ...message, output: editValue });
     }
   };
+
   return (
     <div className="flex flex-col w-full gap-1">
       <InlinedElements elements={inlineElements} className="items-end" />
 
       <div className="flex flex-row items-center gap-1 w-full group">
-        {!isEditing && isEditable && (
+        {!isEditing && editable && (
           <Button
             variant="ghost"
             size="icon"
@@ -78,12 +80,27 @@ const UserMessage = memo(function UserMessage({
             <Pencil />
           </Button>
         )}
+        {!isEditing && favoritesEnabled && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              'favorite-message invisible group-hover:visible',
+              isFavorite ? 'visible text-yellow-500' : 'text-muted-foreground',
+              !editable && 'ml-auto'
+            )}
+            onClick={() => toggleMessageFavorite(message)}
+            disabled={disabled}
+          >
+            <Star className={cn('h-4 w-4', isFavorite ? 'fill-current' : '')} />
+          </Button>
+        )}
         <div
           className={cn(
             'px-5 py-2.5 relative bg-accent rounded-3xl',
             inlineElements.length ? 'rounded-tr-lg' : '',
             isEditing ? 'w-full flex-grow' : 'max-w-[70%] flex-grow-0',
-            isEditable ? '' : 'ml-auto'
+            editable ? '' : 'ml-auto'
           )}
         >
           {isEditing ? (
@@ -110,11 +127,7 @@ const UserMessage = memo(function UserMessage({
               </div>
             </div>
           ) : (
-            <div
-              className={`flex ${
-                message.command ? 'flex-col gap-1' : 'flex-col'
-              }`}
-            >
+            <div className="flex flex-col">
               {message.command ? (
                 <div className="font-bold text-[#08f] command-span">
                   {message.command}

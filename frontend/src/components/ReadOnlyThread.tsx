@@ -1,8 +1,8 @@
 import { MessageContext } from '@/contexts/MessageContext';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import { useSetRecoilState } from 'recoil';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { toast } from 'sonner';
 
 import {
@@ -13,6 +13,7 @@ import {
   IStep,
   IThread,
   nestMessages,
+  sessionIdState,
   sideViewState,
   useApi,
   useConfig
@@ -30,19 +31,29 @@ type Props = {
 
 const ReadOnlyThread = ({ id }: Props) => {
   const { config } = useConfig();
+  const location = useLocation();
+  const isSharedRoute = location.pathname.startsWith('/share/');
   const {
     data: thread,
     error: threadError,
     isLoading
-  } = useApi<IThread>(id ? `/project/thread/${id}` : null, {
-    revalidateOnFocus: false
-  });
+  } = useApi<IThread>(
+    id
+      ? isSharedRoute
+        ? `/project/share/${id}`
+        : `/project/thread/${id}`
+      : null,
+    {
+      revalidateOnFocus: false
+    }
+  );
   const navigate = useNavigate();
   const setSideView = useSetRecoilState(sideViewState);
   const [steps, setSteps] = useState<IStep[]>([]);
   const apiClient = useContext(ChainlitContext);
   const { t } = useTranslation();
   const layoutMaxWidth = useLayoutMaxWidth();
+  const sessionId = useRecoilValue(sessionIdState);
 
   useEffect(() => {
     if (!thread) {
@@ -61,7 +72,7 @@ const ReadOnlyThread = ({ id }: Props) => {
 
   const onFeedbackUpdated = useCallback(
     async (message: IStep, onSuccess: () => void, feedback: IFeedback) => {
-      toast.promise(apiClient.setFeedback(feedback), {
+      toast.promise(apiClient.setFeedback(feedback, sessionId), {
         loading: 'Updating',
         success: (res) => {
           setSteps((prev) =>
@@ -146,6 +157,8 @@ const ReadOnlyThread = ({ id }: Props) => {
     return {
       allowHtml: config?.features?.unsafe_allow_html,
       latex: config?.features?.latex,
+      renderMarkdown: config?.features?.user_message_markdown,
+      editable: false,
       loading: false,
       showFeedbackButtons: !!config?.dataPersistence,
       uiName: config?.ui?.name || '',
@@ -159,13 +172,14 @@ const ReadOnlyThread = ({ id }: Props) => {
     config?.ui?.name,
     config?.ui?.cot,
     config?.features?.unsafe_allow_html,
+    config?.features?.user_message_markdown,
     onElementRefClick,
     onError,
     onFeedbackUpdated,
     onFeedbackDeleted
   ]);
 
-  if (isLoading) {
+  if (!isSharedRoute && isLoading) {
     return (
       <div className="flex flex-col h-full w-full items-center justify-center">
         <Loader className="!size-6" />
@@ -173,10 +187,9 @@ const ReadOnlyThread = ({ id }: Props) => {
     );
   }
 
-  if (!thread) {
+  if (!isSharedRoute && !thread) {
     return null;
   }
-
 
   return (
     <div className="flex w-full flex-col flex-grow relative overflow-y-auto">

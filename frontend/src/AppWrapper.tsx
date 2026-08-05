@@ -10,7 +10,6 @@ import {
   useConfig
 } from '@chainlit/react-client';
 
-
 export default function AppWrapper() {
   const [translationLoaded, setTranslationLoaded] = useState(false);
   const { isAuthenticated, isReady } = useAuth();
@@ -18,23 +17,20 @@ export default function AppWrapper() {
   const { i18n } = useTranslation();
   const { windowMessage } = useChatInteract();
 
-  async function loadTranslation(language: string) {
-    try {
-      const translation = await import(`../../translations/${languageInUse}.json`);
-      i18n.addResourceBundle(language, 'translation', translation);
-      i18n.changeLanguage(language);
-      setTranslationLoaded(true)
-    } catch (error) {
-      console.error(
-        `Could not load translation for language: ${language}`,
-        error
-      );
-    }
+  function handleChangeLanguage(languageBundle: any): void {
+    i18n.addResourceBundle(languageInUse, 'translation', languageBundle);
+    i18n.changeLanguage(languageInUse);
   }
 
+  const { data: translations } = useApi<any>(
+    `/project/translations?language=${languageInUse}`
+  );
+
   useEffect(() => {
-    loadTranslation(languageInUse);
-  }, []);
+    if (!translations) return;
+    handleChangeLanguage(translations.translation);
+    setTranslationLoaded(true);
+  }, [translations]);
 
   useEffect(() => {
     const handleWindowMessage = (event: MessageEvent) => {

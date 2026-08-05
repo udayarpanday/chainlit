@@ -1,6 +1,6 @@
 import { MessageContext } from '@/contexts/MessageContext';
-import { useCallback, useContext, useMemo } from 'react';
-import { useSetRecoilState, useRecoilValue } from 'recoil';
+import { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { toast } from 'sonner';
 
 import {
@@ -9,13 +9,13 @@ import {
   IMessageElement,
   IStep,
   messagesState,
+  sessionIdState,
   sideViewState,
   updateMessageById,
   useChatData,
   useChatInteract,
   useChatMessages,
-  useConfig,
-  evoyaCreatorEnabledState,
+  useConfig
 } from '@chainlit/react-client';
 
 import { Messages } from '@/components/chat/Messages';
@@ -33,20 +33,20 @@ const MessagesContainer = ({ navigate }: Props) => {
   const { uploadFile: _uploadFile } = useChatInteract();
   const setMessages = useSetRecoilState(messagesState);
   const setSideView = useSetRecoilState(sideViewState);
-  const creatorEnabled = useRecoilValue(evoyaCreatorEnabledState);
+  const sessionId = useRecoilValue(sessionIdState);
 
   const { t } = useTranslation();
 
   const uploadFile = useCallback(
-    (file: File, onProgress: (progress: number) => void) => {
-      return _uploadFile(file, onProgress);
+    (file: File, onProgress: (progress: number) => void, parentId?: string) => {
+      return _uploadFile(file, onProgress, parentId);
     },
     [_uploadFile]
   );
 
   const onFeedbackUpdated = useCallback(
     async (message: IStep, onSuccess: () => void, feedback: IFeedback) => {
-      toast.promise(apiClient.setFeedback(feedback), {
+      toast.promise(apiClient.setFeedback(feedback, sessionId), {
         loading: t('chat.messages.feedback.status.updating'),
         success: (res) => {
           setMessages((prev) =>
@@ -91,6 +91,40 @@ const MessagesContainer = ({ navigate }: Props) => {
     []
   );
 
+  const knownSideElementsRef = useRef<Map<string, IMessageElement>>(new Map());
+  const knownSideOrderRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    const sideElements = elements.filter((e) => e.display === 'side');
+
+    if (sideElements.length === 0) {
+      knownSideElementsRef.current = new Map();
+      knownSideOrderRef.current = [];
+      setSideView(undefined);
+      return;
+    }
+
+    const prevMap = knownSideElementsRef.current;
+    const prevOrder = knownSideOrderRef.current;
+    const currentIds = sideElements.map((e) => e.id);
+
+    const hasChanged =
+      currentIds.length !== prevOrder.length ||
+      currentIds.some((id, i) => prevOrder[i] !== id) ||
+      sideElements.some((e) => prevMap.get(e.id) !== e);
+
+    if (hasChanged) {
+      const newMap = new Map<string, IMessageElement>();
+      sideElements.forEach((e) => newMap.set(e.id, e));
+      knownSideElementsRef.current = newMap;
+      knownSideOrderRef.current = currentIds;
+      setSideView({
+        title: sideElements[sideElements.length - 1].name,
+        elements: sideElements
+      });
+    }
+  }, [elements]);
+
   const onElementRefClick = useCallback(
     (element: IMessageElement) => {
       if (
@@ -124,8 +158,9 @@ const MessagesContainer = ({ navigate }: Props) => {
       askUser,
       allowHtml: config?.features?.unsafe_allow_html,
       latex: config?.features?.latex,
+      renderUserMarkdown: config?.features?.user_message_markdown,
+      editable: !!config?.features.edit_message,
       loading,
-      showEvoyaCreatorButton: config?.showEvoyaCreatorButton && !creatorEnabled,
       showFeedbackButtons: enableFeedback,
       uiName: config?.ui?.name || '',
       cot: config?.ui?.cot || 'hidden',
@@ -141,10 +176,12 @@ const MessagesContainer = ({ navigate }: Props) => {
     config?.ui?.name,
     config?.ui?.cot,
     config?.features?.unsafe_allow_html,
+    config?.features?.user_message_markdown,
     onElementRefClick,
     onError,
     onFeedbackUpdated
   ]);
+
   return (
     <MessageContext.Provider value={memoizedContext}>
       <Messages

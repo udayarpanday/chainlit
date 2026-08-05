@@ -1,7 +1,8 @@
-import { X, Cloud } from 'lucide-react';
+import { X } from 'lucide-react';
 import React from 'react';
 import { useRecoilValue } from 'recoil';
 
+import { useTranslation } from '@/components/i18n/Translator';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -11,7 +12,6 @@ import {
 } from '@/components/ui/tooltip';
 
 import { attachmentsState } from '@/state/chat';
-import { evoyaAttachmentsState } from '@/state/evoya';
 
 import { Attachment } from './Attachment';
 
@@ -72,10 +72,10 @@ const CircularProgressButton = ({
   );
 };
 const Attachments = () => {
+  const { t } = useTranslation();
   const attachments = useRecoilValue(attachmentsState);
-  const evoyaAttachments = useRecoilValue(evoyaAttachmentsState);
 
-  if (attachments.length === 0 && evoyaAttachments.length === 0) return null;
+  if (attachments.length === 0) return null;
 
   return (
     <div id="attachments" className="flex flex-row flex-wrap gap-4 w-fit">
@@ -95,7 +95,9 @@ const Attachments = () => {
                   </CircularProgressButton>
                 </div>
               </TooltipTrigger>
-              <TooltipContent>Cancel upload</TooltipContent>
+              <TooltipContent>
+                {t('chat.fileUpload.actions.cancelUpload')}
+              </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         ) : null;
@@ -115,7 +117,9 @@ const Attachments = () => {
                     </Button>
                   </div>
                 </TooltipTrigger>
-                <TooltipContent>Remove attachment</TooltipContent>
+                <TooltipContent>
+                  {t('chat.fileUpload.actions.removeAttachment')}
+                </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           ) : null;
@@ -125,51 +129,9 @@ const Attachments = () => {
             key={attachment.id}
             name={attachment.name}
             mime={attachment.type}
+            file={attachment.file}
           >
             {progress}
-            {remove}
-          </Attachment>
-        );
-      })}
-      {evoyaAttachments.map((attachment) => {
-        const remove =
-          attachment.remove ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="absolute -right-2 -top-2">
-                    <Button
-                      size="icon"
-                      className="w-6 h-6 shadow-sm rounded-full border-4 bg-card hover:bg-card text-foreground light:border-muted"
-                      onClick={attachment.remove}
-                    >
-                      <X className="!size-3" />
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>Remove attachment</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : null;
-
-        return (
-          <Attachment
-            key={attachment.id}
-            name={attachment.name}
-            mime={attachment.type}
-            iconFlag={
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="right-5 -top-2 absolute rounded-full bg-white border-4 text-primary p-0.5">
-                      <Cloud className="h-3 w-3" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>Cloud Attachment</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            }
-          >
             {remove}
           </Attachment>
         );

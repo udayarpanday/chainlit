@@ -1,5 +1,5 @@
 import { MessageContext } from 'contexts/MessageContext';
-import React, { memo, useContext, useState, useEffect } from 'react';
+import React, { memo, useContext, useMemo } from 'react';
 
 import {
   type IAction,
@@ -10,9 +10,6 @@ import {
 import BlinkingCursor from '@/components/BlinkingCursor';
 
 import { Message } from './Message';
-import { WidgetContext } from '@chainlit/copilot/src/context';
-import { firstUserInteraction, } from '@chainlit/react-client';
-import { useRecoilValue } from 'recoil';
 
 interface Props {
   messages: IStep[];
@@ -25,10 +22,13 @@ interface Props {
 
 const CL_RUN_NAMES = ['on_chat_start', 'on_message', 'on_audio_end'];
 
-const hasToolStep = (step: IStep): boolean => {
+const hasActiveToolStep = (step: IStep): boolean => {
   return (
     step.steps?.some(
-      (s) => s.type === 'tool' || s.type.includes('message') || hasToolStep(s)
+      (s) =>
+        (s.type === 'tool' && s.start && !s.end && !s.isError) ||
+        s.type.includes('message') ||
+        hasActiveToolStep(s)
     ) || false
   );
 };
@@ -41,44 +41,19 @@ const hasAssistantMessage = (step: IStep): boolean => {
   );
 };
 
-const checkToolStep = (step: IStep): boolean => {
-  return step.steps?.some((s) => s.type === 'tool' && s.end == null || checkToolStep(s)) || false;
-};
-
-const collectToolCallSteps = (steps: IStep[]): IStep[] => {
-  const toolSteps: IStep[] = [];
-
-  for (const step of steps) {
-    if (step.name === 'tools' || step.type === 'tool') {
-      toolSteps.push(step);
-    }
-
-    if (step.steps?.length) {
-      toolSteps.push(...collectToolCallSteps(step.steps));
-    }
-  }
-
-  return toolSteps;
-};
-
 const Messages = memo(
   ({ messages, elements, actions, indent, isRunning, scorableRun }: Props) => {
-    const { evoya } = useContext(WidgetContext);
     const messageContext = useContext(MessageContext);
-    const firstInteraction = useRecoilValue(firstUserInteraction);
-    const [isToolLoading, setToolLoading] = useState(false);
 
-    useEffect(() => {
-      const getLoaderState = messages.some(checkToolStep);
-      if (isToolLoading || getLoaderState) {
-        setToolLoading(false);
-      }
-      const timeout = setTimeout(() => {
-        setToolLoading(getLoaderState);
-      }, 700);
-      return () => clearTimeout(timeout);
-
+    const lastAssistantMessage = useMemo(() => {
+      return messages.findLast((m) => m.type === 'assistant_message');
     }, [messages]);
+
+    const lastScorableAssistantMessage = useMemo(() => {
+      return scorableRun?.steps?.findLast(
+        (m) => m.type === 'assistant_message'
+      );
+    }, [scorableRun]);
 
     return (
       <>
@@ -86,11 +61,13 @@ const Messages = memo(
           // Handle chainlit runs
           if (CL_RUN_NAMES.includes(m.name)) {
             const isRunning = !m.end && !m.isError && messageContext.loading;
-            const isToolCallCoT = messageContext.cot === 'tool_call';
+            const isToolCallCoT =
+              messageContext.cot === 'tool_call' ||
+              messageContext.cot === 'full';
             const isHiddenCoT = messageContext.cot === 'hidden';
 
             const showToolCoTLoader = isToolCallCoT
-              ? isRunning && !hasToolStep(m)
+              ? isRunning && !hasActiveToolStep(m)
               : false;
 
             const showHiddenCoTLoader = isHiddenCoT
@@ -111,13 +88,10 @@ const Messages = memo(
                     scorableRun={scorableRun}
                   />
                 ) : null}
-                {showToolCoTLoader || showHiddenCoTLoader ? (
-                  <div className={(!!evoya === false && !!firstInteraction == false) && 'absolute'}>
-                    <BlinkingCursor />
-                  </div>
-
+                {(showToolCoTLoader || showHiddenCoTLoader) &&
+                m.name !== 'on_chat_start' ? (
+                  <BlinkingCursor />
                 ) : null}
-
               </React.Fragment>
             );
           } else {
@@ -126,28 +100,16 @@ const Messages = memo(
             // The message is scorable if it is the last assistant message of the run
 
             const isRunLastAssistantMessage =
-              m ===
-              _scorableRun?.steps?.findLast(
-                (_m) => _m.type === 'assistant_message'
-              );
+              m.type === 'run' ? false : m === lastScorableAssistantMessage;
 
-            const isLastAssistantMessage =
-              messages.findLast((_m) => _m.type === 'assistant_message') === m;
+            const isLastAssistantMessage = m === lastAssistantMessage;
 
             const isScorable =
               isRunLastAssistantMessage || isLastAssistantMessage;
 
-            const toolCalls: IStep[] = [];
-
-            if (indent === 0 && m.type === 'assistant_message') {
-              toolCalls.push(...collectToolCallSteps(messages));
-            }
-
             return (
               <Message
                 message={m}
-                toolCalls={toolCalls}
-                evoyaMode={evoya?.type}
                 elements={elements}
                 actions={actions}
                 key={m.id}

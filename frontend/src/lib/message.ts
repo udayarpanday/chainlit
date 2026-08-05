@@ -1,5 +1,10 @@
 import type { IMessageElement } from 'client-types/';
 
+const toSafeLinkTarget = (name: string) =>
+  encodeURIComponent(name.replace(/\s+/g, '_'))
+    .replace(/\(/g, '%28')
+    .replace(/\)/g, '%29'); // Encode parentheses to avoid issues in URLs
+
 const isForIdMatch = (id: string | number | undefined, forId: string) => {
   if (!forId || !id) {
     return false;
@@ -12,27 +17,6 @@ const escapeRegExp = (string: string) => {
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 };
-
-function escapeBrackets(text: string) {
-  const pattern =
-    /(```[\s\S]*?```|`.*?`)|\\\[([\s\S]*?[^\\])\\\]|\\\((.*?)\\\)|(\${1})/g;
-  const res = text.replace(
-    pattern,
-    (match, codeBlock, squareBracket, roundBracket, dollarSign) => {
-      if (codeBlock) {
-        return codeBlock;
-      } else if (squareBracket) {
-        return `$$\n${squareBracket}\n$$`;
-      } else if (roundBracket) {
-        return `$${roundBracket}$`;
-      } else if (dollarSign) {
-        return '\\$';
-      }
-      return match;
-    },
-  );
-  return res;
-}
 
 export const prepareContent = ({
   elements,
@@ -55,7 +39,6 @@ export const prepareContent = ({
     : undefined;
 
   let preparedContent = content ? content.trim() : '';
-  preparedContent = escapeBrackets(preparedContent);
   const inlinedElements = elements.filter(
     (e) => isForIdMatch(id, e?.forId) && e.display === 'inline'
   );
@@ -83,8 +66,9 @@ export const prepareContent = ({
       } else {
         // Element is a reference, add it to the list and return link
         refElements.push(element);
-        // spaces break markdown links. The address in the link is not used anyway
-        return `[${match}](${match.replaceAll(' ', '_')})`;
+        // Build a Markdown-safe link: escape text, and encode () in the slug
+        // The address in the link is not used anyway
+        return `[${match}](${toSafeLinkTarget(match)})`;
       }
     });
   }

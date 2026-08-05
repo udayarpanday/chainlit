@@ -10,10 +10,9 @@ type TranslatorProps = {
   path: string | string[];
   suffix?: string;
   options?: options;
-  className?: string;
 };
 
-const Translator = ({ path, options, suffix, className }: TranslatorProps) => {
+const Translator = ({ path, options, suffix }: TranslatorProps) => {
   const { t, i18n } = usei18nextTranslation();
 
   if (!i18n.exists(path, options)) {
@@ -21,7 +20,7 @@ const Translator = ({ path, options, suffix, className }: TranslatorProps) => {
   }
 
   return (
-    <span className={className}>
+    <span>
       {t(path, options)}
       {suffix}
     </span>

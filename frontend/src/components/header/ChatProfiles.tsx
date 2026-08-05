@@ -1,4 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
+import { useSetRecoilState } from 'recoil';
 
 import {
   ChainlitContext,
@@ -8,7 +9,7 @@ import {
   useConfig
 } from '@chainlit/react-client';
 
-import Markdown from '@/components/Markdown';
+import { Markdown } from '@/components/Markdown';
 import {
   HoverCard,
   HoverCardContent,
@@ -22,6 +23,9 @@ import {
   SelectValue
 } from '@/components/ui/select';
 
+import { IAttachment, attachmentsState } from '@/state/chat';
+
+import { NewChatDialog } from './NewChat';
 
 interface Props {
   navigate?: (to: string) => void;
@@ -33,6 +37,7 @@ export default function ChatProfiles({ navigate }: Props) {
   const { chatProfile, setChatProfile } = useChatSession();
   const { firstInteraction } = useChatMessages();
   const { clear } = useChatInteract();
+  const setAttachments = useSetRecoilState<IAttachment[]>(attachmentsState);
   const [newChatProfile, setNewChatProfile] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
 
@@ -69,6 +74,7 @@ export default function ChatProfiles({ navigate }: Props) {
   const handleConfirm = (profile: string) => {
     setChatProfile(profile);
     setNewChatProfile(null);
+    setAttachments([]);
     clear();
     handleClose();
   };
@@ -102,7 +108,7 @@ export default function ChatProfiles({ navigate }: Props) {
               : profile.icon;
 
             return (
-              <HoverCard openDelay={100} closeDelay={0} key={profile.name}>
+              <HoverCard openDelay={0} closeDelay={0} key={profile.name}>
                 <HoverCardTrigger asChild>
                   <SelectItem
                     data-test={`select-item:${profile.name}`}
@@ -113,11 +119,11 @@ export default function ChatProfiles({ navigate }: Props) {
                       {icon && (
                         <img
                           src={icon}
-                          alt={profile.name}
+                          alt={profile.display_name || profile.name}
                           className="w-6 h-6 rounded-md object-cover"
                         />
                       )}
-                      <span>{profile.name}</span>
+                      <span>{profile.display_name || profile.name}</span>
                     </div>
                   </SelectItem>
                 </HoverCardTrigger>
@@ -128,7 +134,11 @@ export default function ChatProfiles({ navigate }: Props) {
                   className="w-80 overflow-visible"
                   sideOffset={10}
                 >
-                  <Markdown allowHtml={allowHtml} latex={latex}>
+                  <Markdown
+                    allowHtml={allowHtml}
+                    latex={latex}
+                    renderMarkdown={true}
+                  >
                     {profile.markdown_description}
                   </Markdown>
                 </HoverCardContent>

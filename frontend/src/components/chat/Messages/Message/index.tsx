@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { MessageContext } from 'contexts/MessageContext';
-import { memo, useContext, useMemo } from 'react';
+import { memo, useContext, useMemo, useRef } from 'react';
 
 import {
   type IAction,
@@ -18,12 +18,9 @@ import { MessageButtons } from './Buttons';
 import { MessageContent } from './Content';
 import Step from './Step';
 import UserMessage from './UserMessage';
-import ToolStepInfo from './ToolStepInfo';
 
 interface Props {
   message: IStep;
-  toolCalls?: IStep[] | null;
-  evoyaMode?: string;
   elements: IMessageElement[];
   actions: IAction[];
   indent: number;
@@ -34,17 +31,9 @@ interface Props {
 
 const EMPTY_ELEMENTS: IMessageElement[] = [];
 
-const langGraphExclude = ['default', 'dashboard', 'container'];
-
-const hasVisibleOutput = (output?: string) => {
-  return !!output?.trim();
-};
-
 const Message = memo(
   ({
     message,
-    toolCalls,
-    evoyaMode,
     elements,
     actions,
     isRunning,
@@ -52,10 +41,10 @@ const Message = memo(
     isScorable,
     scorableRun
   }: Props) => {
-    
-    const { allowHtml, cot, latex, onError } = useContext(MessageContext);
+    const { allowHtml, cot, latex, renderUserMarkdown, onError } =
+      useContext(MessageContext);
     const layoutMaxWidth = useLayoutMaxWidth();
-    const isAsk = message.waitForAnswer;
+    const contentRef = useRef<HTMLDivElement>(null);
     const isUserMessage = message.type === 'user_message';
     const isStep = !message.type.includes('message');
     // Only keep tool calls if Chain of Thought is tool_call
@@ -65,6 +54,8 @@ const Message = memo(
     const hiddenSkip = isStep && cot === 'hidden';
 
     const skip = toolCallSkip || hiddenSkip;
+    const showInputSection = Boolean(message.input && message.showInput);
+    const shouldRenderOutput = !showInputSection || Boolean(message.output);
 
     const userMessageContent = useMemo(
       () => (
@@ -73,6 +64,7 @@ const Message = memo(
           message={message}
           allowHtml={allowHtml}
           latex={latex}
+          renderMarkdown={renderUserMarkdown}
         />
       ),
       [message, allowHtml, latex]
@@ -94,13 +86,9 @@ const Message = memo(
       );
     }
 
-    if (isStep && message.name === 'Reinforcement') return null;
-    if (isStep && message.type === 'tool' && message.name.includes('DocumentProcessor')) return null;
-    if (isStep && message.name === 'LangGraph' && (langGraphExclude.includes(evoyaMode ?? '') || isRunning)) return null;
-
     return (
       <>
-        <div className="step my-2">
+        <div data-step-type={message.type} className="step py-2">
           <div
             className="flex flex-col"
             style={{
@@ -121,23 +109,25 @@ const Message = memo(
               ) : (
                 <div className="ai-message flex gap-4 w-full">
                   {!isStep || !indent ? (
-                    <div className="hidden md:block">
-                      <MessageAvatar
-                        author={message.name}
-                        content={message.output}
-                        hide={message.name === 'LangGraph'}
-                      />
-                    </div>
-                  ) : null}
-                  {!isStep &&
-                  (isRunning || (toolCalls && toolCalls.length > 0)) &&
-                  !hasVisibleOutput(message.output) &&
-                  evoyaMode !== 'default' ? (
-                    <ToolStepInfo toolCalls={toolCalls ?? []} />
+                    <MessageAvatar
+                      author={message.metadata?.avatarName || message.name}
+                      isError={message.isError}
+                      iconName={message.metadata?.icon}
+                    />
                   ) : null}
                   {/* Display the step and its children */}
                   {isStep ? (
                     <Step step={message} isRunning={isRunning}>
+                      {showInputSection ? (
+                        <MessageContent
+                          elements={elements}
+                          message={message}
+                          allowHtml={allowHtml}
+                          latex={latex}
+                          renderMarkdown={true}
+                          sections={['input']}
+                        />
+                      ) : null}
                       {message.steps ? (
                         <Messages
                           messages={message.steps.filter(
@@ -149,38 +139,48 @@ const Message = memo(
                           isRunning={isRunning}
                         />
                       ) : null}
-                      <MessageContent
-                        elements={elements}
+                      {shouldRenderOutput ? (
+                        <MessageContent
+                          ref={contentRef}
+                          elements={elements}
+                          message={message}
+                          allowHtml={allowHtml}
+                          latex={latex}
+                          renderMarkdown={true}
+                          sections={showInputSection ? ['output'] : undefined}
+                        />
+                      ) : null}
+                      <MessageButtons
                         message={message}
-                        allowHtml={allowHtml}
-                        latex={latex}
+                        actions={actions}
+                        contentRef={contentRef}
                       />
-                      <MessageButtons message={message} actions={actions} />
                     </Step>
                   ) : (
                     // Display an assistant message
                     <div className="flex flex-col items-start min-w-[150px] flex-grow gap-2">
                       <MessageContent
+                        ref={contentRef}
                         elements={elements}
                         message={message}
                         allowHtml={allowHtml}
                         latex={latex}
+                        renderMarkdown={true}
                       />
-                      {!isRunning && isAsk ? (
-                        <>
-                          <AskFileButton onError={onError} />
-                          <AskActionButtons
-                            actions={actions}
-                            messageId={message.id}
-                          />
-                        </>
-                      ) : null}
+
+                      <AskFileButton messageId={message.id} onError={onError} />
+                      <AskActionButtons
+                        actions={actions}
+                        messageId={message.id}
+                      />
+
                       <MessageButtons
                         message={message}
                         actions={actions}
                         run={
                           scorableRun && isScorable ? scorableRun : undefined
                         }
+                        contentRef={contentRef}
                       />
                     </div>
                   )}
