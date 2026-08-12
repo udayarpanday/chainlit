@@ -25,5 +25,5 @@ export const useUserManagement = () => {
     }
   }, [error]);
 
-  return { user, setUserFromAPI };
+  return { user, setUser, setUserFromAPI };
 };

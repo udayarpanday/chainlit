@@ -20,15 +20,28 @@ export default function AppWrapper() {
 
   async function loadTranslation(language: string) {
     try {
-      const translation = await import(`../../translations/${languageInUse}.json`);
+      const translation = await import(`../../translations/${language}.json`);
       i18n.addResourceBundle(language, 'translation', translation);
       i18n.changeLanguage(language);
-      setTranslationLoaded(true)
+      setTranslationLoaded(true);
     } catch (error) {
       console.error(
         `Could not load translation for language: ${language}`,
         error
       );
+      // Fallback to en-US
+      if (language !== 'en-US') {
+        try {
+          const fallback = await import(`../../translations/en-US.json`);
+          i18n.addResourceBundle('en-US', 'translation', fallback);
+          i18n.changeLanguage('en-US');
+          setTranslationLoaded(true);
+        } catch (e) {
+          setTranslationLoaded(true);
+        }
+      } else {
+        setTranslationLoaded(true);
+      }
     }
   }
 

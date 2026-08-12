@@ -107,3 +107,14 @@ export interface IChainlitConfig {
 
   translation: object;
 }
+
+export type ChatInputSocketPayload =
+  | string
+  | {
+      text?: string;
+      mode?: 'append' | 'replace';
+    };
+
+export interface IChatArchived {
+  is_chat_archived: boolean;
+}

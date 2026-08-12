@@ -62,6 +62,8 @@ export default defineConfig({
   resolve: {
     dedupe: ['lucide-react'],
     alias: {
+      '@chainlit/copilot/src': path.resolve(__dirname, '../copilot/src'),
+      '@evoya/file-picker/src': path.resolve(__dirname, '../evoya-files/src'),
       react: path.resolve(__dirname, './node_modules/react'),
       'lucide-react': path.resolve(__dirname, '../../frontend/node_modules/lucide-react'),
       "@mdxeditor/editor/dist/styles/ui.module.css.js": path.resolve(__dirname, "./node_modules/@mdxeditor/editor/dist/styles/ui.module.css.js"),

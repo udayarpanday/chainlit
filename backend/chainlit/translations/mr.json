@@ -22,8 +22,7 @@
       "form": {
         "email": {
           "label": "ईमेल पत्ता",
-          "required": "ईमेल आवश्यक आहे",
-          "placeholder": "me@example.com"
+          "required": "ईमेल आवश्यक आहे"
         },
         "password": {
           "label": "पासवर्ड",
@@ -70,20 +69,6 @@
       "stop": "रेकॉर्डिंग थांबवा",
       "connecting": "कनेक्ट करत आहे"
     },
-    "favorites": {
-      "use": "आवडता संदेश वापरा",
-      "headline": "आवडते संदेश",
-      "remove": "आवडता संदेश काढा",
-      "empty": {
-        "title": "अद्याप कोणतेही प्रॉम्प्ट जतन केलेले नाहीत",
-        "description": "एक प्रॉम्प्ट पाठवून आणि त्यावर स्टार करून सुरुवात करा किंवा मागील चॅटमधून प्रॉम्प्टवर स्टार करा"
-      }
-    },
-    "commands": {
-      "button": "साधने",
-      "changeTool": "साधन बदला",
-      "availableTools": "उपलब्ध साधने"
-    },
     "fileUpload": {
       "dragDrop": "फाइल्स येथे ड्रॅग आणि ड्रॉप करा",
       "browse": "फाइल्स ब्राउझ करा",
@@ -91,10 +76,6 @@
       "errors": {
         "failed": "अपलोड अयशस्वी",
         "cancelled": "यांचे अपलोड रद्द केले"
-      },
-      "actions": {
-        "cancelUpload": "अपलोड रद्द करा",
-        "removeAttachment": "अटॅचमेंट काढा"
       }
     },
     "messages": {
@@ -114,8 +95,7 @@
         "edit": "फीडबॅक संपादित करा",
         "dialog": {
           "title": "टिप्पणी जोडा",
-          "submit": "फीडबॅक सबमिट करा",
-          "yourFeedback": "तुमची प्रतिक्रिया..."
+          "submit": "फीडबॅक सबमिट करा"
         },
         "status": {
           "updating": "अपडेट करत आहे",
@@ -129,10 +109,9 @@
       "show": "इतिहास दाखवा"
     },
     "settings": {
-      "title": "सेटिंग्ज पॅनल",
-      "customize": "या वेळी तुमच्या चॅट सेटिंग्ज कस्टमाइझ करा"
+      "title": "सेटिंग्ज पॅनल"
     },
-    "watermark": "LLM चुका करू शकतात. महत्त्वाची माहिती तपासण्याचा विचार करा."
+    "watermark": "सह बनवले"
   },
   "threadHistory": {
     "sidebar": {
@@ -156,24 +135,10 @@
     "thread": {
       "untitled": "शीर्षकविरहित संभाषण",
       "menu": {
-        "rename": "नाव बदला",
-        "share": "शेअर करा",
-        "delete": "हटवा"
-      },
-      "actions": {
-        "share": {
-          "title": "चॅटचा दुवा शेअर करा",
-          "button": "शेअर करा",
-          "status": {
-            "copied": "दुवा कॉपी केला",
-            "created": "शेअर दुवा तयार झाला!",
-            "unshared": "या थ्रेडसाठी शेअरिंग अक्षम केले"
-          },
-          "error": {
-            "create": "शेअर दुवा तयार करण्यात अपयश",
-            "unshare": "थ्रेडचे शेअरिंग थांबवण्यात अपयश"
-          }
+          "rename": "Rename",
+          "delete": "Delete"
         },
+      "actions": {
         "delete": {
           "title": "हटविण्याची पुष्टी करा",
           "description": "हे थ्रेड आणि त्याचे संदेश व घटक हटवेल. ही क्रिया पूर्ववत केली जाऊ शकत नाही",
@@ -245,16 +210,5 @@
     "security": "Security",
     "beta": "Beta",
     "best-practice": "Best Practice"
-  },
-  "components": {
-    "MultiSelectInput": {
-      "placeholder": "चुनें..."
-    },
-    "DatePickerInput": {
-      "placeholder": {
-        "single": "तारीख निवडा",
-        "range": "तारीख श्रेणी निवडा"
-      }
-    }
   }
 }

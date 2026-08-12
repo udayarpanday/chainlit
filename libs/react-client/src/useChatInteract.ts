@@ -204,6 +204,13 @@ const useChatInteract = () => {
     session?.socket.emit('stop');
   }, [session?.socket]);
 
+  const passAudioType = useCallback(
+    (type: string) => {
+      session?.socket.emit('audio_type', { type });
+    },
+    [session?.socket]
+  );
+
   const uploadFile = useCallback(
     (file: File, onProgress: (progress: number) => void, parentId?: string) => {
       return client.uploadFile(file, onProgress, sessionId, parentId);
@@ -225,7 +232,8 @@ const useChatInteract = () => {
     setIdToResume,
     updateChatSettings,
     editChatSettings,
-    toggleMessageFavorite
+    toggleMessageFavorite,
+    passAudioType
   };
 };
 

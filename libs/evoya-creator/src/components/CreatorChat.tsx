@@ -5,7 +5,15 @@ const CreatorChat = (): JSX.Element => {
   const { config } = useContext(WidgetContext);
 
   useEffect(() => {
-    if (!window.cl_shadowRootElement_container) {
+    const creatorContainer = document.getElementById(
+      'copilot-embedded-container-creator'
+    );
+    const existingChatContainer = window.cl_shadowRootElement_container;
+    const originalParent =
+      existingChatContainer?.parentElement ??
+      document.getElementById('copilot-embedded-container');
+
+    if (!existingChatContainer) {
       fetch(`${config.apiBaseUrl}/api/agent/user/list/`)
         .then((response) => response.json())
         .then((agents) => {
@@ -13,12 +21,26 @@ const CreatorChat = (): JSX.Element => {
           loadChatWithUuid(defaultAgent)
         })
     } else {
-      document.getElementById('copilot-embedded-container-creator')?.appendChild(window.cl_shadowRootElement_container)
+      creatorContainer?.appendChild(existingChatContainer);
     }
+
+    return () => {
+      const chatContainer = window.cl_shadowRootElement_container;
+      const returnContainer =
+        originalParent ?? document.getElementById('copilot-embedded-container');
+
+      if (
+        returnContainer?.isConnected &&
+        chatContainer?.parentElement === creatorContainer
+      ) {
+        returnContainer.appendChild(chatContainer);
+      }
+    };
   }, [])
 
   const loadChatWithUuid = (uuid: string) => {
     window.unmountChainlitWidget();
+    console.log(config, 'config');
     setTimeout(() => window.initCopilotChat(
       {
         chat_uuid: uuid,
@@ -32,6 +54,8 @@ const CreatorChat = (): JSX.Element => {
         privacyShield: {
           enabled: false
         },
+        hideWaterMark: config?.hideWaterMark,
+        additionalInfo: config?.additionalInfo,
         evoyaCreator: {
           enabled: true,
           initialEnabled: true

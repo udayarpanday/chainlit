@@ -288,17 +288,31 @@ export const projectAccess = atom<boolean>({
   default: false
 });
 
-export const agentState = atom<IAgents[]>({
+export const agentState = atom<IAgents>({
   key: 'Agent',
-  default: []
+  default: { agents: [] }
 });
 
-export const initialTranscriptState = atom<{ text?: string; mode?: string }>({
+export type InitialTranscriptMode = 'append' | 'replace';
+
+export interface InitialTranscriptStateValue {
+  text: string;
+  mode: InitialTranscriptMode;
+  receivedAt: number;
+}
+
+export const initialTranscriptState = atom<InitialTranscriptStateValue | null>({
   key: 'InitialTranscript',
-  default: {}
+  default: null
 });
 
-export const promptState = atom<{ text?: string; mode?: string }>({
-  key: 'Prompt',
-  default: {}
+export interface EvoyaPromptContext {
+  context_prompt: string;
+  context_prompt_exact_sent_to_llm?: unknown;
+  is_superuser: boolean | undefined;
+}
+
+export const promptState = atom<EvoyaPromptContext | undefined>({
+  key: 'Context',
+  default: undefined
 });

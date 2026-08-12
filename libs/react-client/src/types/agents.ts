@@ -5,9 +5,5 @@ export interface IAgent {
 }
 
 export interface IAgents {
-  name: string;
-  uuid: string;
-  agent_name: boolean;
-  description: string;
-  agents?: IAgent[];
+  agents: IAgent[];
 }

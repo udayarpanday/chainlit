@@ -21,10 +21,10 @@ interface Props {
   message: IStep;
 }
 
-function escapeBrackets(text: string) {
+function escapeBrackets(text?: string) {
   const pattern =
     /(```[\s\S]*?```|`.*?`)|\\\[([\s\S]*?[^\\])\\\]|\\\((.*?)\\\)|(\${1})/g;
-  const res = text.replace(
+  const res = (text ?? '').replace(
     pattern,
     (match, codeBlock, squareBracket, roundBracket, dollarSign) => {
       if (codeBlock) {

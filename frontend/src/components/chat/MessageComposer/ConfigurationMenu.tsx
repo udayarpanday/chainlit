@@ -164,11 +164,11 @@ const mapProject = (
 const truncateProjectName = (name: string, length = 36) =>
   name.length > length ? `${name.slice(0, length)}...` : name;
 
-function escapeBrackets(text: string) {
+function escapeBrackets(text?: string) {
   const pattern =
     /(```[\s\S]*?```|`.*?`)|\\\[([\s\S]*?[^\\])\\\]|\\\((.*?)\\\)|(\${1})/g;
 
-  return text.replace(
+  return (text ?? '').replace(
     pattern,
     (match, codeBlock, squareBracket, roundBracket) => {
       if (codeBlock) return codeBlock;

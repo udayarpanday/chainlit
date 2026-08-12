@@ -10,22 +10,28 @@ import io from 'socket.io-client';
 import { toast } from 'sonner';
 import {
   actionState,
+  agentState,
   askUserState,
   audioConnectionState,
   callFnState,
+  chatArchived,
   chatProfileState,
   chatSettingsInputsState,
   chatSettingsValueState,
   commandsState,
   currentThreadIdState,
   elementState,
+  type EvoyaPromptContext,
   favoriteMessagesState,
   firstUserInteraction,
+  initialTranscriptState,
   isAiSpeakingState,
   loadingState,
   mcpState,
   messagesState,
   modesState,
+  projectAccess,
+  promptState,
   resumeThreadErrorState,
   sessionIdState,
   sessionState,
@@ -37,7 +43,10 @@ import {
   wavStreamPlayerState
 } from 'src/state';
 import {
+  ChatInputSocketPayload,
   IAction,
+  IAgents,
+  IChatArchived,
   ICommand,
   IElement,
   IMessageElement,
@@ -58,6 +67,31 @@ import { OutputAudioChunk } from './types/audio';
 import { ChainlitContext } from './context';
 import type { IToken } from './useChatData';
 
+type EvoyaCreatorWindow = Window &
+  typeof globalThis & {
+    evoyaCreatorEnabled?: boolean;
+    updateEvoyaCreator?: (message: IStep) => string | null | undefined;
+  };
+
+const forwardMessageToEvoyaCreator = (message: IStep) => {
+  const creatorWindow = window as EvoyaCreatorWindow;
+
+  if (
+    message.type !== 'assistant_message' ||
+    !message.output ||
+    !creatorWindow.evoyaCreatorEnabled ||
+    !creatorWindow.updateEvoyaCreator
+  ) {
+    return;
+  }
+
+  try {
+    return creatorWindow.updateEvoyaCreator(message) ?? undefined;
+  } catch (error) {
+    console.error('Failed to update Evoya Creator:', error);
+  }
+};
+
 const useChatSession = () => {
   const client = useContext(ChainlitContext);
   const sessionId = useRecoilValue(sessionIdState);
@@ -77,6 +111,8 @@ const useChatSession = () => {
   const setCallFn = useSetRecoilState(callFnState);
   const setCommands = useSetRecoilState(commandsState);
   const setModes = useSetRecoilState(modesState);
+  const setAgents = useSetRecoilState(agentState);
+  const setContextPrompt = useSetRecoilState(promptState);
   const setSideView = useSetRecoilState(sideViewState);
   const setElements = useSetRecoilState(elementState);
   const setTasklists = useSetRecoilState(tasklistState);
@@ -87,6 +123,9 @@ const useChatSession = () => {
   const idToResume = useRecoilValue(threadIdToResumeState);
   const setThreadResumeError = useSetRecoilState(resumeThreadErrorState);
   const setFavoriteMessages = useSetRecoilState(favoriteMessagesState);
+  const setInitialTranscript = useSetRecoilState(initialTranscriptState);
+  const setChatArchived = useSetRecoilState(chatArchived);
+  const setProjectAccess = useSetRecoilState(projectAccess);
 
   const [currentThreadId, setCurrentThreadId] =
     useRecoilState(currentThreadIdState);
@@ -295,7 +334,14 @@ const useChatSession = () => {
       });
 
       socket.on('new_message', (message: IStep) => {
-        setMessages((oldMessages) => addMessage(oldMessages, message));
+        setMessages((oldMessages) => {
+          const creatorOutput = forwardMessageToEvoyaCreator(message);
+
+          return addMessage(oldMessages, {
+            ...message,
+            output: creatorOutput ?? message.output
+          });
+        });
       });
 
       socket.on(
@@ -376,6 +422,39 @@ const useChatSession = () => {
 
       socket.on('set_modes', (modes: IMode[]) => {
         setModes(modes);
+      });
+
+      socket.on('agents', (agents: IAgents) => {
+        setAgents(agents);
+      });
+
+      socket.on('context_prompt', (context: EvoyaPromptContext | undefined) => {
+        if (context) {
+          setContextPrompt(context);
+        }
+      });
+
+      socket.on('initial_transcript', (payload: ChatInputSocketPayload) => {
+        const text = typeof payload === 'string' ? payload : payload?.text;
+
+        if (typeof text !== 'string') {
+          return;
+        }
+
+        setInitialTranscript({
+          text,
+          mode:
+            typeof payload === 'string' ? 'replace' : payload.mode || 'replace',
+          receivedAt: Date.now()
+        });
+      });
+
+      socket.on('chat_archived', (payload: IChatArchived) => {
+        setChatArchived(payload.is_chat_archived);
+      });
+
+      socket.on('is_project_accessible', (payload: boolean) => {
+        setProjectAccess(payload);
       });
 
       socket.on('set_favorites', (steps: IStep[]) => {

@@ -54,11 +54,23 @@ export const UploadButton = ({
   onFileUploadError
 }: UploadButtonProps) => {
   const { config } = useConfig();
+  const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const upload = useUpload({
     spec: fileSpec,
-    onResolved: (payloads: File[]) => onFileUpload(payloads),
-    onError: onFileUploadError,
-    options: { noDrag: true }
+    onResolved: (payloads: File[]) => {
+      onFileUpload(payloads);
+      setFileMenuOpen(false);
+    },
+    onError: (error: string) => {
+      onFileUploadError(error);
+      setFileMenuOpen(false);
+    },
+    options: {
+      noDrag: true,
+      noClick: true,
+      useFsAccessApi: false,
+      onFileDialogCancel: () => setFileMenuOpen(false)
+    }
   });
 
   const [evoyaAttachments, setEvoyaAttachments] = useRecoilState(evoyaAttachmentsState);
@@ -87,7 +99,7 @@ export const UploadButton = ({
   }
 
   if (!upload) return null;
-  const { getRootProps, getInputProps } = upload;
+  const { getInputProps, open } = upload;
 
   if (!config?.features.spontaneous_file_upload?.enabled) return null;
 
@@ -96,7 +108,15 @@ export const UploadButton = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <span className="inline-block">
-            <DropdownMenu>
+            <input
+              id="upload-button-input"
+              className="hidden"
+              {...getInputProps()}
+            />
+            <DropdownMenu
+              open={fileMenuOpen}
+              onOpenChange={setFileMenuOpen}
+            >
               <DropdownMenuTrigger asChild>
                 <Button
                   id="file-menu-toggle"
@@ -121,13 +141,13 @@ export const UploadButton = ({
                   transform: 'none',
                   zIndex: 50
                 }}>
-                <DropdownMenuItem>
-                  <input
-                    id="upload-button-input"
-                    className="hidden"
-                    {...getInputProps()}
-                  />
-                  <div className="flex items-center gap-2" {...getRootProps()}>
+                <DropdownMenuItem
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    open();
+                  }}
+                >
+                  <div className="flex items-center gap-2">
                     <div className="rounded-md bg-muted p-2">
                       <Monitor className="!w-5 !h-5" />
                     </div>

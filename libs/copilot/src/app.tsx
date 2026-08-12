@@ -21,6 +21,7 @@ import {
   COPILOT_THREAD_CHANGED_EVENT_KEY,
   CopilotThreadChangedEventParams
 } from './state';
+import WidgetEmbedded from './widgetEmbed';
 
 interface Props {
   widgetConfig: IWidgetConfig;
@@ -40,7 +41,7 @@ declare global {
 }
 
 export default function App({ widgetConfig }: Props) {
-  const { isAuthenticated, data, setUser } = useAuth();
+  const { isAuthenticated, data, setUserFromAPI, setUser } = useAuth();
   const [config, setConfig] = useRecoilState(configState);
   const [, setCreatorEnabled] = useRecoilState(evoyaCreatorEnabledState);
   const { evoya } = useContext(WidgetContext);
@@ -52,6 +53,19 @@ export default function App({ widgetConfig }: Props) {
     evoya?.locale || widgetConfig.language || navigator.language || 'en-US';
   const [authError, setAuthError] = useState<string>();
   const [fetchError, setFetchError] = useState<string>();
+
+  useEffect(() => {
+    const disableCreatorMode = () => setCreatorEnabled(false);
+    const enableCreatorMode = () => setCreatorEnabled(true);
+
+    window.addEventListener('disable-creator-mode', disableCreatorMode);
+    window.addEventListener('enable-creator-mode', enableCreatorMode);
+
+    return () => {
+      window.removeEventListener('disable-creator-mode', disableCreatorMode);
+      window.removeEventListener('enable-creator-mode', enableCreatorMode);
+    };
+  }, [setCreatorEnabled]);
 
   useEffect(() => {
     if (evoya?.reset) {
@@ -74,21 +88,25 @@ export default function App({ widgetConfig }: Props) {
     }
   }, [config]);
 
-  useEffect(() => {
-    setCreatorEnabled(evoya?.evoyaCreator?.initialEnabled ?? false);
-  }, []);
+  const loadTranslations = async (lang: string) => {
+    try {
+      const translations = await import(`../../../translations/${lang}.json`);
+      i18n.addResourceBundle(lang, 'translation', translations);
+      i18n.changeLanguage(lang);
+    } catch (error) {
+      console.error(`Could not load translations for ${lang}:`, error);
+      const splitLang = lang.split('-');
+      if (splitLang.length === 2 && lang !== 'en-US') {
+        loadTranslations(splitLang[0]);
+      } else {
+        loadTranslations('en-US');
+      }
+    }
+  };
 
   useEffect(() => {
-    apiClient
-      .get(`/project/translations?language=${languageInUse}`)
-      .then((res) => res.json())
-      .then((data) => {
-        i18n.addResourceBundle(languageInUse, 'translation', data.translation);
-        i18n.changeLanguage(languageInUse);
-      })
-      .catch((err) => {
-        setFetchError(String(err));
-      });
+    loadTranslations(languageInUse);
+    setCreatorEnabled(evoya?.evoyaCreator?.initialEnabled ?? false)
   }, []);
 
   const defaultTheme = widgetConfig.theme || data?.default_theme;
@@ -113,10 +131,7 @@ export default function App({ widgetConfig }: Props) {
     const userData = await apiClient
       .getUser(widgetConfig.accessToken || '')
       .catch((err) => setAuthError(String(err)));
-    if (userData) {
-      setUser(userData);
-    }
-    setTimeout(() => clear(), 1500);
+      setUserFromAPI();
   };
 
   useEffect(() => {
@@ -137,8 +152,12 @@ export default function App({ widgetConfig }: Props) {
 
   return (
     <ThemeProvider storageKey="vite-ui-theme" defaultTheme={defaultTheme}>
-      <Toaster className="toast" position="bottom-center" />
-      <Widget config={widgetConfig} error={fetchError || authError} />
+      <Toaster className="toast" position="top-right" />
+      {evoya?.type === 'default' ? (
+        <Widget config={widgetConfig} error={fetchError || authError} />
+      ) : (
+        <WidgetEmbedded />
+      )}
     </ThemeProvider>
   );
 }

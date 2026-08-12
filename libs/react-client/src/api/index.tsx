@@ -199,8 +199,10 @@ export class ChainlitAPI extends APIBase {
     return res.json();
   }
 
-  async getUser(): Promise<IUser> {
-    const res = await this.get(`/user`);
+  async getUser(token: string): Promise<IUser> {
+    const res = await this.fetch('GET', '/user', undefined, undefined, {
+      Authorization: `Bearer ${token}`
+    });
     return res.json();
   }
 

@@ -67,14 +67,28 @@ const Message = memo(
     const skip = toolCallSkip || hiddenSkip;
 
     const userMessageContent = useMemo(
-      () => (
-        <MessageContent
-          elements={EMPTY_ELEMENTS}
-          message={message}
-          allowHtml={allowHtml}
-          latex={latex}
-        />
-      ),
+      () => {
+        const collapsedPromptDisplayOutput =
+          message.metadata?.evoyaCollapsedPromptDisplayOutput;
+
+        if (collapsedPromptDisplayOutput === '') {
+          return null;
+        }
+
+        const displayMessage =
+          typeof collapsedPromptDisplayOutput === 'string'
+            ? { ...message, output: collapsedPromptDisplayOutput }
+            : message;
+
+        return (
+          <MessageContent
+            elements={EMPTY_ELEMENTS}
+            message={displayMessage}
+            allowHtml={allowHtml}
+            latex={latex}
+          />
+        );
+      },
       [message, allowHtml, latex]
     );
 

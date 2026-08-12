@@ -10,8 +10,8 @@ interface Props {
   isRunning?: boolean;
 }
 
-function humanizeToolName(name: string): string {
-  const normalizedName = name.replace(/^tool_/, '');
+function humanizeToolName(name?: string): string {
+  const normalizedName = (name ?? 'Tool').replace(/^tool_/, '');
 
   if (normalizedName.includes('_')) {
     return normalizedName
@@ -108,7 +108,7 @@ export default function ToolStepInfo({
   }, [toolCalls]);
 
   return (
-    <div className="flex flex-col flex-grow w-0">
+    <div className="flex flex-col justify-center flex-grow w-0">
       <p
         className={cn(
           'flex items-center gap-1 group/step loading-shimmer'

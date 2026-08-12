@@ -22,8 +22,7 @@
       "form": {
         "email": {
           "label": "ઈમેલ એડ્રેસ",
-          "required": "ઈમેલ આવશ્યક છે",
-          "placeholder": "me@example.com"
+          "required": "ઈમેલ આવશ્યક છે"
         },
         "password": {
           "label": "પાસવર્ડ",
@@ -70,20 +69,6 @@
       "stop": "રેકોર્ડિંગ બંધ કરો",
       "connecting": "કનેક્ટ થઈ રહ્યું છે"
     },
-    "favorites": {
-      "use": "મનપસંદ સંદેશનો ઉપયોગ કરો",
-      "headline": "મનપસંદ સંદેશાઓ",
-      "remove": "મનપસંદ સંદેશ દૂર કરો",
-      "empty": {
-        "title": "હજી સુધી કોઈ પ્રોમ્પ્ટ સાચવેલ નથી",
-        "description": "એક પ્રોમ્પ્ટ મોકલીને અને તેને સ્ટાર કરીને શરૂઆત કરો અથવા અગાઉની ચેટમાંથી કોઈ પ્રોમ્પ્ટને સ્ટાર કરો"
-      }
-    },
-    "commands": {
-      "button": "ટૂલ્સ",
-      "changeTool": "ટૂલ બદલો",
-      "availableTools": "ઉપલબ્ધ ટૂલ્સ"
-    },
     "fileUpload": {
       "dragDrop": "અહીં ફાઇલ્સ ખેંચો અને છોડો",
       "browse": "ફાઇલ્સ બ્રાઉઝ કરો",
@@ -91,10 +76,6 @@
       "errors": {
         "failed": "અપલોડ કરવામાં નિષ્ફળ",
         "cancelled": "અપલોડ રદ કર્યું"
-      },
-      "actions": {
-        "cancelUpload": "અપલોડ રદ કરો",
-        "removeAttachment": "જોડાણ દૂર કરો"
       }
     },
     "messages": {
@@ -114,8 +95,7 @@
         "edit": "પ્રતિસાદ સંપાદિત કરો",
         "dialog": {
           "title": "ટિપ્પણી ઉમેરો",
-          "submit": "પ્રતિસાદ સબમિટ કરો",
-          "yourFeedback": "તમારો પ્રતિસાદ..."
+          "submit": "પ્રતિસાદ સબમિટ કરો"
         },
         "status": {
           "updating": "અપડેટ થઈ રહ્યું છે",
@@ -129,10 +109,9 @@
       "show": "ઇતિહાસ બતાવો"
     },
     "settings": {
-      "title": "સેટિંગ્સ પેનલ",
-      "customize": "તમારા ચેટ સેટિંગ્સ અહીં કસ્ટમાઇઝ કરો"
+      "title": "સેટિંગ્સ પેનલ"
     },
-    "watermark": "LLM ભૂલો કરી શકે છે. મહત્વપૂર્ણ માહિતી તપાસવાનું વિચારો."
+    "watermark": "સાથે બનાવેલ"
   },
   "threadHistory": {
     "sidebar": {
@@ -156,24 +135,10 @@
     "thread": {
       "untitled": "શીર્ષક વગરની વાતચીત",
       "menu": {
-        "rename": "નામ બદલો",
-        "share": "શેર કરો",
-        "delete": "Delete"
-      },
-      "actions": {
-        "share": {
-          "title": "ચેટની લિંક શેર કરો",
-          "button": "શેર કરો",
-          "status": {
-            "copied": "લિંક કૉપિ થઈ",
-            "created": "શેર લિંક બનાવાઈ!",
-            "unshared": "આ થ્રેડ માટે શેરિંગ નિષ્ક્રિય છે"
-          },
-          "error": {
-            "create": "શેર લિંક બનાવવામાં નિષ્ફળ",
-            "unshare": "થ્રેડ અનશેર કરવામાં નિષ્ફળ"
-          }
+          "rename": "Rename",
+          "delete": "Delete"
         },
+      "actions": {
         "delete": {
           "title": "કાઢી નાખવાની પુષ્ટિ કરો",
           "description": "આ થ્રેડ અને તેના સંદેશાઓ અને તત્વોને કાઢી નાખશે. આ ક્રિયા પાછી ફેરવી શકાશે નહીં",
@@ -245,16 +210,5 @@
     "security": "Security",
     "beta": "Beta",
     "best-practice": "Best Practice"
-  },
-  "components": {
-    "MultiSelectInput": {
-      "placeholder": "બેંચી લો..."
-    },
-    "DatePickerInput": {
-      "placeholder": {
-        "single": "તારીખ પસંદ કરો",
-        "range": "તારીખની શ્રેણી પસંદ કરો"
-      }
-    }
   }
 }
