@@ -1,3 +1,4 @@
+import { getScopedSessionId, getScopedSessionStorageItem } from 'src/storage';
 import { IElement, IThread, IUser } from 'src/types';
 
 import { IAction } from 'src/types/action';
@@ -41,6 +42,22 @@ export class ClientError extends Error {
 }
 
 type Payload = FormData | any;
+type RequestHeaders = Record<string, string>;
+type RequestHeadersInput = RequestHeaders | string | undefined;
+
+const normalizeHeaders = (headers: RequestHeadersInput): RequestHeaders => {
+  if (!headers) return {};
+
+  if (typeof headers === 'string') {
+    return {
+      Authorization: headers.startsWith('Bearer ')
+        ? headers
+        : `Bearer ${headers}`
+    };
+  }
+
+  return { ...headers };
+};
 
 export class APIBase {
   constructor(
@@ -63,8 +80,12 @@ export class APIBase {
     // Add additionalQueryParams for all API calls
     if (this.additionalQueryParams) {
       const params = new URLSearchParams(this.additionalQueryParams);
-      const separator = url.search ? '&' : '?';
-      url.search = url.search + `${separator}${params.toString()}`;
+      const additionalSearch = params.toString();
+
+      if (additionalSearch) {
+        const separator = url.search ? '&' : '?';
+        url.search = url.search + `${separator}${additionalSearch}`;
+      }
     }
 
     return url.toString();
@@ -117,22 +138,26 @@ export class APIBase {
     path: string,
     data?: Payload,
     signal?: AbortSignal,
-    headers: { Authorization?: string; 'Content-Type'?: string } = {}
+    headers: RequestHeadersInput = {}
   ): Promise<Response> {
     try {
       let body;
+      const requestHeaders: RequestHeaders = {
+        'X-Chainlit-Session-Id': getScopedSessionId(),
+        ...normalizeHeaders(headers)
+      };
 
       if (data instanceof FormData) {
         body = data;
       } else {
-        headers['Content-Type'] = 'application/json';
+        requestHeaders['Content-Type'] = 'application/json';
         body = data ? JSON.stringify(data) : null;
       }
 
       const res = await fetch(this.buildEndpoint(path), {
         method,
         credentials: 'include',
-        headers,
+        headers: requestHeaders,
         signal,
         body
       });
@@ -150,11 +175,20 @@ export class APIBase {
     }
   }
 
-  async get(
-    endpoint: string,
-    headers: { Authorization?: string; 'Content-Type'?: string } = {}
-  ) {
-    return await this.fetch('GET', endpoint, undefined, undefined, headers);
+  async get(endpoint: string, headers: RequestHeadersInput = {}) {
+    const token = getScopedSessionStorageItem('chainlit_token');
+    const requestHeaders: RequestHeaders = {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...normalizeHeaders(headers)
+    };
+
+    return await this.fetch(
+      'GET',
+      endpoint,
+      undefined,
+      undefined,
+      requestHeaders
+    );
   }
 
   async post(endpoint: string, data: Payload, signal?: AbortSignal) {

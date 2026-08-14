@@ -1,12 +1,16 @@
 import { isEqual } from 'lodash';
 import { AtomEffect, DefaultValue, atom, selector } from 'recoil';
 import { Socket } from 'socket.io-client';
-import { v4 as uuidv4 } from 'uuid';
 
 import { IAgents } from './types/agents';
 import { ICommand } from './types/command';
 import { IMode } from './types/mode';
 
+import {
+  createScopedSessionId,
+  getScopedSessionId,
+  setScopedSessionId
+} from './storage';
 import {
   IAction,
   IAsk,
@@ -45,14 +49,19 @@ export const chatProfileState = atom<string | undefined>({
 
 const sessionIdAtom = atom<string>({
   key: 'SessionId',
-  default: uuidv4()
+  default: getScopedSessionId()
 });
 
 export const sessionIdState = selector({
   key: 'SessionIdSelector',
   get: ({ get }) => get(sessionIdAtom),
-  set: ({ set }, newValue) =>
-    set(sessionIdAtom, newValue instanceof DefaultValue ? uuidv4() : newValue)
+  set: ({ set }, newValue) => {
+    const sessionId =
+      newValue instanceof DefaultValue ? createScopedSessionId() : newValue;
+
+    setScopedSessionId(sessionId);
+    set(sessionIdAtom, sessionId);
+  }
 });
 
 export const sessionState = atom<ISession | undefined>({

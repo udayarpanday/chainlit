@@ -11,15 +11,28 @@ import tailwindcss from './src/index.css?inline';
 import hljscss from 'highlight.js/styles/monokai-sublime.css?inline';
 
 import AppWrapper from './src/appWrapper';
+import { EvoyaConfig } from './src/evoya/types';
 import {
   clearChainlitCopilotThreadId,
   getChainlitCopilotThreadId
 } from './src/state';
 import { IWidgetConfig } from './src/types';
-import { EvoyaConfig } from './src/evoya/types';
 
 const id = 'chainlit-copilot';
 let root: ReactDOM.Root | null = null;
+let hostElement: HTMLDivElement | null = null;
+
+const cleanupWidget = () => {
+  root?.unmount();
+  root = null;
+
+  hostElement?.remove();
+  hostElement = null;
+
+  document
+    .querySelectorAll<HTMLElement>(`#${id}`)
+    .forEach((element) => element.remove());
+};
 
 declare global {
   interface Window {
@@ -39,18 +52,20 @@ declare global {
 }
 
 window.mountChainlitWidget = (config: IWidgetConfig, evoya: EvoyaConfig) => {
-  const container = document.createElement('div');
-  container.id = id;
+  cleanupWidget();
+
+  hostElement = document.createElement('div');
+  hostElement.id = id;
 
   if (evoya.container !== null) {
-    container.style.height = '100%';
-    container.style.width = '100%';
-    evoya.container.appendChild(container);
+    hostElement.style.height = '100%';
+    hostElement.style.width = '100%';
+    evoya.container.appendChild(hostElement);
   } else {
-    document.body.appendChild(container);
+    document.body.appendChild(hostElement);
   }
 
-  const shadowContainer = container.attachShadow({ mode: 'open' });
+  const shadowContainer = hostElement.attachShadow({ mode: 'open' });
   const shadowRootElement = document.createElement('div');
   shadowRootElement.id = 'cl-shadow-root';
   shadowContainer.appendChild(shadowRootElement);
@@ -60,7 +75,7 @@ window.mountChainlitWidget = (config: IWidgetConfig, evoya: EvoyaConfig) => {
   }
 
   window.cl_shadowRootElement = shadowRootElement;
-  window.cl_shadowRootElement_container = container;
+  window.cl_shadowRootElement_container = hostElement;
 
   const resetStyles = document.createElement('style');
   resetStyles.textContent = `
@@ -86,9 +101,7 @@ window.mountChainlitWidget = (config: IWidgetConfig, evoya: EvoyaConfig) => {
   );
 };
 
-window.unmountChainlitWidget = () => {
-  root?.unmount();
-};
+window.unmountChainlitWidget = cleanupWidget;
 
 window.sendChainlitMessage = () => {
   console.info('Copilot is not active. Please check if the widget is mounted.');

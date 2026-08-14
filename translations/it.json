@@ -530,6 +530,10 @@
         }
     },
     "evoyaFiles": {
+        "datasource": {
+            "connected": "Connesso a un'origine dati",
+            "not_connected": "Non connesso a un'origine dati"
+        },
         "actions": {
             "connect": {
                 "label": "Connetti"

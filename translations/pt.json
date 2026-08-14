@@ -553,6 +553,10 @@
         }
     },
     "evoyaFiles": {
+        "datasource": {
+            "connected": "Ligado a uma fonte de dados",
+            "not_connected": "Não ligado a uma fonte de dados"
+        },
         "actions": {
             "connect": {
                 "label": "Conectar"

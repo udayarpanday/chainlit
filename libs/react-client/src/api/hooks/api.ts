@@ -5,8 +5,16 @@ import useSWR, { SWRConfig, SWRConfiguration } from 'swr';
 
 import { useAuthState } from './auth/state';
 
-const fetcher = async (client: ChainlitAPI, endpoint: string) => {
-  const res = await client.get(endpoint);
+type UseApiConfiguration = SWRConfiguration & {
+  headers?: Record<string, string>;
+};
+
+const fetcher = async (
+  client: ChainlitAPI,
+  endpoint: string,
+  headers?: Record<string, string>
+) => {
+  const res = await client.get(endpoint, headers);
   return res?.json();
 };
 
@@ -47,7 +55,7 @@ const cloneClient = (client: ChainlitAPI): ChainlitAPI => {
  */
 function useApi<T>(
   path?: string | null,
-  { ...swrConfig }: SWRConfiguration = {}
+  { headers, ...swrConfig }: UseApiConfiguration = {}
 ) {
   const client = useContext(ChainlitContext);
   const { setUser } = useAuthState();
@@ -73,9 +81,9 @@ function useApi<T>(
 
         const useApiClient = cloneClient(client);
         useApiClient.on401 = useApiClient.onError = undefined;
-        return fetcher(useApiClient, url);
+        return fetcher(useApiClient, url, headers);
       },
-    [client]
+    [client, headers, setUser]
   );
 
   // Use a stable key for useSWR

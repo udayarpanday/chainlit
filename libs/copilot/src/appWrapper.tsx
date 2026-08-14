@@ -23,7 +23,7 @@ export default function AppWrapper({ widgetConfig, evoya }: Props) {
   const [accessToken, setAccessToken] = useState(widgetConfig.accessToken);
   const additionalQueryParams = widgetConfig?.additionalQueryParamsForAPI;
   const apiClient = useMemo(
-    () => makeApiClient(widgetConfig.chainlitServer, additionalQueryParams || {}),
+    () => makeApiClient(widgetConfig.chainlitServer, additionalQueryParams),
     [widgetConfig.chainlitServer, additionalQueryParams]
   );
   const widgetContextValue = useMemo(

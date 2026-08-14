@@ -577,6 +577,10 @@
         }
     },
     "evoyaFiles": {
+        "datasource": {
+            "connected": "Mit einer Datenquelle verbunden",
+            "not_connected": "Nicht mit einer Datenquelle verbunden"
+        },
         "actions": {
             "attachments": {
                 "label": "Cloud Storage",

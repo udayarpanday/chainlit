@@ -21,6 +21,7 @@ import { userEnvState } from 'state/user';
 
 declare global {
   interface Window {
+    brand_color?: string | null;
     cl_shadowRootElement?: HTMLDivElement;
     transports?: string[];
     theme?: {
@@ -39,6 +40,9 @@ function App() {
   const { connect, chatProfile, setChatProfile } = useChatSession();
 
   const configLoaded = !!config;
+  const brandColor =
+    new URLSearchParams(window.location.search).get('brand_color') ??
+    window.brand_color;
 
   const chatProfileOk = configLoaded
     ? config.chatProfiles.length
@@ -95,6 +99,7 @@ function App() {
     <ThemeProvider
       storageKey="vite-ui-theme"
       defaultTheme={data?.default_theme}
+      brandColor={brandColor}
     >
       <Toaster richColors className="toast" position="top-right" />
 
