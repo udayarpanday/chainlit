@@ -16,7 +16,7 @@ export default function ChatWrapper() {
   const evoyaSessionUuid = evoya?.session_uuid || '';
 
   useEffect(() => {
-    if (evoyaSessionUuid !== undefined || evoyaSessionUuid !== '') {
+    if (evoyaSessionUuid) {
       setScopedSessionStorageItem('session_token', evoyaSessionUuid);
       localStorage.removeItem('session_token');
       document.cookie =
@@ -30,7 +30,7 @@ export default function ChatWrapper() {
       // @ts-expect-error window typing
       transports: window.transports,
       userEnv: {},
-      accessToken: `Bearer ${accessToken}`,
+      accessToken,
       evoya: { session_uuid: evoyaSessionUuid }
     });
   }, [accessToken, connect, evoyaSessionUuid, session?.socket]);

@@ -3,6 +3,8 @@ import { Eye, EyeOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { ClientError } from '@chainlit/react-client';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -63,7 +65,9 @@ export function LoginForm({
     try {
       await onPasswordSignIn(data.email, data.password, callbackUrl);
     } catch (err) {
-      if (err instanceof Error) {
+      if (err instanceof ClientError && err.detail) {
+        setErrorState(err.detail);
+      } else if (err instanceof Error) {
         setErrorState(err.message);
       }
     } finally {
@@ -102,8 +106,9 @@ export function LoginForm({
               </Label>
               <Input
                 id="email"
+                disabled={loading}
                 autoFocus
-                placeholder="me@example.com"
+                placeholder={t('auth.login.form.email.placeholder')}
                 {...register('email', {
                   required: t('auth.login.form.email.required')
                 })}
@@ -127,6 +132,7 @@ export function LoginForm({
               <div className="relative">
                 <Input
                   id="password"
+                  disabled={loading}
                   type={showPassword ? 'text' : 'password'}
                   {...register('password', {
                     required: t('auth.login.form.password.required')

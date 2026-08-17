@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { Ellipsis, Trash } from 'lucide-react';
+import { Ellipsis, Share2, Trash2 } from 'lucide-react';
 
 import { Pencil } from '@/components/icons/Pencil';
 import { buttonVariants } from '@/components/ui/button';
@@ -15,12 +15,14 @@ import { Translator } from '../i18n';
 interface Props {
   onDelete: () => void;
   onRename: () => void;
+  onShare?: () => void;
   className?: string;
 }
 
 export default function ThreadOptions({
   onDelete,
   onRename,
+  onShare,
   className
 }: Props) {
   return (
@@ -52,6 +54,18 @@ export default function ThreadOptions({
           <Translator path="threadHistory.thread.menu.rename" />
           <Pencil className="ml-auto" />
         </DropdownMenuItem>
+        {onShare && (
+          <DropdownMenuItem
+            id="share-thread"
+            onClick={(e) => {
+              e.stopPropagation();
+              onShare();
+            }}
+          >
+            <Translator path="threadHistory.thread.menu.share" />
+            <Share2 className="ml-auto" />
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem
           id="delete-thread"
           onClick={(e) => {
@@ -61,7 +75,7 @@ export default function ThreadOptions({
           className="text-red-500 focus:text-red-500"
         >
           <Translator path="threadHistory.thread.menu.delete" />
-          <Trash className="ml-auto" />
+          <Trash2 className="ml-auto" />
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

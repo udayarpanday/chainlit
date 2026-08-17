@@ -1,6 +1,6 @@
 import { useConfig } from '@chainlit/react-client';
 
-import Markdown from '@/components/Markdown';
+import { Markdown } from '@/components/Markdown';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -44,6 +44,7 @@ export default function ReadmeButton() {
             className="flex flex-col flex-grow overflow-y-auto"
             allowHtml={config?.features?.unsafe_allow_html}
             latex={config?.features?.latex}
+            renderMarkdown={true}
           >
             {config.markdown}
           </Markdown>

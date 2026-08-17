@@ -1,3 +1,9 @@
+export type DatasourceConnection = {
+  id: number;
+  name: string;
+  connectionType: 'upload' | 'monitored';
+};
+
 export type EvoyaFile = {
   type?: string;
   name: string;
@@ -13,6 +19,8 @@ export type EvoyaFile = {
   size: number;
   path: string;
   mime: string;
+  connectedToDatasource?: boolean;
+  datasources?: DatasourceConnection[];
   lastModifiedAt?: Date | null;
   lastModifiedBy?: ActivityActor | null;
   lastOpenedAt?: Date | null;
@@ -20,7 +28,7 @@ export type EvoyaFile = {
   lastActivityAt?: Date | null;
   lastActivityBy?: ActivityActor | null;
   lastActivityType?: 'opened' | 'modified' | null;
-}
+};
 
 export type ActivityActor = {
   id: string;

@@ -29,7 +29,7 @@ const useUpload = ({ onError, onResolved, options, spec }: useUploadProps) => {
       if (!acceptedFiles.length) return;
       return onResolved(acceptedFiles);
     },
-    [spec]
+    [onError, onResolved, spec]
   );
 
   let dzAccept: Record<string, string[]> = {};
@@ -45,7 +45,7 @@ const useUpload = ({ onError, onResolved, options, spec }: useUploadProps) => {
     dzAccept = accept;
   }
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     maxFiles: spec.max_files || undefined,
     accept: dzAccept,
@@ -53,7 +53,7 @@ const useUpload = ({ onError, onResolved, options, spec }: useUploadProps) => {
     ...options
   });
 
-  return { getInputProps, getRootProps, isDragActive };
+  return { getInputProps, getRootProps, isDragActive, open };
 };
 
 export { useUpload };

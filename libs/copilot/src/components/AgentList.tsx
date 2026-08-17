@@ -80,14 +80,14 @@ const AgentRow = ({
   onOpenTestChat?: (agent: AgentListItem) => void;
   onClick: () => void;
 }) => {
-  const canShowMenu =
-    selected && agent.showAgentMenu !== false && !agent.isArchived;
+  const canShowMenu = agent.showAgentMenu !== false && !agent.isArchived;
   const canEditAgent =
     !!onEditAgent &&
     canShowMenu &&
     agent.showEditAgentOption !== false &&
     !agent.isCurated;
-  const canSetDefaultAgent = !!onSetDefaultAgent && canShowMenu;
+  const canSetDefaultAgent =
+    !!onSetDefaultAgent && canShowMenu && !agent.isDefault;
   const canOpenTestChat =
     !!onOpenTestChat && canShowMenu && agent.showTestChatOption !== false;
   const hasMenuItems = canEditAgent || canSetDefaultAgent || canOpenTestChat;
@@ -122,7 +122,7 @@ const AgentRow = ({
                 type="button"
                 size="icon"
                 variant="ghost"
-                className="h-8 w-8 rounded-lg opacity-0 transition-all group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 data-[state=open]:bg-accent"
+                className="h-8 w-8 rounded-lg opacity-100 transition-all md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100 data-[state=open]:opacity-100 data-[state=open]:bg-accent"
                 onClick={(e) => e.stopPropagation()}
               >
                 <EllipsisVertical className="h-4 w-4 text-muted-foreground" />

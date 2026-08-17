@@ -2,7 +2,6 @@ import asyncio
 import uuid
 from typing import Any, Dict, List, Literal, Optional, Union, cast, get_args
 
-from literalai.helper import utc_now
 from socketio.exceptions import TimeoutError
 
 from chainlit.chat_context import chat_context
@@ -11,10 +10,13 @@ from chainlit.data import get_data_layer
 from chainlit.element import Element, ElementDict, File
 from chainlit.logger import logger
 from chainlit.message import Message
+from chainlit.mode import Mode
 from chainlit.session import BaseSession, WebsocketSession
 from chainlit.step import StepDict
 from chainlit.types import (
     AskActionResponse,
+    AskElementResponse,
+    AskFileSpec,
     AskSpec,
     CommandDict,
     FileDict,
@@ -25,6 +27,7 @@ from chainlit.types import (
     ToastType,
 )
 from chainlit.user import PersistedUser
+from chainlit.utils import utc_now
 
 
 class BaseChainlitEmitter:
@@ -100,7 +103,9 @@ class BaseChainlitEmitter:
 
     async def send_ask_user(
         self, step_dict: StepDict, spec: AskSpec, raise_on_timeout=False
-    ) -> Optional[Union["StepDict", "AskActionResponse", List["FileDict"]]]:
+    ) -> Optional[
+        Union["StepDict", "AskActionResponse", "AskElementResponse", List["FileDict"]]
+    ]:
         """Stub method to send a prompt to the UI and wait for a response."""
         pass
 
@@ -138,12 +143,20 @@ class BaseChainlitEmitter:
         """Stub method to send the available commands to the UI."""
         pass
 
+    async def set_modes(self, modes: List[Mode]):
+        """Stub method to send the available modes to the UI."""
+        pass
+
     async def send_window_message(self, data: Any):
         """Stub method to send custom data to the host window."""
         pass
 
-    def send_toast(self, message: str, type: Optional[ToastType] = "info"):
+    async def send_toast(self, message: str, type: Optional[ToastType] = "info"):
         """Stub method to send a toast message to the UI."""
+        pass
+
+    async def set_favorites(self, steps: List[StepDict]):
+        """Stub method to send the favorite messages to the UI."""
         pass
 
 
@@ -285,6 +298,7 @@ class ChainlitEmitter(BaseChainlitEmitter):
                         "chainlitKey": file["id"],
                         "display": "inline",
                         "type": Element.infer_type_from_mime(file["type"]),
+                        "mime": file["type"],
                     }
                 )
                 for file in files
@@ -304,19 +318,22 @@ class ChainlitEmitter(BaseChainlitEmitter):
         self, step_dict: StepDict, spec: AskSpec, raise_on_timeout=False
     ):
         """Send a prompt to the UI and wait for a response."""
-
+        parent_id = str(step_dict["parentId"])
         try:
+            if spec.type == "file":
+                self.session.files_spec[parent_id] = cast(AskFileSpec, spec)
+
             # Send the prompt to the UI
             user_res = await self.emit_call(
                 "ask", {"msg": step_dict, "spec": spec.to_dict()}, spec.timeout
-            )  # type: Optional[Union["StepDict", "AskActionResponse", List["FileReference"]]]
+            )  # type: Optional[Union["StepDict", "AskActionResponse", "AskElementResponse", List["FileReference"]]]
 
             # End the task temporarily so that the User can answer the prompt
             await self.task_end()
 
-            final_res: Optional[Union[StepDict, AskActionResponse, List[FileDict]]] = (
-                None
-            )
+            final_res: Optional[
+                Union[StepDict, AskActionResponse, AskElementResponse, List[FileDict]]
+            ] = None
 
             if user_res:
                 interaction: Union[str, None] = None
@@ -353,6 +370,9 @@ class ChainlitEmitter(BaseChainlitEmitter):
                     action_res = cast(AskActionResponse, user_res)
                     final_res = action_res
                     interaction = action_res["name"]
+                elif spec.type == "element":
+                    final_res = cast(AskElementResponse, user_res)
+                    interaction = "custom_element"
 
                 if not self.session.has_first_interaction and interaction:
                     self.session.has_first_interaction = True
@@ -366,6 +386,8 @@ class ChainlitEmitter(BaseChainlitEmitter):
             if raise_on_timeout:
                 raise e
         finally:
+            if parent_id in self.session.files_spec:
+                del self.session.files_spec[parent_id]
             await self.task_start()
 
     async def send_call_fn(
@@ -425,13 +447,27 @@ class ChainlitEmitter(BaseChainlitEmitter):
             commands,
         )
 
+    def set_modes(self, modes: List[Mode]):
+        """Send the available modes to the UI."""
+        return self.emit(
+            "set_modes",
+            [mode.to_dict() for mode in modes],
+        )
+
+    def set_favorites(self, steps: List[StepDict]):
+        """Send the favorite messages to the UI."""
+        return self.emit(
+            "set_favorites",
+            steps,
+        )
+
     def send_window_message(self, data: Any):
         """Send custom data to the host window."""
         return self.emit("window_message", data)
 
-    def send_toast(self, message: str, type: Optional[ToastType] = "info"):
+    async def send_toast(self, message: str, type: Optional[ToastType] = "info"):
         """Send a toast message to the UI."""
         # check that the type is valid using ToastType
         if type not in get_args(ToastType):
             raise ValueError(f"Invalid toast type: {type}")
-        return self.emit("toast", {"message": message, "type": type})
+        await self.emit("toast", {"message": message, "type": type})

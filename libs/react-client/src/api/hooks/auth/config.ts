@@ -10,11 +10,7 @@ export const useAuthConfig = () => {
   const { authConfig, setAuthConfig } = useAuthState();
   const headers = useMemo<Record<string, string>>(() => {
     const nextHeaders: Record<string, string> = {};
-
-    if (token) {
-      nextHeaders.Authorization = `Bearer ${token}`;
-    }
-
+    if (token) nextHeaders.Authorization = `Bearer ${token}`;
     return nextHeaders;
   }, [token]);
   const { data: authConfigData, isLoading } = useApi<IAuthConfig>(

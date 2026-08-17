@@ -1,3 +1,4 @@
+import { cn } from '@/lib/utils';
 import { useContext, useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
@@ -13,12 +14,14 @@ import {
 
 import ChatSettingsModal from './components/ChatSettings';
 import { ThemeProvider } from './components/ThemeProvider';
+import { Loader } from '@/components/Loader';
 import { Toaster } from '@/components/ui/sonner';
 
 import { userEnvState } from 'state/user';
 
 declare global {
   interface Window {
+    brand_color?: string | null;
     cl_shadowRootElement?: HTMLDivElement;
     transports?: string[];
     theme?: {
@@ -32,11 +35,14 @@ function App() {
   const { config } = useConfig();
 
   const apiClient = useContext(ChainlitContext);
-  const userEnv = useRecoilValue(userEnvState);
   const { isAuthenticated, data, isReady, setUserFromAPI } = useAuth();
+  const userEnv = useRecoilValue(userEnvState);
   const { connect, chatProfile, setChatProfile } = useChatSession();
 
   const configLoaded = !!config;
+  const brandColor =
+    new URLSearchParams(window.location.search).get('brand_color') ??
+    window.brand_color;
 
   const chatProfileOk = configLoaded
     ? config.chatProfiles.length
@@ -50,8 +56,8 @@ function App() {
       searchParams.get('access_token') ||
       getScopedSessionStorageItem('chainlit_token_iframe');
     apiClient
-      .jwtAuth(token)
-      .then((res) => setUserFromAPI())
+      .jwtAuth(token || '')
+      .then(() => setUserFromAPI())
       .catch((err) => console.log(err));
   }, []);
 
@@ -93,11 +99,21 @@ function App() {
     <ThemeProvider
       storageKey="vite-ui-theme"
       defaultTheme={data?.default_theme}
+      brandColor={brandColor}
     >
       <Toaster richColors className="toast" position="top-right" />
 
       <ChatSettingsModal />
       <RouterProvider router={router} />
+
+      <div
+        className={cn(
+          'bg-[hsl(var(--background))] flex items-center justify-center fixed size-full p-2 top-0',
+          isReady && 'hidden'
+        )}
+      >
+        <Loader className="!size-6" />
+      </div>
     </ThemeProvider>
   );
 }

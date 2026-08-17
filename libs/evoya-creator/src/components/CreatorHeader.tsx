@@ -10,7 +10,6 @@ const CreatorHeader = (): JSX.Element => {
   } = useEvoyaCreator();
 
   const handleCloseCreator = () => {
-    document.getElementById('copilot-embedded-container')?.appendChild(window.cl_shadowRootElement_container)
     closeCreatorOverlay();
   };
 

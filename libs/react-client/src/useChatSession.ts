@@ -21,11 +21,15 @@ import {
   commandsState,
   currentThreadIdState,
   elementState,
+  type EvoyaPromptContext,
+  favoriteMessagesState,
   firstUserInteraction,
   initialTranscriptState,
   isAiSpeakingState,
   loadingState,
+  mcpState,
   messagesState,
+  modesState,
   projectAccess,
   promptState,
   resumeThreadErrorState,
@@ -41,10 +45,12 @@ import {
 import {
   ChatInputSocketPayload,
   IAction,
+  IAgents,
   IChatArchived,
   ICommand,
   IElement,
   IMessageElement,
+  IMode,
   IStep,
   ITasklistElement,
   IThread
@@ -52,12 +58,11 @@ import {
 import {
   addMessage,
   deleteMessageById,
-  findMessageById,
   updateMessageById,
-  updateMessageContentById
+  updateMessageContentById,
+  findMessageById
 } from 'src/utils/message';
 
-import { IAgents } from './types/agents';
 import { OutputAudioChunk } from './types/audio';
 
 import { ChainlitContext } from './context';
@@ -87,16 +92,19 @@ const useChatSession = () => {
   const setIsAiSpeaking = useSetRecoilState(isAiSpeakingState);
   const setAudioConnection = useSetRecoilState(audioConnectionState);
   const resetChatSettingsValue = useResetRecoilState(chatSettingsValueState);
+  const setChatSettingsValue = useSetRecoilState(chatSettingsValueState);
   const setFirstUserInteraction = useSetRecoilState(firstUserInteraction);
   const setLoading = useSetRecoilState(loadingState);
+  const setMcps = useSetRecoilState(mcpState);
   const wavStreamPlayer = useRecoilValue(wavStreamPlayerState);
   const wavRecorder = useRecoilValue(wavRecorderState);
   const setMessages = useSetRecoilState(messagesState);
   const setAskUser = useSetRecoilState(askUserState);
   const setCallFn = useSetRecoilState(callFnState);
   const setCommands = useSetRecoilState(commandsState);
-  const setContextPrompt = useSetRecoilState(promptState);
+  const setModes = useSetRecoilState(modesState);
   const setAgents = useSetRecoilState(agentState);
+  const setContextPrompt = useSetRecoilState(promptState);
   const setSideView = useSetRecoilState(sideViewState);
   const setElements = useSetRecoilState(elementState);
   const setTasklists = useSetRecoilState(tasklistState);
@@ -106,6 +114,7 @@ const useChatSession = () => {
   const [chatProfile, setChatProfile] = useRecoilState(chatProfileState);
   const idToResume = useRecoilValue(threadIdToResumeState);
   const setThreadResumeError = useSetRecoilState(resumeThreadErrorState);
+  const setFavoriteMessages = useSetRecoilState(favoriteMessagesState);
   const setInitialTranscript = useSetRecoilState(initialTranscriptState);
   const setChatArchived = useSetRecoilState(chatArchived);
   const setProjectAccess = useSetRecoilState(projectAccess);
@@ -223,6 +232,57 @@ const useChatSession = () => {
         setLoading(resetTaskLoading());
         setSession((s) => ({ ...s!, error: false }));
         isReconnectingRef.current = false;
+        socket.emit('fetch_favorites');
+        setMcps((prev) =>
+          prev.map((mcp) => {
+            let promise;
+            if (mcp.clientType === 'sse') {
+              promise = client.connectSseMCP(sessionId, mcp.name, mcp.url!);
+            } else if (mcp.clientType === 'streamable-http') {
+              promise = client.connectStreamableHttpMCP(
+                sessionId,
+                mcp.name,
+                mcp.url!,
+                mcp.headers || {}
+              );
+            } else {
+              promise = client.connectStdioMCP(
+                sessionId,
+                mcp.name,
+                mcp.command!
+              );
+            }
+            promise
+              .then(async ({ success, mcp }) => {
+                setMcps((prev) =>
+                  prev.map((existingMcp) => {
+                    if (existingMcp.name === mcp.name) {
+                      return {
+                        ...existingMcp,
+                        status: success ? 'connected' : 'failed',
+                        tools: mcp ? mcp.tools : existingMcp.tools
+                      };
+                    }
+                    return existingMcp;
+                  })
+                );
+              })
+              .catch(() => {
+                setMcps((prev) =>
+                  prev.map((existingMcp) => {
+                    if (existingMcp.name === mcp.name) {
+                      return {
+                        ...existingMcp,
+                        status: 'failed'
+                      };
+                    }
+                    return existingMcp;
+                  })
+                );
+              });
+            return { ...mcp, status: 'connecting' };
+          })
+        );
       });
 
       socket.on('connect_error', (_) => {
@@ -278,12 +338,24 @@ const useChatSession = () => {
       });
 
       socket.on('resume_thread', (thread: IThread) => {
+        const isReadOnlyView = Boolean(
+          (thread as any)?.metadata?.viewer_read_only
+        );
+        if (!isReadOnlyView && idToResume && thread.id !== idToResume) {
+          window.location.href = `/thread/${thread.id}`;
+        }
+        if (!isReadOnlyView && idToResume) {
+          setCurrentThreadId(thread.id);
+        }
         let messages: IStep[] = [];
         for (const step of thread.steps) {
           messages = addMessage(messages, step);
         }
         if (thread.metadata?.chat_profile) {
           setChatProfile(thread.metadata?.chat_profile);
+        }
+        if (thread.metadata?.chat_settings) {
+          setChatSettingsValue(thread.metadata?.chat_settings);
         }
         setMessages(messages);
         const elements = thread.elements || [];
@@ -435,8 +507,11 @@ const useChatSession = () => {
       socket.on('set_commands', (commands: ICommand[]) => {
         setCommands(commands);
       });
+      socket.on('set_modes', (modes: IMode[]) => {
+        setModes(modes);
+      });
 
-      socket.on('agents', (agents: IAgents[]) => {
+      socket.on('agents', (agents: IAgents) => {
         setAgents(agents);
       });
 
@@ -448,11 +523,7 @@ const useChatSession = () => {
 
       socket.on(
         'context_prompt',
-        (context: {
-          context_prompt: string;
-          context_prompt_exact_sent_to_llm?: unknown;
-          is_superuser: boolean | undefined;
-        }) => {
+        (context: EvoyaPromptContext | undefined) => {
           if (context) {
             setContextPrompt(context);
           }
@@ -480,6 +551,16 @@ const useChatSession = () => {
       
       socket.on('is_project_accessible', (payload:boolean) => {
         setProjectAccess(payload);
+      });
+      socket.on('set_favorites', (steps: IStep[]) => {
+        setFavoriteMessages(steps);
+      });
+
+      socket.on('set_sidebar_title', (title: string) => {
+        setSideView((prev) => {
+          if (prev?.title === title) return prev;
+          return { title, elements: prev?.elements || [] };
+        });
       });
 
       socket.on("chat_session_uuid", (data: { session_uuid: string }) => {

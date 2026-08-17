@@ -3,17 +3,36 @@ import ReactDOM from 'react-dom/client';
 
 import { type IStep } from '@chainlit/react-client';
 
-// Change the imports to handle CSS properly
+// @ts-expect-error inline css
 import sonnercss from './sonner.css?inline';
+// @ts-expect-error inline css
 import tailwindcss from './src/index.css?inline';
+// @ts-expect-error inline css
 import hljscss from 'highlight.js/styles/monokai-sublime.css?inline';
 
 import AppWrapper from './src/appWrapper';
-import { IWidgetConfig } from './src/types';
 import { EvoyaConfig } from './src/evoya/types';
+import {
+  clearChainlitCopilotThreadId,
+  getChainlitCopilotThreadId
+} from './src/state';
+import { IWidgetConfig } from './src/types';
 
 const id = 'chainlit-copilot';
 let root: ReactDOM.Root | null = null;
+let hostElement: HTMLDivElement | null = null;
+
+const cleanupWidget = () => {
+  root?.unmount();
+  root = null;
+
+  hostElement?.remove();
+  hostElement = null;
+
+  document
+    .querySelectorAll<HTMLElement>(`#${id}`)
+    .forEach((element) => element.remove());
+};
 
 declare global {
   interface Window {
@@ -27,22 +46,26 @@ declare global {
     unmountChainlitWidget: () => void;
     toggleChainlitCopilot: () => void;
     sendChainlitMessage: (message: IStep) => void;
+    getChainlitCopilotThreadId: () => string | null;
+    clearChainlitCopilotThreadId: (newThreadId?: string) => void;
   }
 }
 
 window.mountChainlitWidget = (config: IWidgetConfig, evoya: EvoyaConfig) => {
-  const container = document.createElement('div');
-  container.id = id;
+  cleanupWidget();
+
+  hostElement = document.createElement('div');
+  hostElement.id = id;
 
   if (evoya.container !== null) {
-    container.style.height = '100%';
-    container.style.width = '100%';
-    evoya.container.appendChild(container);
+    hostElement.style.height = '100%';
+    hostElement.style.width = '100%';
+    evoya.container.appendChild(hostElement);
   } else {
-    document.body.appendChild(container);
+    document.body.appendChild(hostElement);
   }
 
-  const shadowContainer = container.attachShadow({ mode: 'open' });
+  const shadowContainer = hostElement.attachShadow({ mode: 'open' });
   const shadowRootElement = document.createElement('div');
   shadowRootElement.id = 'cl-shadow-root';
   shadowContainer.appendChild(shadowRootElement);
@@ -52,7 +75,7 @@ window.mountChainlitWidget = (config: IWidgetConfig, evoya: EvoyaConfig) => {
   }
 
   window.cl_shadowRootElement = shadowRootElement;
-  window.cl_shadowRootElement_container = container;
+  window.cl_shadowRootElement_container = hostElement;
 
   const resetStyles = document.createElement('style');
   resetStyles.textContent = `
@@ -67,31 +90,22 @@ window.mountChainlitWidget = (config: IWidgetConfig, evoya: EvoyaConfig) => {
   `;
   shadowContainer.appendChild(resetStyles);
 
-  const tailwindStyles = document.createElement('style');
-  tailwindStyles.textContent = tailwindcss.toString();
-  shadowContainer.appendChild(tailwindStyles);
-
-  const sonnerStyles = document.createElement('style');
-  sonnerStyles.textContent = sonnercss.toString();
-  shadowContainer.appendChild(sonnerStyles);
-
-  const hlStyles = document.createElement('style');
-  hlStyles.textContent = hljscss.toString();
-  shadowContainer.appendChild(hlStyles);
-
   root = ReactDOM.createRoot(shadowRootElement);
   root.render(
     <React.StrictMode>
+      <style type="text/css">{tailwindcss.toString()}</style>
+      <style type="text/css">{sonnercss.toString()}</style>
+      <style type="text/css">{hljscss.toString()}</style>
       <AppWrapper widgetConfig={config} evoya={evoya} />
     </React.StrictMode>
   );
 };
 
-window.unmountChainlitWidget = () => {
-  root?.unmount();
-  document.getElementById(id)?.remove();
-};
+window.unmountChainlitWidget = cleanupWidget;
 
-window.sendChainlitMessage = (message: IStep) => {
+window.sendChainlitMessage = () => {
   console.info('Copilot is not active. Please check if the widget is mounted.');
 };
+
+window.getChainlitCopilotThreadId = getChainlitCopilotThreadId;
+window.clearChainlitCopilotThreadId = clearChainlitCopilotThreadId;

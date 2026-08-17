@@ -9,6 +9,13 @@ export interface EvoyaCreatorConfig {
   container: HTMLElement;
   theme?: 'light' | 'dark';
   brand_color?: string | null;
+  hideWaterMark?: boolean;
+  additionalInfo?: {
+    text?: string;
+    link?: string;
+    linkText?: string;
+    defaultText?: boolean;
+  };
   apiBaseUrl?: string;
   csrfToken?: string;
   workspaceId?: string;

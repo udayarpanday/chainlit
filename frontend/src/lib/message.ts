@@ -8,15 +8,15 @@ const isForIdMatch = (id: string | number | undefined, forId: string) => {
   return forId === id.toString();
 };
 
-const escapeRegExp = (string: string) => {
+const escapeRegExp = (string?: string) => {
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return (string ?? '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 };
 
-function escapeBrackets(text: string) {
+function escapeBrackets(text?: string) {
   const pattern =
     /(```[\s\S]*?```|`.*?`)|\\\[([\s\S]*?[^\\])\\\]|\\\((.*?)\\\)|(\${1})/g;
-  const res = text.replace(
+  const res = (text ?? '').replace(
     pattern,
     (match, codeBlock, squareBracket, roundBracket, dollarSign) => {
       if (codeBlock) {
@@ -45,7 +45,9 @@ export const prepareContent = ({
   id: string;
   language?: string;
 }) => {
-  const elementNames = elements.map((e) => escapeRegExp(e.name));
+  const elementNames = elements
+    .map((e) => escapeRegExp(e.name))
+    .filter(Boolean);
 
   // Sort by descending length to avoid matching substrings
   elementNames.sort((a, b) => b.length - a.length);

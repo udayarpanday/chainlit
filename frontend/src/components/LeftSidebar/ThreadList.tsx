@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
-import { map, size } from 'lodash';
-import { useContext, useState } from 'react';
+import { size } from 'lodash';
+import { Share2 } from 'lucide-react';
+import { useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSetRecoilState } from 'recoil';
@@ -9,15 +10,17 @@ import { toast } from 'sonner';
 import {
   ChainlitContext,
   ClientError,
-  ThreadHistory,
+  ThreadHistory, // sessionIdState,
   threadHistoryState,
   useChatInteract,
   useChatMessages,
-  useChatSession
+  useChatSession,
+  useConfig
 } from '@chainlit/react-client';
 
 import Alert from '@/components/Alert';
 import { Loader } from '@/components/Loader';
+import ShareDialog from '@/components/share/ShareDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +50,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem
 } from '@/components/ui/sidebar';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from '@/components/ui/tooltip';
 
 import { Translator } from '../i18n';
 import ThreadOptions from './ThreadOptions';
@@ -74,6 +83,102 @@ export function ThreadList({
   const [threadNewName, setThreadNewName] = useState<string>();
   const setThreadHistory = useSetRecoilState(threadHistoryState);
   const apiClient = useContext(ChainlitContext);
+  const { config } = useConfig();
+  const dataPersistence = config?.dataPersistence;
+  const threadSharingReady = Boolean((config as any)?.threadSharing);
+  // sessionId not needed here
+
+  // Share thread state
+  const [threadIdToShare, setThreadIdToShare] = useState<string | undefined>();
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  // Share dialog state is centralized in ShareDialog; we only track which thread to share
+
+  const handleShareThread = (threadId: string) => {
+    if (!threadSharingReady) return;
+    setThreadIdToShare(threadId);
+    setIsShareDialogOpen(true);
+    // ShareDialog handles its own internal state; we just open it
+  };
+
+  type ParsedGroupLabel = {
+    month: string;
+    year: number;
+    raw: string;
+  };
+
+  const getMonthMap = (
+    locale = navigator.language
+  ): { map: Record<string, number>; monthRegex: RegExp } => {
+    const map: Record<string, number> = {};
+    const monthNames: string[] = [];
+
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(2020, i, 1);
+
+      const long = d
+        .toLocaleDateString(locale, { month: 'long' })
+        .toLocaleLowerCase(locale);
+
+      map[long] = i;
+      monthNames.push(long);
+    }
+    const monthRegex = new RegExp(`\\b(${monthNames.join('|')})\\b`, 'i');
+    return { map, monthRegex };
+  };
+
+  const { map: monthMap, monthRegex } = useMemo<{
+    map: Record<string, number>;
+    monthRegex: RegExp;
+  }>(() => getMonthMap(), []);
+
+  const parseGroupLabel = (label: string): ParsedGroupLabel | null => {
+    const locale = navigator.language;
+
+    const matchMonth = label.toLocaleLowerCase(locale).match(monthRegex);
+    if (!matchMonth) return null;
+    const month = matchMonth[0];
+
+    const matchYear = label.match(/\d{4}/);
+    if (!matchYear) return null;
+    const year = Number(matchYear[0]);
+
+    if (isNaN(year)) return null;
+
+    return { month, year, raw: label };
+  };
+
+  const sortGroupsByDate = (a: string, b: string): number => {
+    const aParsed = parseGroupLabel(a);
+    const bParsed = parseGroupLabel(b);
+
+    if (!aParsed || !bParsed) return a.localeCompare(b);
+
+    if (aParsed.year !== bParsed.year) {
+      return bParsed.year - aParsed.year;
+    }
+    const aMonth = monthMap[aParsed.month] ?? -1;
+    const bMonth = monthMap[bParsed.month] ?? -1;
+
+    return bMonth - aMonth;
+  };
+
+  const sortedTimeGroupKeys = useMemo(() => {
+    if (!threadHistory?.timeGroupedThreads) return [];
+    const fixedOrder = [
+      'Today',
+      'Yesterday',
+      'Previous 7 days',
+      'Previous 30 days'
+    ];
+    return Object.keys(threadHistory.timeGroupedThreads).sort((a, b) => {
+      const aIndex = fixedOrder.indexOf(a);
+      const bIndex = fixedOrder.indexOf(b);
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      return sortGroupsByDate(a, b);
+    });
+  }, [threadHistory?.timeGroupedThreads]);
 
   if (isFetching || (!threadHistory?.timeGroupedThreads && isLoadingMore)) {
     return (
@@ -99,27 +204,26 @@ export function ThreadList({
     );
   }
 
-  const handleDeleteThread = () => {
+  const handleDeleteThread = async () => {
     if (!threadIdToDelete) return;
+    if (
+      threadIdToDelete === idToResume ||
+      threadIdToDelete === currentThreadId
+    ) {
+      clear();
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
 
     toast.promise(apiClient.deleteThread(threadIdToDelete), {
       loading: (
         <Translator path="threadHistory.thread.actions.delete.inProgress" />
       ),
       success: () => {
-        if (
-          threadIdToDelete === idToResume ||
-          threadIdToDelete === currentThreadId
-        ) {
-          clear();
-        }
-        if (threadIdToDelete === threadHistory.currentThreadId) {
-          navigate('/');
-        }
         setThreadHistory((prev) => ({
           ...prev,
           threads: prev?.threads?.filter((t) => t.id !== threadIdToDelete)
         }));
+        navigate('/');
         return (
           <Translator path="threadHistory.thread.actions.delete.success" />
         );
@@ -152,10 +256,9 @@ export function ThreadList({
           const threadIndex = next.threads?.findIndex(
             (t) => t.id === threadIdToRename
           );
-
-          if (typeof threadIndex === 'number') {
-            next.threads![threadIndex] = {
-              ...next.threads![threadIndex],
+          if (typeof threadIndex === 'number' && next.threads) {
+            next.threads[threadIndex] = {
+              ...next.threads[threadIndex],
               name: threadNewName
             };
           }
@@ -239,9 +342,7 @@ export function ThreadList({
               id="name"
               required
               value={threadNewName}
-              onChange={(e) => {
-                setThreadNewName(e.target.value);
-              }}
+              onChange={(e) => setThreadNewName(e.target.value)}
               placeholder={t(
                 'threadHistory.thread.actions.rename.form.name.placeholder'
               )}
@@ -262,51 +363,95 @@ export function ThreadList({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {map(threadHistory.timeGroupedThreads, (items, group) => (
-        <SidebarGroup key={group}>
-          <SidebarGroupLabel>{getTimeGroupLabel(group)}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((thread) => {
-                const isResumed =
-                  idToResume === thread.id && !threadHistory.currentThreadId;
-                const isSelected =
-                  isResumed || threadHistory.currentThreadId === thread.id;
-                return (
-                  <SidebarMenuItem key={thread.id} id={`thread-${thread.id}`}>
-                    <Link to={isResumed ? '' : `/thread/${thread.id}`}>
-                      <SidebarMenuButton
-                        isActive={isSelected}
-                        className="relative truncate h-9 group/thread"
+      <ShareDialog
+        open={isShareDialogOpen}
+        onOpenChange={(open) => {
+          setIsShareDialogOpen(open);
+          if (!open) {
+            setThreadIdToShare(undefined);
+          }
+        }}
+        threadId={threadIdToShare || null}
+      />
+      <TooltipProvider delayDuration={300}>
+        {sortedTimeGroupKeys.map((group) => {
+          const items = threadHistory!.timeGroupedThreads![group];
+          return (
+            <SidebarGroup key={group}>
+              <SidebarGroupLabel>{getTimeGroupLabel(group)}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {items.map((thread) => {
+                    const isResumed =
+                      idToResume === thread.id &&
+                      !threadHistory!.currentThreadId;
+                    const isSelected =
+                      isResumed || threadHistory!.currentThreadId === thread.id;
+                    return (
+                      <SidebarMenuItem
+                        key={thread.id}
+                        id={`thread-${thread.id}`}
                       >
-                        {thread.name || (
-                          <Translator path="threadHistory.thread.untitled" />
-                        )}
-                        <div
-                          className={cn(
-                            'absolute w-10 bottom-0 top-0 right-0 bg-gradient-to-l from-[hsl(var(--sidebar-background))] to-transparent'
-                          )}
-                        />
-                        <ThreadOptions
-                          onDelete={() => setThreadIdToDelete(thread.id)}
-                          onRename={() => {
-                            setThreadIdToRename(thread.id);
-                            setThreadNewName(thread.name);
-                          }}
-                          className={cn(
-                            'absolute z-20 bottom-0 top-0 right-0 bg-sidebar-accent hover:bg-sidebar-accent hover:text-primary flex opacity-0 group-hover/thread:opacity-100',
-                            isSelected && 'bg-sidebar-accent opacity-100'
-                          )}
-                        />
-                      </SidebarMenuButton>
-                    </Link>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      ))}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Link to={isResumed ? '' : `/thread/${thread.id}`}>
+                              <SidebarMenuButton
+                                isActive={isSelected}
+                                className="relative h-9 group/thread"
+                              >
+                                <span className="flex min-w-0 items-center gap-2">
+                                  {thread.metadata?.is_shared ? (
+                                    <Share2
+                                      className="h-4 w-4 shrink-0 text-muted-foreground"
+                                      aria-hidden="true"
+                                    />
+                                  ) : null}
+                                  <span className="truncate">
+                                    {thread.name || (
+                                      <Translator path="threadHistory.thread.untitled" />
+                                    )}
+                                  </span>
+                                </span>
+                                <div
+                                  className={cn(
+                                    'absolute w-10 bottom-0 top-0 right-0 bg-gradient-to-l from-[hsl(var(--sidebar-background))] to-transparent'
+                                  )}
+                                />
+                                <ThreadOptions
+                                  onDelete={() =>
+                                    setThreadIdToDelete(thread.id)
+                                  }
+                                  onRename={() => {
+                                    setThreadIdToRename(thread.id);
+                                    setThreadNewName(thread.name);
+                                  }}
+                                  onShare={
+                                    dataPersistence && threadSharingReady
+                                      ? () => handleShareThread(thread.id)
+                                      : undefined
+                                  }
+                                  className={cn(
+                                    'absolute z-20 bottom-0 top-0 right-0 bg-sidebar-accent hover:bg-sidebar-accent hover:text-primary flex opacity-0 group-hover/thread:opacity-100',
+                                    isSelected &&
+                                      'bg-sidebar-accent opacity-100'
+                                  )}
+                                />
+                              </SidebarMenuButton>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" align="center">
+                            <p>{thread.name}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          );
+        })}
+      </TooltipProvider>
       {isLoadingMore ? (
         <div className="flex items-center justify-center p-2">
           <Loader />

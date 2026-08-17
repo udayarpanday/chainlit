@@ -15,6 +15,7 @@ import {
   ICommand,
   IStep,
   initialTranscriptState,
+  evoyaCreatorEnabledState,
   useAuth,
   useChatData,
   useChatInteract,
@@ -56,6 +57,7 @@ export default function MessageComposer({
   submitProxy
 }: Props) {
   const context = useRecoilValue(promptState);
+  const creatorEnabled = useRecoilValue(evoyaCreatorEnabledState);
   const { evoya } = useContext(WidgetContext);
   const inputRef = useRef<InputMethods>(null);
   const [value, setValue] = useState('');
@@ -97,10 +99,16 @@ export default function MessageComposer({
   useEffect(() => {
     if (!initialTranscript || !inputRef.current) return;
 
+    const transcriptText = initialTranscript.text;
+    if (typeof transcriptText !== 'string') {
+      resetInitialTranscript();
+      return;
+    }
+
     if (initialTranscript.mode === 'append') {
-      inputRef.current.appendContent(initialTranscript.text);
+      inputRef.current.appendContent(transcriptText);
     } else {
-      inputRef.current.setContent(initialTranscript.text);
+      inputRef.current.setContent(transcriptText);
     }
 
     resetInitialTranscript();
@@ -128,7 +136,8 @@ export default function MessageComposer({
       attachments?: IAttachment[],
       evoyaAttachments?: EvoyaAttachment[],
       selectedCommand?: string,
-      selectedAgents?: string[]
+      selectedAgents?: string[],
+      collapsedPromptDisplayOutput?: string
     ) => {
       const message: IStep = {
         threadId: '',
@@ -139,7 +148,12 @@ export default function MessageComposer({
         type: 'user_message',
         output: msg,
         createdAt: new Date().toISOString(),
-        metadata: { location: window.location.href }
+        metadata: {
+          location: window.location.href,
+          ...(collapsedPromptDisplayOutput !== undefined
+            ? { evoyaCollapsedPromptDisplayOutput: collapsedPromptDisplayOutput }
+            : {})
+        }
       };
 
       const fileReferences = attachments
@@ -154,14 +168,14 @@ export default function MessageComposer({
       }
 
       // @ts-expect-error is not a valid prop
-      if (window.sendCreatorMessage && window.evoyaCreatorEnabled) {
+      if (window.sendCreatorMessage && creatorEnabled) {
         // @ts-expect-error is not a valid prop
         window.sendCreatorMessage(message);
       } else {
         sendMessage(message, fileReferences, evoyaReferences);
       }
     },
-    [user, sendMessage]
+    [user, sendMessage, creatorEnabled]
   );
 
   const onReply = useCallback(
@@ -183,16 +197,36 @@ export default function MessageComposer({
   );
 
   const submit = async () => {
-    if (disabled) {
+    if (
+      disabled ||
+      (!selectedCommand &&
+        value === '' &&
+        attachments.length === 0 &&
+        evoyaAttachments.length === 0)
+    ) {
       return;
     }
 
+    const isCollapsedCreatorPrompt =
+      creatorEnabled &&
+      !!selectedCommand &&
+      !inputRef.current?.isCommandExpanded();
+    const fullContent =
+      inputRef.current?.getFullContent?.(isCollapsedCreatorPrompt) || value;
+
     if (submitProxy) {
-      submitProxy(value, (text: string) => {
+      submitProxy(fullContent, (text: string) => {
         if (askUser) {
           onReply(text);
         } else {
-          onSubmit(text, attachments, evoyaAttachments);
+          onSubmit(
+            text,
+            attachments,
+            evoyaAttachments,
+            selectedCommand?.id,
+            selectedAgents,
+            isCollapsedCreatorPrompt ? value : undefined
+          );
         }
         setAttachments([]);
         setValue('');
@@ -204,17 +238,35 @@ export default function MessageComposer({
   };
 
   const submitMessage = useCallback(() => {
-    if (disabled || (value === '' && attachments.length === 0 && evoyaAttachments.length === 0)) {
+    if (
+      disabled ||
+      (!selectedCommand &&
+        value === '' &&
+        attachments.length === 0 &&
+        evoyaAttachments.length === 0)
+    ) {
       return;
     }
 
     // Get full content including agents
-    const fullContent = inputRef.current?.getFullContent?.() || value;
+    const isCollapsedCreatorPrompt =
+      creatorEnabled &&
+      !!selectedCommand &&
+      !inputRef.current?.isCommandExpanded();
+    const fullContent =
+      inputRef.current?.getFullContent?.(isCollapsedCreatorPrompt) || value;
 
     if (askUser) {
       onReply(fullContent);
     } else {
-      onSubmit(fullContent, attachments, evoyaAttachments, selectedCommand?.id, selectedAgents);
+      onSubmit(
+        fullContent,
+        attachments,
+        evoyaAttachments,
+        selectedCommand?.id,
+        selectedAgents,
+        isCollapsedCreatorPrompt ? value : undefined
+      );
     }
     setAttachments([]);
     setEvoyaAttachments([]);
@@ -229,6 +281,7 @@ export default function MessageComposer({
     evoyaAttachments,
     selectedCommand,
     selectedAgents,
+    creatorEnabled,
     setAttachments,
     setSelectedAgents,
     onSubmit
@@ -366,7 +419,11 @@ export default function MessageComposer({
           />
         )}
         <div className="flex items-center gap-1">
-          <SubmitButton onSubmit={submit} disabled={disabled} value={value} />
+          <SubmitButton
+            onSubmit={submit}
+            disabled={disabled}
+            value={selectedCommand ? selectedCommand.id : value}
+          />
         </div>
       </div>
     </div>

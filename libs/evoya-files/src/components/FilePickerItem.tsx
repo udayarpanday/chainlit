@@ -1,6 +1,14 @@
+import {
+  File,
+  FileBraces,
+  FileImage,
+  FileText,
+  Folder,
+  FolderClock
+} from 'lucide-react';
 import type { ReactNode } from 'react';
-import { File, FileBraces, FileImage, FileText, FolderOpen } from 'lucide-react';
 
+import { useTranslation } from '@chainlit/app/src/components/i18n/Translator';
 import { Checkbox } from '@chainlit/app/src/components/ui/checkbox';
 import { useUpload } from '@chainlit/app/src/hooks/useUpload';
 import { cn } from '@chainlit/app/src/lib/utils';
@@ -10,6 +18,9 @@ import { getDateDisplay, getSizeDisplay } from '../utils/file';
 import FileItemActions from './FileItemActions';
 
 export type PickerCheckedState = boolean | 'indeterminate';
+
+const isSharePointItem = (item: FilePickerItem) =>
+  item.path.toLowerCase().includes('sharepoint');
 
 type Props = {
   item: FilePickerItem;
@@ -30,22 +41,41 @@ type Props = {
 };
 
 export const getItemIcon = (item: FilePickerItem): ReactNode => {
-  if (!('size' in item)) return <FolderOpen className="h-4 shrink-0" />;
+  const isSharePoint = isSharePointItem(item);
+  const iconClassName = cn(
+    'h-4 shrink-0',
+    isSharePoint && 'text-sky-600 dark:text-sky-400'
+  );
+
+  if (isSharePoint) {
+    const isConnectedToDatasource =
+      'size' in item && item.connectedToDatasource === true;
+
+    return isConnectedToDatasource ? (
+      <FolderClock className={iconClassName} />
+    ) : (
+      <Folder className={iconClassName} />
+    );
+  }
+
+  if (!('size' in item)) {
+    return <Folder className={iconClassName} />;
+  }
 
   const extension = item.name.split('.').pop()?.toLowerCase();
   switch (extension) {
     case 'png':
     case 'jpg':
     case 'jpeg':
-      return <FileImage className="h-4 shrink-0" />;
+      return <FileImage className={iconClassName} />;
     case 'pdf':
     case 'txt':
     case 'md':
-      return <FileText className="h-4 shrink-0" />;
+      return <FileText className={iconClassName} />;
     case 'json':
-      return <FileBraces className="h-4 shrink-0" />;
+      return <FileBraces className={iconClassName} />;
     default:
-      return <File className="h-4 shrink-0" />;
+      return <File className={iconClassName} />;
   }
 };
 
@@ -66,8 +96,18 @@ export default function FilePickerItemComponent({
   renameItem = async () => {},
   downloadItems = () => {}
 }: Props) {
+  const { t } = useTranslation();
   const isFile = 'size' in item;
-  const isNonLocal = Boolean(item.path && item.path.toLowerCase().includes('sharepoint'));
+  const datasourceConnectionState =
+    isFile && isSharePointItem(item) ? item.connectedToDatasource : undefined;
+  const datasourceLabel =
+    datasourceConnectionState === undefined
+      ? undefined
+      : t(
+          datasourceConnectionState
+            ? 'evoyaFiles.datasource.connected'
+            : 'evoyaFiles.datasource.not_connected'
+        );
   const upload = useUpload({
     spec: { max_size_mb: 500, max_files: 20, accept: ['*/*'] },
     onResolved: (payloads: File[]) =>
@@ -114,25 +154,36 @@ export default function FilePickerItemComponent({
         )}
         onClick={clickItem}
       >
-        {getItemIcon(item)}
         <span
-          className={cn(
-            'ml-1 overflow-hidden overflow-ellipsis whitespace-nowrap',
-            isNonLocal && 'text-sky-700'
-          )}
+          aria-label={datasourceLabel}
+          className="inline-flex shrink-0"
+          role={datasourceLabel ? 'img' : undefined}
+          title={datasourceLabel}
         >
+          {getItemIcon(item)}
+        </span>
+        <span className="ml-1 overflow-hidden overflow-ellipsis whitespace-nowrap">
           {item.name}
         </span>
       </div>
       {!compact && !attachmentMode && !destinationMode && (
         <>
-          <div className={cn(rowCellClass, 'text-gray-400 hidden md:block')} onClick={clickItem}>
+          <div
+            className={cn(rowCellClass, 'text-gray-400 hidden md:block')}
+            onClick={clickItem}
+          >
             {item.owner}
           </div>
-          <div className={cn(rowCellClass, 'text-gray-400 hidden md:block')} onClick={clickItem}>
+          <div
+            className={cn(rowCellClass, 'text-gray-400 hidden md:block')}
+            onClick={clickItem}
+          >
             {item.modified ? getDateDisplay(item.modified) : ''}
           </div>
-          <div className={cn(rowCellClass, 'text-gray-400 hidden md:block')} onClick={clickItem}>
+          <div
+            className={cn(rowCellClass, 'text-gray-400 hidden md:block')}
+            onClick={clickItem}
+          >
             {'size' in item ? getSizeDisplay(item.size) : '--'}
           </div>
         </>

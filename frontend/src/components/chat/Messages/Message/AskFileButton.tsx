@@ -5,6 +5,7 @@ import { useContext, useState } from 'react';
 import { IAsk, IFileRef } from '@chainlit/react-client';
 
 import { Translator } from '@/components/i18n';
+import { useTranslation } from '@/components/i18n/Translator';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
@@ -19,9 +20,11 @@ interface UploadState {
 
 interface _AskFileButtonProps {
   askUser: IAsk;
+  parentId?: string;
   uploadFile: (
     file: File,
-    onProgress: (progress: number) => void
+    onProgress: (progress: number) => void,
+    parentId?: string
   ) => {
     xhr: XMLHttpRequest;
     promise: Promise<IFileRef>;
@@ -76,6 +79,8 @@ const _AskFileButton = ({
   uploadFile,
   onError
 }: _AskFileButtonProps) => {
+  const { t } = useTranslation();
+
   const [uploads, setUploads] = useState<UploadState[]>([]);
 
   const uploading = uploads.some((upload) => !upload.uploaded);
@@ -90,16 +95,20 @@ const _AskFileButton = ({
     const promises: Promise<IFileRef>[] = [];
 
     const newUploads = files.map((file, index) => {
-      const { xhr, promise } = uploadFile(file, (progress) => {
-        setUploads((prev) =>
-          prev.map((upload, i) => {
-            if (i === index) {
-              return { ...upload, progress };
-            }
-            return upload;
-          })
-        );
-      });
+      const { xhr, promise } = uploadFile(
+        file,
+        (progress) => {
+          setUploads((prev) =>
+            prev.map((upload, i) => {
+              if (i === index) {
+                return { ...upload, progress };
+              }
+              return upload;
+            })
+          );
+        },
+        askUser?.parentId
+      );
       promises.push(promise);
       return { progress: 0, uploaded: false, cancel: () => xhr.abort() };
     });
@@ -107,7 +116,13 @@ const _AskFileButton = ({
     Promise.all(promises)
       .then((fileRefs) => askUser.callback(fileRefs))
       .catch((error) => {
-        onError(`Failed to upload: ${error.message}`);
+        onError(
+          `${t('chat.fileUpload.errors.failed')}: ${
+            typeof error === 'object' && error !== null
+              ? (error.message ?? error)
+              : error
+          }`
+        );
         setUploads((prev) => {
           prev.forEach((u) => u.cancel());
           return [];
@@ -163,23 +178,23 @@ const _AskFileButton = ({
 };
 
 interface AskFileButtonProps {
+  messageId: string;
   onError: (error: string) => void;
 }
 
-const AskFileButton = ({ onError }: AskFileButtonProps) => {
+const AskFileButton = ({ messageId, onError }: AskFileButtonProps) => {
   const messageContext = useContext(MessageContext);
+  const belongsToMessage = messageContext.askUser?.spec.step_id === messageId;
+  const isAskFile = messageContext.askUser?.spec.type === 'file';
 
-  if (
-    messageContext.askUser?.spec.type !== 'file' ||
-    !messageContext?.uploadFile
-  )
+  if (!belongsToMessage || !isAskFile || !messageContext?.uploadFile)
     return null;
 
   return (
     <_AskFileButton
       onError={onError}
       uploadFile={messageContext.uploadFile}
-      askUser={messageContext.askUser}
+      askUser={messageContext.askUser!}
     />
   );
 };

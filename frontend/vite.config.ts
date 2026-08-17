@@ -15,7 +15,7 @@ export default defineConfig({
       output: [
         {
           name: 'chatpage',
-          dir: '/mnt/d/client_works/avaia-chat/src/avaia_chat/public/chatpage',
+          dir: 'D:\\client_works\\avaia-chat\\src\\avaia_chat\\public\\chatpage',
           format: 'iife',
           entryFileNames: 'assets/index.js',
           inlineDynamicImports: true,
@@ -27,6 +27,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      // Resolve cross-project workspace source imports (evoya frontend -> copilot/evoya-files source)
+      '@chainlit/copilot/src': path.resolve(__dirname, '../libs/copilot/src'),
+      '@evoya/file-picker/src': path.resolve(__dirname, '../libs/evoya-files/src'),
       // To prevent conflicts with packages in @chainlit/react-client, we need to specify the resolution paths for these dependencies.
       react: path.resolve(__dirname, './node_modules/react'),
       'usehooks-ts': path.resolve(__dirname, './node_modules/usehooks-ts'),

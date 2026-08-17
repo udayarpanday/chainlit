@@ -1,7 +1,7 @@
 import { type ITextElement, useConfig } from '@chainlit/react-client';
 
 import Alert from '@/components/Alert';
-import Markdown from '@/components/Markdown';
+import { Markdown } from '@/components/Markdown';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { useFetch } from 'hooks/useFetch';
@@ -40,6 +40,7 @@ const TextElement = ({ element }: TextElementProps) => {
     <Markdown
       allowHtml={allowHtml}
       latex={latex}
+      renderMarkdown={true}
       className={`${element.display}-text`}
     >
       {content}

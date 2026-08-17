@@ -1,18 +1,30 @@
-<h1 align="center">Welcome to Chainlit by Literal AI 👋</h1>
+<h1 align="center">Welcome to Chainlit 👋</h1>
 
 <p align="center">
 <b>Build python production-ready conversational AI applications in minutes, not weeks ⚡️</b>
 
 </p>
 <p align="center">
-    <a href="https://discord.gg/k73SQ3FyUh" rel="nofollow"><img alt="Discord" src="https://dcbadge.vercel.app/api/server/ZThrUxbAYw?style=flat" style="max-width:100%;"></a>
+   <a href="https://discord.gg/k73SQ3FyUh" target="_blank">
+   <img src="https://img.shields.io/discord/1088038867602526210?logo=discord&labelColor=%20%235462eb&logoColor=%20%23f5f5f5&color=%20%235462eb"
+      alt="chat on Discord"></a>
     <a href="https://twitter.com/chainlit_io" rel="nofollow"><img alt="Twitter" src="https://img.shields.io/twitter/url/https/twitter.com/chainlit_io.svg?style=social&label=Follow%20%40chainlit_io" style="max-width:100%;"></a>
     <a href="https://pypistats.org/packages/chainlit" rel="nofollow"><img alt="Downloads" src="https://img.shields.io/pypi/dm/chainlit" style="max-width:100%;"></a>
         <a href="https://github.com/chainlit/chainlit/graphs/contributors" rel="nofollow"><img alt="Contributors" src="https://img.shields.io/github/contributors/chainlit/chainlit" style="max-width:100%;"></a>
     <a href="https://github.com/Chainlit/chainlit/actions/workflows/ci.yaml" rel="nofollow"><img alt="CI" src="https://github.com/Chainlit/chainlit/actions/workflows/ci.yaml/badge.svg" style="max-width:100%;"></a>
 </p>
 
+> ⚠️ **Notice:** Chainlit is now community-maintained.
+>
+> As of May 1st 2025, the original Chainlit team has stepped back from active development. The project is maintained by @Chainlit/chainlit-maintainers under a formal Maintainer Agreement.
+>
+> Maintainers are responsible for code review, releases, and security.  
+> Chainlit SAS provides no warranties on future updates.
+>
+> Want to help maintain? [Apply here →](https://docs.google.com/forms/d/e/1FAIpQLSf6CllNWnKBnDIoj0m-DnHU6b0dj8HYFGixKy-_qNi_rD4iNA/viewform)
+
 <p align="center">
+    <a href="https://chainlit.io"><b>Website</b></a>  •  
     <a href="https://docs.chainlit.io"><b>Documentation</b></a>  •  
     <a href="https://help.chainlit.io"><b>Chainlit Help</b></a>  •  
     <a href="https://github.com/Chainlit/cookbook"><b>Cookbook</b></a>

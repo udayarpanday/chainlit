@@ -40,13 +40,14 @@ interface Props {
 
 export interface InputMethods {
   reset: () => void;
-  getFullContent: () => string;
+  getFullContent: (includeCollapsedPrompt?: boolean) => string;
+  isCommandExpanded: () => boolean;
   setContent: (value: string) => void;
   appendContent: (value: string) => void;
 }
 
-const escapeHtml = (unsafe: string) => {
-  return unsafe
+const escapeHtml = (unsafe?: string) => {
+  return (unsafe ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -54,7 +55,7 @@ const escapeHtml = (unsafe: string) => {
     .replace(/'/g, '&#039;');
 };
 
-const formatContent = (value: string) => {
+const formatContent = (value?: string) => {
   return escapeHtml(value)
     .replace(/\n/g, '<br>')
     .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
@@ -138,9 +139,25 @@ const Input = forwardRef<InputMethods, Props>(
       );
     };
 
-    const getFullContent = () => {
+    const getFullContent = (includeCollapsedPrompt = false) => {
       // Get base content
-      const baseContent = getContentWithoutCommand();
+      let baseContent = getContentWithoutCommand();
+
+      // A collapsed prompt is represented only by a non-editable command chip,
+      // which getContentWithoutCommand intentionally removes. Creator mode can
+      // opt in to its prompt text because that path cannot expand it server-side.
+      if (
+        includeCollapsedPrompt &&
+        selectedCommand &&
+        !isCommandExpanded
+      ) {
+        const promptContent =
+          selectedCommand.prompt_content || selectedCommand.id;
+
+        baseContent = baseContent
+          ? `${promptContent}\n${baseContent}`
+          : promptContent;
+      }
 
       // Prepend agents to the message as part of the text with markdown-like formatting
       if (selectedAgents && selectedAgents.length > 0) {
@@ -201,6 +218,7 @@ const Input = forwardRef<InputMethods, Props>(
     useImperativeHandle(ref, () => ({
       reset,
       getFullContent,
+      isCommandExpanded: () => isCommandExpanded,
       setContent: (value: string) => syncContent(value, 'replace'),
       appendContent: (value: string) => syncContent(value, 'append')
     }));
