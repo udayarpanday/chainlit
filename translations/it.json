@@ -557,7 +557,9 @@
             "load_error": "Impossibile caricare i file",
             "search_error": "Impossibile cercare i file",
             "search_truncated": "Sono disponibili altri risultati. Affina la ricerca.",
-            "load_more": "Carica altro"
+            "load_more": "Carica altro",
+            "show_more": "Mostra altro",
+            "show_less": "Mostra meno"
         },
         "shortcuts": {
             "title": "Scorciatoie",

@@ -676,7 +676,9 @@
             "load_error": "Impossible de charger les fichiers",
             "search_error": "Impossible de rechercher les fichiers",
             "search_truncated": "D’autres résultats sont disponibles. Affinez votre recherche.",
-            "load_more": "Charger plus"
+            "load_more": "Charger plus",
+            "show_more": "Afficher plus",
+            "show_less": "Afficher moins"
         },
         "shortcuts": {
             "title": "Raccourcis",

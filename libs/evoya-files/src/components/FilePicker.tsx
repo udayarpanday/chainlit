@@ -671,7 +671,7 @@ export default function FilePicker({
         {!activeShortcut && (
         <div
           className={cn(
-            'rounded-lg border min-h-24 relative overflow-hidden flex',
+            'rounded-lg border min-h-24 relative overflow-hidden flex flex-shrink-0',
             isDragActive && hasUpload
               ? 'bg-primary/20 [.contents>div]:bg-primary/20!'
               : 'bg-white'

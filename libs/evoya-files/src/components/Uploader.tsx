@@ -161,7 +161,7 @@ export default function Uploader({
         <div className={cn("font-bold", type === 'compact' ? 'text-xl' : 'text-2xl')}>
           <Translator path="evoyaFiles.common.files" />
         </div>
-        {currentPath === '/' && isSuperuser && showConnectButton && (
+        {currentPath === '/' && showConnectButton && (
           <Button asChild>
             <a href="/files/manage/sharepoint/mounts/">
               <Translator path="evoyaFiles.actions.connect.label" />
