@@ -87,6 +87,7 @@ window.mountChainlitWidget = (config: IWidgetConfig, evoya: EvoyaConfig) => {
       color: inherit;
       box-sizing: border-box;
     }
+    ${evoya.additionalCss ?? ''}
   `;
   shadowContainer.appendChild(resetStyles);
 

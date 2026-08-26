@@ -13,6 +13,7 @@ export interface EvoyaConfig {
   logo?: string | null;
   hideWaterMark?: boolean;
   brand_color?: string | null;
+  additionalCss?: string | null;
   additionalInfo?: EvoyaAdditionalInfo;
   chatBubbleConfig?: EvoyaChatBubble;
   headerConfig?: EvoyaHeaderConfig;
