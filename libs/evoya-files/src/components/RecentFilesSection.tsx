@@ -1,5 +1,11 @@
-import type { KeyboardEvent, MouseEvent } from 'react';
-import { Folder, LoaderCircle, PackageOpen } from 'lucide-react';
+import { type KeyboardEvent, type MouseEvent, useState } from 'react';
+import {
+  ChevronDown,
+  ChevronUp,
+  Folder,
+  LoaderCircle,
+  PackageOpen
+} from 'lucide-react';
 
 import { Translator } from '@chainlit/app/src/components/i18n';
 import { useTranslation } from '@chainlit/app/src/components/i18n/Translator';
@@ -9,6 +15,9 @@ import type { FilePickerItem, RecentFile } from '../types';
 import { getDateDisplay } from '../utils/file';
 import FileItemActions from './FileItemActions';
 import { getItemIcon } from './FilePickerItem';
+
+const COLLAPSED_FILE_COUNT = 10;
+const EXPANDED_FILE_COUNT = 40;
 
 type Props = {
   files: RecentFile[];
@@ -32,6 +41,12 @@ export default function RecentFilesSection({
   onDelete
 }: Props) {
   const { t } = useTranslation();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const visibleFiles = files.slice(
+    0,
+    isExpanded ? EXPANDED_FILE_COUNT : COLLAPSED_FILE_COUNT
+  );
+  const canExpand = files.length > COLLAPSED_FILE_COUNT;
 
   const activateRow = (event: KeyboardEvent<HTMLTableRowElement>, file: RecentFile) => {
     if (event.target !== event.currentTarget) return;
@@ -89,7 +104,7 @@ export default function RecentFilesSection({
                 </td>
               </tr>
             )}
-            {files.map((file) => (
+            {visibleFiles.map((file) => (
               <tr
                 key={file.id}
                 tabIndex={0}
@@ -142,6 +157,30 @@ export default function RecentFilesSection({
           </tbody>
         </table>
       </div>
+      {canExpand && (
+        <div className="mt-2 flex justify-center">
+          <Button
+            type="button"
+            variant="ghost"
+            className="gap-2"
+            onClick={() => setIsExpanded((expanded) => !expanded)}
+            aria-expanded={isExpanded}
+          >
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <ChevronDown className="h-4 w-4" aria-hidden="true" />
+            )}
+            <Translator
+              path={
+                isExpanded
+                  ? 'evoyaFiles.common.show_less'
+                  : 'evoyaFiles.common.show_more'
+              }
+            />
+          </Button>
+        </div>
+      )}
     </section>
   );
 }

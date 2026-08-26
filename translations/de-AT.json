@@ -683,7 +683,9 @@
             "load_error": "Dateien konnten nicht geladen werden",
             "search_error": "Dateien konnten nicht durchsucht werden",
             "search_truncated": "Weitere Ergebnisse sind verfügbar. Verfeinern Sie die Suche.",
-            "load_more": "Mehr laden"
+            "load_more": "Mehr laden",
+            "show_more": "Mehr anzeigen",
+            "show_less": "Weniger anzeigen"
         },
         "shortcuts": {
             "title": "Verknüpfungen",

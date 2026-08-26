@@ -683,7 +683,9 @@
             "load_error": "Files could not be loaded",
             "search_error": "Files could not be searched",
             "search_truncated": "More results are available. Refine your search.",
-            "load_more": "Load more"
+            "load_more": "Load more",
+            "show_more": "Show more",
+            "show_less": "Show less"
         },
         "shortcuts": {
             "title": "Shortcuts",

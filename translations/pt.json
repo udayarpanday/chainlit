@@ -650,7 +650,9 @@
             "load_error": "Não foi possível carregar os ficheiros",
             "search_error": "Não foi possível pesquisar os ficheiros",
             "search_truncated": "Existem mais resultados. Refine a pesquisa.",
-            "load_more": "Carregar mais"
+            "load_more": "Carregar mais",
+            "show_more": "Mostrar mais",
+            "show_less": "Mostrar menos"
         },
         "shortcuts": {
             "title": "Atalhos",
