@@ -420,6 +420,11 @@
         }
     },
     "chat": {
+        "temporary": {
+            "title": "Temporärer Chat",
+            "locked": "Der temporäre Chat kann nur vor dem Senden einer Nachricht geändert werden",
+            "footer": "Temporärer Chat — dieser Chat wird nicht in Ihrem Verlauf gespeichert"
+        },
         "input": {
             "placeholder": "Ihre Eingabe...",
             "archived": "Dieser Chat gehört zu einem archivierten Agenten. Archivieren Sie den Agenten wieder aus, um diesen Chat fortzusetzen, oder wählen Sie einen anderen Agenten aus, um einen neuen Chat zu starten.",

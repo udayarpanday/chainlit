@@ -37,6 +37,7 @@ import {
   sessionState,
   sideViewState,
   tasklistState,
+  temporaryChatState,
   threadIdToResumeState,
   tokenCountState,
   wavRecorderState,
@@ -89,6 +90,8 @@ const useChatSession = () => {
   const sessionId = useRecoilValue(sessionIdState);
 
   const [session, setSession] = useRecoilState(sessionState);
+  const [temporaryChat, setTemporaryChatState] =
+    useRecoilState(temporaryChatState);
   const setIsAiSpeaking = useSetRecoilState(isAiSpeakingState);
   const setAudioConnection = useSetRecoilState(audioConnectionState);
   const resetChatSettingsValue = useResetRecoilState(chatSettingsValueState);
@@ -124,6 +127,11 @@ const useChatSession = () => {
 
   const [currentThreadId, setCurrentThreadId] =
     useRecoilState(currentThreadIdState);
+  const temporaryChatRef = useRef(temporaryChat);
+
+  useEffect(() => {
+    temporaryChatRef.current = temporaryChat;
+  }, [temporaryChat]);
 
   useEffect(() => {
     if (session?.socket) {
@@ -185,6 +193,7 @@ const useChatSession = () => {
             clientTabId: tabId,
             socketReconnection: isReconnectingRef.current ? 'true' : 'false',
             reconnectAttempt: String(reconnectAttemptRef.current),
+            temporaryChat: temporaryChatRef.current,
             chatSessionUuid:
               evoya?.session_uuid ||
               getScopedSessionStorageItem('session_token') ||
@@ -232,7 +241,9 @@ const useChatSession = () => {
         setLoading(resetTaskLoading());
         setSession((s) => ({ ...s!, error: false }));
         isReconnectingRef.current = false;
-        socket.emit('fetch_favorites');
+        if (!temporaryChatRef.current) {
+          socket.emit('fetch_favorites');
+        }
         setMcps((prev) =>
           prev.map((mcp) => {
             let promise;
@@ -684,6 +695,15 @@ const useChatSession = () => {
     setLoading(false);
   }, [session]);
 
+  const setTemporaryChat = useCallback(
+    (enabled: boolean) => {
+      temporaryChatRef.current = enabled;
+      setTemporaryChatState(enabled);
+      session?.socket.emit('temporary_chat', { enabled });
+    },
+    [session, setTemporaryChatState]
+  );
+
   return {
     connect,
     disconnect,
@@ -691,6 +711,8 @@ const useChatSession = () => {
     sessionId,
     chatProfile,
     idToResume,
+    temporaryChat,
+    setTemporaryChat,
     setChatProfile
   };
 };

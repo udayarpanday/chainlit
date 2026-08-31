@@ -417,6 +417,11 @@
         }
     },
     "chat": {
+        "temporary": {
+            "title": "Chat temporanea",
+            "locked": "La chat temporanea può essere modificata solo prima di inviare un messaggio",
+            "footer": "Chat temporanea — questa chat non verrà salvata nella cronologia"
+        },
         "input": {
             "placeholder": "Scrivi il tuo messaggio qui...",
             "archived": "Questa chat appartiene a un agente archiviato. Rimuovi l’agente dall’archivio per continuare questa chat oppure seleziona un altro agente per avviare una nuova chat.",

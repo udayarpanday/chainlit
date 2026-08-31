@@ -71,6 +71,11 @@ export const sessionState = atom<ISession | undefined>({
   default: undefined
 });
 
+export const temporaryChatState = atom<boolean>({
+  key: 'TemporaryChat',
+  default: false
+});
+
 export const actionState = atom<IAction[]>({
   key: 'Actions',
   default: []

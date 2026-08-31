@@ -11,24 +11,27 @@ import { v4 as uuidv4 } from 'uuid';
 import { WidgetContext } from '@chainlit/copilot/src/context';
 import {
   chatArchived,
+  evoyaCreatorEnabledState,
   FileSpec,
   ICommand,
   IStep,
   initialTranscriptState,
-  evoyaCreatorEnabledState,
+  projectAccess,
+  promptState,
+  temporaryChatState,
   useAuth,
   useChatData,
-  useChatInteract,
-  projectAccess
+  useChatInteract
 } from '@chainlit/react-client';
 import { Archive, FolderOpen, Plus, X } from 'lucide-react';
 
 import { Settings } from '@/components/icons/Settings';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
+import { evoyaAttachmentsState, EvoyaAttachment } from '@/state/evoya';
 import { chatSettingsOpenState } from '@/state/project';
 import { IAttachment, attachmentsState } from 'state/chat';
-import { evoyaAttachmentsState, EvoyaAttachment } from '@/state/evoya';
 
 import { Attachments } from './Attachments';
 import ConfigurationMenu, {
@@ -39,7 +42,6 @@ import Input, { InputMethods } from './Input';
 import SubmitButton from './SubmitButton';
 import UploadButton from './UploadButton';
 import UploadButtonDropdown from './UploadButtonDropdown';
-import { promptState } from '@chainlit/react-client';
 
 interface Props {
   fileSpec: FileSpec;
@@ -73,6 +75,7 @@ export default function MessageComposer({
   const initialTranscript = useRecoilValue(initialTranscriptState);
   const isChatArchived = useRecoilValue(chatArchived);
   const isProjectAccessible = useRecoilValue(projectAccess);
+  const temporaryChat = useRecoilValue(temporaryChatState);
   console.log(isProjectAccessible)
   const resetInitialTranscript = useResetRecoilState(initialTranscriptState);
   const { t } = useTranslation();
@@ -296,11 +299,15 @@ export default function MessageComposer({
 
   return (
     <div
-      className={`bg-accent p-3 px-4 w-full ${
+      className={cn(
+        'bg-accent p-3 px-4 w-full flex flex-col',
         (evoya && evoya.type == 'dashboard') || evoya == undefined
           ? 'min-h-24 rounded-3xl'
-          : 'rounded-full'
-      } flex flex-col ${isChatArchived ? 'border border-primary' : ''}`}
+          : 'rounded-full',
+        isChatArchived && 'border border-primary',
+        temporaryChat &&
+          'border border-dashed border-gray-400 dark:border-gray-500'
+      )}
     >
       {isChatArchived ? (
         <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">

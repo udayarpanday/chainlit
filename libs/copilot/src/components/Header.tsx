@@ -15,7 +15,8 @@ import { ChainlitContext, getScopedSessionStorageItem } from '@chainlit/react-cl
 import {
   chatArchived,
   evoyaCreatorEnabledState,
-  firstUserInteraction
+  firstUserInteraction,
+  temporaryChatState
 } from '@chainlit/react-client';
 import {
   sessionIdState,
@@ -26,6 +27,7 @@ import {
 } from '@chainlit/react-client';
 
 import AgentList, { AgentListItem } from './AgentList';
+import TemporaryChatButton from './TemporaryChatButton';
 
 const sessionTokenKey = 'session_token';
 
@@ -92,6 +94,7 @@ const Header = ({
   const { accessToken, evoya } = useContext(WidgetContext);
   const sessionId = useRecoilValue(sessionIdState);
   const firstInteraction = useRecoilValue(firstUserInteraction);
+  const temporaryChat = useRecoilValue(temporaryChatState);
 
   const hasChatProfiles = !!config?.chatProfiles?.length;
   const [sessionUuid, setSessionUuid] = useState(evoya?.session_uuid ?? '');
@@ -456,15 +459,26 @@ const Header = ({
             barSpacing={2}
           />
         ) : null}
+        {!creatorEnabled ? <TemporaryChatButton /> : null}
         {evoya?.type === 'dashboard' && !creatorEnabled && (
           <>
             <ViewContext />
-            <FavoriteSessionButton sessionUuid={sessionUuid || getScopedSessionStorageItem('session_token')} />
-            <ShareSessionButton
-              sessionUuid={sessionUuid || getScopedSessionStorageItem('session_token')}
-              restrictSharedSessionsToOrg={restrictSharedSessionsToOrg}
-              isChatArchived={isChatArchived}
-            />
+            {!temporaryChat ? (
+              <FavoriteSessionButton
+                sessionUuid={
+                  sessionUuid || getScopedSessionStorageItem('session_token')
+                }
+              />
+            ) : null}
+            {!temporaryChat ? (
+              <ShareSessionButton
+                sessionUuid={
+                  sessionUuid || getScopedSessionStorageItem('session_token')
+                }
+                restrictSharedSessionsToOrg={restrictSharedSessionsToOrg}
+                isChatArchived={isChatArchived}
+              />
+            ) : null}
           </>
         )}
         {!creatorEnabled && (

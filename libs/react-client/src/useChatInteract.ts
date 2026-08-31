@@ -16,6 +16,7 @@ import {
   sessionState,
   sideViewState,
   tasklistState,
+  temporaryChatState,
   threadIdToResumeState,
   tokenCountState
 } from 'src/state';
@@ -37,6 +38,8 @@ const useChatInteract = () => {
   const resetSessionId = useResetRecoilState(sessionIdState);
   const resetChatSettingsValue = useResetRecoilState(chatSettingsValueState);
   const resetChatArchived = useResetRecoilState(chatArchived);
+  const resetSession = useResetRecoilState(sessionState);
+  const resetTemporaryChat = useResetRecoilState(temporaryChatState);
 
   const setFirstUserInteraction = useSetRecoilState(firstUserInteraction);
   const setLoading = useSetRecoilState(loadingState);
@@ -53,6 +56,7 @@ const useChatInteract = () => {
   const clear = useCallback(() => {
     session?.socket.emit('clear_session');
     session?.socket.disconnect();
+    resetSession();
     setIdToResume(undefined);
     resetSessionId();
     setFirstUserInteraction(undefined);
@@ -64,6 +68,7 @@ const useChatInteract = () => {
     resetChatSettings();
     resetChatSettingsValue();
     resetChatArchived();
+    resetTemporaryChat();
     setSideView(undefined);
     setCurrentThreadId(undefined);
   }, [session]);

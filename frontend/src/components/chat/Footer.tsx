@@ -1,14 +1,20 @@
-import { cn, hasMessage } from '@/lib/utils';
 import { useContext } from 'react';
+import { useRecoilValue } from 'recoil';
 
 import { WidgetContext } from '@chainlit/copilot/src/context';
-import { FileSpec, useChatMessages } from '@chainlit/react-client';
+import {
+  FileSpec,
+  temporaryChatState,
+  useChatMessages
+} from '@chainlit/react-client';
 
 import WaterMark from '@/components/WaterMark';
+import { cn, hasMessage } from '@/lib/utils';
 
 import DataProcessingPopover from './DataProcessingPopover';
 import MessageComposer from './MessageComposer';
 import ScrollDownButton from './ScrollDownButton';
+import TemporaryChatNotice from './TemporaryChatNotice';
 
 interface Props {
   fileSpec: FileSpec;
@@ -26,6 +32,7 @@ export default function ChatFooter({
   ...props
 }: Props) {
   const { messages } = useChatMessages();
+  const temporaryChat = useRecoilValue(temporaryChatState);
   const { evoya } = useContext(WidgetContext);
   const dataProcessingCategories =
     evoya?.additionalInfo?.dataProcessingCategories ?? [];
@@ -42,8 +49,19 @@ export default function ChatFooter({
         <ScrollDownButton onClick={() => props.setAutoScroll(true)} />
       ) : null}
       <MessageComposer {...props} />
-      <div className={cn("relative flex min-h-4 w-full items-center flex-wrap gap-2", evoya?.type === 'dashboard' ? 'justify-start' : 'justify-center flex-col')}>
-        <WaterMark />
+      <div
+        className={cn(
+          'relative flex min-h-4 w-full items-center flex-wrap gap-2',
+          evoya?.type === 'dashboard'
+            ? 'justify-start'
+            : 'justify-center flex-col'
+        )}
+      >
+        {temporaryChat ? (
+          <TemporaryChatNotice />
+        ) : (
+          <WaterMark />
+        )}
         {showDataProcessing ? (
           <div className="absolute right-0 top-1/2 -translate-y-1/2">
             <DataProcessingPopover categories={dataProcessingCategories} />
