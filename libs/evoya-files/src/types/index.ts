@@ -10,7 +10,7 @@ export type FilePickerItem = FilePickerItemBase & { id: string };
 export type FilePickerData = {
   path: PathItem[];
   items: FilePickerItem[];
-}
+};
 
 type WithTransportDates<T> = T extends unknown
   ? Omit<T, 'created' | 'modified'> & {
@@ -27,6 +27,7 @@ export type FilesApiResponse = {
   documents: FileListItemDto[];
   recent_files?: unknown;
   breadcrumbs: PathItem[];
+  showBulkDeleteAction?: boolean;
   searchTruncated?: boolean;
   error?: string;
 };
@@ -44,7 +45,7 @@ export type PathItem = {
   name: string;
   path?: string;
   canOpen: boolean;
-}
+};
 
 // export type FilePickerItem = {
 //   type: 'file' | 'dir';
