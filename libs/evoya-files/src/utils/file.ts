@@ -43,9 +43,17 @@ const downloadBlobFromUrl = (url: string, fileName: string) => {
   link.parentNode.removeChild(link);
 }
 
+const previewMimePrefixes = ['text/', 'image/', 'audio/'];
+const previewMimeTypes = ['video/webm', 'application/json', 'application/pdf'];
+
+const isPreviewSupported = (mime: string) =>
+  previewMimePrefixes.some((prefix) => mime.includes(prefix)) ||
+  previewMimeTypes.some((type) => mime.includes(type));
+
 export {
   getSizeDisplay,
   getDateDisplay,
   downloadBlob,
   downloadBlobFromUrl,
+  isPreviewSupported,
 }

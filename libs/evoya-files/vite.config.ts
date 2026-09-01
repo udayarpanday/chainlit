@@ -37,7 +37,7 @@ export default defineConfig({
       output: [
         {
           name: 'files',
-          dir: '../../../avaia-chat/src/avaia_chat/public/evoya-files',
+          dir: 'D:\\client_works\\avaia-chat\\src\\avaia_chat\\public\\evoya-files',
           format: 'iife',
           entryFileNames: 'index.js',
           inlineDynamicImports: true

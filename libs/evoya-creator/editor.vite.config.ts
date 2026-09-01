@@ -60,6 +60,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      '@chainlit/copilot/src': path.resolve(__dirname, '../copilot/src'),
+      '@evoya/file-picker/src': path.resolve(__dirname, '../evoya-files/src'),
       react: path.resolve(__dirname, './node_modules/react'),
       "@mdxeditor/editor/dist/styles/ui.module.css.js": path.resolve(__dirname, "./node_modules/@mdxeditor/editor/dist/styles/ui.module.css.js"),
       "@mdxeditor/editor/dist/plugins/core/SharedHistoryPlugin.js": path.resolve(__dirname, "./node_modules/@mdxeditor/editor/dist/plugins/core/SharedHistoryPlugin.js"),

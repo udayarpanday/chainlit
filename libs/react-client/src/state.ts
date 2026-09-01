@@ -1,17 +1,23 @@
 import { isEqual } from 'lodash';
-import { DefaultValue, atom, selector } from 'recoil';
+import { AtomEffect, DefaultValue, atom, selector } from 'recoil';
 import { Socket } from 'socket.io-client';
-import { v4 as uuidv4 } from 'uuid';
 
 import { IAgents } from './types/agents';
 import { ICommand } from './types/command';
+import { IMode } from './types/mode';
 
+import {
+  createScopedSessionId,
+  getScopedSessionId,
+  setScopedSessionId
+} from './storage';
 import {
   IAction,
   IAsk,
   IAuthConfig,
   ICallFn,
   IChainlitConfig,
+  IMcp,
   IMessageElement,
   IStep,
   ITasklistElement,
@@ -43,14 +49,19 @@ export const chatProfileState = atom<string | undefined>({
 
 const sessionIdAtom = atom<string>({
   key: 'SessionId',
-  default: uuidv4()
+  default: getScopedSessionId()
 });
 
 export const sessionIdState = selector({
   key: 'SessionIdSelector',
   get: ({ get }) => get(sessionIdAtom),
-  set: ({ set }, newValue) =>
-    set(sessionIdAtom, newValue instanceof DefaultValue ? uuidv4() : newValue)
+  set: ({ set }, newValue) => {
+    const sessionId =
+      newValue instanceof DefaultValue ? createScopedSessionId() : newValue;
+
+    setScopedSessionId(sessionId);
+    set(sessionIdAtom, sessionId);
+  }
 });
 
 export const sessionState = atom<ISession | undefined>({
@@ -75,43 +86,8 @@ export const commandsState = atom<ICommand[]>({
   default: []
 });
 
-export const promptState = atom<
-  | {
-      context_prompt: string;
-      context_prompt_exact_sent_to_llm?: unknown;
-      is_superuser: boolean | undefined;
-    }
-  | undefined
->({
-  key: 'Context',
-  default: undefined
-});
-
-export type InitialTranscriptMode = 'append' | 'replace';
-
-export interface InitialTranscriptStateValue {
-  text: string;
-  mode: InitialTranscriptMode;
-  receivedAt: number;
-}
-
-export const initialTranscriptState = atom<InitialTranscriptStateValue | null>({
-  key: 'InitialTranscript',
-  default: null
-});
-
-export const chatArchived = atom<boolean>({
-  key: 'ChatArchived',
-  default: false
-});
-
-export const projectAccess = atom<boolean>({
-  key: 'ProjectAccess',
-  default: false
-});
-
-export const agentState = atom<IAgents[]>({
-  key: 'Agent',
+export const modesState = atom<IMode[]>({
+  key: 'Modes',
   default: []
 });
 
@@ -166,16 +142,35 @@ export const chatSettingsDefaultValueSelector = selector({
   key: 'ChatSettingsValue/Default',
   get: ({ get }) => {
     const chatSettings = get(chatSettingsInputsState);
-    return chatSettings.reduce(
-      (form: { [key: string]: any }, input: any) => (
-        (form[input.id] = input.initial), form
-      ),
-      {}
-    );
+
+    const collectInitialValues = (
+      inputs: any[],
+      acc: Record<string, any>
+    ): Record<string, any> => {
+      if (!Array.isArray(inputs)) {
+        return acc;
+      }
+
+      inputs.forEach((input) => {
+        if (!input) {
+          return;
+        }
+        if (Array.isArray(input?.inputs) && input.inputs.length > 0) {
+          // Handle tabs
+          collectInitialValues(input.inputs, acc);
+        } else if (input?.id !== undefined) {
+          acc[input.id] = input.initial;
+        }
+      });
+
+      return acc;
+    };
+
+    return collectInitialValues(chatSettings, {});
   }
 });
 
-export const chatSettingsValueState = atom({
+export const chatSettingsValueState = atom<Record<string, any>>({
   key: 'ChatSettingsValue',
   default: chatSettingsDefaultValueSelector
 });
@@ -244,7 +239,7 @@ export const threadHistoryState = atom<ThreadHistory | undefined>({
 });
 
 export const sideViewState = atom<
-  { title: string; elements: IMessageElement[] } | undefined
+  { title: string; elements: IMessageElement[]; key?: string } | undefined
 >({
   key: 'SideView',
   default: undefined
@@ -252,5 +247,81 @@ export const sideViewState = atom<
 
 export const currentThreadIdState = atom<string | undefined>({
   key: 'CurrentThreadId',
+  default: undefined
+});
+
+const localStorageEffect =
+  <T>(key: string): AtomEffect<T> =>
+  ({ setSelf, onSet }) => {
+    // When the atom is first initialized, try to get its value from localStorage
+    const savedValue = localStorage.getItem(key);
+    if (savedValue != null) {
+      try {
+        setSelf(JSON.parse(savedValue));
+      } catch (error) {
+        console.error(
+          `Error parsing localStorage value for key "${key}":`,
+          error
+        );
+      }
+    }
+
+    // Subscribe to state changes and update localStorage
+    onSet((newValue, _, isReset) => {
+      if (isReset) {
+        localStorage.removeItem(key);
+      } else {
+        localStorage.setItem(key, JSON.stringify(newValue));
+      }
+    });
+  };
+
+export const mcpState = atom<IMcp[]>({
+  key: 'Mcp',
+  default: [],
+  effects: [localStorageEffect<IMcp[]>('mcp_storage_key')]
+});
+
+export const favoriteMessagesState = atom<IStep[]>({
+  key: 'favoriteMessagesState',
+  default: []
+});
+
+export const chatArchived = atom<boolean>({
+  key: 'ChatArchived',
+  default: false
+});
+
+export const projectAccess = atom<boolean>({
+  key: 'ProjectAccess',
+  default: false
+});
+
+export const agentState = atom<IAgents>({
+  key: 'Agent',
+  default: { agents: [] }
+});
+
+export type InitialTranscriptMode = 'append' | 'replace';
+
+export interface InitialTranscriptStateValue {
+  text: string;
+  mode: InitialTranscriptMode;
+  receivedAt: number;
+}
+
+export const initialTranscriptState = atom<InitialTranscriptStateValue | null>({
+  key: 'InitialTranscript',
+  default: null
+});
+
+export interface EvoyaPromptContext {
+  context_prompt: string;
+  context_prompt_exact_sent_to_llm?: unknown;
+  is_superuser: boolean | undefined;
+}
+
+export const promptState = atom<EvoyaPromptContext | undefined>({
+  key: 'Context',
   default: undefined
 });

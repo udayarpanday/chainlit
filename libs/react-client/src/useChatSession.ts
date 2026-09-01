@@ -21,11 +21,15 @@ import {
   commandsState,
   currentThreadIdState,
   elementState,
+  type EvoyaPromptContext,
+  favoriteMessagesState,
   firstUserInteraction,
   initialTranscriptState,
   isAiSpeakingState,
   loadingState,
+  mcpState,
   messagesState,
+  modesState,
   projectAccess,
   promptState,
   resumeThreadErrorState,
@@ -41,10 +45,12 @@ import {
 import {
   ChatInputSocketPayload,
   IAction,
+  IAgents,
   IChatArchived,
   ICommand,
   IElement,
   IMessageElement,
+  IMode,
   IStep,
   ITasklistElement,
   IThread
@@ -52,18 +58,18 @@ import {
 import {
   addMessage,
   deleteMessageById,
-  findMessageById,
   updateMessageById,
-  updateMessageContentById
+  updateMessageContentById,
+  findMessageById
 } from 'src/utils/message';
 
-import { IAgents } from './types/agents';
 import { OutputAudioChunk } from './types/audio';
 
 import { ChainlitContext } from './context';
 import {
   getChainlitTabId,
-  getScopedSessionStorageItem
+  getScopedSessionStorageItem,
+  setScopedSessionStorageItem
 } from './storage';
 import type { IToken } from './useChatData';
 import {
@@ -72,25 +78,33 @@ import {
   resetTaskLoading
 } from './taskLoading';
 
+type EvoyaCreatorWindow = Window &
+  typeof globalThis & {
+    evoyaCreatorEnabled?: boolean;
+    updateEvoyaCreator?: (message: IStep, parent?: IStep) => string | undefined;
+  };
+
 const useChatSession = () => {
   const client = useContext(ChainlitContext);
   const sessionId = useRecoilValue(sessionIdState);
-  const stickyCookieCalledRef = useRef(false);
 
   const [session, setSession] = useRecoilState(sessionState);
   const setIsAiSpeaking = useSetRecoilState(isAiSpeakingState);
   const setAudioConnection = useSetRecoilState(audioConnectionState);
   const resetChatSettingsValue = useResetRecoilState(chatSettingsValueState);
+  const setChatSettingsValue = useSetRecoilState(chatSettingsValueState);
   const setFirstUserInteraction = useSetRecoilState(firstUserInteraction);
   const setLoading = useSetRecoilState(loadingState);
+  const setMcps = useSetRecoilState(mcpState);
   const wavStreamPlayer = useRecoilValue(wavStreamPlayerState);
   const wavRecorder = useRecoilValue(wavRecorderState);
   const setMessages = useSetRecoilState(messagesState);
   const setAskUser = useSetRecoilState(askUserState);
   const setCallFn = useSetRecoilState(callFnState);
   const setCommands = useSetRecoilState(commandsState);
-  const setContextPrompt = useSetRecoilState(promptState);
+  const setModes = useSetRecoilState(modesState);
   const setAgents = useSetRecoilState(agentState);
+  const setContextPrompt = useSetRecoilState(promptState);
   const setSideView = useSetRecoilState(sideViewState);
   const setElements = useSetRecoilState(elementState);
   const setTasklists = useSetRecoilState(tasklistState);
@@ -100,6 +114,7 @@ const useChatSession = () => {
   const [chatProfile, setChatProfile] = useRecoilState(chatProfileState);
   const idToResume = useRecoilValue(threadIdToResumeState);
   const setThreadResumeError = useSetRecoilState(resumeThreadErrorState);
+  const setFavoriteMessages = useSetRecoilState(favoriteMessagesState);
   const setInitialTranscript = useSetRecoilState(initialTranscriptState);
   const setChatArchived = useSetRecoilState(chatArchived);
   const setProjectAccess = useSetRecoilState(projectAccess);
@@ -119,6 +134,17 @@ const useChatSession = () => {
   const isReconnectingRef = useRef(false);
   const reconnectAttemptRef = useRef(0);
 
+  const refreshStickyCookie = useCallback(
+    async (stickySessionId: string) => {
+      try {
+        await client.stickyCookie(stickySessionId);
+      } catch (err) {
+        console.error(`Failed to set sticky session cookie: ${err}`);
+      }
+    },
+    [client]
+  );
+
   const _connect = useCallback(
     async ({
       transports,
@@ -136,14 +162,7 @@ const useChatSession = () => {
           ? `${pathname}/ws/socket.io`
           : '/ws/socket.io';
 
-      if (!stickyCookieCalledRef.current) {
-        stickyCookieCalledRef.current = true;
-        try {
-          await client.stickyCookie(sessionId);
-        } catch (err) {
-          console.error(`Failed to set sticky session cookie: ${err}`);
-        }
-      }
+      await refreshStickyCookie(sessionId);
 
       isReconnectingRef.current = false;
       reconnectAttemptRef.current = 0;
@@ -152,6 +171,9 @@ const useChatSession = () => {
         path,
         withCredentials: true,
         transports,
+        query: {
+          chainlit_session_id: sessionId,
+        },
         auth: (cb) => {
           cb({
             clientType: client.type,
@@ -185,6 +207,7 @@ const useChatSession = () => {
       socket.io.on('reconnect_attempt', (attempt: number) => {
         isReconnectingRef.current = true;
         reconnectAttemptRef.current = attempt;
+        void refreshStickyCookie(sessionId);
       });
 
       socket.io.on('reconnect', (attempt: number) => {
@@ -209,6 +232,57 @@ const useChatSession = () => {
         setLoading(resetTaskLoading());
         setSession((s) => ({ ...s!, error: false }));
         isReconnectingRef.current = false;
+        socket.emit('fetch_favorites');
+        setMcps((prev) =>
+          prev.map((mcp) => {
+            let promise;
+            if (mcp.clientType === 'sse') {
+              promise = client.connectSseMCP(sessionId, mcp.name, mcp.url!);
+            } else if (mcp.clientType === 'streamable-http') {
+              promise = client.connectStreamableHttpMCP(
+                sessionId,
+                mcp.name,
+                mcp.url!,
+                mcp.headers || {}
+              );
+            } else {
+              promise = client.connectStdioMCP(
+                sessionId,
+                mcp.name,
+                mcp.command!
+              );
+            }
+            promise
+              .then(async ({ success, mcp }) => {
+                setMcps((prev) =>
+                  prev.map((existingMcp) => {
+                    if (existingMcp.name === mcp.name) {
+                      return {
+                        ...existingMcp,
+                        status: success ? 'connected' : 'failed',
+                        tools: mcp ? mcp.tools : existingMcp.tools
+                      };
+                    }
+                    return existingMcp;
+                  })
+                );
+              })
+              .catch(() => {
+                setMcps((prev) =>
+                  prev.map((existingMcp) => {
+                    if (existingMcp.name === mcp.name) {
+                      return {
+                        ...existingMcp,
+                        status: 'failed'
+                      };
+                    }
+                    return existingMcp;
+                  })
+                );
+              });
+            return { ...mcp, status: 'connecting' };
+          })
+        );
       });
 
       socket.on('connect_error', (_) => {
@@ -264,12 +338,24 @@ const useChatSession = () => {
       });
 
       socket.on('resume_thread', (thread: IThread) => {
+        const isReadOnlyView = Boolean(
+          (thread as any)?.metadata?.viewer_read_only
+        );
+        if (!isReadOnlyView && idToResume && thread.id !== idToResume) {
+          window.location.href = `/thread/${thread.id}`;
+        }
+        if (!isReadOnlyView && idToResume) {
+          setCurrentThreadId(thread.id);
+        }
         let messages: IStep[] = [];
         for (const step of thread.steps) {
           messages = addMessage(messages, step);
         }
         if (thread.metadata?.chat_profile) {
           setChatProfile(thread.metadata?.chat_profile);
+        }
+        if (thread.metadata?.chat_settings) {
+          setChatSettingsValue(thread.metadata?.chat_settings);
         }
         setMessages(messages);
         const elements = thread.elements || [];
@@ -298,15 +384,20 @@ const useChatSession = () => {
         }*/
         setMessages((oldMessages) => {
           let newOutput = message.output;
-          // @ts-expect-error is not a valid prop
-          if (message.type === 'assistant_message' && message.output !== "" && window.evoyaCreatorEnabled) {
-            const directParent = findMessageById(oldMessages, message.parentId || '');
-            let messageParent = directParent;
-            if (directParent?.parentId) {
-              messageParent = findMessageById(oldMessages, directParent.parentId);
-            }
-            // @ts-expect-error is not a valid prop
-            newOutput = window.updateEvoyaCreator(message, findMessageById(oldMessages, message.parentId)) || message.output;
+          const evoyaWindow = window as EvoyaCreatorWindow;
+
+          if (
+            message.type === 'assistant_message' &&
+            message.output !== '' &&
+            evoyaWindow.evoyaCreatorEnabled
+          ) {
+            const parentMessage = message.parentId
+              ? findMessageById(oldMessages, message.parentId)
+              : undefined;
+
+            newOutput =
+              evoyaWindow.updateEvoyaCreator?.(message, parentMessage) ||
+              message.output;
             // window.updateEvoyaCreator(message.output);
           }
 
@@ -326,7 +417,7 @@ const useChatSession = () => {
 
       socket.on('update_message', (message: IStep) => {
         setMessages((oldMessages) => {
-          let newMessages = oldMessages;
+          const newMessages = oldMessages;
           /* // @ts-expect-error is not a valid prop
           if (message.type === 'run' && message.name === 'on_message' && message.end && window.evoyaCreatorEnabled) {
             const oldMsg = findMessageById(oldMessages, message.id)
@@ -346,7 +437,7 @@ const useChatSession = () => {
               })
             }
           }*/
-          return updateMessageById(newMessages, message.id, message)
+          return updateMessageById(newMessages, message.id, message);
         });
       });
 
@@ -416,8 +507,11 @@ const useChatSession = () => {
       socket.on('set_commands', (commands: ICommand[]) => {
         setCommands(commands);
       });
+      socket.on('set_modes', (modes: IMode[]) => {
+        setModes(modes);
+      });
 
-      socket.on('agents', (agents: IAgents[]) => {
+      socket.on('agents', (agents: IAgents) => {
         setAgents(agents);
       });
 
@@ -429,11 +523,7 @@ const useChatSession = () => {
 
       socket.on(
         'context_prompt',
-        (context: {
-          context_prompt: string;
-          context_prompt_exact_sent_to_llm?: unknown;
-          is_superuser: boolean | undefined;
-        }) => {
+        (context: EvoyaPromptContext | undefined) => {
           if (context) {
             setContextPrompt(context);
           }
@@ -461,6 +551,23 @@ const useChatSession = () => {
       
       socket.on('is_project_accessible', (payload:boolean) => {
         setProjectAccess(payload);
+      });
+      socket.on('set_favorites', (steps: IStep[]) => {
+        setFavoriteMessages(steps);
+      });
+
+      socket.on('set_sidebar_title', (title: string) => {
+        setSideView((prev) => {
+          if (prev?.title === title) return prev;
+          return { title, elements: prev?.elements || [] };
+        });
+      });
+
+      socket.on("chat_session_uuid", (data: { session_uuid: string }) => {
+        if (data?.session_uuid) {
+          sessionStorage.setItem("chat_session_uuid", data.session_uuid);
+          setScopedSessionStorageItem('session_token', data.session_uuid);
+        }
       });
 
       socket.on('set_sidebar_elements', (elements: IMessageElement[]) => {
@@ -563,7 +670,7 @@ const useChatSession = () => {
         }
       });
     },
-    [setSession, sessionId, idToResume, chatProfile]
+    [setSession, sessionId, idToResume, chatProfile, refreshStickyCookie]
   );
 
   const connect = useCallback(debounce(_connect, 200), [_connect]);

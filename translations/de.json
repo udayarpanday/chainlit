@@ -88,6 +88,18 @@
                 "title": "Projekte",
                 "empty": "Keine Projekte gefunden"
             },
+            "configurationMenu": {
+                "title": "Konfiguration",
+                "promptLibrary": "Prompt-Bibliothek",
+                "enabled": "Ein",
+                "searchPrompts": "Prompts durchsuchen...",
+                "promptPreview": "Wählen Sie einen Prompt aus, um seinen Inhalt anzuzeigen",
+                "searchProjects": "Projekte durchsuchen...",
+                "untitledProject": "Unbenanntes Projekt",
+                "privacyActive": "Datenschutzschild aktiv",
+                "hideAnonymizedText": "Anonymisierten Text ausblenden",
+                "showAnonymizedText": "Anonymisierten Text anzeigen"
+            },
             "tasklist": {
                 "TaskList": {
                     "title": "\ud83d\uddd2\ufe0f Aufgabenliste",
@@ -181,6 +193,7 @@
         },
         "organisms": {
             "privacyShield": {
+                "title": "Datenschutzschild",
                 "showPrivacyTable": "Anonymisierte Wörter einblenden",
                 "hidePrivacyTable": "Anonymisierte Wörter ausblenden",
                 "info": "Privacy Shield anonymisiert sensible Details (z. B. Namen), bevor der Text an die KI gesendet wird. Es funktioniert nur für Text, nicht für hochgeladene Dokumente.",
@@ -244,7 +257,7 @@
                     },
                     "additionalInfo": {
                         "defaultText": "Geben Sie / für Prompts oder @ ein, um andere Agenten einzubeziehen",
-                        "text": "All information provided without warranty. Please verify the accuracy of the information provided."
+                        "text": "Alle Angaben erfolgen ohne Gewähr. Bitte überprüfen Sie die Richtigkeit der bereitgestellten Informationen."
                     },
                     "view_agent_details": {
                         "text": "Wählen Sie einen Agenten aus, um dessen Details anzuzeigen."
@@ -273,6 +286,17 @@
                     "reset": "Zurücksetzen",
                     "cancel": "Abbrechen",
                     "confirm": "Bestätigen"
+                },
+                "dataProcessing": {
+                    "button": "Datenverarbeitung",
+                    "title": "Wo Ihre Daten verarbeitet werden",
+                    "categories": {
+                        "language_model": "Sprachmodell",
+                        "image_generation": "Bildgenerierung",
+                        "image_analysis": "Bildanalyse",
+                        "document_ocr": "Dokument-OCR",
+                        "voice_speech_to_text": "Sprache-zu-Text"
+                    }
                 }
             },
             "threadHistory": {
@@ -553,6 +577,10 @@
         }
     },
     "evoyaFiles": {
+        "datasource": {
+            "connected": "Mit einer Datenquelle verbunden",
+            "not_connected": "Nicht mit einer Datenquelle verbunden"
+        },
         "actions": {
             "attachments": {
                 "label": "Cloud Storage",
@@ -582,11 +610,26 @@
             "new": {
                 "label": "Neu"
             },
+            "connect": {
+                "label": "Verbinden"
+            },
             "download": {
                 "label": "Herunterladen"
             },
+            "menu": {
+                "label": "Dateiaktionen"
+            },
+            "open_recent_file": {
+                "label": "{{name}} öffnen"
+            },
+            "open_location": {
+                "label": "Speicherort {{location}} öffnen"
+            },
             "search": {
                 "label": "Suchen"
+            },
+            "open_in_file_manager": {
+                "label": "Im Dateimanager öffnen"
             },
             "back_to_project": {
                 "label": "zurück zum Projekt"
@@ -637,13 +680,30 @@
         "common": {
             "selected": "ausgewählt",
             "files": "Dateien",
-            "no_entries": "Keine Einträge"
+            "no_entries": "Keine Einträge",
+            "recent_files": "Zuletzt erstellte Dateien",
+            "no_recent_files": "Noch keine kürzlich von KI generierten Dateien",
+            "load_error": "Dateien konnten nicht geladen werden",
+            "search_error": "Dateien konnten nicht durchsucht werden",
+            "search_truncated": "Weitere Ergebnisse sind verfügbar. Verfeinern Sie die Suche.",
+            "load_more": "Mehr laden",
+            "show_more": "Mehr anzeigen",
+            "show_less": "Weniger anzeigen"
         },
+        "shortcuts": {
+            "title": "Verknüpfungen",
+            "generated": { "title": "Generierte Dateien", "description": "Von KI generierte Dateien", "empty": "Noch keine generierten Dateien" },
+            "images": { "title": "Bilder", "description": "Von KI generierte Bilder", "empty": "Noch keine generierten Bilder" },
+            "projects": { "title": "Projekte", "description": "Zu Ihren Projektordnern springen", "empty": "Noch keine Projekte" }
+        },
+        "activity": { "opened": "Geöffnet von", "modified": "Bearbeitet von" },
         "headers": {
             "name": "Name",
             "owner": "Ersteller",
             "modified": "Bearbeitet",
-            "size": "Grösse"
+            "size": "Grösse",
+            "location": "Speicherort",
+            "actions": "Aktionen"
         }
     },
     "evoyaCreator": {

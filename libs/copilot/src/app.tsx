@@ -13,8 +13,14 @@ import {
   useChatInteract
 } from '@chainlit/react-client';
 
+import { useCopilotInteract } from './hooks/useCopilotInteract';
+
 import { ThemeProvider } from './ThemeProvider';
 import { WidgetContext } from './context';
+import {
+  COPILOT_THREAD_CHANGED_EVENT_KEY,
+  CopilotThreadChangedEventParams
+} from './state';
 import WidgetEmbedded from './widgetEmbed';
 
 interface Props {
@@ -29,23 +35,40 @@ declare global {
       light: Record<string, string>;
       dark: Record<string, string>;
     };
+    getChainlitCopilotThreadId: () => string | null;
+    clearChainlitCopilotThreadId: (newThreadId?: string) => void;
   }
 }
 
 export default function App({ widgetConfig }: Props) {
-  const { isAuthenticated, data, user, setUser } = useAuth();
+  const { isAuthenticated, data, setUserFromAPI, setUser } = useAuth();
   const [config, setConfig] = useRecoilState(configState);
-  const [creatorEnabled, setCreatorEnabled] = useRecoilState(evoyaCreatorEnabledState);
+  const [, setCreatorEnabled] = useRecoilState(evoyaCreatorEnabledState);
   const { evoya } = useContext(WidgetContext);
   const apiClient = useContext(ChainlitContext);
   const { i18n } = useTranslation();
-  const languageInUse = navigator.language || 'en-US';
+  const { startNewChat } = useCopilotInteract();
+  const { clear } = useChatInteract();
+  const languageInUse =
+    evoya?.locale || widgetConfig.language || navigator.language || 'en-US';
   const [authError, setAuthError] = useState<string>();
   const [fetchError, setFetchError] = useState<string>();
-  const { clear } = useChatInteract();
 
   useEffect(() => {
-    if (evoya.reset) {
+    const disableCreatorMode = () => setCreatorEnabled(false);
+    const enableCreatorMode = () => setCreatorEnabled(true);
+
+    window.addEventListener('disable-creator-mode', disableCreatorMode);
+    window.addEventListener('enable-creator-mode', enableCreatorMode);
+
+    return () => {
+      window.removeEventListener('disable-creator-mode', disableCreatorMode);
+      window.removeEventListener('enable-creator-mode', enableCreatorMode);
+    };
+  }, [setCreatorEnabled]);
+
+  useEffect(() => {
+    if (evoya?.reset) {
       clear();
     }
   }, [evoya]);
@@ -65,24 +88,28 @@ export default function App({ widgetConfig }: Props) {
     }
   }, [config]);
 
-  useEffect(() => {
-    loadTranslations();
-    setCreatorEnabled(evoya?.evoyaCreator?.initialEnabled ?? false)
-  }, []);
-
-  const loadTranslations = async () => {
+  const loadTranslations = async (lang: string) => {
     try {
-      const translations = await import(
-        `../../../translations/${languageInUse}.json`
-      );
-      i18n.addResourceBundle(languageInUse, 'translation', translations);
-      i18n.changeLanguage(languageInUse);
+      const translations = await import(`../../../translations/${lang}.json`);
+      i18n.addResourceBundle(lang, 'translation', translations);
+      i18n.changeLanguage(lang);
     } catch (error) {
-      console.error(`Could not load translations for ${languageInUse}:`, error);
+      console.error(`Could not load translations for ${lang}:`, error);
+      const splitLang = lang.split('-');
+      if (splitLang.length === 2 && lang !== 'en-US') {
+        loadTranslations(splitLang[0]);
+      } else {
+        loadTranslations('en-US');
+      }
     }
   };
 
-  const defaultTheme = widgetConfig.theme || 'light';
+  useEffect(() => {
+    loadTranslations(languageInUse);
+    setCreatorEnabled(evoya?.evoyaCreator?.initialEnabled ?? false)
+  }, []);
+
+  const defaultTheme = widgetConfig.theme || data?.default_theme;
 
   useEffect(() => {
     if (fetchError) return;
@@ -92,7 +119,7 @@ export default function App({ widgetConfig }: Props) {
       } else {
         apiClient
           .jwtAuth(widgetConfig.accessToken)
-          .then((res) => getUserWithAuth())
+          .then(() => getUserWithAuth())
           .catch((err) => setAuthError(String(err)));
       }
     } else {
@@ -102,20 +129,35 @@ export default function App({ widgetConfig }: Props) {
 
   const getUserWithAuth = async () => {
     const userData = await apiClient
-      .getUser(widgetConfig.accessToken)
+      .getUser(widgetConfig.accessToken || '')
       .catch((err) => setAuthError(String(err)));
-    setUser(userData);
-    setTimeout(clear(), 1500);
+      setUserFromAPI();
   };
+
+  useEffect(() => {
+    const eventListener = (e: Event) => {
+      const customEvent = e as CustomEvent<CopilotThreadChangedEventParams>;
+      startNewChat(customEvent?.detail?.newThreadId);
+    };
+
+    window.addEventListener(COPILOT_THREAD_CHANGED_EVENT_KEY, eventListener);
+
+    return () => {
+      window.removeEventListener(
+        COPILOT_THREAD_CHANGED_EVENT_KEY,
+        eventListener
+      );
+    };
+  }, []);
 
   return (
     <ThemeProvider
       storageKey="vite-ui-theme"
       defaultTheme={defaultTheme}
-      brandColor={evoya.brand_color}
+      brandColor={evoya?.brand_color}
     >
-      <Toaster richColors className="toast" position="top-right" />
-      {evoya.type === 'default' ? (
+      <Toaster className="toast" position="top-right" />
+      {evoya?.type === 'default' ? (
         <Widget config={widgetConfig} error={fetchError || authError} />
       ) : (
         <WidgetEmbedded />

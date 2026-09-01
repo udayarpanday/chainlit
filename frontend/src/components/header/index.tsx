@@ -1,15 +1,33 @@
 import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSetRecoilState } from 'recoil';
 
-import { useAudio, useAuth, useConfig } from '@chainlit/react-client';
+import {
+  useAudio,
+  useAuth,
+  useChatData,
+  useConfig
+} from '@chainlit/react-client';
 
 import AudioPresence from '@/components/AudioPresence';
+import ButtonLink from '@/components/ButtonLink';
+import { Settings } from '@/components/icons/Settings';
+import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
+} from '@/components/ui/tooltip';
+import { Translator } from 'components/i18n';
+
+import { chatSettingsSidebarOpenState } from '@/state/project';
 
 import ApiKeys from './ApiKeys';
 import ChatProfiles from './ChatProfiles';
 import NewChatButton from './NewChat';
 import ReadmeButton from './Readme';
+import ShareButton from './Share';
 import SidebarTrigger from './SidebarTrigger';
 import { ThemeToggle } from './ThemeToggle';
 import UserNav from './UserNav';
@@ -19,11 +37,22 @@ const Header = memo(() => {
   const navigate = useNavigate();
   const { data } = useAuth();
   const { config } = useConfig();
+  const { chatSettingsInputs } = useChatData();
   const { open, openMobile, isMobile } = useSidebar();
+  const setChatSettingsSidebarOpen = useSetRecoilState(
+    chatSettingsSidebarOpenState
+  );
 
   const sidebarOpen = isMobile ? openMobile : open;
 
   const historyEnabled = data?.requireLogin && config?.dataPersistence;
+  const sidebarHidden = config?.ui?.default_sidebar_state === 'hidden';
+
+  const links = config?.ui?.header_links || [];
+
+  const showSettingsInHeader =
+    config?.ui?.chat_settings_location === 'sidebar' &&
+    chatSettingsInputs.length > 0;
 
   return (
     <div
@@ -31,8 +60,12 @@ const Header = memo(() => {
       id="header"
     >
       <div className="flex items-center">
-        {historyEnabled ? !sidebarOpen ? <SidebarTrigger /> : null : null}
-        {historyEnabled ? (
+        {historyEnabled && !sidebarHidden ? (
+          !sidebarOpen ? (
+            <SidebarTrigger />
+          ) : null
+        ) : null}
+        {historyEnabled && !sidebarHidden ? (
           !sidebarOpen ? (
             <NewChatButton navigate={navigate} />
           ) : null
@@ -57,8 +90,38 @@ const Header = memo(() => {
 
       <div />
       <div className="flex items-center gap-1">
+        <ShareButton />
         <ReadmeButton />
         <ApiKeys />
+        {links &&
+          links.map((link, index) => (
+            <ButtonLink
+              key={`${link.name}-${link.url}-${index}`}
+              name={link.name}
+              displayName={link.display_name}
+              iconUrl={link.icon_url}
+              url={link.url}
+              target={link.target}
+            />
+          ))}
+        {showSettingsInHeader && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                id="chat-settings-header-button"
+                onClick={() => setChatSettingsSidebarOpen(true)}
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-muted-foreground"
+              >
+                <Settings className="!size-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <Translator path="chat.settings.title" />
+            </TooltipContent>
+          </Tooltip>
+        )}
         <ThemeToggle />
         <UserNav />
       </div>

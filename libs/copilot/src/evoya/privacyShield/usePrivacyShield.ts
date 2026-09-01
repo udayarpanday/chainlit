@@ -5,7 +5,6 @@ import {
 } from 'react';
 import {
   useRecoilValue,
-  useResetRecoilState,
   useSetRecoilState
 } from 'recoil';
 import { WidgetContext } from 'context';
@@ -151,28 +150,24 @@ const usePrivacyShield = () => {
     setCurrentText(text);
     setOpen(true);
 
-    const apiKey = evoya?.api?.privacyShield.apiKey;
-    const agent_uuid = evoya?.api?.privacyShield.privacyAgent;
-
-    if (!agent_uuid) {
-      setCurrentSections([]);
-      return;
-    }
-    
     setLoading(true);
 
     const baseUrl = evoya?.api?.baseUrl;
-    const apiUrl = `${baseUrl}/api/agent/${agent_uuid}/invoke/`;
+    const apiUrl = `${baseUrl}/api/privacy-shield/invoke/`;
+    const headers = new Headers({
+      'Content-Type': 'application/json'
+    });
+
+    if (evoya?.api?.csrf_token) {
+      headers.set('X-CSRFTOKEN', evoya.api.csrf_token);
+    }
 
     const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Api-Key ${apiKey}`,
-        'X-CSRFTOKEN': evoya?.api?.csrf_token
-      },
+      credentials: 'include',
+      headers,
       body: JSON.stringify({
-        text: text,
+        text,
         context: {}
       })
     });

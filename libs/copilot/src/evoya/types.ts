@@ -8,10 +8,12 @@ export interface EvoyaConfig {
     chat_uuid: string,
     session_uuid: string | undefined
   ) => string | undefined;
+  locale?: string;
   api?: EvoyaApiConfig;
   logo?: string | null;
   hideWaterMark?: boolean;
   brand_color?: string | null;
+  additionalCss?: string | null;
   additionalInfo?: EvoyaAdditionalInfo;
   chatBubbleConfig?: EvoyaChatBubble;
   headerConfig?: EvoyaHeaderConfig;
@@ -47,6 +49,17 @@ export interface EvoyaAdditionalInfo {
   link?: string;
   linkText?: string;
   defaultText?: boolean;
+  dataProcessing?: boolean;
+  dataProcessingCategories?: EvoyaDataProcessingCategory[];
+}
+
+export type EvoyaDataProcessingRegion = 'CH' | 'EU' | 'US' | 'OTHER';
+
+export interface EvoyaDataProcessingCategory {
+  key: string;
+  label: string;
+  region: EvoyaDataProcessingRegion;
+  flag: string;
 }
 
 export interface EvoyaChatBubble {

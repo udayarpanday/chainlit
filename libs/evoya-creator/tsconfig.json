@@ -20,6 +20,8 @@
     "types": ["node"],
     "paths": {
       "client-types/*": ["../../react-client/dist"],
+      "@chainlit/copilot/src/*": ["../../copilot/src/*"],
+      "@evoya/file-picker/src/*": ["../../evoya-files/src/*"],
       "@/*": ["./*"]
     }
   },

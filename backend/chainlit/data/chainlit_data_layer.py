@@ -14,6 +14,7 @@ from chainlit.logger import logger
 from chainlit.step import StepDict
 from chainlit.types import (
     Feedback,
+    FeedbackDict,
     PageInfo,
     PaginatedResponse,
     Pagination,
@@ -22,7 +23,14 @@ from chainlit.types import (
 )
 from chainlit.user import PersistedUser, User
 
+# Import for runtime usage (isinstance checks)
+try:
+    from chainlit.data.storage_clients.gcs import GCSStorageClient
+except ImportError:
+    GCSStorageClient = None  # type: ignore[assignment,misc]
+
 if TYPE_CHECKING:
+    from chainlit.data.storage_clients.gcs import GCSStorageClient
     from chainlit.element import Element, ElementDict
     from chainlit.step import StepDict
 
@@ -54,20 +62,29 @@ class ChainlitDataLayer(BaseDataLayer):
         if not self.pool:
             await self.connect()
 
-        async with self.pool.acquire() as connection:  # type: ignore
-            try:
-                if params:
-                    records = await connection.fetch(query, *params.values())
-                else:
-                    records = await connection.fetch(query)
-                return [dict(record) for record in records]
-            except Exception as e:
-                logger.error(f"Database error: {e!s}")
-                raise
+        try:
+            async with self.pool.acquire() as connection:  # type: ignore
+                try:
+                    if params:
+                        records = await connection.fetch(query, *params.values())
+                    else:
+                        records = await connection.fetch(query)
+                    return [dict(record) for record in records]
+                except Exception as e:
+                    logger.error(f"Database error: {e!s}")
+                    raise
+        except (
+            asyncpg.exceptions.ConnectionDoesNotExistError,
+            asyncpg.exceptions.InterfaceError,
+        ) as e:
+            # Handle connection issues by cleaning up and rethrowing
+            logger.error(f"Connection error: {e!s}")
+            await self.cleanup()
+            raise
 
     async def get_user(self, identifier: str) -> Optional[PersistedUser]:
         query = """
-        SELECT * FROM "User" 
+        SELECT * FROM "User"
         WHERE identifier = $1
         """
         result = await self.execute_query(query, {"identifier": identifier})
@@ -136,12 +153,6 @@ class ChainlitDataLayer(BaseDataLayer):
 
     @queue_until_user_message()
     async def create_element(self, element: "Element"):
-        if not self.storage_client:
-            logger.warn(
-                "Data Layer: create_element error. No cloud storage configured!"
-            )
-            return
-
         if not element.for_id:
             return
 
@@ -164,29 +175,51 @@ class ChainlitDataLayer(BaseDataLayer):
                         "end_time": await self.get_current_timestamp(),
                     }
                 )
-        content: Optional[Union[bytes, str]] = None
 
-        if element.path:
-            async with aiofiles.open(element.path, "rb") as f:
-                content = await f.read()
-        elif element.content:
-            content = element.content
-        elif not element.url:
-            raise ValueError("Element url, path or content must be provided")
+        # Handle file uploads only if storage_client is configured
+        path = None
+        if self.storage_client:
+            content: Optional[Union[bytes, str]] = None
 
-        if element.thread_id:
-            path = f"threads/{element.thread_id}/files/{element.id}"
+            if element.path:
+                async with aiofiles.open(element.path, "rb") as f:
+                    content = await f.read()
+            elif element.content:
+                content = element.content
+            elif not element.url:
+                raise ValueError("Element url, path or content must be provided")
+
+            if content is not None:
+                if element.thread_id:
+                    path = f"threads/{element.thread_id}/files/{element.id}"
+                else:
+                    path = f"files/{element.id}"
+
+                content_disposition = (
+                    f'attachment; filename="{element.name}"'
+                    if not (
+                        GCSStorageClient is not None
+                        and isinstance(self.storage_client, GCSStorageClient)
+                    )
+                    else None
+                )
+                await self.storage_client.upload_file(
+                    object_key=path,
+                    data=content,
+                    mime=element.mime or "application/octet-stream",
+                    overwrite=True,
+                    content_disposition=content_disposition,
+                )
+
         else:
-            path = f"files/{element.id}"
+            # Log warning only if element has file content that needs uploading
+            if element.path or element.url or element.content:
+                logger.warning(
+                    "Data Layer: No storage client configured. "
+                    "File will not be uploaded."
+                )
 
-        if content is not None:
-            await self.storage_client.upload_file(
-                object_key=path,
-                data=content,
-                mime=element.mime or "application/octet-stream",
-                overwrite=True,
-            )
-
+        # Always persist element metadata to database
         query = """
         INSERT INTO "Element" (
             id, "threadId", "stepId", metadata, mime, name, "objectKey", url,
@@ -273,7 +306,7 @@ class ChainlitDataLayer(BaseDataLayer):
                     object_key=elements[0]["objectKey"]
                 )
         query = """
-        DELETE FROM "Element" 
+        DELETE FROM "Element"
         WHERE id = $1
         """
         params = {"id": element_id}
@@ -318,16 +351,16 @@ class ChainlitDataLayer(BaseDataLayer):
         )
         ON CONFLICT (id) DO UPDATE SET
             "parentId" = COALESCE(EXCLUDED."parentId", "Step"."parentId"),
-            input = COALESCE(EXCLUDED.input, "Step".input),
-            metadata = CASE 
-                WHEN EXCLUDED.metadata <> '{}' THEN EXCLUDED.metadata 
-                ELSE "Step".metadata 
+            input = COALESCE(NULLIF(EXCLUDED.input, ''), "Step".input),
+            metadata = CASE
+                WHEN EXCLUDED.metadata <> '{}' THEN EXCLUDED.metadata
+                ELSE "Step".metadata
             END,
             name = COALESCE(EXCLUDED.name, "Step".name),
-            output = COALESCE(EXCLUDED.output, "Step".output),
-            type = CASE 
-                WHEN EXCLUDED.type = 'run' THEN "Step".type 
-                ELSE EXCLUDED.type 
+            output = COALESCE(NULLIF(EXCLUDED.output, ''), "Step".output),
+            type = CASE
+                WHEN EXCLUDED.type = 'run' THEN "Step".type
+                ELSE EXCLUDED.type
             END,
             "threadId" = COALESCE(EXCLUDED."threadId", "Step"."threadId"),
             "endTime" = COALESCE(EXCLUDED."endTime", "Step"."endTime"),
@@ -375,9 +408,24 @@ class ChainlitDataLayer(BaseDataLayer):
             'DELETE FROM "Step" WHERE id = $1', {"step_id": step_id}
         )
 
+    async def get_step(self, step_id: str) -> Optional[StepDict]:
+        # Get step and related feedback
+        query = """
+        SELECT  s.*,
+                f.id feedback_id,
+                f.value feedback_value,
+                f."comment" feedback_comment
+        FROM "Step" s left join "Feedback" f on s.id = f."stepId"
+        WHERE s.id = $1
+        """
+        result = await self.execute_query(query, {"step_id": step_id})
+        if not result:
+            return None
+        return self._convert_step_row_to_dict(result[0])
+
     async def get_thread_author(self, thread_id: str) -> str:
         query = """
-        SELECT u.identifier 
+        SELECT u.identifier
         FROM "Thread" t
         JOIN "User" u ON t."userId" = u.id
         WHERE t.id = $1
@@ -389,7 +437,7 @@ class ChainlitDataLayer(BaseDataLayer):
 
     async def delete_thread(self, thread_id: str):
         elements_query = """
-        SELECT * FROM "Element" 
+        SELECT * FROM "Element"
         WHERE "threadId" = $1
         """
         elements_results = await self.execute_query(
@@ -409,8 +457,8 @@ class ChainlitDataLayer(BaseDataLayer):
         self, pagination: Pagination, filters: ThreadFilter
     ) -> PaginatedResponse[ThreadDict]:
         query = """
-        SELECT 
-            t.*, 
+        SELECT
+            t.*,
             u.identifier as user_identifier,
             (SELECT COUNT(*) FROM "Thread" WHERE "userId" = t."userId") as total
         FROM "Thread" t
@@ -431,11 +479,11 @@ class ChainlitDataLayer(BaseDataLayer):
             param_count += 1
 
         if pagination.cursor:
-            query += f' AND t."createdAt" < (SELECT "createdAt" FROM "Thread" WHERE id = ${param_count})'
+            query += f' AND t."updatedAt" < (SELECT "updatedAt" FROM "Thread" WHERE id = ${param_count})'
             params["cursor"] = pagination.cursor
             param_count += 1
 
-        query += f' ORDER BY t."createdAt" DESC LIMIT ${param_count}'
+        query += f' ORDER BY t."updatedAt" DESC LIMIT ${param_count}'
         params["limit"] = pagination.first + 1
 
         results = await self.execute_query(query, params)
@@ -449,7 +497,7 @@ class ChainlitDataLayer(BaseDataLayer):
         for thread in threads:
             thread_dict = ThreadDict(
                 id=str(thread["id"]),
-                createdAt=thread["createdAt"].isoformat(),
+                createdAt=thread["updatedAt"].isoformat(),
                 name=thread["name"],
                 userId=str(thread["userId"]) if thread["userId"] else None,
                 userIdentifier=thread["user_identifier"],
@@ -483,17 +531,21 @@ class ChainlitDataLayer(BaseDataLayer):
 
         thread = results[0]
 
-        # Get steps
+        # Get steps and related feedback
         steps_query = """
-        SELECT * FROM "Step" 
-        WHERE "threadId" = $1 
+        SELECT  s.*,
+                f.id feedback_id,
+                f.value feedback_value,
+                f."comment" feedback_comment
+        FROM "Step" s left join "Feedback" f on s.id = f."stepId"
+        WHERE s."threadId" = $1
         ORDER BY "startTime"
         """
         steps_results = await self.execute_query(steps_query, {"thread_id": thread_id})
 
         # Get elements
         elements_query = """
-        SELECT * FROM "Element" 
+        SELECT * FROM "Element"
         WHERE "threadId" = $1
         """
         elements_results = await self.execute_query(
@@ -532,18 +584,53 @@ class ChainlitDataLayer(BaseDataLayer):
         if self.show_logger:
             logger.info(f"asyncpg: update_thread, thread_id={thread_id}")
 
+        has_updates = (
+            metadata is not None
+            or name is not None
+            or user_id is not None
+            or tags is not None
+        )
+
+        if metadata is None:
+            metadata = {}
+
         thread_name = truncate(
             name
             if name is not None
             else (metadata.get("name") if metadata and "name" in metadata else None)
         )
 
+        existing = await self.execute_query(
+            'SELECT "metadata" FROM "Thread" WHERE id = $1',
+            {"thread_id": thread_id},
+        )
+
+        thread_exists = isinstance(existing, list) and existing
+        if thread_exists and not has_updates:
+            return
+
+        base = {}
+        if thread_exists:
+            raw = existing[0].get("metadata") or {}
+            if isinstance(raw, str):
+                try:
+                    base = json.loads(raw)
+                except json.JSONDecodeError:
+                    base = {}
+            elif isinstance(raw, dict):
+                base = raw
+        to_delete = {k for k, v in metadata.items() if v is None}
+        incoming = {k: v for k, v in metadata.items() if v is not None}
+        base = {k: v for k, v in base.items() if k not in to_delete}
+        metadata = {**base, **incoming}
+
         data = {
             "id": thread_id,
             "name": thread_name,
             "userId": user_id,
             "tags": tags,
-            "metadata": json.dumps(metadata or {}),
+            "metadata": json.dumps(metadata),
+            "updatedAt": datetime.now(),
         }
 
         # Remove None values
@@ -556,14 +643,43 @@ class ChainlitDataLayer(BaseDataLayer):
 
         update_sets = [f'"{k}" = EXCLUDED."{k}"' for k in data.keys() if k != "id"]
 
-        query = f"""
-            INSERT INTO "Thread" ({", ".join(columns)})
-            VALUES ({", ".join(placeholders)})
-            ON CONFLICT (id) DO UPDATE
-            SET {", ".join(update_sets)};
-        """
+        if update_sets:
+            query = f"""
+                INSERT INTO "Thread" ({", ".join(columns)})
+                VALUES ({", ".join(placeholders)})
+                ON CONFLICT (id) DO UPDATE
+                SET {", ".join(update_sets)};
+            """
+        else:
+            query = f"""
+                INSERT INTO "Thread" ({", ".join(columns)})
+                VALUES ({", ".join(placeholders)})
+                ON CONFLICT (id) DO NOTHING
+            """
 
         await self.execute_query(query, {str(i + 1): v for i, v in enumerate(values)})
+
+    async def get_favorite_steps(self, user_id: str) -> List[StepDict]:
+        query = """
+                SELECT s.*
+                FROM "Step" s
+                         JOIN "Thread" t ON s."threadId" = t.id
+                WHERE t."userId" = $1
+                  AND s.metadata::jsonb->>'favorite' = 'true'
+                ORDER BY s."createdAt" DESC \
+                """
+        results = await self.execute_query(query, {"user_id": user_id})
+        return [self._convert_step_row_to_dict(row) for row in results]
+
+    def _extract_feedback_dict_from_step_row(self, row: Dict) -> Optional[FeedbackDict]:
+        if row.get("feedback_id", None) is not None:
+            return FeedbackDict(
+                forId=str(row["id"]),
+                id=str(row["feedback_id"]),
+                value=row["feedback_value"],
+                comment=row["feedback_comment"],
+            )
+        return None
 
     def _convert_step_row_to_dict(self, row: Dict) -> StepDict:
         return StepDict(
@@ -580,6 +696,7 @@ class ChainlitDataLayer(BaseDataLayer):
             showInput=row.get("showInput"),
             isError=row.get("isError"),
             end=row["endTime"].isoformat() if row.get("endTime") else None,
+            feedback=self._extract_feedback_dict_from_step_row(row),
         )
 
     def _convert_element_row_to_dict(self, row: Dict) -> ElementDict:
@@ -609,7 +726,14 @@ class ChainlitDataLayer(BaseDataLayer):
     async def cleanup(self):
         """Cleanup database connections"""
         if self.pool:
+            logger.debug("Cleaning up connection pool")
             await self.pool.close()
+            self.pool = None
+
+    async def close(self) -> None:
+        if self.storage_client:
+            await self.storage_client.close()
+        await self.cleanup()
 
 
 def truncate(text: Optional[str], max_length: int = 255) -> Optional[str]:

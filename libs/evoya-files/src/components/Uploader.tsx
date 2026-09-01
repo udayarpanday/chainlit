@@ -14,6 +14,7 @@ import {
   FolderPlus,
   ArrowLeft,
   ExternalLink,
+  FilePen,
   PlusCircle,
 } from 'lucide-react';
 import { cn } from '@chainlit/app/src/lib/utils';
@@ -59,7 +60,7 @@ export default function Uploader({
   onFileUpload,
   loadCurrentPath,
 }: Props) {
-  const { apiBaseUrl, csrfToken, projectId, type } = useContext(FilePickerContext);
+  const { apiBaseUrl, csrfToken, isSuperuser, showConnectButton, projectId, type } = useContext(FilePickerContext);
   const [newFolderName, setNewFolderName] = useState('');
   const [newFolderOpen, setNewFolderOpen] = useState(false);
   const folderNameInput = useRef<HTMLInputElement>(null);
@@ -160,6 +161,13 @@ export default function Uploader({
         <div className={cn("font-bold", type === 'compact' ? 'text-xl' : 'text-2xl')}>
           <Translator path="evoyaFiles.common.files" />
         </div>
+        {currentPath === '/' && showConnectButton && (
+          <Button asChild>
+            <a href="/files/manage/sharepoint/mounts/">
+              <Translator path="evoyaFiles.actions.connect.label" />
+            </a>
+          </Button>
+        )}
         {currentPath !== '/' && (
           <div className="flex gap-2">
             <input
@@ -167,17 +175,6 @@ export default function Uploader({
               className="hidden"
               {...upload2.getInputProps()}
             />
-            <Button
-              variant="outline"
-              id='upload-button'
-              disabled={isLoading || isSearch}
-              size={type === 'compact' ? 'sm' : 'default'}
-              className="text-[#7b809a] border-[#7b809a] hover:bg-[#7b809a]/10 hover:text-[#7b809a]"
-              {...upload2.getRootProps()}
-            >
-              <Upload className="h-5" />
-              <Translator path="evoyaFiles.actions.upload.title" />
-            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -190,8 +187,15 @@ export default function Uploader({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent container={window.cl_files_shadowRootElement} align="end">
-                <DropdownMenuItem onClick={() => setNewMdOpen(true)} id='upload-button'>
+                <DropdownMenuItem
+                  id='upload-button'
+                  onClick={upload2.getRootProps().onClick}
+                >
                   <Upload className="h-5" />
+                  <Translator path="evoyaFiles.actions.upload.title" />
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setNewMdOpen(true)} id='create-md-button'>
+                  <FilePen className="h-5" />
                   <Translator path="evoyaFiles.actions.create_md.title" />
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setNewFolderOpen(true)} id='create-folder-button'>

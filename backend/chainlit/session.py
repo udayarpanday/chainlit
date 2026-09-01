@@ -1,18 +1,77 @@
 import asyncio
 import json
 import mimetypes
+import re
 import shutil
 import uuid
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Callable, Deque, Dict, Literal, Optional, Union
 
 import aiofiles
 
 from chainlit.logger import logger
-from chainlit.types import FileReference
+from chainlit.types import AskFileSpec, FileReference
 
 if TYPE_CHECKING:
+    from mcp import ClientSession
+
+    from chainlit.config import ChainlitConfig
     from chainlit.types import FileDict
     from chainlit.user import PersistedUser, User
+
+_CLOSE_TIMEOUT = 10.0  # seconds to wait for a background MCP task to finish
+
+
+@dataclass
+class McpSession:
+    """Lifecycle wrapper for a single MCP connection.
+
+    Each MCP connection is run inside its own ``asyncio.Task``.  That task
+    creates the ``AsyncExitStack``, enters all context managers (transport,
+    ``ClientSession``), calls ``initialize()``, and then blocks on
+    ``stop_event.wait()``.  When the event is set the task wakes up and
+    closes the exit stack **in the same task** that opened it, avoiding
+    the cross-task cancel-scope corruption described in
+    https://github.com/Chainlit/chainlit/issues/2182.
+
+    Original solution by @nigiva:
+    https://github.com/Chainlit/chainlit/issues/2182#issuecomment-2840283194
+    """
+
+    name: str
+    client: "ClientSession"
+    task: asyncio.Task
+    stop_event: asyncio.Event = field(default_factory=asyncio.Event)
+
+    async def close(self) -> None:
+        """Signal the background task to shut down and wait for it."""
+        self.stop_event.set()
+        try:
+            await asyncio.wait_for(self.task, timeout=_CLOSE_TIMEOUT)
+        except asyncio.TimeoutError:
+            logger.warning(
+                "MCP session %r did not shut down within %.1fs — cancelling",
+                self.name,
+                _CLOSE_TIMEOUT,
+            )
+            self.task.cancel()
+            try:
+                await self.task
+            except BaseException:
+                pass
+        except asyncio.CancelledError:
+            pass
+        except BaseException:
+            logger.debug("Error while closing MCP session %r", self.name, exc_info=True)
+
+    # Backward-compatible tuple unpacking.
+    # The original Chainlit format is ``(ClientSession, AsyncExitStack)``.
+    # Code that does ``client, _ = mcp_sessions[name]`` will get the
+    # ``ClientSession`` and a safe sentinel (not the real exit stack,
+    # which must only be closed by the owning background task).
+    def __iter__(self):
+        return iter((self.client, self))
+
 
 ClientType = Literal["webapp", "copilot", "teams", "slack", "discord"]
 
@@ -46,6 +105,7 @@ class BaseSession:
     thread_id_to_resume: Optional[str] = None
     client_type: ClientType
     current_task: Optional[asyncio.Task] = None
+    chat_started: bool = False
 
     def __init__(
         self,
@@ -60,12 +120,10 @@ class BaseSession:
         token: Optional[str],
         # User specific environment variables. Empty if no user environment variables are required.
         user_env: Optional[Dict[str, str]],
+        # WSGI environment variables for the connection request
+        environ: Optional[dict[str, Any]] = None,
         # Chat profile selected before the session was created
         chat_profile: Optional[str] = None,
-        # Origin of the request
-        http_referer: Optional[str] = None,
-        # Cookie
-        http_cookie: Optional[str] = None,
     ):
         if thread_id:
             self.thread_id_to_resume = thread_id
@@ -74,12 +132,13 @@ class BaseSession:
         self.client_type = client_type
         self.token = token
         self.has_first_interaction = False
+        self.chat_started = False
         self.user_env = user_env or {}
+        self.environ = environ or {}
         self.chat_profile = chat_profile
-        self.http_referer = http_referer
-        self.http_cookie = http_cookie
 
         self.files: Dict[str, FileDict] = {}
+        self.files_spec: Dict[str, AskFileSpec] = {}
 
         self.id = id
 
@@ -142,14 +201,21 @@ class BaseSession:
         return {"id": file_id}
 
     def to_persistable(self) -> Dict:
+        from chainlit.config import config
         from chainlit.user_session import user_sessions
 
         user_session = user_sessions.get(self.id) or {}  # type: Dict
         user_session["chat_settings"] = self.chat_settings
         user_session["chat_profile"] = self.chat_profile
-        user_session["http_referer"] = self.http_referer
         user_session["client_type"] = self.client_type
-        metadata = clean_metadata(user_session)
+
+        # Check config setting for whether to persist user environment variables
+        user_session_copy = user_session.copy()
+        if not config.project.persist_user_env:
+            # Remove user environment variables (API keys) before persisting to database
+            user_session_copy["env"] = {}
+
+        metadata = clean_metadata(user_session_copy)
         return metadata
 
 
@@ -168,10 +234,8 @@ class HTTPSession(BaseSession):
         # Logged-in user token
         token: Optional[str] = None,
         user_env: Optional[Dict[str, str]] = None,
-        # Origin of the request
-        http_referer: Optional[str] = None,
-        # Cookie
-        http_cookie: Optional[str] = None,
+        # WSGI environment variables for the connection request
+        environ: Optional[dict[str, Any]] = None,
     ):
         super().__init__(
             id=id,
@@ -180,11 +244,10 @@ class HTTPSession(BaseSession):
             token=token,
             client_type=client_type,
             user_env=user_env,
-            http_referer=http_referer,
-            http_cookie=http_cookie,
+            environ=environ,
         )
 
-    def delete(self):
+    async def delete(self):
         """Delete the session."""
         if self.files_dir.is_dir():
             shutil.rmtree(self.files_dir)
@@ -207,6 +270,8 @@ class WebsocketSession(BaseSession):
 
     to_clear: bool = False
 
+    mcp_sessions: dict[str, McpSession]
+
     def __init__(
         self,
         # Id from the session cookie
@@ -220,6 +285,8 @@ class WebsocketSession(BaseSession):
         # User specific environment variables. Empty if no user environment variables are required.
         user_env: Dict[str, str],
         client_type: ClientType,
+        # WSGI environment variables for the connection request
+        environ: Optional[dict[str, Any]] = None,
         # Thread id
         thread_id: Optional[str] = None,
         # Logged-in user information
@@ -228,12 +295,6 @@ class WebsocketSession(BaseSession):
         token: Optional[str] = None,
         # Chat profile selected before the session was created
         chat_profile: Optional[str] = None,
-        # Languages of the user's browser
-        languages: Optional[str] = None,
-        # Origin of the request
-        http_referer: Optional[str] = None,
-        # Cookie
-        http_cookie: Optional[str] = None,
     ):
         super().__init__(
             id=id,
@@ -243,8 +304,7 @@ class WebsocketSession(BaseSession):
             user_env=user_env,
             client_type=client_type,
             chat_profile=chat_profile,
-            http_referer=http_referer,
-            http_cookie=http_cookie,
+            environ=environ,
         )
 
         self.socket_id = socket_id
@@ -254,11 +314,54 @@ class WebsocketSession(BaseSession):
         self.restored = False
 
         self.thread_queues: Dict[str, ThreadQueue] = {}
+        self.mcp_sessions = {}
+
+        match = (
+            re.match(
+                r"^\s*([a-zA-Z0-9-]+)", environ.get("HTTP_ACCEPT_LANGUAGE", "en-US")
+            )
+            if environ
+            else None
+        )
+        self.language = match.group(1) if match else "en-US"
+
+        self.config: ChainlitConfig = self.get_config()
 
         ws_sessions_id[self.id] = self
         ws_sessions_sid[socket_id] = self
 
-        self.languages = languages
+    def get_config(self) -> "ChainlitConfig":
+        """
+        Return the config for this session: overridden if chat profile exists and has overrides, else global config.
+        """
+        from chainlit.config import config as global_config
+
+        # If no chat profile, always fallback to global config
+        if not self.chat_profile:
+            return global_config
+        # If already computed, use self.config
+        if hasattr(self, "config") and self.config:
+            return self.config
+        # Try to compute overrides
+        cfg = global_config
+        if global_config.code.set_chat_profiles:
+            import asyncio
+
+            try:
+                profiles = asyncio.get_event_loop().run_until_complete(
+                    global_config.code.set_chat_profiles(self.user, self.language)
+                )
+                current_profile = next(
+                    (p for p in profiles if p.name == self.chat_profile), None
+                )
+                if current_profile and getattr(
+                    current_profile, "config_overrides", None
+                ):
+                    cfg = global_config.with_overrides(current_profile.config_overrides)
+            except Exception:
+                pass
+        self.config = cfg
+        return cfg
 
     def restore(self, new_socket_id: str):
         """Associate a new socket id to the session."""
@@ -267,12 +370,23 @@ class WebsocketSession(BaseSession):
         self.socket_id = new_socket_id
         self.restored = True
 
-    def delete(self):
+    async def delete(self):
         """Delete the session."""
         if self.files_dir.is_dir():
             shutil.rmtree(self.files_dir)
         ws_sessions_sid.pop(self.socket_id, None)
         ws_sessions_id.pop(self.id, None)
+
+        for mcp_session in list(self.mcp_sessions.values()):
+            try:
+                await mcp_session.close()
+            except Exception:
+                logger.debug(
+                    "Error closing MCP session %r during session delete",
+                    mcp_session.name,
+                    exc_info=True,
+                )
+        self.mcp_sessions.clear()
 
     async def flush_method_queue(self):
         for method_name, queue in self.thread_queues.items():

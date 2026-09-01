@@ -50,7 +50,10 @@ export const messageBuilder = (context: SelectionContext, message: IStep, mdCont
   return {
     ...message,
     // output: newMessage,
-    ...additional
+    metadata: {
+      ...message.metadata,
+      ...additional.metadata,
+    }
   }
 }
 

@@ -10,27 +10,14 @@ export const useUserManagement = () => {
   const {
     data: userData,
     error,
-    isLoading,
     mutate: setUserFromAPI
-  } = useApi<IUser>('/user', {
-    fetcher: (url: string) => fetch(url, {
-      credentials: 'include', // This is the key change
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    }).then(res => {
-      if (!res.ok) throw new Error('API error');
-      return res.json();
-    })
-  });
+  } = useApi<IUser>('/user');
 
   useEffect(() => {
     if (userData) {
       setUser(userData);
-    } else if (isLoading) {
-      setUser(undefined);
     }
-  }, [userData, isLoading, setUser]);
+  }, [userData, setUser]);
 
   useEffect(() => {
     if (error) {
@@ -38,5 +25,5 @@ export const useUserManagement = () => {
     }
   }, [error]);
 
-  return { user, setUserFromAPI, setUser };
+  return { user, setUser, setUserFromAPI };
 };

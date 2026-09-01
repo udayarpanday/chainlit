@@ -34,14 +34,13 @@ def mock_session_factory(persisted_test_user: PersistedUser) -> Callable[..., Mo
         mock.user_env = kwargs.get("user_env", {"test_env": "value"})
         mock.chat_settings = kwargs.get("chat_settings", {})
         mock.chat_profile = kwargs.get("chat_profile", None)
-        mock.http_referer = kwargs.get("http_referer", None)
-        mock.http_cookie = kwargs.get("http_cookie", None)
+        mock.environ = kwargs.get("environ", None)
         mock.client_type = kwargs.get("client_type", "webapp")
-        mock.languages = kwargs.get("languages", ["en"])
         mock.thread_id = kwargs.get("thread_id", "test_thread_id")
         mock.emit = AsyncMock()
         mock.has_first_interaction = kwargs.get("has_first_interaction", True)
         mock.files = kwargs.get("files", {})
+        mock.files_spec = kwargs.get("files_spec", {})
 
         return mock
 
@@ -55,7 +54,21 @@ def mock_session(mock_session_factory) -> Mock:
 
 @asynccontextmanager
 async def create_chainlit_context(mock_session):
-    context = ChainlitContext(mock_session)
+    from chainlit.emitter import BaseChainlitEmitter
+
+    # Create a mock emitter with all necessary methods
+    mock_emitter = Mock(spec=BaseChainlitEmitter)
+    mock_emitter.send_step = AsyncMock()
+    mock_emitter.update_step = AsyncMock()
+    mock_emitter.delete_step = AsyncMock()
+    mock_emitter.stream_start = AsyncMock()
+    mock_emitter.send_element = AsyncMock()
+    mock_emitter.send_action = AsyncMock()
+    mock_emitter.remove_action = AsyncMock()
+    mock_emitter.emit = AsyncMock()
+    mock_emitter.set_chat_settings = Mock()  # Sync method, not async
+
+    context = ChainlitContext(mock_session, emitter=mock_emitter)
     token = context_var.set(context)
     try:
         yield context

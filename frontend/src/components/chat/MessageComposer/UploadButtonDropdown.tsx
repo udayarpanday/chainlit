@@ -54,11 +54,23 @@ export const UploadButton = ({
   onFileUploadError
 }: UploadButtonProps) => {
   const { config } = useConfig();
+  const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const upload = useUpload({
     spec: fileSpec,
-    onResolved: (payloads: File[]) => onFileUpload(payloads),
-    onError: onFileUploadError,
-    options: { noDrag: true }
+    onResolved: (payloads: File[]) => {
+      onFileUpload(payloads);
+      setFileMenuOpen(false);
+    },
+    onError: (error: string) => {
+      onFileUploadError(error);
+      setFileMenuOpen(false);
+    },
+    options: {
+      noDrag: true,
+      noClick: true,
+      useFsAccessApi: false,
+      onFileDialogCancel: () => setFileMenuOpen(false)
+    }
   });
 
   const [evoyaAttachments, setEvoyaAttachments] = useRecoilState(evoyaAttachmentsState);
@@ -87,7 +99,7 @@ export const UploadButton = ({
   }
 
   if (!upload) return null;
-  const { getRootProps, getInputProps } = upload;
+  const { getInputProps, open } = upload;
 
   if (!config?.features.spontaneous_file_upload?.enabled) return null;
 
@@ -96,7 +108,15 @@ export const UploadButton = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <span className="inline-block">
-            <DropdownMenu>
+            <input
+              id="upload-button-input"
+              className="hidden"
+              {...getInputProps()}
+            />
+            <DropdownMenu
+              open={fileMenuOpen}
+              onOpenChange={setFileMenuOpen}
+            >
               <DropdownMenuTrigger asChild>
                 <Button
                   id="file-menu-toggle"
@@ -112,22 +132,22 @@ export const UploadButton = ({
                 align={isMobile ? 'center' : 'start'}
                 side={isMobile ? 'top' : undefined}
                 sideOffset={isMobile ? 5 : 12}
-                className="focus:outline-none w-[16vw] p-1"
+                className="focus:outline-none w-[16vw] min-w-[250px] p-1"
                 style={{
                   position: isMobile ? 'fixed' : 'relative',
-                  bottom: isMobile ? '-82vh' : '45px',
-                  right: isMobile ? 'auto' : '10px',
+                  bottom: isMobile ? '-82vh' : '-10px',
+                  right: isMobile ? 'auto' : '-5px',
                   left: isMobile ? '45px' : 'auto',
                   transform: 'none',
                   zIndex: 50
                 }}>
-                <DropdownMenuItem>
-                  <input
-                    id="upload-button-input"
-                    className="hidden"
-                    {...getInputProps()}
-                  />
-                  <div className="flex items-center gap-2" {...getRootProps()}>
+                <DropdownMenuItem
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    open();
+                  }}
+                >
+                  <div className="flex items-center gap-2">
                     <div className="rounded-md bg-muted p-2">
                       <Monitor className="!w-5 !h-5" />
                     </div>
@@ -183,7 +203,7 @@ export const UploadButton = ({
                 />
               </FilePickerContext.Provider>
             </div>
-            <DialogFooter>
+            <DialogFooter className="gap-y-2">
               <Button variant="secondary" onClick={() => setFilesOpen(false)}>
                 <Translator path="common.actions.cancel" />
               </Button>

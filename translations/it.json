@@ -88,6 +88,18 @@
                 "title": "Progetti",
                 "empty": "Nessun progetto trovato"
             },
+            "configurationMenu": {
+                "title": "Configurazione",
+                "promptLibrary": "Libreria dei prompt",
+                "enabled": "Attivo",
+                "searchPrompts": "Cerca prompt...",
+                "promptPreview": "Seleziona un prompt per visualizzarne il contenuto",
+                "searchProjects": "Cerca progetti...",
+                "untitledProject": "Progetto senza titolo",
+                "privacyActive": "Protezione della privacy attiva",
+                "hideAnonymizedText": "Nascondi il testo anonimizzato",
+                "showAnonymizedText": "Mostra il testo anonimizzato"
+            },
             "tasklist": {
                 "TaskList": {
                     "title": "\ud83d\uddd2\ufe0f Elenco Attività",
@@ -181,6 +193,7 @@
         },
         "organisms": {
             "privacyShield": {
+                "title": "Protezione della privacy",
                 "showPrivacyTable": "Mostra tabella parole anonimizzate",
                 "hidePrivacyTable": "Nascondi tabella parole anonimizzate",
                 "info": "Privacy Shield anonimizza i dettagli sensibili (ad es. i nomi) prima che il testo venga inviato all'IA. Funziona solo per il testo, non per i documenti caricati.",
@@ -270,6 +283,17 @@
                     "reset": "Reimposta",
                     "cancel": "Annulla",
                     "confirm": "Conferma"
+                },
+                "dataProcessing": {
+                    "button": "Trattamento dei dati",
+                    "title": "Dove vengono trattati i tuoi dati",
+                    "categories": {
+                        "language_model": "Modello linguistico",
+                        "image_generation": "Generazione di immagini",
+                        "image_analysis": "Analisi delle immagini",
+                        "document_ocr": "OCR dei documenti",
+                        "voice_speech_to_text": "Voce in testo"
+                    }
                 }
             },
             "threadHistory": {
@@ -503,6 +527,50 @@
                     "inProgress": "Rinominazione thread in corso"
                 }
             }
+        }
+    },
+    "evoyaFiles": {
+        "datasource": {
+            "connected": "Connesso a un'origine dati",
+            "not_connected": "Non connesso a un'origine dati"
+        },
+        "actions": {
+            "connect": {
+                "label": "Connetti"
+            },
+            "open_in_file_manager": {
+                "label": "Apri nel file manager"
+            },
+            "menu": {
+                "label": "Azioni file"
+            },
+            "open_recent_file": {
+                "label": "Apri {{name}}"
+            },
+            "open_location": {
+                "label": "Apri posizione {{location}}"
+            }
+        },
+        "common": {
+            "recent_files": "File recenti",
+            "no_recent_files": "Nessun file recente generato dall'IA",
+            "load_error": "Impossibile caricare i file",
+            "search_error": "Impossibile cercare i file",
+            "search_truncated": "Sono disponibili altri risultati. Affina la ricerca.",
+            "load_more": "Carica altro",
+            "show_more": "Mostra altro",
+            "show_less": "Mostra meno"
+        },
+        "shortcuts": {
+            "title": "Scorciatoie",
+            "generated": { "title": "File generati", "description": "File generati dall'IA", "empty": "Nessun file generato" },
+            "images": { "title": "Immagini", "description": "Immagini generate dall'IA", "empty": "Nessuna immagine generata" },
+            "projects": { "title": "Progetti", "description": "Vai alle cartelle dei progetti", "empty": "Nessun progetto" }
+        },
+        "activity": { "opened": "Aperto da", "modified": "Modificato da" },
+        "headers": {
+            "location": "Posizione",
+            "actions": "Azioni"
         }
     },
     "navigation": {

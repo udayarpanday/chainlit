@@ -7,7 +7,7 @@ import { useUserManagement } from './userManagement';
 export const useAuth = () => {
   const { authConfig } = useAuthConfig();
   const { logout } = useSessionManagement();
-  const { user, setUserFromAPI,setUser } = useUserManagement();
+  const { user, setUser, setUserFromAPI } = useUserManagement();
 
   const isReady =
     !!authConfig && (!authConfig.requireLogin || user !== undefined);

@@ -88,6 +88,18 @@
                 "title": "Projets",
                 "empty": "Aucun projet trouvé"
             },
+            "configurationMenu": {
+                "title": "Configuration",
+                "promptLibrary": "Bibliothèque de prompts",
+                "enabled": "Activé",
+                "searchPrompts": "Rechercher des prompts...",
+                "promptPreview": "Sélectionnez un prompt pour afficher son contenu",
+                "searchProjects": "Rechercher des projets...",
+                "untitledProject": "Projet sans titre",
+                "privacyActive": "Bouclier de confidentialité activé",
+                "hideAnonymizedText": "Masquer le texte anonymisé",
+                "showAnonymizedText": "Afficher le texte anonymisé"
+            },
             "tasklist": {
                 "TaskList": {
                     "title": "🗒️ Liste des Tâches",
@@ -181,6 +193,7 @@
         },
         "organisms": {
             "privacyShield": {
+                "title": "Bouclier de confidentialité",
                 "showPrivacyTable": "Afficher le tableau des mots anonymisés",
                 "hidePrivacyTable": "Cacher le tableau des mots anonymisés",
                 "info": "Privacy Shield anonymise les informations sensibles (par ex. les noms) avant que le texte ne soit envoyé à l’IA. Il fonctionne uniquement pour le texte, pas pour les documents téléversés.",
@@ -270,6 +283,17 @@
                     "reset": "Réinitialiser",
                     "cancel": "Annuler",
                     "confirm": "Confirmer"
+                },
+                "dataProcessing": {
+                    "button": "Traitement des donnees",
+                    "title": "Ou vos donnees sont traitees",
+                    "categories": {
+                        "language_model": "Modele de langage",
+                        "image_generation": "Generation d'image",
+                        "image_analysis": "Analyse d'image",
+                        "document_ocr": "OCR de document",
+                        "voice_speech_to_text": "Transcription vocale"
+                    }
                 }
             },
             "threadHistory": {
@@ -543,6 +567,10 @@
         }
     },
     "evoyaFiles": {
+        "datasource": {
+            "connected": "Connecté à une source de données",
+            "not_connected": "Non connecté à une source de données"
+        },
         "actions": {
             "attachments": {
                 "label": "Cloud Storage",
@@ -572,8 +600,20 @@
             "new": {
                 "label": "New"
             },
+            "connect": {
+                "label": "Connecter"
+            },
             "download": {
                 "label": "Download"
+            },
+            "menu": {
+                "label": "Actions du fichier"
+            },
+            "open_recent_file": {
+                "label": "Ouvrir {{name}}"
+            },
+            "open_location": {
+                "label": "Ouvrir l’emplacement {{location}}"
             },
             "search": {
                 "label": "Search"
@@ -627,13 +667,30 @@
         "common": {
             "selected": "selected",
             "files": "Files",
-            "no_entries": "No entries"
+            "no_entries": "No entries",
+            "recent_files": "Fichiers récents",
+            "no_recent_files": "Aucun fichier récent généré par l’IA",
+            "load_error": "Impossible de charger les fichiers",
+            "search_error": "Impossible de rechercher les fichiers",
+            "search_truncated": "D’autres résultats sont disponibles. Affinez votre recherche.",
+            "load_more": "Charger plus",
+            "show_more": "Afficher plus",
+            "show_less": "Afficher moins"
         },
+        "shortcuts": {
+            "title": "Raccourcis",
+            "generated": { "title": "Fichiers générés", "description": "Fichiers générés par l’IA", "empty": "Aucun fichier généré" },
+            "images": { "title": "Images", "description": "Images générées par l’IA", "empty": "Aucune image générée" },
+            "projects": { "title": "Projets", "description": "Accéder à vos dossiers de projet", "empty": "Aucun projet" }
+        },
+        "activity": { "opened": "Ouvert par", "modified": "Modifié par" },
         "headers": {
             "name": "Name",
             "owner": "Owner",
             "modified": "Modified",
-            "size": "Size"
+            "size": "Size",
+            "location": "Emplacement",
+            "actions": "Actions"
         }
     },
     "evoyaCreator": {
