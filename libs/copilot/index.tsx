@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-import { type IStep } from '@chainlit/react-client';
+import { type IStep, resetScopedChatSession } from '@chainlit/react-client';
 
 // @ts-expect-error inline css
 import sonnercss from './sonner.css?inline';
@@ -53,6 +53,10 @@ declare global {
 
 window.mountChainlitWidget = (config: IWidgetConfig, evoya: EvoyaConfig) => {
   cleanupWidget();
+
+  if (evoya.reset) {
+    resetScopedChatSession(!evoya.session_uuid);
+  }
 
   hostElement = document.createElement('div');
   hostElement.id = id;

@@ -1,5 +1,5 @@
 import { WidgetContext } from '@/context';
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useRef } from 'react';
 
 import {
   setScopedSessionStorageItem,
@@ -11,9 +11,18 @@ import ChatBody from './body';
 
 export default function ChatWrapper() {
   const { accessToken, evoya } = useContext(WidgetContext);
-  const { connect, session } = useChatSession();
+  const { connect, disconnect, session } = useChatSession();
   const { sendMessage } = useChatInteract();
   const evoyaSessionUuid = evoya?.session_uuid || '';
+  const disconnectRef = useRef(disconnect);
+
+  useEffect(() => {
+    disconnectRef.current = disconnect;
+  }, [disconnect]);
+
+  useEffect(() => {
+    return () => disconnectRef.current();
+  }, []);
 
   useEffect(() => {
     if (evoyaSessionUuid) {
