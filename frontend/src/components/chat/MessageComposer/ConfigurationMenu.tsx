@@ -27,20 +27,17 @@ import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { WidgetContext } from '@chainlit/copilot/src/context';
 import { usePrivacyShield } from '@chainlit/copilot/src/evoya/privacyShield/usePrivacyShield';
 import {
+  ChainlitContext,
   ICommand,
   activeModelOverrideState,
   canOverrideModelState,
   commandsState,
+  getScopedSessionStorageItem,
   modelCatalogState
 } from '@chainlit/react-client';
 
 import ModelPickerModal from '@/components/ModelPicker/ModelPickerModal';
-import {
-  isMockModelCatalog,
-  isModelPickerMockEnabled,
-  mockActiveModel,
-  mockModelCatalog
-} from '@/components/ModelPicker/mockData';
+import { normalizeModelCatalogResponse } from '@/components/ModelPicker/catalog';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -239,7 +236,8 @@ export default function ConfigurationMenu({
   onCommandSelect
 }: Props) {
   const { t } = useTranslation();
-  const { evoya } = useContext(WidgetContext);
+  const apiClient = useContext(ChainlitContext);
+  const { accessToken, evoya } = useContext(WidgetContext);
   const commands = useRecoilValue(commandsState) as PromptCommand[];
   const modelCatalog = useRecoilValue(modelCatalogState);
   const activeModel = useRecoilValue(activeModelOverrideState);
@@ -256,9 +254,7 @@ export default function ConfigurationMenu({
     sections
   } = usePrivacyShield();
   const [open, setOpen] = useState(false);
-  const [modelPickerOpen, setModelPickerOpen] = useState(
-    isModelPickerMockEnabled
-  );
+  const [modelPickerOpen, setModelPickerOpen] = useState(false);
   const [configurationTooltipOpen, setConfigurationTooltipOpen] =
     useState(false);
   const [panel, setPanel] = useState<Panel>('menu');
@@ -284,27 +280,80 @@ export default function ConfigurationMenu({
   const privacyShieldConfig = evoya?.api?.privacyShield as
     PrivacyShieldConfig | undefined;
   const hasPrivacy = !!privacyShieldConfig?.enabled;
-  const hasModelPicker =
-    isModelPickerMockEnabled ||
-    (canOverrideModel && Boolean(modelCatalog?.length));
-  const usingMockModelCatalog =
-    isModelPickerMockEnabled &&
-    (!modelCatalog?.length || isMockModelCatalog(modelCatalog));
+  const hasModelPicker = canOverrideModel && Boolean(modelCatalog?.length);
   const hasActions =
     hasModelPicker || hasPrompts || hasProjects || hasCreator || hasPrivacy;
   const activeModelName =
     modelCatalog?.find((model) => model.id === activeModel?.modelId)?.name ??
     modelCatalog?.find((model) => model.isDefault)?.name;
-  const configurationDisabled = disabled && !usingMockModelCatalog;
+  const configurationDisabled = disabled;
 
   useEffect(() => {
-    if (!isModelPickerMockEnabled) return;
-    if (!modelCatalog?.length) {
-      setModelCatalog(mockModelCatalog);
-      setActiveModel(mockActiveModel);
-      setCanOverrideModel(true);
-    }
+    if (modelCatalog?.length) return;
+
+    const controller = new AbortController();
+    const baseUrl = evoya?.api?.baseUrl?.replace(/\/$/, '');
+    const endpoint = baseUrl
+      ? `${baseUrl}/api/model/list`
+      : apiClient.buildEndpoint('/api/model/list');
+    const token =
+      accessToken ??
+      getScopedSessionStorageItem('chainlit_token') ??
+      getScopedSessionStorageItem('chainlit_token_iframe');
+
+    void fetch(endpoint, {
+      credentials: 'include',
+      signal: controller.signal,
+      headers: {
+        Accept: 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Model catalog request failed (${response.status})`);
+        }
+        return response.json() as Promise<unknown>;
+      })
+      .then((payload) => {
+        const normalizedModels = normalizeModelCatalogResponse(payload);
+        if (!normalizedModels.length) {
+          setCanOverrideModel(false);
+          return;
+        }
+
+        const defaultModel =
+          normalizedModels.find((model) => model.isDefault) ??
+          normalizedModels.find((model) => model.id === activeModel?.modelId) ??
+          normalizedModels[0];
+        const models = normalizedModels
+          .map((model) => ({
+            ...model,
+            isDefault: model.id === defaultModel.id
+          }))
+          .sort(
+            (left, right) => Number(right.isDefault) - Number(left.isDefault)
+          );
+        setModelCatalog(models);
+        setActiveModel((current) =>
+          current && models.some((model) => model.id === current.modelId)
+            ? current
+            : { modelId: defaultModel.id }
+        );
+        setCanOverrideModel(true);
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        setCanOverrideModel(false);
+        console.error('Unable to load model catalog', error);
+      });
+
+    return () => controller.abort();
   }, [
+    accessToken,
+    activeModel?.modelId,
+    apiClient,
+    evoya?.api?.baseUrl,
     modelCatalog?.length,
     setActiveModel,
     setCanOverrideModel,
@@ -597,7 +646,7 @@ export default function ConfigurationMenu({
                         model.id === activeModel.modelId && model.isDefault
                     )
                   )}
-                  disabled={disabled && !usingMockModelCatalog}
+                  disabled={disabled}
                   onClick={handleOpenModelPicker}
                 />
               ) : null}
@@ -765,7 +814,7 @@ export default function ConfigurationMenu({
       {hasModelPicker ? (
         <ModelPickerModal
           open={modelPickerOpen}
-          disabled={disabled && !usingMockModelCatalog}
+          disabled={disabled}
           onOpenChange={setModelPickerOpen}
         />
       ) : null}
