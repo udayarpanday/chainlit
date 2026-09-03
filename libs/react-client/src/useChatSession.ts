@@ -9,11 +9,14 @@ import {
 import io from 'socket.io-client';
 import { toast } from 'sonner';
 import {
+  type EvoyaPromptContext,
   actionState,
+  activeModelOverrideState,
   agentState,
   askUserState,
   audioConnectionState,
   callFnState,
+  canOverrideModelState,
   chatArchived,
   chatProfileState,
   chatSettingsInputsState,
@@ -21,7 +24,6 @@ import {
   commandsState,
   currentThreadIdState,
   elementState,
-  type EvoyaPromptContext,
   favoriteMessagesState,
   firstUserInteraction,
   initialTranscriptState,
@@ -29,6 +31,7 @@ import {
   loadingState,
   mcpState,
   messagesState,
+  modelCatalogState,
   modesState,
   projectAccess,
   promptState,
@@ -43,6 +46,7 @@ import {
   wavStreamPlayerState
 } from 'src/state';
 import {
+  ActiveModelOverride,
   ChatInputSocketPayload,
   IAction,
   IAgents,
@@ -53,14 +57,18 @@ import {
   IMode,
   IStep,
   ITasklistElement,
-  IThread
+  IThread,
+  ModelCatalogItem,
+  ModelReasoningSelection,
+  ReasoningSpec,
+  SetModelOverrideResponse
 } from 'src/types';
 import {
   addMessage,
   deleteMessageById,
+  findMessageById,
   updateMessageById,
-  updateMessageContentById,
-  findMessageById
+  updateMessageContentById
 } from 'src/utils/message';
 
 import { OutputAudioChunk } from './types/audio';
@@ -71,18 +79,118 @@ import {
   getScopedSessionStorageItem,
   setScopedSessionStorageItem
 } from './storage';
-import type { IToken } from './useChatData';
 import {
   markTaskEnded,
   markTaskStarted,
   resetTaskLoading
 } from './taskLoading';
+import type { IToken } from './useChatData';
 
 type EvoyaCreatorWindow = Window &
   typeof globalThis & {
     evoyaCreatorEnabled?: boolean;
     updateEvoyaCreator?: (message: IStep, parent?: IStep) => string | undefined;
   };
+
+type ModelCatalogSocketPayload =
+  | unknown[]
+  | {
+      models?: unknown[];
+      catalog?: unknown[];
+      active?: unknown;
+      can_override_model?: boolean;
+      canOverrideModel?: boolean;
+    };
+
+const asObject = (value: unknown): Record<string, any> | undefined =>
+  value && typeof value === 'object'
+    ? (value as Record<string, any>)
+    : undefined;
+
+const normalizeReasoningSpec = (value: unknown): ReasoningSpec => {
+  const raw = asObject(value);
+  if (!raw || raw.type === 'none') return { type: 'none' };
+
+  if (raw.type === 'effort' && Array.isArray(raw.values)) {
+    const values = raw.values.filter(
+      (item: unknown): item is string => typeof item === 'string'
+    );
+    return {
+      type: 'effort',
+      values,
+      ...(typeof raw.default === 'string' ? { default: raw.default } : {})
+    };
+  }
+
+  if (
+    raw.type === 'max_tokens' &&
+    typeof raw.min === 'number' &&
+    typeof raw.max === 'number' &&
+    typeof raw.step === 'number'
+  ) {
+    return {
+      type: 'max_tokens',
+      min: raw.min,
+      max: raw.max,
+      step: raw.step,
+      ...(typeof raw.default === 'number' ? { default: raw.default } : {})
+    };
+  }
+
+  return { type: 'none' };
+};
+
+const normalizeModelCatalogItem = (
+  value: unknown
+): ModelCatalogItem | undefined => {
+  const raw = asObject(value);
+  const id = Number(raw?.id);
+  if (!raw || !Number.isFinite(id) || !raw.name || !raw.key) return undefined;
+
+  return {
+    id,
+    key: String(raw.key),
+    name: String(raw.name),
+    provider: String(raw.provider || ''),
+    providerLogoUrl:
+      typeof (raw.providerLogoUrl ?? raw.provider_logo_url) === 'string'
+        ? (raw.providerLogoUrl ?? raw.provider_logo_url)
+        : undefined,
+    dataLocation:
+      typeof (raw.dataLocation ?? raw.data_location) === 'string'
+        ? (raw.dataLocation ?? raw.data_location)
+        : undefined,
+    isToolsSupported: Boolean(
+      raw.isToolsSupported ?? raw.is_tools_supported ?? true
+    ),
+    reasoning: normalizeReasoningSpec(raw.reasoning),
+    isDefault: Boolean(raw.isDefault ?? raw.is_default)
+  };
+};
+
+const normalizeActiveModel = (
+  value: unknown
+): ActiveModelOverride | undefined => {
+  const raw = asObject(value);
+  const modelId = Number(raw?.modelId ?? raw?.model_id);
+  if (!raw || !Number.isFinite(modelId)) return undefined;
+
+  const reasoning = asObject(raw.reasoning);
+  const normalizedReasoning: ModelReasoningSelection = {};
+  if (typeof reasoning?.effort === 'string') {
+    normalizedReasoning.effort = reasoning.effort;
+  }
+  if (typeof reasoning?.max_tokens === 'number') {
+    normalizedReasoning.max_tokens = reasoning.max_tokens;
+  }
+
+  return {
+    modelId,
+    ...(Object.keys(normalizedReasoning).length
+      ? { reasoning: normalizedReasoning }
+      : {})
+  };
+};
 
 const useChatSession = () => {
   const client = useContext(ChainlitContext);
@@ -103,6 +211,9 @@ const useChatSession = () => {
   const setCallFn = useSetRecoilState(callFnState);
   const setCommands = useSetRecoilState(commandsState);
   const setModes = useSetRecoilState(modesState);
+  const setModelCatalog = useSetRecoilState(modelCatalogState);
+  const setActiveModelOverride = useSetRecoilState(activeModelOverrideState);
+  const setCanOverrideModel = useSetRecoilState(canOverrideModelState);
   const setAgents = useSetRecoilState(agentState);
   const setContextPrompt = useSetRecoilState(promptState);
   const setSideView = useSetRecoilState(sideViewState);
@@ -155,6 +266,10 @@ const useChatSession = () => {
       userEnv: Record<string, string>;
       evoya: { session_uuid: string };
     }) => {
+      setModelCatalog(undefined);
+      setActiveModelOverride(undefined);
+      setCanOverrideModel(false);
+
       const { protocol, host, pathname } = new URL(client.httpEndpoint);
       const uri = `${protocol}//${host}`;
       const path =
@@ -172,7 +287,7 @@ const useChatSession = () => {
         withCredentials: true,
         transports,
         query: {
-          chainlit_session_id: sessionId,
+          chainlit_session_id: sessionId
         },
         auth: (cb) => {
           cb({
@@ -511,6 +626,33 @@ const useChatSession = () => {
         setModes(modes);
       });
 
+      socket.on('model_catalog', (payload: ModelCatalogSocketPayload) => {
+        const envelope = Array.isArray(payload) ? undefined : payload;
+        const rawModels = Array.isArray(payload)
+          ? payload
+          : (envelope?.models ?? envelope?.catalog ?? []);
+        const models = rawModels
+          .map(normalizeModelCatalogItem)
+          .filter((model): model is ModelCatalogItem => Boolean(model))
+          .sort(
+            (left, right) => Number(right.isDefault) - Number(left.isDefault)
+          );
+        const active = normalizeActiveModel(envelope?.active);
+        const defaultModel = models.find((model) => model.isDefault);
+
+        setModelCatalog(models.length ? models : undefined);
+        setActiveModelOverride(
+          active ?? (defaultModel ? { modelId: defaultModel.id } : undefined)
+        );
+        setCanOverrideModel(
+          Boolean(
+            envelope?.canOverrideModel ??
+            envelope?.can_override_model ??
+            models.length
+          )
+        );
+      });
+
       socket.on('agents', (agents: IAgents) => {
         setAgents(agents);
       });
@@ -521,14 +663,11 @@ const useChatSession = () => {
         });
       });
 
-      socket.on(
-        'context_prompt',
-        (context: EvoyaPromptContext | undefined) => {
-          if (context) {
-            setContextPrompt(context);
-          }
+      socket.on('context_prompt', (context: EvoyaPromptContext | undefined) => {
+        if (context) {
+          setContextPrompt(context);
         }
-      );
+      });
 
       socket.on('initial_transcript', (payload: ChatInputSocketPayload) => {
         const text = typeof payload === 'string' ? payload : payload?.text;
@@ -545,11 +684,11 @@ const useChatSession = () => {
         });
       });
 
-      socket.on('chat_archived', (payload:IChatArchived) => {
+      socket.on('chat_archived', (payload: IChatArchived) => {
         setChatArchived(payload.is_chat_archived);
       });
-      
-      socket.on('is_project_accessible', (payload:boolean) => {
+
+      socket.on('is_project_accessible', (payload: boolean) => {
         setProjectAccess(payload);
       });
       socket.on('set_favorites', (steps: IStep[]) => {
@@ -563,9 +702,9 @@ const useChatSession = () => {
         });
       });
 
-      socket.on("chat_session_uuid", (data: { session_uuid: string }) => {
+      socket.on('chat_session_uuid', (data: { session_uuid: string }) => {
         if (data?.session_uuid) {
-          sessionStorage.setItem("chat_session_uuid", data.session_uuid);
+          sessionStorage.setItem('chat_session_uuid', data.session_uuid);
           setScopedSessionStorageItem('session_token', data.session_uuid);
         }
       });
@@ -684,6 +823,67 @@ const useChatSession = () => {
     setLoading(false);
   }, [session]);
 
+  const setModelOverride = useCallback(
+    (selection: ActiveModelOverride): Promise<SetModelOverrideResponse> => {
+      const socket = session?.socket;
+      if (!socket?.connected) {
+        return Promise.resolve({
+          ok: false,
+          error: { code: 'disconnected', message: 'Socket is disconnected' }
+        });
+      }
+
+      return new Promise((resolve) => {
+        let settled = false;
+        const timeout = window.setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          resolve({
+            ok: false,
+            error: { code: 'timeout', message: 'Model override timed out' }
+          });
+        }, 15_000);
+
+        socket.emit(
+          'set_model_override',
+          {
+            model_id: selection.modelId,
+            ...(selection.reasoning ? { reasoning: selection.reasoning } : {})
+          },
+          (response: unknown) => {
+            if (settled) return;
+            settled = true;
+            window.clearTimeout(timeout);
+
+            const raw = asObject(response);
+            if (!raw?.ok) {
+              const rawError = asObject(raw?.error);
+              resolve({
+                ok: false,
+                error: {
+                  ...(typeof rawError?.code === 'string'
+                    ? { code: rawError.code }
+                    : {}),
+                  ...(typeof rawError?.message === 'string'
+                    ? { message: rawError.message }
+                    : typeof raw?.error === 'string'
+                      ? { message: raw.error }
+                      : {})
+                }
+              });
+              return;
+            }
+
+            const active = normalizeActiveModel(raw.active) ?? selection;
+            setActiveModelOverride(active);
+            resolve({ ok: true, active });
+          }
+        );
+      });
+    },
+    [session?.socket, setActiveModelOverride]
+  );
+
   return {
     connect,
     disconnect,
@@ -691,7 +891,8 @@ const useChatSession = () => {
     sessionId,
     chatProfile,
     idToResume,
-    setChatProfile
+    setChatProfile,
+    setModelOverride
   };
 };
 

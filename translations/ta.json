@@ -1,4 +1,26 @@
 {
+    "components": {
+        "molecules": {
+            "modelPicker": {
+                "model": "மாதிரி",
+                "title": "மாதிரி தேர்வு (இந்த அரட்டை அமர்வுக்கு மட்டும்)",
+                "search": "மாதிரிகளைத் தேடுக...",
+                "default": "இயல்புநிலை",
+                "noThinking": "சிந்தனை இல்லை",
+                "thinking": "சிந்தனை",
+                "low": "குறைவு",
+                "medium": "நடுத்தரம்",
+                "high": "உயர்",
+                "xHigh": "மிக உயர்ந்த",
+                "max": "அதிகபட்சம்",
+                "changeFailed": "மாதிரியை மாற்ற முடியவில்லை",
+                "toolsUnsupported": "இந்த மாதிரி முகவரின் கருவிகளை ஆதரிக்காது",
+                "dataRegion": "தரவு பகுதி: {{region}}",
+                "thinkingTokens": "சிந்தனை டோக்கன் வரம்பு",
+                "empty": "மாதிரிகள் எதுவும் கிடைக்கவில்லை"
+            }
+        }
+    },
     "common": {
         "actions": {
             "cancel": "\u0bb0\u0ba4\u0bcd\u0ba4\u0bc1 \u0b9a\u0bc6\u0baf\u0bcd",

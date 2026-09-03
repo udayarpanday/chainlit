@@ -1,4 +1,26 @@
 {
+    "components": {
+        "molecules": {
+            "modelPicker": {
+                "model": "മോഡൽ",
+                "title": "മോഡൽ തിരഞ്ഞെടുപ്പ് (ഈ ചാറ്റ് സെഷനിൽ മാത്രം)",
+                "search": "മോഡലുകൾ തിരയുക...",
+                "default": "സ്ഥിരസ്ഥിതി",
+                "noThinking": "ചിന്തയില്ല",
+                "thinking": "ചിന്ത",
+                "low": "കുറവ്",
+                "medium": "ഇടത്തരം",
+                "high": "ഉയർന്നത്",
+                "xHigh": "വളരെ ഉയർന്നത്",
+                "max": "പരമാവധി",
+                "changeFailed": "മോഡൽ മാറ്റാനായില്ല",
+                "toolsUnsupported": "ഈ മോഡൽ ഏജന്റിന്റെ ഉപകരണങ്ങളെ പിന്തുണയ്ക്കുന്നില്ല",
+                "dataRegion": "ഡാറ്റാ മേഖല: {{region}}",
+                "thinkingTokens": "ചിന്താ ടോക്കൺ പരിധി",
+                "empty": "മോഡലുകളൊന്നും കണ്ടെത്തിയില്ല"
+            }
+        }
+    },
     "common": {
         "actions": {
             "cancel": "\u0d31\u0d26\u0d4d\u0d26\u0d3e\u0d15\u0d4d\u0d15\u0d41\u0d15",

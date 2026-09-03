@@ -1,4 +1,26 @@
 {
+    "components": {
+        "molecules": {
+            "modelPicker": {
+                "model": "ಮಾದರಿ",
+                "title": "ಮಾದರಿ ಆಯ್ಕೆ (ಈ ಚಾಟ್ ಸೆಷನ್‌ಗೆ ಮಾತ್ರ)",
+                "search": "ಮಾದರಿಗಳನ್ನು ಹುಡುಕಿ...",
+                "default": "ಪೂರ್ವನಿಯೋಜಿತ",
+                "noThinking": "ಚಿಂತನೆ ಇಲ್ಲ",
+                "thinking": "ಚಿಂತನೆ",
+                "low": "ಕಡಿಮೆ",
+                "medium": "ಮಧ್ಯಮ",
+                "high": "ಹೆಚ್ಚು",
+                "xHigh": "ಅತಿ ಹೆಚ್ಚು",
+                "max": "ಗರಿಷ್ಠ",
+                "changeFailed": "ಮಾದರಿಯನ್ನು ಬದಲಾಯಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ",
+                "toolsUnsupported": "ಈ ಮಾದರಿಯು ಏಜೆಂಟ್ ಸಾಧನಗಳನ್ನು ಬೆಂಬಲಿಸುವುದಿಲ್ಲ",
+                "dataRegion": "ಡೇಟಾ ಪ್ರದೇಶ: {{region}}",
+                "thinkingTokens": "ಚಿಂತನೆ ಟೋಕನ್ ಮಿತಿ",
+                "empty": "ಯಾವುದೇ ಮಾದರಿ ಕಂಡುಬಂದಿಲ್ಲ"
+            }
+        }
+    },
     "common": {
         "actions": {
             "cancel": "\u0cb0\u0ca6\u0ccd\u0ca6\u0cc1\u0cae\u0cbe\u0ca1\u0cbf",

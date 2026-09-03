@@ -1,4 +1,26 @@
 {
+    "components": {
+        "molecules": {
+            "modelPicker": {
+                "model": "モデル",
+                "title": "モデル選択（このチャットセッションのみ）",
+                "search": "モデルを検索...",
+                "default": "デフォルト",
+                "noThinking": "思考なし",
+                "thinking": "思考",
+                "low": "低",
+                "medium": "中",
+                "high": "高",
+                "xHigh": "最高",
+                "max": "最大",
+                "changeFailed": "モデルを変更できません",
+                "toolsUnsupported": "このモデルはエージェントのツールに対応していません",
+                "dataRegion": "データ地域: {{region}}",
+                "thinkingTokens": "思考トークン予算",
+                "empty": "モデルが見つかりません"
+            }
+        }
+    },
     "common": {
         "actions": {
             "cancel": "\u30ad\u30e3\u30f3\u30bb\u30eb",

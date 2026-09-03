@@ -12,6 +12,7 @@ import {
   setScopedSessionId
 } from './storage';
 import {
+  ActiveModelOverride,
   IAction,
   IAsk,
   IAuthConfig,
@@ -22,6 +23,7 @@ import {
   IStep,
   ITasklistElement,
   IUser,
+  ModelCatalogItem,
   ThreadHistory
 } from './types';
 import { groupByDate } from './utils/group';
@@ -89,6 +91,21 @@ export const commandsState = atom<ICommand[]>({
 export const modesState = atom<IMode[]>({
   key: 'Modes',
   default: []
+});
+
+export const modelCatalogState = atom<ModelCatalogItem[] | undefined>({
+  key: 'ModelCatalog',
+  default: undefined
+});
+
+export const activeModelOverrideState = atom<ActiveModelOverride | undefined>({
+  key: 'ActiveModelOverride',
+  default: undefined
+});
+
+export const canOverrideModelState = atom<boolean>({
+  key: 'CanOverrideModel',
+  default: false
 });
 
 export const tokenCountState = atom<number>({

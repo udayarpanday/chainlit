@@ -1,4 +1,26 @@
 {
+    "components": {
+        "molecules": {
+            "modelPicker": {
+                "model": "Modelo",
+                "title": "Seletor de modelo (apenas nesta sessão)",
+                "search": "Pesquisar modelos...",
+                "default": "Predefinido",
+                "noThinking": "Sem raciocínio",
+                "thinking": "Raciocínio",
+                "low": "Baixo",
+                "medium": "Médio",
+                "high": "Alto",
+                "xHigh": "Muito alto",
+                "max": "Máximo",
+                "changeFailed": "Não foi possível alterar o modelo",
+                "toolsUnsupported": "Este modelo não suporta as ferramentas do agente",
+                "dataRegion": "Região dos dados: {{region}}",
+                "thinkingTokens": "Orçamento de tokens de raciocínio",
+                "empty": "Nenhum modelo encontrado"
+            }
+        }
+    },
   "common": {
     "actions": {
       "cancel": "Cancelar",

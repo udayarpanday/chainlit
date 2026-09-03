@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import {
+  Brain,
   Eye,
   EyeOff,
   FilePen,
@@ -21,12 +22,25 @@ import {
   useState
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRecoilValue } from 'recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 
 import { WidgetContext } from '@chainlit/copilot/src/context';
 import { usePrivacyShield } from '@chainlit/copilot/src/evoya/privacyShield/usePrivacyShield';
-import { ICommand, commandsState } from '@chainlit/react-client';
+import {
+  ICommand,
+  activeModelOverrideState,
+  canOverrideModelState,
+  commandsState,
+  modelCatalogState
+} from '@chainlit/react-client';
 
+import ModelPickerModal from '@/components/ModelPicker/ModelPickerModal';
+import {
+  isMockModelCatalog,
+  isModelPickerMockEnabled,
+  mockActiveModel,
+  mockModelCatalog
+} from '@/components/ModelPicker/mockData';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -227,6 +241,12 @@ export default function ConfigurationMenu({
   const { t } = useTranslation();
   const { evoya } = useContext(WidgetContext);
   const commands = useRecoilValue(commandsState) as PromptCommand[];
+  const modelCatalog = useRecoilValue(modelCatalogState);
+  const activeModel = useRecoilValue(activeModelOverrideState);
+  const canOverrideModel = useRecoilValue(canOverrideModelState);
+  const setModelCatalog = useSetRecoilState(modelCatalogState);
+  const setActiveModel = useSetRecoilState(activeModelOverrideState);
+  const setCanOverrideModel = useSetRecoilState(canOverrideModelState);
   const isMobile = useIsMobile();
   const {
     enabled: privacyEnabled,
@@ -236,6 +256,9 @@ export default function ConfigurationMenu({
     sections
   } = usePrivacyShield();
   const [open, setOpen] = useState(false);
+  const [modelPickerOpen, setModelPickerOpen] = useState(
+    isModelPickerMockEnabled
+  );
   const [configurationTooltipOpen, setConfigurationTooltipOpen] =
     useState(false);
   const [panel, setPanel] = useState<Panel>('menu');
@@ -259,10 +282,34 @@ export default function ConfigurationMenu({
   const hasProjects = isDashboard && isProjectAccessible;
   const hasCreator = !!evoya?.evoyaCreator?.enabled;
   const privacyShieldConfig = evoya?.api?.privacyShield as
-    | PrivacyShieldConfig
-    | undefined;
+    PrivacyShieldConfig | undefined;
   const hasPrivacy = !!privacyShieldConfig?.enabled;
-  const hasActions = hasPrompts || hasProjects || hasCreator || hasPrivacy;
+  const hasModelPicker =
+    isModelPickerMockEnabled ||
+    (canOverrideModel && Boolean(modelCatalog?.length));
+  const usingMockModelCatalog =
+    isModelPickerMockEnabled &&
+    (!modelCatalog?.length || isMockModelCatalog(modelCatalog));
+  const hasActions =
+    hasModelPicker || hasPrompts || hasProjects || hasCreator || hasPrivacy;
+  const activeModelName =
+    modelCatalog?.find((model) => model.id === activeModel?.modelId)?.name ??
+    modelCatalog?.find((model) => model.isDefault)?.name;
+  const configurationDisabled = disabled && !usingMockModelCatalog;
+
+  useEffect(() => {
+    if (!isModelPickerMockEnabled) return;
+    if (!modelCatalog?.length) {
+      setModelCatalog(mockModelCatalog);
+      setActiveModel(mockActiveModel);
+      setCanOverrideModel(true);
+    }
+  }, [
+    modelCatalog?.length,
+    setActiveModel,
+    setCanOverrideModel,
+    setModelCatalog
+  ]);
 
   const syncProjectsFromBridge = useCallback(() => {
     const untitledProject = t(
@@ -336,6 +383,10 @@ export default function ConfigurationMenu({
 
     window.setTimeout(() => promptInputRef.current?.focus(), 100);
   }, [open, panel]);
+
+  useEffect(() => {
+    if (!hasModelPicker) setModelPickerOpen(false);
+  }, [hasModelPicker]);
 
   useEffect(() => {
     const autoEnable = privacyShieldConfig?.autoEnable;
@@ -465,6 +516,12 @@ export default function ConfigurationMenu({
     setOpen(false);
   };
 
+  const handleOpenModelPicker = () => {
+    dismissConfigurationTooltip();
+    setOpen(false);
+    setModelPickerOpen(true);
+  };
+
   if (!hasActions) return null;
 
   return (
@@ -485,7 +542,7 @@ export default function ConfigurationMenu({
                   variant="ghost"
                   size="icon"
                   className="hover:bg-muted"
-                  disabled={disabled}
+                  disabled={configurationDisabled}
                   onPointerDown={dismissConfigurationTooltip}
                   onClick={() => {
                     dismissConfigurationTooltip();
@@ -514,8 +571,8 @@ export default function ConfigurationMenu({
             panel === 'menu'
               ? 'w-[300px]'
               : panel === 'projects'
-              ? 'w-[27vw] min-w-[320px] overflow-hidden p-0'
-              : 'w-[50vw] min-w-[320px]'
+                ? 'w-[27vw] min-w-[320px] overflow-hidden p-0'
+                : 'w-[50vw] min-w-[320px]'
           )}
           style={{
             position: isMobile ? 'fixed' : 'relative',
@@ -528,6 +585,22 @@ export default function ConfigurationMenu({
         >
           {panel === 'menu' ? (
             <div className="space-y-1 p-1">
+              {hasModelPicker ? (
+                <MenuRow
+                  icon={Brain}
+                  label={t('components.molecules.modelPicker.model')}
+                  status={activeModelName}
+                  active={Boolean(
+                    activeModel &&
+                    !modelCatalog?.find(
+                      (model) =>
+                        model.id === activeModel.modelId && model.isDefault
+                    )
+                  )}
+                  disabled={disabled && !usingMockModelCatalog}
+                  onClick={handleOpenModelPicker}
+                />
+              ) : null}
               <MenuRow
                 icon={StickyNote}
                 label={t(
@@ -688,6 +761,14 @@ export default function ConfigurationMenu({
           ) : null}
         </PopoverContent>
       </Popover>
+
+      {hasModelPicker ? (
+        <ModelPickerModal
+          open={modelPickerOpen}
+          disabled={disabled && !usingMockModelCatalog}
+          onOpenChange={setModelPickerOpen}
+        />
+      ) : null}
 
       {selectedProjects.length > 0 ? (
         <TooltipProvider delayDuration={100}>

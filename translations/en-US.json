@@ -13,6 +13,24 @@
             }
         },
         "molecules": {
+            "modelPicker": {
+                "model": "Model",
+                "title": "Model picker (this chat session only)",
+                "search": "Search models...",
+                "default": "Default",
+                "noThinking": "No thinking",
+                "thinking": "Thinking",
+                "low": "Low",
+                "medium": "Medium",
+                "high": "High",
+                "xHigh": "X-high",
+                "max": "Max",
+                "changeFailed": "Unable to change model",
+                "toolsUnsupported": "This model does not support the agent's tools",
+                "dataRegion": "Data region: {{region}}",
+                "thinkingTokens": "Thinking token budget",
+                "empty": "No models found"
+            },
             "newChatButton": {
                 "newChat": "New",
                 "newChatSession": "Session"

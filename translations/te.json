@@ -1,4 +1,26 @@
 {
+    "components": {
+        "molecules": {
+            "modelPicker": {
+                "model": "మోడల్",
+                "title": "మోడల్ ఎంపిక (ఈ చాట్ సెషన్‌కు మాత్రమే)",
+                "search": "మోడళ్లను వెతకండి...",
+                "default": "డిఫాల్ట్",
+                "noThinking": "ఆలోచన లేదు",
+                "thinking": "ఆలోచన",
+                "low": "తక్కువ",
+                "medium": "మధ్యస్థం",
+                "high": "ఎక్కువ",
+                "xHigh": "అతి ఎక్కువ",
+                "max": "గరిష్ఠం",
+                "changeFailed": "మోడల్‌ను మార్చలేకపోయాము",
+                "toolsUnsupported": "ఈ మోడల్ ఏజెంట్ సాధనాలకు మద్దతు ఇవ్వదు",
+                "dataRegion": "డేటా ప్రాంతం: {{region}}",
+                "thinkingTokens": "ఆలోచన టోకెన్ పరిమితి",
+                "empty": "మోడళ్లు ఏవీ కనబడలేదు"
+            }
+        }
+    },
     "common": {
         "actions": {
             "cancel": "\u0c30\u0c26\u0c4d\u0c26\u0c41 \u0c1a\u0c47\u0c2f\u0c02\u0c21\u0c3f",

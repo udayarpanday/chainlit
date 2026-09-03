@@ -1,4 +1,26 @@
 {
+    "components": {
+        "molecules": {
+            "modelPicker": {
+                "model": "מודל",
+                "title": "בחירת מודל (לשיחת צ׳אט זו בלבד)",
+                "search": "חיפוש מודלים...",
+                "default": "ברירת מחדל",
+                "noThinking": "ללא חשיבה",
+                "thinking": "חשיבה",
+                "low": "נמוכה",
+                "medium": "בינונית",
+                "high": "גבוהה",
+                "xHigh": "גבוהה מאוד",
+                "max": "מרבית",
+                "changeFailed": "לא ניתן לשנות מודל",
+                "toolsUnsupported": "מודל זה אינו תומך בכלי הסוכן",
+                "dataRegion": "אזור נתונים: {{region}}",
+                "thinkingTokens": "תקציב אסימוני חשיבה",
+                "empty": "לא נמצאו מודלים"
+            }
+        }
+    },
     "common": {
         "actions": {
             "cancel": "\u05d1\u05d9\u05d8\u05d5\u05dc",

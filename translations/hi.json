@@ -1,4 +1,26 @@
 {
+    "components": {
+        "molecules": {
+            "modelPicker": {
+                "model": "मॉडल",
+                "title": "मॉडल चयन (केवल इस चैट सत्र के लिए)",
+                "search": "मॉडल खोजें...",
+                "default": "डिफ़ॉल्ट",
+                "noThinking": "बिना चिंतन",
+                "thinking": "चिंतन",
+                "low": "कम",
+                "medium": "मध्यम",
+                "high": "उच्च",
+                "xHigh": "अति उच्च",
+                "max": "अधिकतम",
+                "changeFailed": "मॉडल बदला नहीं जा सका",
+                "toolsUnsupported": "यह मॉडल एजेंट के टूल का समर्थन नहीं करता",
+                "dataRegion": "डेटा क्षेत्र: {{region}}",
+                "thinkingTokens": "चिंतन टोकन सीमा",
+                "empty": "कोई मॉडल नहीं मिला"
+            }
+        }
+    },
     "common": {
         "actions": {
             "cancel": "\u0930\u0926\u094d\u0926 \u0915\u0930\u0947\u0902",

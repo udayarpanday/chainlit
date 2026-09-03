@@ -1,4 +1,26 @@
 {
+    "components": {
+        "molecules": {
+            "modelPicker": {
+                "model": "模型",
+                "title": "模型选择器（仅限本次聊天会话）",
+                "search": "搜索模型...",
+                "default": "默认",
+                "noThinking": "无思考",
+                "thinking": "思考",
+                "low": "低",
+                "medium": "中",
+                "high": "高",
+                "xHigh": "超高",
+                "max": "最大",
+                "changeFailed": "无法更改模型",
+                "toolsUnsupported": "此模型不支持代理工具",
+                "dataRegion": "数据区域：{{region}}",
+                "thinkingTokens": "思考令牌预算",
+                "empty": "未找到模型"
+            }
+        }
+    },
     "common": {
         "actions": {
             "cancel": "\u53d6\u6d88",

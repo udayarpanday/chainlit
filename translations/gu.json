@@ -1,4 +1,26 @@
 {
+    "components": {
+        "molecules": {
+            "modelPicker": {
+                "model": "મોડેલ",
+                "title": "મોડેલ પસંદગી (ફક્ત આ ચેટ સત્ર માટે)",
+                "search": "મોડેલ શોધો...",
+                "default": "ડિફૉલ્ટ",
+                "noThinking": "વિચાર વિના",
+                "thinking": "વિચાર",
+                "low": "ઓછું",
+                "medium": "મધ્યમ",
+                "high": "ઉચ્ચ",
+                "xHigh": "અતિ ઉચ્ચ",
+                "max": "મહત્તમ",
+                "changeFailed": "મોડેલ બદલી શકાયું નથી",
+                "toolsUnsupported": "આ મોડેલ એજન્ટના સાધનોને સપોર્ટ કરતું નથી",
+                "dataRegion": "ડેટા વિસ્તાર: {{region}}",
+                "thinkingTokens": "વિચાર ટોકન મર્યાદા",
+                "empty": "કોઈ મોડેલ મળ્યું નથી"
+            }
+        }
+    },
     "common": {
         "actions": {
             "cancel": "\u0ab0\u0aa6 \u0a95\u0ab0\u0acb",

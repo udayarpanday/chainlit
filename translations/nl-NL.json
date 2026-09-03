@@ -1,4 +1,26 @@
 {
+    "components": {
+        "molecules": {
+            "modelPicker": {
+                "model": "Model",
+                "title": "Modelkiezer (alleen voor deze chatsessie)",
+                "search": "Modellen zoeken...",
+                "default": "Standaard",
+                "noThinking": "Niet nadenken",
+                "thinking": "Nadenken",
+                "low": "Laag",
+                "medium": "Gemiddeld",
+                "high": "Hoog",
+                "xHigh": "Zeer hoog",
+                "max": "Maximaal",
+                "changeFailed": "Kan model niet wijzigen",
+                "toolsUnsupported": "Dit model ondersteunt de tools van de agent niet",
+                "dataRegion": "Gegevensregio: {{region}}",
+                "thinkingTokens": "Tokenbudget voor nadenken",
+                "empty": "Geen modellen gevonden"
+            }
+        }
+    },
     "common": {
         "actions": {
             "cancel": "Annuleren",

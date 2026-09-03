@@ -1,4 +1,26 @@
 {
+    "components": {
+        "molecules": {
+            "modelPicker": {
+                "model": "মডেল",
+                "title": "মডেল নির্বাচন (শুধু এই চ্যাট সেশনের জন্য)",
+                "search": "মডেল খুঁজুন...",
+                "default": "ডিফল্ট",
+                "noThinking": "চিন্তা নেই",
+                "thinking": "চিন্তা",
+                "low": "কম",
+                "medium": "মাঝারি",
+                "high": "উচ্চ",
+                "xHigh": "অতি উচ্চ",
+                "max": "সর্বোচ্চ",
+                "changeFailed": "মডেল পরিবর্তন করা যায়নি",
+                "toolsUnsupported": "এই মডেলটি এজেন্টের টুল সমর্থন করে না",
+                "dataRegion": "ডেটা অঞ্চল: {{region}}",
+                "thinkingTokens": "চিন্তার টোকেন সীমা",
+                "empty": "কোনো মডেল পাওয়া যায়নি"
+            }
+        }
+    },
     "common": {
         "actions": {
             "cancel": "\u09ac\u09be\u09a4\u09bf\u09b2 \u0995\u09b0\u09c1\u09a8",
