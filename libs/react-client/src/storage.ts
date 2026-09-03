@@ -90,6 +90,16 @@ export const createScopedSessionId = () => {
   return sessionId;
 };
 
+export const resetScopedChatSession = (clearPersistedSession = true) => {
+  const sessionId = createScopedSessionId();
+
+  if (clearPersistedSession) {
+    removeScopedSessionStorageItem('session_token');
+  }
+
+  return sessionId;
+};
+
 export const getScopedSessionId = () =>
   getScopedSessionStorageItem(SESSION_ID_KEY) || createScopedSessionId();
 
