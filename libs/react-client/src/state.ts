@@ -51,7 +51,8 @@ export const chatProfileState = atom<string | undefined>({
 
 const sessionIdAtom = atom<string>({
   key: 'SessionId',
-  default: getScopedSessionId()
+  default: '',
+  effects: [({ setSelf }) => setSelf(getScopedSessionId())]
 });
 
 export const sessionIdState = selector({
