@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { useRecoilValue } from 'recoil';
 import { toast } from 'sonner';
 
 import {
@@ -26,12 +26,6 @@ import {
 } from '@/components/ui/dialog';
 
 import ModelRow from './ModelRow';
-import {
-  isMockModelCatalog,
-  isModelPickerMockEnabled,
-  mockActiveModel,
-  mockModelCatalog
-} from './mockData';
 import { getInitialReasoning } from './reasoning';
 
 interface Props {
@@ -46,13 +40,8 @@ export default function ModelPickerModal({
   onOpenChange
 }: Props) {
   const { t } = useTranslation();
-  const sessionModels = useRecoilValue(modelCatalogState);
-  const models = sessionModels?.length ? sessionModels : mockModelCatalog;
-  const usingMockCatalog =
-    isModelPickerMockEnabled && isMockModelCatalog(models);
-  const sessionActive = useRecoilValue(activeModelOverrideState);
-  const active = sessionActive ?? mockActiveModel;
-  const setActive = useSetRecoilState(activeModelOverrideState);
+  const models = useRecoilValue(modelCatalogState) ?? [];
+  const active = useRecoilValue(activeModelOverrideState);
   const { setModelOverride } = useChatSession();
   const [query, setQuery] = useState('');
   const [pendingModelId, setPendingModelId] = useState<number>();
@@ -110,16 +99,6 @@ export default function ModelPickerModal({
     if (isAlreadyActive) return;
 
     setPendingModelId(model.id);
-    if (usingMockCatalog) {
-      await new Promise((resolve) => window.setTimeout(resolve, 350));
-      setActive({
-        modelId: model.id,
-        ...(nextReasoning ? { reasoning: nextReasoning } : {})
-      });
-      setPendingModelId(undefined);
-      return;
-    }
-
     const result = await setModelOverride({
       modelId: model.id,
       ...(nextReasoning ? { reasoning: nextReasoning } : {})
