@@ -13,6 +13,24 @@
             }
         },
         "molecules": {
+            "modelPicker": {
+                "model": "Modell",
+                "title": "Modellauswahl (nur für diese Chatsitzung)",
+                "search": "Modelle suchen...",
+                "default": "Standard",
+                "noThinking": "Kein Denken",
+                "thinking": "Denken",
+                "low": "Niedrig",
+                "medium": "Mittel",
+                "high": "Hoch",
+                "xHigh": "Sehr hoch",
+                "max": "Maximal",
+                "changeFailed": "Modell konnte nicht geändert werden",
+                "toolsUnsupported": "Dieses Modell unterstützt die Werkzeuge des Agenten nicht",
+                "dataRegion": "Datenregion: {{region}}",
+                "thinkingTokens": "Token-Budget fürs Denken",
+                "empty": "Keine Modelle gefunden"
+            },
             "newChatButton": {
                 "newChat": "Neu",
                 "newChatSession": "Sitzung"

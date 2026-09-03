@@ -13,6 +13,24 @@
             }
         },
         "molecules": {
+            "modelPicker": {
+                "model": "Modèle",
+                "title": "Sélection du modèle (uniquement pour cette session)",
+                "search": "Rechercher des modèles...",
+                "default": "Par défaut",
+                "noThinking": "Sans réflexion",
+                "thinking": "Réflexion",
+                "low": "Faible",
+                "medium": "Moyenne",
+                "high": "Élevée",
+                "xHigh": "Très élevée",
+                "max": "Maximum",
+                "changeFailed": "Impossible de changer de modèle",
+                "toolsUnsupported": "Ce modèle ne prend pas en charge les outils de l’agent",
+                "dataRegion": "Région des données : {{region}}",
+                "thinkingTokens": "Budget de jetons de réflexion",
+                "empty": "Aucun modèle trouvé"
+            },
             "newChatButton": {
                 "newChat": "Nouveau",
                 "newChatSession": "Session"
