@@ -183,9 +183,11 @@ const normalizeActiveModel = (
   if (typeof reasoning?.max_tokens === 'number') {
     normalizedReasoning.max_tokens = reasoning.max_tokens;
   }
+  const key = raw.key ?? raw.model_key;
 
   return {
     modelId,
+    ...(typeof key === 'string' && key ? { key } : {}),
     ...(Object.keys(normalizedReasoning).length
       ? { reasoning: normalizedReasoning }
       : {})
@@ -835,49 +837,54 @@ const useChatSession = () => {
 
       return new Promise((resolve) => {
         let settled = false;
-        const timeout = window.setTimeout(() => {
+        let timeout = 0;
+
+        const finish = (response: unknown) => {
           if (settled) return;
           settled = true;
-          resolve({
+          window.clearTimeout(timeout);
+          socket.off('model_override', finish);
+
+          const raw = asObject(response);
+          if (!raw?.ok) {
+            const rawError = asObject(raw?.error);
+            resolve({
+              ok: false,
+              error: {
+                ...(typeof rawError?.code === 'string'
+                  ? { code: rawError.code }
+                  : {}),
+                ...(typeof rawError?.message === 'string'
+                  ? { message: rawError.message }
+                  : typeof raw?.error === 'string'
+                    ? { message: raw.error }
+                    : {})
+              }
+            });
+            return;
+          }
+
+          const active = normalizeActiveModel(raw.active) ?? selection;
+          setActiveModelOverride(active);
+          resolve({ ok: true, active });
+        };
+
+        timeout = window.setTimeout(() => {
+          finish({
             ok: false,
             error: { code: 'timeout', message: 'Model override timed out' }
           });
         }, 15_000);
 
+        socket.once('model_override', finish);
         socket.emit(
           'set_model_override',
           {
             model_id: selection.modelId,
+            ...(selection.key ? { model_key: selection.key } : {}),
             ...(selection.reasoning ? { reasoning: selection.reasoning } : {})
           },
-          (response: unknown) => {
-            if (settled) return;
-            settled = true;
-            window.clearTimeout(timeout);
-
-            const raw = asObject(response);
-            if (!raw?.ok) {
-              const rawError = asObject(raw?.error);
-              resolve({
-                ok: false,
-                error: {
-                  ...(typeof rawError?.code === 'string'
-                    ? { code: rawError.code }
-                    : {}),
-                  ...(typeof rawError?.message === 'string'
-                    ? { message: rawError.message }
-                    : typeof raw?.error === 'string'
-                      ? { message: raw.error }
-                      : {})
-                }
-              });
-              return;
-            }
-
-            const active = normalizeActiveModel(raw.active) ?? selection;
-            setActiveModelOverride(active);
-            resolve({ ok: true, active });
-          }
+          finish
         );
       });
     },
