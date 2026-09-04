@@ -294,8 +294,8 @@ export default function ConfigurationMenu({
     const controller = new AbortController();
     const baseUrl = evoya?.api?.baseUrl?.replace(/\/$/, '');
     const endpoint = baseUrl
-      ? `${baseUrl}/api/model/list`
-      : apiClient.buildEndpoint('/api/model/list');
+      ? `${baseUrl}/api/model/list/`
+      : apiClient.buildEndpoint('/api/model/list/');
     const token =
       accessToken ??
       getScopedSessionStorageItem('chainlit_token') ??
