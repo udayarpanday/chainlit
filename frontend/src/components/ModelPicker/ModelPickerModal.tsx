@@ -42,7 +42,7 @@ export default function ModelPickerModal({
   const { t } = useTranslation();
   const models = useRecoilValue(modelCatalogState) ?? [];
   const active = useRecoilValue(activeModelOverrideState);
-  const { setModelOverride } = useChatSession();
+  const { setChatProfile, setModelOverride } = useChatSession();
   const [query, setQuery] = useState('');
   const [pendingModelId, setPendingModelId] = useState<number>();
   const [reasoningByModel, setReasoningByModel] = useState<
@@ -101,13 +101,18 @@ export default function ModelPickerModal({
     setPendingModelId(model.id);
     const result = await setModelOverride({
       modelId: model.id,
+      key: model.key,
       ...(nextReasoning ? { reasoning: nextReasoning } : {})
     });
     setPendingModelId(undefined);
 
     if (!result.ok) {
       toast.error(t('components.molecules.modelPicker.changeFailed'));
-    } else if (result.active.reasoning) {
+      return;
+    }
+
+    setChatProfile(model.key);
+    if (result.active.reasoning) {
       updateReasoning(model.id, result.active.reasoning);
     }
   };

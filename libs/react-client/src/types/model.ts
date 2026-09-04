@@ -28,6 +28,7 @@ export type ModelCatalogItem = {
 
 export type ActiveModelOverride = {
   modelId: number;
+  key?: string;
   reasoning?: ModelReasoningSelection;
 };
 
