@@ -362,8 +362,8 @@ export default function FilePicker({
         ? searchItems
         : pathData.items
       : attachmentMode
-      ? folderFiles
-      : pathData.items;
+        ? folderFiles
+        : pathData.items;
 
     if (isSelectionControlled) {
       items.forEach((item) => onItemSelectionChange(item, val));
@@ -609,8 +609,8 @@ export default function FilePicker({
       ? searchItems
       : pathData.items
     : attachmentMode
-    ? folderFiles
-    : pathData.items;
+      ? folderFiles
+      : pathData.items;
   const selectableItemsLength = selectableItems.length;
   const selectedPathKeys = new Set((selectedItemPaths ?? []).map(selectionKey));
   const getControlledSelectionState = (
@@ -643,8 +643,8 @@ export default function FilePicker({
     ? allSelectableItemsSelected
       ? true
       : visibleControlledStates.some((state) => state !== false)
-      ? 'indeterminate'
-      : false
+        ? 'indeterminate'
+        : false
     : allSelectableItemsSelected;
 
   return (
@@ -717,12 +717,12 @@ export default function FilePicker({
                         ? 'grid-cols-[auto_max-content]'
                         : 'grid-cols-[max-content_auto_max-content] md:grid-cols-[max-content_auto_max-content_max-content_max-content_max-content]'
                       : singleMode
-                      ? compact || attachmentMode || destinationMode
-                        ? 'grid-cols-[auto]'
-                        : 'grid-cols-[auto] md:grid-cols-[auto_max-content_max-content_max-content]'
-                      : compact || attachmentMode || destinationMode
-                      ? 'grid-cols-[max-content_auto]'
-                      : 'grid-cols-[max-content_auto] md:grid-cols-[max-content_auto_max-content_max-content_max-content]'
+                        ? compact || attachmentMode || destinationMode
+                          ? 'grid-cols-[auto]'
+                          : 'grid-cols-[auto] md:grid-cols-[auto_max-content_max-content_max-content]'
+                        : compact || attachmentMode || destinationMode
+                          ? 'grid-cols-[max-content_auto]'
+                          : 'grid-cols-[max-content_auto] md:grid-cols-[max-content_auto_max-content_max-content_max-content]'
                   )}
                 >
                   <div className="contents text-xs">
@@ -859,27 +859,6 @@ export default function FilePicker({
         }) && (
           <ShortcutsSection onOpen={(shortcut) => void fetchShortcut(shortcut)} />
         )} */}
-        {shouldShowRecentFiles({
-          path: currentPath,
-          isSearch,
-          pickerType,
-          compact,
-          attachmentMode,
-          destinationMode,
-          singleMode
-        }) &&
-          !activeShortcut && (
-            <RecentFilesSection
-              files={recentFiles}
-              isLoading={isLoading}
-              onOpenFile={recentItemClick}
-              onOpenLocation={fetchDirectory}
-              onDownload={(file) => downloadItems([file])}
-              onRename={(file, newName) => renameItem(file, newName)}
-              onMove={(file, destination) => moveItem(file, destination)}
-              onDelete={(file) => deleteItems([file])}
-            />
-          )}
         {!activeShortcut &&
           (selectedElements.length > 0 || attachmentMode) &&
           !destinationMode &&
@@ -929,6 +908,28 @@ export default function FilePicker({
               </div>
             </div>
           )}
+        {shouldShowRecentFiles({
+          path: currentPath,
+          isSearch,
+          pickerType,
+          compact,
+          attachmentMode,
+          destinationMode,
+          singleMode
+        }) &&
+          !activeShortcut && (
+            <RecentFilesSection
+              files={recentFiles}
+              isLoading={isLoading}
+              onOpenFile={recentItemClick}
+              onOpenLocation={fetchDirectory}
+              onDownload={(file) => downloadItems([file])}
+              onRename={(file, newName) => renameItem(file, newName)}
+              onMove={(file, destination) => moveItem(file, destination)}
+              onDelete={(file) => deleteItems([file])}
+            />
+          )}
+
         <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
           <DialogContent
             container={window.cl_files_shadowRootElement}
