@@ -1,29 +1,30 @@
-import { useMemo, useRef, useState } from 'react';
+import { cn } from '@/lib/utils';
 import {
   ChevronDown,
   Clock3,
   EllipsisVertical,
+  Pin,
   Search,
-  X,
-  UserRound
+  UserRound,
+  X
 } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
 
-import { cn } from '@/lib/utils';
+import { Translator } from '@chainlit/app/src/components/i18n';
+import { useTranslation } from '@chainlit/app/src/components/i18n/Translator';
 import { Button } from '@chainlit/app/src/components/ui/button';
-import { Input } from '@chainlit/app/src/components/ui/input';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@chainlit/app/src/components/ui/popover';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@chainlit/app/src/components/ui/dropdown-menu';
-import { Translator } from '@chainlit/app/src/components/i18n';
-import { useTranslation } from '@chainlit/app/src/components/i18n/Translator';
+import { Input } from '@chainlit/app/src/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from '@chainlit/app/src/components/ui/popover';
 
 export interface AgentListItem {
   id: string;
@@ -52,6 +53,8 @@ interface AgentListProps {
   onSetDefaultAgent?: (agent: AgentListItem) => void;
   onOpenTestChat?: (agent: AgentListItem) => void;
   onNewChat?: () => void;
+  onTogglePin?: (agent: AgentListItem) => void;
+  pendingPinUuids?: ReadonlySet<string>;
   className?: string;
 }
 
@@ -59,9 +62,7 @@ const sectionTitleClassName =
   'text-xs font-semibold uppercase tracking-wide text-muted-foreground';
 
 const truncateAgentName = (name: string, length = 30) =>
-  name.length > length
-    ? `${name.slice(0, length)}...`
-    : name;
+  name.length > length ? `${name.slice(0, length)}...` : name;
 
 const AgentRow = ({
   agent,
@@ -70,6 +71,8 @@ const AgentRow = ({
   onEditAgent,
   onSetDefaultAgent,
   onOpenTestChat,
+  onTogglePin,
+  pinPending = false,
   onClick
 }: {
   agent: AgentListItem;
@@ -79,7 +82,11 @@ const AgentRow = ({
   onSetDefaultAgent?: (agent: AgentListItem) => void;
   onOpenTestChat?: (agent: AgentListItem) => void;
   onClick: () => void;
+  onTogglePin?: (agent: AgentListItem) => void;
+  pinPending?: boolean;
 }) => {
+  const { t } = useTranslation();
+  const canTogglePin = !!onTogglePin && !!agent.agentUuid && !agent.isArchived;
   const canShowMenu = agent.showAgentMenu !== false && !agent.isArchived;
   const canEditAgent =
     !!onEditAgent &&
@@ -90,7 +97,11 @@ const AgentRow = ({
     !!onSetDefaultAgent && canShowMenu && !agent.isDefault;
   const canOpenTestChat =
     !!onOpenTestChat && canShowMenu && agent.showTestChatOption !== false;
-  const hasMenuItems = canEditAgent || canSetDefaultAgent || canOpenTestChat;
+  const hasMenuItems =
+    canEditAgent ||
+    canSetDefaultAgent ||
+    canOpenTestChat ||
+    (canShowMenu && canTogglePin);
 
   return (
     <div
@@ -106,13 +117,23 @@ const AgentRow = ({
       >
         <UserRound className="h-4 w-4 shrink-0 text-primary" />
         <span className="truncate text-base font-medium text-left">
-          {truncateAgentName(agent.name,30)}
+          {truncateAgentName(agent.name, 30)}
         </span>
       </button>
       <span className="flex items-center gap-2">
         {showDefaultBadge && agent.isDefault ? (
           <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
             <Translator path="agentList.default" />
+          </span>
+        ) : null}
+        {agent.isPinned ? (
+          <span
+            role="img"
+            aria-label={t('agentList.pinned_agent')}
+            title={t('agentList.pinned_agent')}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center text-muted-foreground"
+          >
+            <Pin aria-hidden="true" className="h-3.5 w-3.5 rotate-[20deg]" />
           </span>
         ) : null}
         {hasMenuItems ? (
@@ -133,6 +154,25 @@ const AgentRow = ({
               sideOffset={8}
               className="w-52 z-[10010] rounded-xl border border-border/80 bg-popover p-1.5 shadow-xl"
             >
+              {canShowMenu && canTogglePin ? (
+                <DropdownMenuItem
+                  disabled={pinPending}
+                  className="rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onTogglePin?.(agent);
+                  }}
+                >
+                  <Translator
+                    path={
+                      agent.isPinned
+                        ? 'agentList.unpin_agent'
+                        : 'agentList.pin_agent'
+                    }
+                  />
+                </DropdownMenuItem>
+              ) : null}
               {canEditAgent ? (
                 <DropdownMenuItem
                   className="rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
@@ -165,7 +205,6 @@ const AgentRow = ({
   );
 };
 
-
 export default function AgentList({
   agents = [],
   recentAgents,
@@ -174,6 +213,8 @@ export default function AgentList({
   onEditAgent,
   onSetDefaultAgent,
   onOpenTestChat,
+  onTogglePin,
+  pendingPinUuids,
   className
 }: AgentListProps) {
   const { t } = useTranslation();
@@ -210,7 +251,10 @@ export default function AgentList({
       !agent.isArchived &&
       (!normalizedQuery || agent.name.toLowerCase().includes(normalizedQuery))
   );
-  const allAgents = filteredAgents.filter((agent) => !agent.isPinned);
+  const allAgents = [
+    ...filteredAgents.filter((agent) => agent.isPinned),
+    ...filteredAgents.filter((agent) => !agent.isPinned)
+  ];
 
   const handleSelect = (agent: AgentListItem) => {
     onSelectAgent?.(agent);
@@ -292,6 +336,10 @@ export default function AgentList({
                     onEditAgent={onEditAgent}
                     onSetDefaultAgent={onSetDefaultAgent}
                     onOpenTestChat={onOpenTestChat}
+                    onTogglePin={onTogglePin}
+                    pinPending={
+                      !!agent.agentUuid && pendingPinUuids?.has(agent.agentUuid)
+                    }
                     onClick={() => handleSelect(agent)}
                   />
                 ))}
@@ -322,6 +370,17 @@ export default function AgentList({
                   onEditAgent={onEditAgent}
                   onSetDefaultAgent={onSetDefaultAgent}
                   onOpenTestChat={onOpenTestChat}
+                  onTogglePin={
+                    agents.some(
+                      (item) =>
+                        item.agentUuid === agent.agentUuid && !item.isArchived
+                    )
+                      ? onTogglePin
+                      : undefined
+                  }
+                  pinPending={
+                    !!agent.agentUuid && pendingPinUuids?.has(agent.agentUuid)
+                  }
                   onClick={() => handleSelect(agent)}
                 />
               ))}

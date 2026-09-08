@@ -4,14 +4,17 @@ import FavoriteSessionButton from '@/evoya/FavoriteSessionButton';
 import ShareSessionButton from '@/evoya/ShareSessionButton';
 import ViewContext from '@/evoya/ViewContext';
 import { Maximize2, X } from 'lucide-react';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { useRecoilValue } from 'recoil';
 
 import AudioPresence from '@chainlit/app/src/components/AudioPresence';
 import ChatProfiles from '@chainlit/app/src/components/header/ChatProfiles';
 import NewChatButton from '@chainlit/app/src/components/header/NewChat';
 import { Button } from '@chainlit/app/src/components/ui/button';
-import { ChainlitContext, getScopedSessionStorageItem } from '@chainlit/react-client';
+import {
+  ChainlitContext,
+  getScopedSessionStorageItem
+} from '@chainlit/react-client';
 import {
   chatArchived,
   evoyaCreatorEnabledState,
@@ -46,6 +49,7 @@ interface DashboardBridgeAgent {
   show_agent_menu?: boolean | string;
   show_edit_agent_option?: boolean | string;
   show_test_chat_option?: boolean | string;
+  is_pinned?: boolean | string;
   is_curated?: boolean | string;
   is_default?: boolean | string;
   is_archived?: boolean | string;
@@ -54,6 +58,7 @@ interface DashboardBridgeAgent {
 }
 
 interface DashboardBridgeData {
+  toggleAgentPin?: (agentUuid: string) => Promise<{ is_pinned: boolean }>;
   chatAgents?: DashboardBridgeAgent[];
   recent_agents?: DashboardBridgeAgent[];
   restrictSharedSessionsToOrg?: boolean;
@@ -95,6 +100,11 @@ const Header = ({
 
   const hasChatProfiles = !!config?.chatProfiles?.length;
   const [sessionUuid, setSessionUuid] = useState(evoya?.session_uuid ?? '');
+  const pendingPinsRef = useRef(new Set<string>());
+  const [pendingPinUuids, setPendingPinUuids] = useState<ReadonlySet<string>>(
+    new Set()
+  );
+  const [canTogglePin, setCanTogglePin] = useState(false);
   const [agents, setAgents] = useState<AgentListItem[]>([]);
   const [recentAgents, setRecentAgents] = useState<AgentListItem[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState<string>();
@@ -140,6 +150,7 @@ const Header = ({
         agent.show_test_chat_option === undefined
           ? true
           : toBoolean(agent.show_test_chat_option),
+      isPinned: toBoolean(agent.is_pinned),
       isCurated: toBoolean(agent.is_curated),
       isDefault: toBoolean(agent.is_default),
       isArchived:
@@ -151,10 +162,12 @@ const Header = ({
 
   const syncDashboardBridgeData = () => {
     if (evoya?.type !== 'dashboard' || !window.dashboardDataForModal) {
+      setCanTogglePin(false);
       setRestrictSharedSessionsToOrg(false);
       return;
     }
     const data = window.dashboardDataForModal();
+    setCanTogglePin(typeof data.toggleAgentPin === 'function');
     setRestrictSharedSessionsToOrg(Boolean(data.restrictSharedSessionsToOrg));
     let chatAgents = (data.chatAgents ?? [])
       .map(mapBridgeAgentToItem)
@@ -253,7 +266,7 @@ const Header = ({
         accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined
       );
       const sessionJson = await sessionResponse.json();
-      if(!sessionJson.session_uuid) return;
+      if (!sessionJson.session_uuid) return;
       setSessionUuid(sessionJson.session_uuid);
       setScopedSessionStorageItem(sessionTokenKey, sessionJson.session_uuid);
       localStorage.removeItem(sessionTokenKey);
@@ -318,6 +331,29 @@ const Header = ({
 
   const getAgentUuid = (agent: AgentListItem) =>
     agent.agentUuid || getCanonicalAgent(agent)?.agentUuid;
+
+  const handleTogglePin = async (agent: AgentListItem) => {
+    if (agent.isArchived || !agent.agentUuid) return;
+    const agentUuid = agent.agentUuid;
+    if (pendingPinsRef.current.has(agentUuid)) return;
+    try {
+      const bridge = window.dashboardDataForModal?.();
+      if (!bridge?.toggleAgentPin) return;
+      const canonicalAgent = (bridge.chatAgents ?? [])
+        .map(mapBridgeAgentToItem)
+        .find((item) => item?.agentUuid === agentUuid);
+      if (!canonicalAgent || canonicalAgent.isArchived) return;
+      pendingPinsRef.current.add(agentUuid);
+      setPendingPinUuids(new Set(pendingPinsRef.current));
+      await bridge.toggleAgentPin(agentUuid);
+      syncDashboardBridgeData();
+    } catch (_error) {
+      // The dashboard reports persistence failures and retains confirmed state.
+    } finally {
+      pendingPinsRef.current.delete(agentUuid);
+      setPendingPinUuids(new Set(pendingPinsRef.current));
+    }
+  };
 
   const handleAgentSelect = (agent: AgentListItem) => {
     const canonicalAgent = getCanonicalAgent(agent);
@@ -418,6 +454,8 @@ const Header = ({
                   onEditAgent={handleEditAgent}
                   onSetDefaultAgent={handleSetDefaultAgent}
                   onOpenTestChat={handleOpenTestChat}
+                  onTogglePin={canTogglePin ? handleTogglePin : undefined}
+                  pendingPinUuids={pendingPinUuids}
                 />
                 <NewChatButton />
               </>
@@ -459,9 +497,15 @@ const Header = ({
         {evoya?.type === 'dashboard' && !creatorEnabled && (
           <>
             <ViewContext />
-            <FavoriteSessionButton sessionUuid={sessionUuid || getScopedSessionStorageItem('session_token')} />
+            <FavoriteSessionButton
+              sessionUuid={
+                sessionUuid || getScopedSessionStorageItem('session_token')
+              }
+            />
             <ShareSessionButton
-              sessionUuid={sessionUuid || getScopedSessionStorageItem('session_token')}
+              sessionUuid={
+                sessionUuid || getScopedSessionStorageItem('session_token')
+              }
               restrictSharedSessionsToOrg={restrictSharedSessionsToOrg}
               isChatArchived={isChatArchived}
             />
