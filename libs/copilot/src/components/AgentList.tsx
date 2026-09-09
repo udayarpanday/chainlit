@@ -251,10 +251,12 @@ export default function AgentList({
       !agent.isArchived &&
       (!normalizedQuery || agent.name.toLowerCase().includes(normalizedQuery))
   );
-  const allAgents = [
-    ...filteredAgents.filter((agent) => agent.isPinned),
-    ...filteredAgents.filter((agent) => !agent.isPinned)
-  ];
+  const allAgents = [...filteredAgents].sort(
+    (first, second) =>
+      Number(!!second.isDefault) - Number(!!first.isDefault) ||
+      Number(!!second.isPinned) - Number(!!first.isPinned) ||
+      first.name.localeCompare(second.name)
+  );
 
   const handleSelect = (agent: AgentListItem) => {
     onSelectAgent?.(agent);
