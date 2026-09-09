@@ -107,36 +107,78 @@ const asObject = (value: unknown): Record<string, any> | undefined =>
     ? (value as Record<string, any>)
     : undefined;
 
-const normalizeReasoningSpec = (value: unknown): ReasoningSpec => {
-  const raw = asObject(value);
-  if (!raw || raw.type === 'none') return { type: 'none' };
+const parseObject = (value: unknown): Record<string, any> | undefined => {
+  if (typeof value !== 'string') return asObject(value);
+  try {
+    return asObject(JSON.parse(value));
+  } catch {
+    return undefined;
+  }
+};
 
-  if (raw.type === 'effort' && Array.isArray(raw.values)) {
-    const values = raw.values.filter(
+const normalizeReasoningConfig = (
+  type: unknown,
+  value: unknown
+): ReasoningSpec | undefined => {
+  const config = asObject(value);
+  if (type === 'effort' && config && Array.isArray(config.values)) {
+    const values = config.values.filter(
       (item: unknown): item is string => typeof item === 'string'
     );
     return {
       type: 'effort',
       values,
-      ...(typeof raw.default === 'string' ? { default: raw.default } : {})
+      ...(typeof config.default === 'string' ? { default: config.default } : {})
     };
   }
 
   if (
-    raw.type === 'max_tokens' &&
-    typeof raw.min === 'number' &&
-    typeof raw.max === 'number' &&
-    typeof raw.step === 'number'
+    type === 'max_tokens' &&
+    config &&
+    typeof config.min === 'number' &&
+    typeof config.max === 'number' &&
+    typeof config.step === 'number'
   ) {
     return {
       type: 'max_tokens',
-      min: raw.min,
-      max: raw.max,
-      step: raw.step,
-      ...(typeof raw.default === 'number' ? { default: raw.default } : {})
+      min: config.min,
+      max: config.max,
+      step: config.step,
+      ...(typeof config.default === 'number' ? { default: config.default } : {})
     };
   }
+};
 
+const normalizeReasoningSpec = (
+  value: unknown,
+  reasoningType?: unknown,
+  supportedParametersValue?: unknown
+): ReasoningSpec => {
+  const raw = asObject(value);
+  if (raw) {
+    if (raw.type === 'none') return { type: 'none' };
+    const normalized = normalizeReasoningConfig(raw.type, raw);
+    if (normalized) return normalized;
+  }
+
+  const supportedParameters = parseObject(supportedParametersValue);
+  const type =
+    reasoningType === 'effort' || reasoningType === 'max_tokens'
+      ? reasoningType
+      : supportedParameters?.reasoning_effort
+        ? 'effort'
+        : supportedParameters?.reasoning_max_tokens
+          ? 'max_tokens'
+          : 'none';
+  const parameterConfig =
+    type === 'effort'
+      ? supportedParameters?.reasoning_effort
+      : type === 'max_tokens'
+        ? supportedParameters?.reasoning_max_tokens
+        : undefined;
+
+  const normalized = normalizeReasoningConfig(type, parameterConfig);
+  if (normalized) return normalized;
   return { type: 'none' };
 };
 
@@ -151,7 +193,7 @@ const normalizeModelCatalogItem = (
     id,
     key: String(raw.key),
     name: String(raw.name),
-    provider: String(raw.provider || ''),
+    provider: String(raw.provider ?? raw.creator ?? raw.model_type ?? ''),
     providerLogoUrl:
       typeof (raw.providerLogoUrl ?? raw.provider_logo_url) === 'string'
         ? (raw.providerLogoUrl ?? raw.provider_logo_url)
@@ -163,7 +205,11 @@ const normalizeModelCatalogItem = (
     isToolsSupported: Boolean(
       raw.isToolsSupported ?? raw.is_tools_supported ?? true
     ),
-    reasoning: normalizeReasoningSpec(raw.reasoning),
+    reasoning: normalizeReasoningSpec(
+      raw.reasoning,
+      raw.reasoningType ?? raw.reasoning_type,
+      raw.supportedParameters ?? raw.supported_parameters
+    ),
     isDefault: Boolean(raw.isDefault ?? raw.is_default)
   };
 };
