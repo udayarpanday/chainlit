@@ -459,15 +459,15 @@ const Header = ({
             barSpacing={2}
           />
         ) : null}
-        {!creatorEnabled ? <TemporaryChatButton /> : null}
         {evoya?.type === 'dashboard' && !creatorEnabled && (
           <>
             <ViewContext />
+            <TemporaryChatButton /> 
             {!temporaryChat ? (
               <FavoriteSessionButton
-                sessionUuid={
-                  sessionUuid || getScopedSessionStorageItem('session_token')
-                }
+              sessionUuid={
+                sessionUuid || getScopedSessionStorageItem('session_token')
+              }
               />
             ) : null}
             {!temporaryChat ? (
