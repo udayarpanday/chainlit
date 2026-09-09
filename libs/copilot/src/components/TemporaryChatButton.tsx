@@ -44,7 +44,7 @@ export default function TemporaryChatButton() {
                 setTemporaryChat(!temporaryChat);
               }}
             >
-              <MessageCircleDashed className="!size-4" />
+              <MessageCircleDashed className="!size-5" />
             </Button>
           </span>
         </TooltipTrigger>
