@@ -42,7 +42,7 @@ export default function ModelPickerModal({
   const { t } = useTranslation();
   const models = useRecoilValue(modelCatalogState) ?? [];
   const active = useRecoilValue(activeModelOverrideState);
-  const { setChatProfile, setModelOverride } = useChatSession();
+  const { setModelOverride } = useChatSession();
   const [query, setQuery] = useState('');
   const [pendingModelId, setPendingModelId] = useState<number>();
   const [reasoningByModel, setReasoningByModel] = useState<
@@ -86,7 +86,8 @@ export default function ModelPickerModal({
 
   const applyModel = async (
     model: ModelCatalogItem,
-    reasoning = reasoningByModel[model.id]
+    reasoning = reasoningByModel[model.id],
+    closeOnSuccess = false
   ) => {
     if (disabled || pendingModelId !== undefined) return;
 
@@ -96,7 +97,13 @@ export default function ModelPickerModal({
       active?.modelId === model.id &&
       JSON.stringify(active.reasoning ?? {}) ===
         JSON.stringify(nextReasoning ?? {});
-    if (isAlreadyActive) return;
+    if (isAlreadyActive) {
+      if (closeOnSuccess) {
+        toast.success(`${model.name} selected`);
+        onOpenChange(false);
+      }
+      return;
+    }
 
     setPendingModelId(model.id);
     const result = await setModelOverride({
@@ -111,9 +118,12 @@ export default function ModelPickerModal({
       return;
     }
 
-    setChatProfile(model.key);
     if (result.active.reasoning) {
       updateReasoning(model.id, result.active.reasoning);
+    }
+    if (closeOnSuccess) {
+      toast.success(`${model.name} selected`);
+      onOpenChange(false);
     }
   };
 
@@ -164,7 +174,9 @@ export default function ModelPickerModal({
                   pending={pendingModelId === model.id}
                   disabled={disabled || pendingModelId !== undefined}
                   reasoning={reasoningByModel[model.id]}
-                  onSelect={() => void applyModel(model)}
+                  onSelect={() =>
+                    void applyModel(model, reasoningByModel[model.id], true)
+                  }
                   onReasoningChange={(reasoning) =>
                     updateReasoning(model.id, reasoning)
                   }

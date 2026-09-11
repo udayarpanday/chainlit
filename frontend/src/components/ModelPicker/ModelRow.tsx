@@ -23,6 +23,7 @@ import { Slider } from '@/components/ui/slider';
 import {
   Tooltip,
   TooltipContent,
+  TooltipPortal,
   TooltipProvider,
   TooltipTrigger
 } from '@/components/ui/tooltip';
@@ -167,16 +168,30 @@ export default function ModelRow({
             <TooltipProvider delayDuration={150}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <TriangleAlert
+                  <button
+                    type="button"
                     aria-label={t(
                       'components.molecules.modelPicker.toolsUnsupported'
                     )}
-                    className="size-3.5 shrink-0 text-amber-600"
-                  />
+                    className="inline-flex shrink-0 text-amber-600"
+                    onPointerDown={stopPropagation}
+                    onClick={stopPropagation}
+                    onKeyDown={stopPropagation}
+                  >
+                    <TriangleAlert aria-hidden="true" className="size-3.5" />
+                  </button>
                 </TooltipTrigger>
-                <TooltipContent>
-                  {t('components.molecules.modelPicker.toolsUnsupported')}
-                </TooltipContent>
+                <TooltipPortal
+                  container={
+                    window.cl_shadowRootElement?.isConnected
+                      ? window.cl_shadowRootElement
+                      : document.body
+                  }
+                >
+                  <TooltipContent className="z-[10000]">
+                    {t('components.molecules.modelPicker.toolsUnsupported')}
+                  </TooltipContent>
+                </TooltipPortal>
               </Tooltip>
             </TooltipProvider>
           ) : null}
@@ -224,7 +239,14 @@ export default function ModelRow({
               >
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent
+                container={
+                  window.cl_shadowRootElement?.isConnected
+                    ? window.cl_shadowRootElement
+                    : document.body
+                }
+                className="z-[10000]"
+              >
                 {model.reasoning.values.map((effort) => (
                   <SelectItem key={effort} value={effort}>
                     {effortLabel(effort)}
