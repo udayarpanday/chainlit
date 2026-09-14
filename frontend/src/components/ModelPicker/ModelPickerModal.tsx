@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRecoilValue } from 'recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { toast } from 'sonner';
 
 import {
@@ -42,13 +42,16 @@ export default function ModelPickerModal({
   const { t } = useTranslation();
   const models = useRecoilValue(modelCatalogState) ?? [];
   const active = useRecoilValue(activeModelOverrideState);
+  const setActive = useSetRecoilState(activeModelOverrideState);
   const { setModelOverride } = useChatSession();
   const [query, setQuery] = useState('');
+  const [highlightedModelId, setHighlightedModelId] = useState('');
   const [pendingModelId, setPendingModelId] = useState<number>();
   const [reasoningByModel, setReasoningByModel] = useState<
     Record<number, ModelReasoningSelection | undefined>
   >({});
   const searchRef = useRef<HTMLInputElement>(null);
+  const committedModelId = active?.modelId;
 
   useEffect(() => {
     if (!models.length) {
@@ -71,8 +74,14 @@ export default function ModelPickerModal({
       setQuery('');
       return;
     }
+
+    const selectedModel =
+      models.find((model) => model.id === committedModelId) ??
+      models.find((model) => model.isDefault) ??
+      models[0];
+    setHighlightedModelId(selectedModel ? String(selectedModel.id) : '');
     window.setTimeout(() => searchRef.current?.focus(), 50);
-  }, [open]);
+  }, [open, committedModelId, models]);
 
   const visibleModels = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -98,6 +107,11 @@ export default function ModelPickerModal({
       JSON.stringify(active.reasoning ?? {}) ===
         JSON.stringify(nextReasoning ?? {});
     if (isAlreadyActive) {
+      setActive({
+        modelId: model.id,
+        key: model.key,
+        ...(nextReasoning ? { reasoning: nextReasoning } : {})
+      });
       if (closeOnSuccess) {
         toast.success(`${model.name} selected`);
         onOpenChange(false);
@@ -118,8 +132,17 @@ export default function ModelPickerModal({
       return;
     }
 
-    if (result.active.reasoning) {
-      updateReasoning(model.id, result.active.reasoning);
+    const committedReasoning =
+      result.active.modelId === model.id
+        ? result.active.reasoning
+        : nextReasoning;
+    setActive({
+      modelId: model.id,
+      key: model.key,
+      ...(committedReasoning ? { reasoning: committedReasoning } : {})
+    });
+    if (committedReasoning) {
+      updateReasoning(model.id, committedReasoning);
     }
     if (closeOnSuccess) {
       toast.success(`${model.name} selected`);
@@ -150,7 +173,12 @@ export default function ModelPickerModal({
           </DialogTitle>
         </DialogHeader>
 
-        <Command shouldFilter={false} className="min-h-0 rounded-none">
+        <Command
+          shouldFilter={false}
+          value={highlightedModelId}
+          onValueChange={setHighlightedModelId}
+          className="min-h-0 rounded-none"
+        >
           <div className="shrink-0 border-b bg-background px-4 py-3">
             <CommandInput
               ref={searchRef}
@@ -170,7 +198,7 @@ export default function ModelPickerModal({
                 <ModelRow
                   key={model.id}
                   model={model}
-                  selected={active?.modelId === model.id}
+                  selected={committedModelId === model.id}
                   pending={pendingModelId === model.id}
                   disabled={disabled || pendingModelId !== undefined}
                   reasoning={reasoningByModel[model.id]}
@@ -182,7 +210,9 @@ export default function ModelPickerModal({
                   }
                   onReasoningCommit={(reasoning) => {
                     updateReasoning(model.id, reasoning);
-                    void applyModel(model, reasoning);
+                    if (committedModelId === model.id) {
+                      void applyModel(model, reasoning);
+                    }
                   }}
                 />
               ))}

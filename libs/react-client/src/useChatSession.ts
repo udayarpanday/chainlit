@@ -700,9 +700,13 @@ const useChatSession = () => {
         const defaultModel = models.find((model) => model.isDefault);
 
         setModelCatalog(models.length ? models : undefined);
-        setActiveModelOverride(
-          active ?? (defaultModel ? { modelId: defaultModel.id } : undefined)
-        );
+        setActiveModelOverride((current) => {
+          if (active) return active;
+          if (current && models.some((model) => model.id === current.modelId)) {
+            return current;
+          }
+          return defaultModel ? { modelId: defaultModel.id } : undefined;
+        });
         setCanOverrideModel(
           Boolean(
             envelope?.canOverrideModel ??
@@ -930,7 +934,17 @@ const useChatSession = () => {
             return;
           }
 
-          const active = normalizeActiveModel(raw.active) ?? selection;
+          const acknowledgedActive = normalizeActiveModel(raw.active);
+          const active: ActiveModelOverride = {
+            ...selection,
+            ...(acknowledgedActive?.key ? { key: acknowledgedActive.key } : {}),
+            ...(acknowledgedActive?.reasoning
+              ? { reasoning: acknowledgedActive.reasoning }
+              : {}),
+            // A successful acknowledgement commits the model the client asked
+            // for. Some backends only return the session's previous/default ID.
+            modelId: selection.modelId
+          };
           setActiveModelOverride(active);
           resolve({ ok: true, active });
         };

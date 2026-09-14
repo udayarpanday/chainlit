@@ -103,13 +103,13 @@ export default function ModelRow({
 
   return (
     <CommandItem
-      value={`${model.name} ${model.key} ${model.provider}`}
+      value={String(model.id)}
       onSelect={onSelect}
       disabled={disabled}
-      aria-selected={selected}
+      aria-current={selected ? 'true' : undefined}
       className={cn(
-        'my-1 min-h-[76px] cursor-pointer rounded-xl border border-transparent px-3 py-3 data-[selected=true]:bg-accent/70',
-        selected && 'border-primary/40 bg-primary/5'
+        'my-1 min-h-[76px] cursor-pointer rounded-xl border border-transparent px-3 py-3 data-[selected=true]:bg-accent/50',
+        selected && '!border-primary/50 !bg-primary/10 text-primary'
       )}
     >
       <Avatar className="size-10 rounded-xl border bg-background">
@@ -165,7 +165,7 @@ export default function ModelRow({
             </TooltipProvider>
           ) : null}
           {!model.isToolsSupported ? (
-            <TooltipProvider delayDuration={150}>
+            <TooltipProvider delayDuration={0}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
@@ -173,7 +173,7 @@ export default function ModelRow({
                     aria-label={t(
                       'components.molecules.modelPicker.toolsUnsupported'
                     )}
-                    className="inline-flex shrink-0 text-amber-600"
+                    className="inline-flex shrink-0 cursor-help text-amber-600"
                     onPointerDown={stopPropagation}
                     onClick={stopPropagation}
                     onKeyDown={stopPropagation}
@@ -199,7 +199,10 @@ export default function ModelRow({
       </div>
 
       <div
-        className="ml-auto flex w-[150px] shrink-0 items-center justify-end gap-2 sm:w-[190px]"
+        className={cn(
+          'ml-auto flex shrink-0 items-center justify-end gap-2',
+          maxTokensSpec ? 'w-[180px] sm:w-[280px]' : 'w-[150px] sm:w-[190px]'
+        )}
         onPointerDown={stopPropagation}
         onClick={stopPropagation}
         onKeyDown={stopPropagation}
@@ -258,7 +261,7 @@ export default function ModelRow({
         ) : null}
 
         {maxTokensSpec ? (
-          <div className="flex w-[158px] items-center gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             <Slider
               aria-label={t('components.molecules.modelPicker.thinking')}
               disabled={disabled}
@@ -272,7 +275,7 @@ export default function ModelRow({
               onValueCommit={([max_tokens]) =>
                 onReasoningCommit({ max_tokens })
               }
-              className="min-w-16"
+              className="min-w-16 flex-1"
             />
             <Input
               aria-label={t('components.molecules.modelPicker.thinkingTokens')}
@@ -303,7 +306,7 @@ export default function ModelRow({
                 event.stopPropagation();
                 if (event.key === 'Enter') event.currentTarget.blur();
               }}
-              className="h-8 w-[82px] px-2 text-xs"
+              className="h-8 w-[86px] shrink-0 px-2 text-xs"
             />
           </div>
         ) : null}

@@ -286,6 +286,9 @@ export default function ConfigurationMenu({
   const activeModelName =
     modelCatalog?.find((model) => model.id === activeModel?.modelId)?.name ??
     modelCatalog?.find((model) => model.isDefault)?.name;
+  const selectedSessionModel = activeModel?.key
+    ? modelCatalog?.find((model) => model.id === activeModel.modelId)
+    : undefined;
   const configurationDisabled = disabled;
 
   useEffect(() => {
@@ -810,6 +813,19 @@ export default function ConfigurationMenu({
           ) : null}
         </PopoverContent>
       </Popover>
+
+      {hasModelPicker && selectedSessionModel ? (
+        <button
+          type="button"
+          onClick={handleOpenModelPicker}
+          disabled={disabled}
+          aria-label={`Change model. Current model: ${selectedSessionModel.name}`}
+          className="flex h-7 max-w-48 items-center gap-1.5 rounded-md border border-primary/25 bg-primary/10 px-2 text-xs font-medium text-primary transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Brain className="!size-5 shrink-0" />
+          <span className="truncate">{selectedSessionModel.name}</span>
+        </button>
+      ) : null}
 
       {hasModelPicker ? (
         <ModelPickerModal
