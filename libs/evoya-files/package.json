@@ -9,6 +9,7 @@
     "build": "vite build",
     "build:dev": "NODE_OPTIONS=--max-old-space-size=16384 NODE_ENV=development vite build",
     "lint": "eslint ./src --ext .ts,.tsx && tsc --noemit",
+    "test": "vitest run",
     "format": "prettier src/**/*.{ts,tsx} --write --loglevel error"
   },
   "dependencies": {
@@ -47,6 +48,8 @@
     "typescript": "^5.2.2",
     "vite": "^4.4.9",
     "vite-plugin-svgr": "^4.2.0",
-    "vite-tsconfig-paths": "^4.2.0"
+    "vite-tsconfig-paths": "^4.2.0",
+    "jsdom": "^22.1.0",
+    "vitest": "^0.34.4"
   }
 }

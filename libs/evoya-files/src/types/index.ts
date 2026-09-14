@@ -34,10 +34,11 @@ export type FilesApiResponse = {
 
 export type ShortcutApiResponse = {
   success: boolean;
-  shortcut: import('./file').ShortcutKey;
-  items: import('./file').ShortcutItemDto[];
-  nextCursor: string | null;
-  breadcrumbs: PathItem[];
+  documents: import('./file').ShortcutItemDto[];
+  folders: import('./file').ShortcutItemDto[];
+  count: number;
+  limit: number;
+  offset: number;
   error?: string;
 };
 
