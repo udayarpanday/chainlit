@@ -18,6 +18,7 @@ export type EvoyaFile = {
   created: Date | null;
   size: number;
   path: string;
+  download_url?: string;
   mime: string;
   connectedToDatasource?: boolean;
   datasources?: DatasourceConnection[];
@@ -60,16 +61,22 @@ export type RecentFile = Omit<EvoyaFile, 'created' | 'modified'> & {
 export type ShortcutKey = 'generated' | 'images' | 'projects';
 
 export type ShortcutItemDto = {
-  id: string;
+  id?: string;
   name: string;
-  owner: string;
+  owner?: string | null;
   created: string | null;
   modified: string | null;
-  showActions: boolean;
-  readOnly: boolean;
+  showActions?: boolean;
+  readOnly?: boolean;
   path: string;
   size?: number | null;
   mime?: string;
+  location?: string;
+  source_tool?: 'code_interpreter' | 'image_tool' | string;
+  source_result_uuid?: string;
+  project_uuid?: string;
+  access_type?: string;
+  download_url?: string;
   last_modified_at?: string | null;
   last_modified_by?: ActivityActor | null;
   last_opened_at?: string | null;
@@ -104,4 +111,5 @@ type FilePickerShortcutItem =
       created: Date | null;
       modified: Date | null;
       path: string;
+      download_url?: string;
     };

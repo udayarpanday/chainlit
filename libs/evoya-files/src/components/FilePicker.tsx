@@ -40,12 +40,19 @@ import {
   shouldShowRecentFiles
 } from '../utils/files-api';
 import { normalizeRecentFiles } from '../utils/recent-files';
-import { normalizeShortcutItems } from '../utils/shortcuts';
+import {
+  getNextShortcutOffset,
+  getShortcutResponseRows,
+  hasMoreShortcutItems,
+  mergeShortcutItems,
+  normalizeShortcutItems
+} from '../utils/shortcuts';
 import FilePickerItemComponent, { PickerCheckedState } from './FilePickerItem';
 import FileSearch from './FileSearch';
 import FolderBreadcrumbs from './FolderBreadcrumbs';
 import RecentFilesSection from './RecentFilesSection';
 import ShortcutFilesView from './ShortcutFilesView';
+import ShortcutsSection from './ShortcutsSection';
 import Uploader from './Uploader';
 
 type Props = {
@@ -70,6 +77,7 @@ type Props = {
 };
 
 const selectionKey = (path: string) => path.replace(/^\/+|\/+$/g, '');
+const SHORTCUT_PAGE_SIZE = 50;
 
 export default function FilePicker({
   initialPath,
@@ -109,7 +117,10 @@ export default function FilePicker({
     null
   );
   const [shortcutItems, setShortcutItems] = useState<ShortcutItem[]>([]);
-  const [shortcutCursor, setShortcutCursor] = useState<string | null>(null);
+  const [shortcutOffset, setShortcutOffset] = useState(0);
+  const [shortcutFetchedCount, setShortcutFetchedCount] = useState(0);
+  const [shortcutCount, setShortcutCount] = useState(0);
+  const [shortcutError, setShortcutError] = useState<string | null>(null);
   const [searchTruncated, setSearchTruncated] = useState(false);
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [isSearch, setIsSearch] = useState(false);
@@ -122,6 +133,14 @@ export default function FilePicker({
 
   const fetchDirectory = async (path: string) => {
     setIsLoading(true);
+    setCurrentPath(path);
+    setActiveShortcut(null);
+    setShortcutItems([]);
+    setShortcutOffset(0);
+    setShortcutFetchedCount(0);
+    setShortcutCount(0);
+    setShortcutError(null);
+    setSelectedView(undefined);
     try {
       const response = await fetch(buildFilesUrl(apiBaseUrl, path));
       if (!response.ok)
@@ -148,11 +167,6 @@ export default function FilePicker({
         ...(Array.isArray(json.breadcrumbs) ? json.breadcrumbs : [])
       ];
 
-      setCurrentPath(path);
-      setActiveShortcut(null);
-      setShortcutItems([]);
-      setShortcutCursor(null);
-      setSelectedView(undefined);
       setSelectedPath(path);
       setIsSearch(false);
       setSearchItems([]);
@@ -187,13 +201,33 @@ export default function FilePicker({
 
   const fetchShortcut = async (
     shortcut: ShortcutKey,
-    cursor?: string | null,
+    offset = 0,
     append = false
   ) => {
     setIsLoading(true);
+    setActiveShortcut(shortcut);
+    setSelectedView(shortcut);
+    setCurrentPath('');
+    setIsSearch(false);
+    setShortcutError(null);
+    const shortcutPath = [
+      { name: 'Home', path: '/', canOpen: true },
+      {
+        name: t(`evoyaFiles.shortcuts.${shortcut}.title`),
+        canOpen: false
+      }
+    ];
+    setPathData({ path: shortcutPath, items: [] });
+    setPathItems(shortcutPath);
+    if (!append) {
+      setShortcutItems([]);
+      setShortcutOffset(0);
+      setShortcutFetchedCount(0);
+      setShortcutCount(0);
+    }
     try {
       const response = await fetch(
-        buildShortcutUrl(apiBaseUrl, shortcut, cursor)
+        buildShortcutUrl(apiBaseUrl, shortcut, SHORTCUT_PAGE_SIZE, offset)
       );
       if (!response.ok)
         throw new Error(`Shortcut request failed (${response.status})`);
@@ -201,45 +235,26 @@ export default function FilePicker({
       if (!json.success)
         throw new Error(json.error || 'Shortcut request failed');
 
-      const items = normalizeShortcutItems(json.items);
-      setShortcutItems((current) => (append ? [...current, ...items] : items));
-      setShortcutCursor(json.nextCursor || null);
-      setPathData({
-        path:
-          Array.isArray(json.breadcrumbs) && json.breadcrumbs.length > 0
-            ? json.breadcrumbs
-            : [
-                { name: 'Home', path: '/', canOpen: true },
-                {
-                  name: t(`evoyaFiles.shortcuts.${shortcut}.title`),
-                  canOpen: false
-                }
-              ],
-        items: []
-      });
+      const backendItems = getShortcutResponseRows(json);
+      const items = normalizeShortcutItems(backendItems);
+      setShortcutItems((current) =>
+        append ? mergeShortcutItems(current, items) : items
+      );
+      setShortcutOffset(getNextShortcutOffset(offset, backendItems.length));
+      setShortcutFetchedCount((current) =>
+        append ? current + backendItems.length : backendItems.length
+      );
+      setShortcutCount(
+        typeof json.count === 'number' && json.count >= 0
+          ? json.count
+          : backendItems.length
+      );
     } catch (error) {
-      // The Phase 2 backend may not be deployed yet. Keep the UI usable and
-      // show the shortcut's normal empty state instead of failing the page.
-      console.info(error);
-      if (!append) {
-        setShortcutItems([]);
-        setShortcutCursor(null);
-        setPathData({
-          path: [
-            { name: 'Home', path: '/', canOpen: true },
-            {
-              name: t(`evoyaFiles.shortcuts.${shortcut}.title`),
-              canOpen: false
-            }
-          ],
-          items: []
-        });
-      }
+      console.error(error);
+      setShortcutError(
+        error instanceof Error ? error.message : 'Shortcut request failed'
+      );
     } finally {
-      setCurrentPath('');
-      setIsSearch(false);
-      setActiveShortcut(shortcut);
-      setSelectedView(shortcut);
       setIsLoading(false);
     }
   };
@@ -304,9 +319,8 @@ export default function FilePicker({
 
   const shortcutItemClick = (item: ShortcutItem) => {
     if ('size' in item) {
-      setPathItems([]);
       handleItemClick(item as FilePickerItem);
-    } else {
+    } else if (item.path) {
       void fetchDirectory(item.path);
     }
   };
@@ -474,8 +488,18 @@ export default function FilePicker({
     }
   };
 
-  const downloadItems = (items: FilePickerItem[]) => {
+  const downloadItems = (items: Array<FilePickerItem | ShortcutItem>) => {
     if (items.length === 1 && 'size' in items[0]) {
+      if (!items[0].path && items[0].download_url) {
+        fetch(items[0].download_url)
+          .then((response) => {
+            if (!response.ok) throw new Error('Download failed');
+            return response.blob();
+          })
+          .then((blob) => downloadBlob(blob, items[0].name))
+          .catch(() => toast.error(t('evoyaFiles.common.load_error')));
+        return;
+      }
       const params = new URLSearchParams({
         path: items[0].path,
         intent: 'download'
@@ -832,13 +856,24 @@ export default function FilePicker({
           <ShortcutFilesView
             shortcut={activeShortcut}
             items={shortcutItems}
-            nextCursor={shortcutCursor}
+            hasMore={hasMoreShortcutItems(
+              shortcutFetchedCount,
+              shortcutCount
+            )}
             isLoading={isLoading}
+            hasError={Boolean(shortcutError)}
             onOpen={shortcutItemClick}
             onLoadMore={() =>
-              void fetchShortcut(activeShortcut, shortcutCursor, true)
+              void fetchShortcut(activeShortcut, shortcutOffset, true)
             }
-            onDownload={(item) => downloadItems([item as FilePickerItem])}
+            onRetry={() =>
+              void fetchShortcut(
+                activeShortcut,
+                shortcutOffset,
+                shortcutFetchedCount > 0
+              )
+            }
+            onDownload={(item) => downloadItems([item])}
             onRename={(item, newName) =>
               renameItem(item as FilePickerItem, newName)
             }
@@ -848,7 +883,7 @@ export default function FilePicker({
             onDelete={(item) => deleteItems([item as FilePickerItem])}
           />
         )}
-        {/* {!activeShortcut && shouldShowRecentFiles({
+        {!activeShortcut && shouldShowRecentFiles({
           path: currentPath,
           isSearch,
           pickerType,
@@ -857,8 +892,10 @@ export default function FilePicker({
           destinationMode,
           singleMode
         }) && (
-          <ShortcutsSection onOpen={(shortcut) => void fetchShortcut(shortcut)} />
-        )} */}
+          <ShortcutsSection
+            onOpen={(shortcut) => void fetchShortcut(shortcut)}
+          />
+        )}
         {!activeShortcut &&
           (selectedElements.length > 0 || attachmentMode) &&
           !destinationMode &&

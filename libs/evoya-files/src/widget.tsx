@@ -31,6 +31,15 @@ export default function Widget({ initialPath, apiBaseUrl, csrfToken, isSuperuser
       if (isPreviewSupported(item.mime)) {
         setOpenFile(item as EvoyaFile);
       } else {
+        if (!item.path && item.download_url) {
+          fetch(item.download_url)
+            .then((response) => {
+              if (!response.ok) throw new Error('Download failed');
+              return response.blob();
+            })
+            .then((blob) => downloadBlob(blob, item.name));
+          return;
+        }
         const params = new URLSearchParams({ path: item.path, intent: 'download' });
         fetch(`${apiBaseUrl}/api/files/download/?${params.toString()}`)
           .then((response) => response.blob())

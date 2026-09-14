@@ -1,3 +1,5 @@
+import type { ShortcutKey } from '../types';
+
 export const buildFilesUrl = (
   apiBaseUrl: string,
   path: string,
@@ -8,23 +10,37 @@ export const buildFilesUrl = (
   return `${apiBaseUrl}/api/files/?${params.toString()}`;
 };
 
-export const buildShortcutUrl = (
-  apiBaseUrl: string,
-  shortcut: string,
-  cursor?: string | null
-) => {
-  const params = new URLSearchParams();
-  if (cursor) params.set('cursor', cursor);
-  const query = params.toString();
-  return `${apiBaseUrl}/api/files/shortcuts/${shortcut}/${query ? `?${query}` : ''}`;
+export const SHORTCUT_KEYS = ['generated', 'images', 'projects'] as const;
+
+export const SHORTCUT_ENDPOINTS: Record<ShortcutKey, string> = {
+  generated: 'generated',
+  images: 'images',
+  projects: 'projects'
 };
 
-export const SHORTCUT_KEYS = ['generated', 'images', 'projects'] as const;
+export const buildShortcutUrl = (
+  apiBaseUrl: string,
+  shortcut: ShortcutKey,
+  limit: number,
+  offset: number,
+  search?: string
+) => {
+  const endpoint = SHORTCUT_ENDPOINTS[shortcut];
+  if (!endpoint) throw new Error('Invalid shortcut key');
+
+  const params = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset)
+  });
+  const trimmedSearch = search?.trim();
+  if (trimmedSearch) params.set('search', trimmedSearch);
+
+  return `${apiBaseUrl}/api/files/${endpoint}/?${params.toString()}`;
+};
 
 export const isShortcutKey = (
   value?: string | null
-): value is (typeof SHORTCUT_KEYS)[number] =>
-  SHORTCUT_KEYS.includes(value as (typeof SHORTCUT_KEYS)[number]);
+): value is ShortcutKey => SHORTCUT_KEYS.includes(value as ShortcutKey);
 
 export const isRootPath = (path: string) =>
   path.replace(/^\/+|\/+$/g, '') === '';

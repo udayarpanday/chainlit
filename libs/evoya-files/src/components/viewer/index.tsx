@@ -46,28 +46,33 @@ export function ViewerWrapper({
 
   useEffect(() => {
     if (
+      !file.path ||
       file.mime.includes('text/')
       || file.mime.includes('application/json')
     ) {
-      setCanSave(true);
+      setCanSave(Boolean(file.path));
     } else {
       setCanSave(false);
     }
 
     setFileLoaded(false);
-    const previewParams = new URLSearchParams({
-      path: file.path,
-      intent: 'preview'
-    });
-    fetch(`${apiBaseUrl}/api/files/download/?${previewParams.toString()}`).then(async (response) => {
+    const previewParams = new URLSearchParams({ path: file.path, intent: 'preview' });
+    const contentUrl = !file.path && file.download_url
+      ? file.download_url
+      : `${apiBaseUrl}/api/files/download/?${previewParams.toString()}`;
+    fetch(contentUrl).then(async (response) => {
+      if (!response.ok) throw new Error('File preview failed');
       const blob = await response.blob();
       setBlobUrl(URL.createObjectURL(blob));
       const text = await blob.text();
       setContent(text);
       setOriginalContent(text);
       setFileLoaded(true);
+    }).catch((error) => {
+      console.error(error);
+      toast.error(t('evoyaFiles.common.load_error'));
     });
-    if (pathLoaded.length === 0) {
+    if (file.path && pathLoaded.length === 0) {
       const filePath = file.path.split('/');
       filePath.pop();
       fetchDirectory(filePath.join('/') + "/");
