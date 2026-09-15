@@ -1,3 +1,4 @@
+import { cn, hasMessage } from '@/lib/utils';
 import { useContext } from 'react';
 import { useRecoilValue } from 'recoil';
 
@@ -57,13 +58,9 @@ export default function ChatFooter({
             : 'justify-center flex-col'
         )}
       >
-        {temporaryChat ? (
-          <TemporaryChatNotice />
-        ) : (
-          <WaterMark />
-        )}
+        {temporaryChat ? <TemporaryChatNotice /> : <WaterMark />}
         {showDataProcessing ? (
-          <div className="absolute right-0 top-1/2 -translate-y-1/2">
+          <div className="ml-auto shrink-0">
             <DataProcessingPopover categories={dataProcessingCategories} />
           </div>
         ) : null}

@@ -1,10 +1,12 @@
-import { Eye, FileText, Image, Info, MessageSquare, Mic } from 'lucide-react';
+import { Eye, FileText, Globe2, Image, MessageSquare, Mic } from 'lucide-react';
 import type { ComponentType, SVGProps } from 'react';
 
-import type { EvoyaDataProcessingCategory } from '@chainlit/copilot/src/evoya/types';
+import type {
+  EvoyaDataProcessingCategory,
+  EvoyaDataProcessingRegion
+} from '@chainlit/copilot/src/evoya/types';
 
 import { useTranslation } from '@/components/i18n/Translator';
-import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
@@ -14,6 +16,7 @@ import {
 import ChFlag from '@/assets/ch.svg?react';
 import EuFlag from '@/assets/eu.svg?react';
 import UsFlag from '@/assets/us.svg?react';
+
 import { useIsMobile } from '@/hooks/use-mobile';
 
 type CategoryIcon = ComponentType<{ className?: string }>;
@@ -27,20 +30,35 @@ const categoryIcons: Record<string, CategoryIcon> = {
   voice_speech_to_text: Mic
 };
 
-const regionLabels: Record<EvoyaDataProcessingCategory['region'], string> = {
+const regionLabels: Record<EvoyaDataProcessingRegion, string> = {
   CH: 'Switzerland',
   EU: 'Europe',
-  US: 'US',
-  OTHER: 'n/a'
+  US: 'United States',
+  OTHER: 'Other'
 };
 
-const regionFlagIcons: Partial<
-  Record<EvoyaDataProcessingCategory['region'], FlagIcon>
-> = {
+const regionChipLabels: Record<EvoyaDataProcessingRegion, string> = {
+  CH: 'CH',
+  EU: 'EU',
+  US: 'US',
+  OTHER: 'Other'
+};
+
+const regionFlagIcons: Partial<Record<EvoyaDataProcessingRegion, FlagIcon>> = {
   CH: ChFlag,
   EU: EuFlag,
   US: UsFlag
 };
+
+const regionOrder: EvoyaDataProcessingRegion[] = ['CH', 'EU', 'US', 'OTHER'];
+
+export function getUniqueDataProcessingRegions(
+  categories: EvoyaDataProcessingCategory[]
+) {
+  const configuredRegions = new Set(categories.map(({ region }) => region));
+
+  return regionOrder.filter((region) => configuredRegions.has(region));
+}
 
 interface Props {
   categories: EvoyaDataProcessingCategory[];
@@ -49,23 +67,40 @@ interface Props {
 export default function DataProcessingPopover({ categories }: Props) {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
+  const uniqueRegions = getUniqueDataProcessingRegions(categories);
 
-  if (!categories.length) return null;
+  if (!uniqueRegions.length) return null;
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button
+        <button
           type="button"
-          variant="ghost"
-          aria-label={t('components.organisms.chat.dataProcessing.button')}
-          className="size-6 p-0 text-xs font-normal text-muted-foreground hover:text-foreground md:h-auto md:w-auto"
+          aria-label={`${t(
+            'components.organisms.chat.dataProcessing.button'
+          )}: ${uniqueRegions.map((region) => regionLabels[region]).join(', ')}`}
+          className="group inline-flex items-center gap-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          <Info className="!size-4 md:hidden" />
-          <span className="hidden md:inline">
-            {t('components.organisms.chat.dataProcessing.button')}
-          </span>
-        </Button>
+          {uniqueRegions.map((region) => {
+            const FlagIcon = regionFlagIcons[region];
+
+            return (
+              <span
+                key={region}
+                className="inline-flex h-6 items-center gap-1 rounded-full border bg-background px-1.5 text-[10px] font-medium leading-none text-muted-foreground shadow-sm transition-colors group-hover:bg-accent group-hover:text-accent-foreground"
+              >
+                {FlagIcon ? (
+                  <FlagIcon
+                    aria-hidden="true"
+                    className="h-3.5 w-[18px] rounded-[2px] object-cover"
+                  />
+                ) : (
+                  <Globe2 aria-hidden="true" className="!size-5" />
+                )}
+              </span>
+            );
+          })}
+        </button>
       </PopoverTrigger>
       <PopoverContent
         align="end"
@@ -85,17 +120,17 @@ export default function DataProcessingPopover({ categories }: Props) {
           {t('components.organisms.chat.dataProcessing.title')}
         </div>
         <div className="space-y-1 p-2">
-          {categories.map(({ key, region }) => {
+          {categories.map(({ key, region }, index) => {
             const Icon = categoryIcons[key] ?? MessageSquare;
             const FlagIcon = regionFlagIcons[region];
-            const regionLabel = regionLabels[region] ?? 'n/a';
+            const regionLabel = regionLabels[region];
             const translatedLabel = t(
               `components.organisms.chat.dataProcessing.categories.${key}`
             );
 
             return (
               <div
-                key={key}
+                key={`${key}-${index}`}
                 className="flex min-h-9 items-center gap-3 rounded-md px-2 text-sm"
               >
                 <Icon className="!size-4 shrink-0 text-muted-foreground" />
@@ -109,7 +144,9 @@ export default function DataProcessingPopover({ categories }: Props) {
                   {FlagIcon ? (
                     <FlagIcon className="h-4 w-5 rounded-[2px] object-cover" />
                   ) : (
-                    'N/A'
+                    <span className="inline-flex items-center gap-1 text-[10px]">
+                      <Globe2 aria-hidden="true" className="!size-5" />
+                    </span>
                   )}
                 </span>
               </div>
