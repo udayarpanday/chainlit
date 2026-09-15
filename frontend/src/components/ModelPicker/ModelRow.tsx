@@ -1,6 +1,12 @@
 import { cn } from '@/lib/utils';
-import { Check, Globe2, LoaderCircle, TriangleAlert } from 'lucide-react';
-import type { KeyboardEvent, MouseEvent, PointerEvent } from 'react';
+import { Check, LoaderCircle, TriangleAlert } from 'lucide-react';
+import type {
+  ComponentType,
+  KeyboardEvent,
+  MouseEvent,
+  PointerEvent,
+  SVGProps
+} from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type {
@@ -28,6 +34,10 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip';
 
+import ChFlag from '@/assets/ch.svg?react';
+import EuFlag from '@/assets/eu.svg?react';
+import UsFlag from '@/assets/us.svg?react';
+
 import { getEffortTranslationKey, normalizeMaxTokenValue } from './reasoning';
 
 interface Props {
@@ -41,10 +51,12 @@ interface Props {
   onReasoningCommit: (reasoning: ModelReasoningSelection) => void;
 }
 
-const regionSymbols: Record<string, string> = {
-  CH: '🇨🇭',
-  EU: '🇪🇺',
-  US: '🇺🇸'
+type FlagIcon = ComponentType<SVGProps<SVGSVGElement>>;
+
+const regionFlagIcons: Record<string, FlagIcon> = {
+  SWITZERLAND: ChFlag,
+  EUROPE: EuFlag,
+  'UNITED STATES': UsFlag
 };
 
 const providerColors = [
@@ -88,6 +100,7 @@ export default function ModelRow({
 }: Props) {
   const { t } = useTranslation();
   const region = model.dataLocation?.toUpperCase();
+  const FlagIcon = region ? regionFlagIcons[region] : undefined;
   const regionLabel = region
     ? t('components.molecules.modelPicker.dataRegion', { region })
     : undefined;
@@ -150,14 +163,16 @@ export default function ModelRow({
                 <TooltipTrigger asChild>
                   <span
                     aria-label={regionLabel}
-                    className="inline-flex shrink-0 items-center gap-1"
+                    className="flex min-w-5 shrink-0 items-center justify-center text-xs leading-none"
                   >
-                    {regionSymbols[region] ? (
-                      <span aria-hidden="true">{regionSymbols[region]}</span>
+                    {FlagIcon ? (
+                      <FlagIcon
+                        aria-hidden="true"
+                        className="h-4 w-5 rounded-[2px] object-cover"
+                      />
                     ) : (
-                      <Globe2 aria-hidden="true" className="size-3" />
+                      'N/A'
                     )}
-                    <span>{region}</span>
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>{regionLabel}</TooltipContent>
