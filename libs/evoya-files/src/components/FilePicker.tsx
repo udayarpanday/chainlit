@@ -51,7 +51,11 @@ import FilePickerItemComponent, { PickerCheckedState } from './FilePickerItem';
 import FileSearch from './FileSearch';
 import FolderBreadcrumbs from './FolderBreadcrumbs';
 import RecentFilesSection from './RecentFilesSection';
-import ShortcutFilesView from './ShortcutFilesView';
+import ShortcutFilesView, {
+  ImageLibraryItem,
+  type ImageViewMode,
+  ImageViewToggle
+} from './ShortcutFilesView';
 import ShortcutsSection from './ShortcutsSection';
 import Uploader from './Uploader';
 
@@ -78,6 +82,11 @@ type Props = {
 
 const selectionKey = (path: string) => path.replace(/^\/+|\/+$/g, '');
 const SHORTCUT_PAGE_SIZE = 50;
+const isInsideImagesDirectory = (path: string) =>
+  path
+    .split(/[\\/]+/)
+    .filter(Boolean)
+    .some((segment) => segment.toLowerCase() === 'images');
 
 export default function FilePicker({
   initialPath,
@@ -128,8 +137,25 @@ export default function FilePicker({
   const [isLoading, setIsLoading] = useState(true);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [showBulkDeleteAction, setShowBulkDeleteAction] = useState(false);
+  const [imageDirectoryView, setImageDirectoryView] =
+    useState<ImageViewMode>('library');
   const isSelectionControlled =
     selectedItemPaths !== undefined && onItemSelectionChange !== undefined;
+  const directoryContainsOnlyImageFiles =
+    pathData.items.length > 0 &&
+    pathData.items.every(
+      (item) => 'size' in item && item.mime.startsWith('image/')
+    );
+  const showImageDirectoryView =
+    !activeShortcut &&
+    !isSearch &&
+    !compact &&
+    !attachmentMode &&
+    !destinationMode &&
+    !singleMode &&
+    directoryContainsOnlyImageFiles &&
+    isInsideImagesDirectory(currentPath);
+  const visibleDirectoryItems = isSearch ? searchItems : pathData.items;
 
   const fetchDirectory = async (path: string) => {
     setIsLoading(true);
@@ -685,7 +711,7 @@ export default function FilePicker({
       )}
       <div
         className={cn(
-          'relative flex flex-col overflow-y-auto',
+          'relative flex min-h-0 flex-col overflow-y-auto',
           compact ? 'max-h-[300px]' : 'h-full'
         )}
       >
@@ -718,7 +744,10 @@ export default function FilePicker({
         {!activeShortcut && (
           <div
             className={cn(
-              'rounded-lg border min-h-24 relative overflow-hidden flex flex-shrink-0',
+              'relative flex flex-col overflow-hidden rounded-lg border',
+              showImageDirectoryView
+                ? 'min-h-0 flex-1'
+                : 'min-h-24 flex-shrink-0',
               isDragActive && hasUpload
                 ? 'bg-primary/20 [.contents>div]:bg-primary/20!'
                 : 'bg-white'
@@ -726,140 +755,186 @@ export default function FilePicker({
             {...(hasUpload ? getRootProps() : {})}
           >
             {hasUpload && <input {...getInputProps()} />}
-            <ScrollArea className="w-full" type="auto">
-              <div className="pb-2 px-4">
+            {showImageDirectoryView && (
+              <div className="z-10 flex shrink-0 justify-end border-b bg-white p-2">
+                <ImageViewToggle
+                  value={imageDirectoryView}
+                  onChange={setImageDirectoryView}
+                />
+              </div>
+            )}
+            {showImageDirectoryView && imageDirectoryView === 'library' ? (
+              <div className="min-h-0 flex-1 overflow-y-auto">
                 {(isLoading || isUploading) && (
-                  <div className="absolute rounded-lg top-0 right-0 bottom-0 left-0 bg-white/50 flex items-center justify-center z-10">
+                  <div className="absolute inset-0 z-20 flex items-center justify-center rounded-lg bg-white/50">
                     <LoaderCircle className="animate-spin" />
                   </div>
                 )}
-                <div
-                  className={cn(
-                    'grid',
-                    showActions
-                      ? compact || attachmentMode || destinationMode
-                        ? 'grid-cols-[auto_max-content]'
-                        : 'grid-cols-[max-content_auto_max-content] md:grid-cols-[max-content_auto_max-content_max-content_max-content_max-content]'
-                      : singleMode
-                        ? compact || attachmentMode || destinationMode
-                          ? 'grid-cols-[auto]'
-                          : 'grid-cols-[auto] md:grid-cols-[auto_max-content_max-content_max-content]'
-                        : compact || attachmentMode || destinationMode
-                          ? 'grid-cols-[max-content_auto]'
-                          : 'grid-cols-[max-content_auto] md:grid-cols-[max-content_auto_max-content_max-content_max-content]'
-                  )}
-                >
-                  <div className="contents text-xs">
-                    {!singleMode && (
-                      <div className="flex items-center p-2 pt-4 sticky top-0 bg-white">
-                        {multiselect && (
-                          <Checkbox
-                            checked={isLoading ? false : headerCheckedState}
-                            disabled={selectableItemsLength === 0}
-                            onCheckedChange={(value) =>
-                              onCheckedChange(value === true)
-                            }
-                          />
-                        )}
-                      </div>
-                    )}
-                    <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
-                      <Translator path="evoyaFiles.headers.name" />
-                    </div>
-                    {!compact && !attachmentMode && !destinationMode && (
-                      <>
-                        <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white hidden md:block">
-                          <Translator path="evoyaFiles.headers.owner" />
-                        </div>
-                        <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white hidden md:block">
-                          <Translator path="evoyaFiles.headers.modified" />
-                        </div>
-                        <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white hidden md:block">
-                          <Translator path="evoyaFiles.headers.size" />
-                        </div>
-                      </>
-                    )}
-                    {showActions && (
-                      <div className="sticky top-0 bg-white"></div>
-                    )}
-                  </div>
-                  {!isSearch &&
-                    pathData.items.length > 0 &&
-                    pathData.items.map((item) => (
-                      <FilePickerItemComponent
-                        item={item}
-                        selected={
-                          isSelectionControlled
-                            ? getControlledSelectionState(item)
-                            : selectedElements.includes(item.id)
-                        }
-                        setSelectedState={(value) =>
-                          setItemSelected(item, value)
-                        }
-                        onClick={() => itemClick(item)}
-                        showActions={showActions}
-                        singleMode={singleMode}
-                        attachmentMode={attachmentMode}
-                        destinationMode={destinationMode}
-                        compact={compact}
-                        onFileUpload={onFileUpload}
-                        hasUpload={hasUpload}
-                        deleteItems={deleteItems}
-                        moveItem={moveItem}
-                        renameItem={renameItem}
-                        downloadItems={downloadItems}
-                      />
-                    ))}
-                  {isSearch &&
-                    searchItems.length > 0 &&
-                    searchItems.map((item) => (
-                      <FilePickerItemComponent
-                        item={item}
-                        selected={
-                          isSelectionControlled
-                            ? getControlledSelectionState(item)
-                            : selectedElements.includes(item.id)
-                        }
-                        setSelectedState={(value) =>
-                          setItemSelected(item, value)
-                        }
-                        onClick={() => itemClick(item)}
-                        showActions={showActions}
-                        singleMode={singleMode}
-                        attachmentMode={attachmentMode}
-                        compact={compact}
-                        onFileUpload={onFileUpload}
-                        hasUpload={hasUpload}
-                        deleteItems={deleteItems}
-                        moveItem={moveItem}
-                        renameItem={renameItem}
-                        downloadItems={downloadItems}
-                      />
-                    ))}
-                  {((!isSearch && pathData.items.length === 0 && !isLoading) ||
-                    (isSearch && !isLoading && searchItems.length === 0)) && (
-                    <div className="col-span-full p-2 flex justify-center text-sm text-gray-400">
-                      <Translator path="evoyaFiles.common.no_entries" />
-                    </div>
-                  )}
-                  {isSearch && searchTruncated && !isLoading && (
-                    <div className="col-span-full border-t p-2 text-center text-sm text-amber-700">
-                      <Translator path="evoyaFiles.common.search_truncated" />
-                    </div>
-                  )}
+                <div className="grid content-start grid-cols-2 gap-3 p-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                  {visibleDirectoryItems.map((item) => (
+                    <ImageLibraryItem
+                      key={item.id}
+                      item={item}
+                      onOpen={(selectedItem) =>
+                        itemClick(selectedItem as FilePickerItem)
+                      }
+                      onDownload={(selectedItem) =>
+                        downloadItems([selectedItem as FilePickerItem])
+                      }
+                      onRename={(selectedItem, name) =>
+                        renameItem(selectedItem as FilePickerItem, name)
+                      }
+                      onMove={(selectedItem, destination) =>
+                        moveItem(selectedItem as FilePickerItem, destination)
+                      }
+                      onDelete={(selectedItem) =>
+                        deleteItems([selectedItem as FilePickerItem])
+                      }
+                    />
+                  ))}
                 </div>
               </div>
-            </ScrollArea>
+            ) : (
+              <ScrollArea
+                className={cn(
+                  'w-full',
+                  showImageDirectoryView && 'min-h-0 flex-1'
+                )}
+                type="auto"
+              >
+                <div className="pb-2 px-4">
+                  {(isLoading || isUploading) && (
+                    <div className="absolute rounded-lg top-0 right-0 bottom-0 left-0 bg-white/50 flex items-center justify-center z-10">
+                      <LoaderCircle className="animate-spin" />
+                    </div>
+                  )}
+                  <div
+                    className={cn(
+                      'grid',
+                      showActions
+                        ? compact || attachmentMode || destinationMode
+                          ? 'grid-cols-[auto_max-content]'
+                          : 'grid-cols-[max-content_auto_max-content] md:grid-cols-[max-content_auto_max-content_max-content_max-content_max-content]'
+                        : singleMode
+                          ? compact || attachmentMode || destinationMode
+                            ? 'grid-cols-[auto]'
+                            : 'grid-cols-[auto] md:grid-cols-[auto_max-content_max-content_max-content]'
+                          : compact || attachmentMode || destinationMode
+                            ? 'grid-cols-[max-content_auto]'
+                            : 'grid-cols-[max-content_auto] md:grid-cols-[max-content_auto_max-content_max-content_max-content]'
+                    )}
+                  >
+                    <div className="contents text-xs">
+                      {!singleMode && (
+                        <div className="flex items-center p-2 pt-4 sticky top-0 bg-white">
+                          {multiselect && (
+                            <Checkbox
+                              checked={isLoading ? false : headerCheckedState}
+                              disabled={selectableItemsLength === 0}
+                              onCheckedChange={(value) =>
+                                onCheckedChange(value === true)
+                              }
+                            />
+                          )}
+                        </div>
+                      )}
+                      <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white">
+                        <Translator path="evoyaFiles.headers.name" />
+                      </div>
+                      {!compact && !attachmentMode && !destinationMode && (
+                        <>
+                          <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white hidden md:block">
+                            <Translator path="evoyaFiles.headers.owner" />
+                          </div>
+                          <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white hidden md:block">
+                            <Translator path="evoyaFiles.headers.modified" />
+                          </div>
+                          <div className="p-2 pt-4 flex items-center text-gray-400 font-semibold sticky top-0 bg-white hidden md:block">
+                            <Translator path="evoyaFiles.headers.size" />
+                          </div>
+                        </>
+                      )}
+                      {showActions && (
+                        <div className="sticky top-0 bg-white"></div>
+                      )}
+                    </div>
+                    {!isSearch &&
+                      pathData.items.length > 0 &&
+                      pathData.items.map((item) => (
+                        <FilePickerItemComponent
+                          item={item}
+                          selected={
+                            isSelectionControlled
+                              ? getControlledSelectionState(item)
+                              : selectedElements.includes(item.id)
+                          }
+                          setSelectedState={(value) =>
+                            setItemSelected(item, value)
+                          }
+                          onClick={() => itemClick(item)}
+                          showActions={showActions}
+                          singleMode={singleMode}
+                          attachmentMode={attachmentMode}
+                          destinationMode={destinationMode}
+                          compact={compact}
+                          onFileUpload={onFileUpload}
+                          hasUpload={hasUpload}
+                          deleteItems={deleteItems}
+                          moveItem={moveItem}
+                          renameItem={renameItem}
+                          downloadItems={downloadItems}
+                        />
+                      ))}
+                    {isSearch &&
+                      searchItems.length > 0 &&
+                      searchItems.map((item) => (
+                        <FilePickerItemComponent
+                          item={item}
+                          selected={
+                            isSelectionControlled
+                              ? getControlledSelectionState(item)
+                              : selectedElements.includes(item.id)
+                          }
+                          setSelectedState={(value) =>
+                            setItemSelected(item, value)
+                          }
+                          onClick={() => itemClick(item)}
+                          showActions={showActions}
+                          singleMode={singleMode}
+                          attachmentMode={attachmentMode}
+                          compact={compact}
+                          onFileUpload={onFileUpload}
+                          hasUpload={hasUpload}
+                          deleteItems={deleteItems}
+                          moveItem={moveItem}
+                          renameItem={renameItem}
+                          downloadItems={downloadItems}
+                        />
+                      ))}
+                    {((!isSearch &&
+                      pathData.items.length === 0 &&
+                      !isLoading) ||
+                      (isSearch && !isLoading && searchItems.length === 0)) && (
+                      <div className="col-span-full p-2 flex justify-center text-sm text-gray-400">
+                        <Translator path="evoyaFiles.common.no_entries" />
+                      </div>
+                    )}
+                    {isSearch && searchTruncated && !isLoading && (
+                      <div className="col-span-full border-t p-2 text-center text-sm text-amber-700">
+                        <Translator path="evoyaFiles.common.search_truncated" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </ScrollArea>
+            )}
           </div>
         )}
         {activeShortcut && (
           <ShortcutFilesView
             shortcut={activeShortcut}
             items={shortcutItems}
-            hasMore={hasMoreShortcutItems(
-              shortcutFetchedCount,
-              shortcutCount
-            )}
+            hasMore={hasMoreShortcutItems(shortcutFetchedCount, shortcutCount)}
             isLoading={isLoading}
             hasError={Boolean(shortcutError)}
             onOpen={shortcutItemClick}
@@ -883,19 +958,20 @@ export default function FilePicker({
             onDelete={(item) => deleteItems([item as FilePickerItem])}
           />
         )}
-        {!activeShortcut && shouldShowRecentFiles({
-          path: currentPath,
-          isSearch,
-          pickerType,
-          compact,
-          attachmentMode,
-          destinationMode,
-          singleMode
-        }) && (
-          <ShortcutsSection
-            onOpen={(shortcut) => void fetchShortcut(shortcut)}
-          />
-        )}
+        {!activeShortcut &&
+          shouldShowRecentFiles({
+            path: currentPath,
+            isSearch,
+            pickerType,
+            compact,
+            attachmentMode,
+            destinationMode,
+            singleMode
+          }) && (
+            <ShortcutsSection
+              onOpen={(shortcut) => void fetchShortcut(shortcut)}
+            />
+          )}
         {!activeShortcut &&
           (selectedElements.length > 0 || attachmentMode) &&
           !destinationMode &&
