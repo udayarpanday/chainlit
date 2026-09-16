@@ -233,6 +233,11 @@ export default function ShortcutFilesView({
                   <th className="px-4 py-3 font-semibold">
                     <Translator path="evoyaFiles.headers.size" />
                   </th>
+                  <th className="w-16 px-4 py-3">
+                    <span className="sr-only">
+                      <Translator path="evoyaFiles.headers.actions" />
+                    </span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -252,24 +257,6 @@ export default function ShortcutFilesView({
                           <span className="ml-2 max-w-[320px] truncate">
                             {item.name}
                           </span>
-                          {'size' in item && (
-                            <div
-                              className="ml-auto"
-                              onClick={stopPropagation}
-                              onKeyDown={stopPropagation}
-                            >
-                              <FileItemActions
-                                item={item as FilePickerItem}
-                                mode="menu-only"
-                                downloadItems={() => onDownload(item)}
-                                renameItem={(_, name) => onRename(item, name)}
-                                moveItem={(_, destination) =>
-                                  onMove(item, destination)
-                                }
-                                deleteItems={() => onDelete(item)}
-                              />
-                            </div>
-                          )}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-gray-500">{item.owner}</td>
@@ -288,6 +275,24 @@ export default function ShortcutFilesView({
                       </td>
                       <td className="px-4 py-3 text-gray-500">
                         {'size' in item ? getSizeDisplay(item.size) : '--'}
+                      </td>
+                      <td
+                        className="w-16 px-4 py-3"
+                        onClick={stopPropagation}
+                        onKeyDown={stopPropagation}
+                      >
+                        {'size' in item && (
+                          <FileItemActions
+                            item={item as FilePickerItem}
+                            mode="menu-only"
+                            downloadItems={() => onDownload(item)}
+                            renameItem={(_, name) => onRename(item, name)}
+                            moveItem={(_, destination) =>
+                              onMove(item, destination)
+                            }
+                            deleteItems={() => onDelete(item)}
+                          />
+                        )}
                       </td>
                     </tr>
                   );
