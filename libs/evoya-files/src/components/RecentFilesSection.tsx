@@ -113,17 +113,17 @@ export default function RecentFilesSection({
                 onKeyDown={(event) => activateRow(event, file)}
                 aria-label={t('evoyaFiles.actions.open_recent_file.label', { name: file.name })}
               >
-                <td className="px-5 py-4">
+                <td className="px-5 py-2">
                   <span className="flex min-w-0 items-center">
                     {getItemIcon(file)}
                     <span className="ml-2 max-w-[280px] truncate">{file.name}</span>
                   </span>
                 </td>
-                <td className="whitespace-nowrap px-5 py-4 text-gray-500">
+                <td className="whitespace-nowrap px-5 py-2 text-gray-500">
                   {file.modified ? getDateDisplay(file.modified) : '—'}
                 </td>
-                <td className="px-5 py-4 text-gray-500">{file.owner}</td>
-                <td className="px-5 py-4">
+                <td className="px-5 py-2 text-gray-500">{file.owner}</td>
+                <td className="px-5 py-2">
                   {file.location ? (
                     <Button
                       type="button"
@@ -142,7 +142,7 @@ export default function RecentFilesSection({
                     <span className="text-gray-400">—</span>
                   )}
                 </td>
-                <td className="px-5 py-4" onClick={(event) => event.stopPropagation()}>
+                <td className="px-5 py-2" onClick={(event) => event.stopPropagation()}>
                   <FileItemActions
                     item={file as FilePickerItem}
                     mode="menu-only"
