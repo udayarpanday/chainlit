@@ -270,6 +270,12 @@ export default function ConfigurationMenu({
   const [hoveredCommand, setHoveredCommand] = useState<PromptCommand | null>(
     null
   );
+  const modelCatalogRequestRef = useRef<{
+    controller: AbortController;
+    endpoint: string;
+    token?: string;
+    promise: Promise<boolean>;
+  } | null>(null);
   const promptInputRef = useRef<HTMLInputElement>(null);
   const autoEnabledAgentRef = useRef<string | undefined>();
 
@@ -290,44 +296,57 @@ export default function ConfigurationMenu({
     ? modelCatalog?.find((model) => model.id === activeModel.modelId)
     : undefined;
   const configurationDisabled = disabled;
+  const baseUrl = evoya?.api?.baseUrl?.replace(/\/$/, '');
+  const modelListEndpoint = baseUrl
+    ? `${baseUrl}/api/model/list/`
+    : apiClient.buildEndpoint('/api/model/list/');
 
-  useEffect(() => {
-    if (modelCatalog?.length) return;
-
-    const controller = new AbortController();
-    const baseUrl = evoya?.api?.baseUrl?.replace(/\/$/, '');
-    const endpoint = baseUrl
-      ? `${baseUrl}/api/model/list/`
-      : apiClient.buildEndpoint('/api/model/list/');
+  const refreshModelCatalog = useCallback(async (): Promise<boolean> => {
     const token =
       accessToken ??
       getScopedSessionStorageItem('chainlit_token') ??
-      getScopedSessionStorageItem('chainlit_token_iframe');
+      getScopedSessionStorageItem('chainlit_token_iframe') ??
+      undefined;
+    const pending = modelCatalogRequestRef.current;
+    if (
+      pending &&
+      !pending.controller.signal.aborted &&
+      pending.endpoint === modelListEndpoint &&
+      pending.token === token
+    ) {
+      return pending.promise;
+    }
+    pending?.controller.abort();
+    const controller = new AbortController();
 
-    void fetch(endpoint, {
-      credentials: 'include',
-      signal: controller.signal,
-      headers: {
-        Accept: 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      }
-    })
-      .then(async (response) => {
+    const promise = (async () => {
+      try {
+        const response = await fetch(modelListEndpoint, {
+          credentials: 'include',
+          cache: 'no-store',
+          signal: controller.signal,
+          headers: {
+            Accept: 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          }
+        });
         if (!response.ok) {
           throw new Error(`Model catalog request failed (${response.status})`);
         }
-        return response.json() as Promise<unknown>;
-      })
-      .then((payload) => {
-        const normalizedModels = normalizeModelCatalogResponse(payload);
+        const normalizedModels = normalizeModelCatalogResponse(
+          (await response.json()) as unknown
+        );
+        if (controller.signal.aborted) return false;
+
         if (!normalizedModels.length) {
+          setModelCatalog([]);
+          setActiveModel(undefined);
           setCanOverrideModel(false);
-          return;
+          return false;
         }
 
         const defaultModel =
           normalizedModels.find((model) => model.isDefault) ??
-          normalizedModels.find((model) => model.id === activeModel?.modelId) ??
           normalizedModels[0];
         const models = normalizedModels
           .map((model) => ({
@@ -341,23 +360,60 @@ export default function ConfigurationMenu({
         setActiveModel((current) =>
           current && models.some((model) => model.id === current.modelId)
             ? current
-            : { modelId: defaultModel.id }
+            : undefined
         );
         setCanOverrideModel(true);
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
+        return true;
+      } catch (error) {
+        if (controller.signal.aborted) return false;
         setCanOverrideModel(false);
         console.error('Unable to load model catalog', error);
-      });
-
-    return () => controller.abort();
+        return false;
+      } finally {
+        if (modelCatalogRequestRef.current?.controller === controller) {
+          modelCatalogRequestRef.current = null;
+        }
+      }
+    })();
+    modelCatalogRequestRef.current = {
+      controller,
+      endpoint: modelListEndpoint,
+      token,
+      promise
+    };
+    return promise;
   }, [
     accessToken,
-    activeModel?.modelId,
-    apiClient,
-    evoya?.api?.baseUrl,
-    modelCatalog?.length,
+    modelListEndpoint,
+    setActiveModel,
+    setCanOverrideModel,
+    setModelCatalog
+  ]);
+
+  useEffect(() => {
+    setModelCatalog([]);
+    setActiveModel(undefined);
+    setCanOverrideModel(false);
+    void refreshModelCatalog();
+
+    const onFocus = () => {
+      void refreshModelCatalog();
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') onFocus();
+    };
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('chainlit:model-catalog-received', onFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('chainlit:model-catalog-received', onFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      modelCatalogRequestRef.current?.controller.abort();
+    };
+  }, [
+    evoya?.chat_uuid,
+    refreshModelCatalog,
     setActiveModel,
     setCanOverrideModel,
     setModelCatalog
@@ -571,7 +627,9 @@ export default function ConfigurationMenu({
   const handleOpenModelPicker = () => {
     dismissConfigurationTooltip();
     setOpen(false);
-    setModelPickerOpen(true);
+    void refreshModelCatalog().then((hasModels) => {
+      if (hasModels) setModelPickerOpen(true);
+    });
   };
 
   if (!hasActions) return null;
