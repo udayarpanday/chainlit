@@ -2,7 +2,9 @@ import { useCallback, useContext } from 'react';
 import { useRecoilValue, useResetRecoilState, useSetRecoilState } from 'recoil';
 import {
   actionState,
+  activeModelOverrideState,
   askUserState,
+  canOverrideModelState,
   chatArchived,
   chatSettingsInputsState,
   chatSettingsValueState,
@@ -12,6 +14,7 @@ import {
   firstUserInteraction,
   loadingState,
   messagesState,
+  modelCatalogState,
   sessionIdState,
   sessionState,
   sideViewState,
@@ -20,7 +23,7 @@ import {
   threadIdToResumeState,
   tokenCountState
 } from 'src/state';
-import { IFileRef, IEvoyaFileRef, IStep } from 'src/types';
+import { IEvoyaFileRef, IFileRef, IStep } from 'src/types';
 import { addMessage } from 'src/utils/message';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -40,6 +43,11 @@ const useChatInteract = () => {
   const resetChatArchived = useResetRecoilState(chatArchived);
   const resetSession = useResetRecoilState(sessionState);
   const resetTemporaryChat = useResetRecoilState(temporaryChatState);
+  const resetModelCatalog = useResetRecoilState(modelCatalogState);
+  const resetActiveModelOverride = useResetRecoilState(
+    activeModelOverrideState
+  );
+  const resetCanOverrideModel = useResetRecoilState(canOverrideModelState);
 
   const setFirstUserInteraction = useSetRecoilState(firstUserInteraction);
   const setLoading = useSetRecoilState(loadingState);
@@ -69,6 +77,9 @@ const useChatInteract = () => {
     resetChatSettingsValue();
     resetChatArchived();
     resetTemporaryChat();
+    resetModelCatalog();
+    resetActiveModelOverride();
+    resetCanOverrideModel();
     setSideView(undefined);
     setCurrentThreadId(undefined);
   }, [session]);

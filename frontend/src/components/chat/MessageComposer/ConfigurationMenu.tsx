@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import {
+  Brain,
   Eye,
   EyeOff,
   FilePen,
@@ -21,12 +22,22 @@ import {
   useState
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRecoilValue } from 'recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 
 import { WidgetContext } from '@chainlit/copilot/src/context';
 import { usePrivacyShield } from '@chainlit/copilot/src/evoya/privacyShield/usePrivacyShield';
-import { ICommand, commandsState } from '@chainlit/react-client';
+import {
+  ChainlitContext,
+  ICommand,
+  activeModelOverrideState,
+  canOverrideModelState,
+  commandsState,
+  getScopedSessionStorageItem,
+  modelCatalogState
+} from '@chainlit/react-client';
 
+import ModelPickerModal from '@/components/ModelPicker/ModelPickerModal';
+import { normalizeModelCatalogResponse } from '@/components/ModelPicker/catalog';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -225,8 +236,15 @@ export default function ConfigurationMenu({
   onCommandSelect
 }: Props) {
   const { t } = useTranslation();
-  const { evoya } = useContext(WidgetContext);
+  const apiClient = useContext(ChainlitContext);
+  const { accessToken, evoya } = useContext(WidgetContext);
   const commands = useRecoilValue(commandsState) as PromptCommand[];
+  const modelCatalog = useRecoilValue(modelCatalogState);
+  const activeModel = useRecoilValue(activeModelOverrideState);
+  const canOverrideModel = useRecoilValue(canOverrideModelState);
+  const setModelCatalog = useSetRecoilState(modelCatalogState);
+  const setActiveModel = useSetRecoilState(activeModelOverrideState);
+  const setCanOverrideModel = useSetRecoilState(canOverrideModelState);
   const isMobile = useIsMobile();
   const {
     enabled: privacyEnabled,
@@ -236,6 +254,7 @@ export default function ConfigurationMenu({
     sections
   } = usePrivacyShield();
   const [open, setOpen] = useState(false);
+  const [modelPickerOpen, setModelPickerOpen] = useState(false);
   const [configurationTooltipOpen, setConfigurationTooltipOpen] =
     useState(false);
   const [panel, setPanel] = useState<Panel>('menu');
@@ -251,6 +270,12 @@ export default function ConfigurationMenu({
   const [hoveredCommand, setHoveredCommand] = useState<PromptCommand | null>(
     null
   );
+  const modelCatalogRequestRef = useRef<{
+    controller: AbortController;
+    endpoint: string;
+    token?: string;
+    promise: Promise<boolean>;
+  } | null>(null);
   const promptInputRef = useRef<HTMLInputElement>(null);
   const autoEnabledAgentRef = useRef<string | undefined>();
 
@@ -259,10 +284,140 @@ export default function ConfigurationMenu({
   const hasProjects = isDashboard && isProjectAccessible;
   const hasCreator = !!evoya?.evoyaCreator?.enabled;
   const privacyShieldConfig = evoya?.api?.privacyShield as
-    | PrivacyShieldConfig
-    | undefined;
+    PrivacyShieldConfig | undefined;
   const hasPrivacy = !!privacyShieldConfig?.enabled;
-  const hasActions = hasPrompts || hasProjects || hasCreator || hasPrivacy;
+  const hasModelPicker = canOverrideModel && Boolean(modelCatalog?.length);
+  const hasActions =
+    hasModelPicker || hasPrompts || hasProjects || hasCreator || hasPrivacy;
+  const activeModelName =
+    modelCatalog?.find((model) => model.id === activeModel?.modelId)?.name ??
+    modelCatalog?.find((model) => model.isDefault)?.name;
+  const selectedSessionModel = activeModel?.key
+    ? modelCatalog?.find((model) => model.id === activeModel.modelId)
+    : undefined;
+  const configurationDisabled = disabled;
+  const baseUrl = evoya?.api?.baseUrl?.replace(/\/$/, '');
+  const modelListEndpoint = baseUrl
+    ? `${baseUrl}/api/model/list/`
+    : apiClient.buildEndpoint('/api/model/list/');
+
+  const refreshModelCatalog = useCallback(async (): Promise<boolean> => {
+    const token =
+      accessToken ??
+      getScopedSessionStorageItem('chainlit_token') ??
+      getScopedSessionStorageItem('chainlit_token_iframe') ??
+      undefined;
+    const pending = modelCatalogRequestRef.current;
+    if (
+      pending &&
+      !pending.controller.signal.aborted &&
+      pending.endpoint === modelListEndpoint &&
+      pending.token === token
+    ) {
+      return pending.promise;
+    }
+    pending?.controller.abort();
+    const controller = new AbortController();
+
+    const promise = (async () => {
+      try {
+        const response = await fetch(modelListEndpoint, {
+          credentials: 'include',
+          cache: 'no-store',
+          signal: controller.signal,
+          headers: {
+            Accept: 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          }
+        });
+        if (!response.ok) {
+          throw new Error(`Model catalog request failed (${response.status})`);
+        }
+        const normalizedModels = normalizeModelCatalogResponse(
+          (await response.json()) as unknown
+        );
+        if (controller.signal.aborted) return false;
+
+        if (!normalizedModels.length) {
+          setModelCatalog([]);
+          setActiveModel(undefined);
+          setCanOverrideModel(false);
+          return false;
+        }
+
+        const defaultModel =
+          normalizedModels.find((model) => model.isDefault) ??
+          normalizedModels[0];
+        const models = normalizedModels
+          .map((model) => ({
+            ...model,
+            isDefault: model.id === defaultModel.id
+          }))
+          .sort(
+            (left, right) => Number(right.isDefault) - Number(left.isDefault)
+          );
+        setModelCatalog(models);
+        setActiveModel((current) =>
+          current && models.some((model) => model.id === current.modelId)
+            ? current
+            : undefined
+        );
+        setCanOverrideModel(true);
+        return true;
+      } catch (error) {
+        if (controller.signal.aborted) return false;
+        setCanOverrideModel(false);
+        console.error('Unable to load model catalog', error);
+        return false;
+      } finally {
+        if (modelCatalogRequestRef.current?.controller === controller) {
+          modelCatalogRequestRef.current = null;
+        }
+      }
+    })();
+    modelCatalogRequestRef.current = {
+      controller,
+      endpoint: modelListEndpoint,
+      token,
+      promise
+    };
+    return promise;
+  }, [
+    accessToken,
+    modelListEndpoint,
+    setActiveModel,
+    setCanOverrideModel,
+    setModelCatalog
+  ]);
+
+  useEffect(() => {
+    setModelCatalog([]);
+    setActiveModel(undefined);
+    setCanOverrideModel(false);
+    void refreshModelCatalog();
+
+    const onFocus = () => {
+      void refreshModelCatalog();
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') onFocus();
+    };
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('chainlit:model-catalog-received', onFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('chainlit:model-catalog-received', onFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      modelCatalogRequestRef.current?.controller.abort();
+    };
+  }, [
+    evoya?.chat_uuid,
+    refreshModelCatalog,
+    setActiveModel,
+    setCanOverrideModel,
+    setModelCatalog
+  ]);
 
   const syncProjectsFromBridge = useCallback(() => {
     const untitledProject = t(
@@ -336,6 +491,10 @@ export default function ConfigurationMenu({
 
     window.setTimeout(() => promptInputRef.current?.focus(), 100);
   }, [open, panel]);
+
+  useEffect(() => {
+    if (!hasModelPicker) setModelPickerOpen(false);
+  }, [hasModelPicker]);
 
   useEffect(() => {
     const autoEnable = privacyShieldConfig?.autoEnable;
@@ -465,6 +624,14 @@ export default function ConfigurationMenu({
     setOpen(false);
   };
 
+  const handleOpenModelPicker = () => {
+    dismissConfigurationTooltip();
+    setOpen(false);
+    void refreshModelCatalog().then((hasModels) => {
+      if (hasModels) setModelPickerOpen(true);
+    });
+  };
+
   if (!hasActions) return null;
 
   return (
@@ -485,7 +652,7 @@ export default function ConfigurationMenu({
                   variant="ghost"
                   size="icon"
                   className="hover:bg-muted"
-                  disabled={disabled}
+                  disabled={configurationDisabled}
                   onPointerDown={dismissConfigurationTooltip}
                   onClick={() => {
                     dismissConfigurationTooltip();
@@ -514,8 +681,8 @@ export default function ConfigurationMenu({
             panel === 'menu'
               ? 'w-[300px]'
               : panel === 'projects'
-              ? 'w-[27vw] min-w-[320px] overflow-hidden p-0'
-              : 'w-[50vw] min-w-[320px]'
+                ? 'w-[27vw] min-w-[320px] overflow-hidden p-0'
+                : 'w-[50vw] min-w-[320px]'
           )}
           style={{
             position: isMobile ? 'fixed' : 'relative',
@@ -528,6 +695,22 @@ export default function ConfigurationMenu({
         >
           {panel === 'menu' ? (
             <div className="space-y-1 p-1">
+              {hasModelPicker ? (
+                <MenuRow
+                  icon={Brain}
+                  label={t('components.molecules.modelPicker.model')}
+                  status={activeModelName}
+                  active={Boolean(
+                    activeModel &&
+                    !modelCatalog?.find(
+                      (model) =>
+                        model.id === activeModel.modelId && model.isDefault
+                    )
+                  )}
+                  disabled={disabled}
+                  onClick={handleOpenModelPicker}
+                />
+              ) : null}
               <MenuRow
                 icon={StickyNote}
                 label={t(
@@ -688,6 +871,27 @@ export default function ConfigurationMenu({
           ) : null}
         </PopoverContent>
       </Popover>
+
+      {hasModelPicker && selectedSessionModel ? (
+        <button
+          type="button"
+          onClick={handleOpenModelPicker}
+          disabled={disabled}
+          aria-label={`Change model. Current model: ${selectedSessionModel.name}`}
+          className="flex h-7 max-w-48 items-center gap-1.5 rounded-md border border-primary/25 bg-primary/10 px-2 text-xs font-medium text-primary transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Brain className="!size-5 shrink-0" />
+          <span className="truncate">{selectedSessionModel.name}</span>
+        </button>
+      ) : null}
+
+      {hasModelPicker ? (
+        <ModelPickerModal
+          open={modelPickerOpen}
+          disabled={disabled}
+          onOpenChange={setModelPickerOpen}
+        />
+      ) : null}
 
       {selectedProjects.length > 0 ? (
         <TooltipProvider delayDuration={100}>
