@@ -704,7 +704,7 @@
             "show_less": "Afficher moins"
         },
         "shortcuts": {
-            "title": "Raccourcis",
+            "title": "Accès",
             "generated": { "title": "Fichiers générés", "description": "Fichiers générés par l’IA", "empty": "Aucun fichier généré" },
             "images": { "title": "Images", "description": "Images générées par l’IA", "empty": "Aucune image générée" },
             "projects": { "title": "Projets", "description": "Accéder à vos dossiers de projet", "empty": "Aucun projet" }
