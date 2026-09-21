@@ -23,6 +23,7 @@ const FavoriteSessionButton = ({ sessionUuid }: Props): JSX.Element => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleClick = async () => {
+    if (!sessionUuid) return;
     setIsLoading(true);
     if (evoya?.api?.favorite && accessToken) {
       if (isFavorite) {
@@ -85,7 +86,7 @@ const FavoriteSessionButton = ({ sessionUuid }: Props): JSX.Element => {
                 size="icon"
                 variant="ghost"
                 onClick={handleClick}
-                disabled={sessionUuid==''}
+                disabled={!sessionUuid || isLoading}
               >
                 {
                   isFavorite ? <Star fill='#facc15' className="!size-5 text-yellow-400" /> : <Star className="!size-5" />
@@ -95,7 +96,7 @@ const FavoriteSessionButton = ({ sessionUuid }: Props): JSX.Element => {
           </TooltipTrigger>
           <TooltipContent>
             <p>
-              {sessionUuid === '' ? (
+              {!sessionUuid ? (
                 <Translator path="components.molecules.shareSession.inactiveButton" />
               ) : (
                 <Translator path="components.molecules.favoriteSession.favoriteButton" />

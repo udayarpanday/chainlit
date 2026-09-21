@@ -673,7 +673,7 @@
             "show_less": "Mostrar menos"
         },
         "shortcuts": {
-            "title": "Atalhos",
+            "title": "Acesso",
             "generated": { "title": "Ficheiros gerados", "description": "Ficheiros gerados por IA", "empty": "Ainda não existem ficheiros gerados" },
             "images": { "title": "Imagens", "description": "Imagens geradas por IA", "empty": "Ainda não existem imagens geradas" },
             "projects": { "title": "Projetos", "description": "Ir para as pastas dos projetos", "empty": "Ainda não existem projetos" }

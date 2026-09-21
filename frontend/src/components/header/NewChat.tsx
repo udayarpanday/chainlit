@@ -47,6 +47,7 @@ const NewChatButton = ({ disabled, newSession }: Props) => {
     }
 
     clear();
+    newSession?.('');
 
     if (evoya?.reset) {
       return;
@@ -72,8 +73,6 @@ const NewChatButton = ({ disabled, newSession }: Props) => {
         console.error('Failed to get new access token:', error);
       }
     }
-
-    newSession?.('');
   };
 
   return (

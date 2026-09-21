@@ -11,10 +11,7 @@ import AudioPresence from '@chainlit/app/src/components/AudioPresence';
 import ChatProfiles from '@chainlit/app/src/components/header/ChatProfiles';
 import NewChatButton from '@chainlit/app/src/components/header/NewChat';
 import { Button } from '@chainlit/app/src/components/ui/button';
-import {
-  ChainlitContext,
-  getScopedSessionStorageItem
-} from '@chainlit/react-client';
+import { ChainlitContext } from '@chainlit/react-client';
 import {
   chatArchived,
   evoyaCreatorEnabledState,
@@ -102,7 +99,12 @@ const Header = ({
   const temporaryChat = useRecoilValue(temporaryChatState);
 
   const hasChatProfiles = !!config?.chatProfiles?.length;
-  const [sessionUuid, setSessionUuid] = useState(evoya?.session_uuid ?? '');
+  const [sessionUuidState, setSessionUuidState] = useState({
+    sessionId,
+    uuid: evoya?.session_uuid ?? ''
+  });
+  const sessionUuid =
+    sessionUuidState.sessionId === sessionId ? sessionUuidState.uuid : '';
   const pendingPinsRef = useRef(new Set<string>());
   const [pendingPinUuids, setPendingPinUuids] = useState<ReadonlySet<string>>(
     new Set()
@@ -262,29 +264,33 @@ const Header = ({
     }
   };
 
-  const getSessionUuid = async () => {
-    try {
-      const sessionResponse = await apiClient.get(
-        `/chat_session_uuid/${sessionId}/`,
-        accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined
-      );
-      const sessionJson = await sessionResponse.json();
-      if (!sessionJson.session_uuid) return;
-      setSessionUuid(sessionJson.session_uuid);
-      setScopedSessionStorageItem(sessionTokenKey, sessionJson.session_uuid);
-      localStorage.removeItem(sessionTokenKey);
-      document.cookie = `${sessionTokenKey}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-    } catch (_e) {
-      return;
-    }
-  };
-
   useEffect(() => {
-    if (!sessionUuid && firstInteraction && !loading) {
-      getSessionUuid();
-      window.dispatchEvent(new CustomEvent('reload-chat-sidebar'));
-    }
-  }, [firstInteraction, loading, evoya]);
+    if (sessionUuid || !firstInteraction || loading) return;
+
+    let cancelled = false;
+    const getSessionUuid = async () => {
+      try {
+        const sessionResponse = await apiClient.get(
+          `/chat_session_uuid/${sessionId}/`,
+          accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined
+        );
+        const sessionJson = await sessionResponse.json();
+        if (cancelled || !sessionJson.session_uuid) return;
+        setSessionUuidState({ sessionId, uuid: sessionJson.session_uuid });
+        setScopedSessionStorageItem(sessionTokenKey, sessionJson.session_uuid);
+        localStorage.removeItem(sessionTokenKey);
+        document.cookie = `${sessionTokenKey}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+      } catch (_e) {
+        return;
+      }
+    };
+
+    getSessionUuid();
+    window.dispatchEvent(new CustomEvent('reload-chat-sidebar'));
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionUuid, firstInteraction, loading, apiClient, sessionId, accessToken]);
 
   useEffect(() => {
     if (evoya?.type !== 'dashboard') return;
@@ -460,7 +466,9 @@ const Header = ({
                   onTogglePin={canTogglePin ? handleTogglePin : undefined}
                   pendingPinUuids={pendingPinUuids}
                 />
-                <NewChatButton />
+                <NewChatButton
+                  newSession={() => setSessionUuidState({ sessionId, uuid: '' })}
+                />
               </>
             )}
           </>
@@ -483,7 +491,9 @@ const Header = ({
         )}
         {evoya?.headerConfig?.showSessionButton && (
           <NewChatButton
-            newSession={(sessionUuid) => setSessionUuid(sessionUuid ?? '')}
+            newSession={(uuid) =>
+              setSessionUuidState({ sessionId, uuid: uuid ?? '' })
+            }
           />
         )}
       </div>
@@ -503,16 +513,12 @@ const Header = ({
             <TemporaryChatButton /> 
             {!temporaryChat ? (
               <FavoriteSessionButton
-              sessionUuid={
-                sessionUuid || getScopedSessionStorageItem('session_token')
-              }
+                sessionUuid={sessionUuid}
               />
             ) : null}
             {!temporaryChat ? (
               <ShareSessionButton
-                sessionUuid={
-                  sessionUuid || getScopedSessionStorageItem('session_token')
-                }
+                sessionUuid={sessionUuid}
                 restrictSharedSessionsToOrg={restrictSharedSessionsToOrg}
                 isChatArchived={isChatArchived}
               />

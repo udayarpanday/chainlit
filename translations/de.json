@@ -714,8 +714,8 @@
             "show_less": "Weniger anzeigen"
         },
         "shortcuts": {
-            "title": "Verknüpfungen",
-            "generated": { "title": "Generierte Dateien", "description": "Von KI generierte Dateien", "empty": "Noch keine generierten Dateien" },
+            "title": "Zugriff",
+            "generated": { "title": "Dokumente", "description": "Von KI generierte Dokumente", "empty": "Noch keine generierten Dateien" },
             "images": { "title": "Bilder", "description": "Von KI generierte Bilder", "empty": "Noch keine generierten Bilder" },
             "projects": { "title": "Projekte", "description": "Zu Ihren Projektordnern springen", "empty": "Noch keine Projekte" }
         },

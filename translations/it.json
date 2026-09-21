@@ -585,7 +585,7 @@
             "show_less": "Mostra meno"
         },
         "shortcuts": {
-            "title": "Scorciatoie",
+            "title": "Accesso",
             "generated": { "title": "File generati", "description": "File generati dall'IA", "empty": "Nessun file generato" },
             "images": { "title": "Immagini", "description": "Immagini generate dall'IA", "empty": "Nessuna immagine generata" },
             "projects": { "title": "Progetti", "description": "Vai alle cartelle dei progetti", "empty": "Nessun progetto" }
