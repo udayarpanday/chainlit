@@ -99,6 +99,10 @@ type ModelCatalogSocketPayload =
       models?: unknown[];
       catalog?: unknown[];
       active?: unknown;
+      agentModel?: unknown;
+      agent_model?: unknown;
+      defaultModel?: unknown;
+      default_model?: unknown;
       can_override_model?: boolean;
       canOverrideModel?: boolean;
     };
@@ -690,9 +694,20 @@ const useChatSession = () => {
         const rawModels = Array.isArray(payload)
           ? payload
           : (envelope?.models ?? envelope?.catalog ?? []);
-        const models = rawModels
+        const agentModel = envelope
+          ? (envelope.agentModel ??
+            envelope.agent_model ??
+            envelope.defaultModel ??
+            envelope.default_model ??
+            envelope.active)
+          : undefined;
+        const models = [...rawModels, agentModel]
           .map(normalizeModelCatalogItem)
           .filter((model): model is ModelCatalogItem => Boolean(model))
+          .filter(
+            (model, index, items) =>
+              items.findIndex((item) => item.id === model.id) === index
+          )
           .sort(
             (left, right) => Number(right.isDefault) - Number(left.isDefault)
           );

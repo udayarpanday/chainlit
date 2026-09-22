@@ -32,12 +32,14 @@ interface Props {
   open: boolean;
   disabled?: boolean;
   onOpenChange: (open: boolean) => void;
+  agentUuid?: string;
 }
 
 export default function ModelPickerModal({
   open,
   disabled = false,
-  onOpenChange
+  onOpenChange,
+  agentUuid
 }: Props) {
   const { t } = useTranslation();
   const models = useRecoilValue(modelCatalogState) ?? [];
@@ -120,11 +122,14 @@ export default function ModelPickerModal({
     }
 
     setPendingModelId(model.id);
-    const result = await setModelOverride({
-      modelId: model.id,
-      key: model.key,
-      ...(nextReasoning ? { reasoning: nextReasoning } : {})
-    });
+    const result = await setModelOverride(
+      {
+        modelId: model.id,
+        key: model.key,
+        ...(nextReasoning ? { reasoning: nextReasoning } : {})
+      },
+      agentUuid
+    );
     setPendingModelId(undefined);
 
     if (!result.ok) {

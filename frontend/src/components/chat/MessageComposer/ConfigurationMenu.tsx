@@ -241,7 +241,6 @@ export default function ConfigurationMenu({
   const commands = useRecoilValue(commandsState) as PromptCommand[];
   const modelCatalog = useRecoilValue(modelCatalogState);
   const activeModel = useRecoilValue(activeModelOverrideState);
-  const canOverrideModel = useRecoilValue(canOverrideModelState);
   const setModelCatalog = useSetRecoilState(modelCatalogState);
   const setActiveModel = useSetRecoilState(activeModelOverrideState);
   const setCanOverrideModel = useSetRecoilState(canOverrideModelState);
@@ -270,14 +269,9 @@ export default function ConfigurationMenu({
   const [hoveredCommand, setHoveredCommand] = useState<PromptCommand | null>(
     null
   );
-  const modelCatalogRequestRef = useRef<{
-    controller: AbortController;
-    endpoint: string;
-    token?: string;
-    promise: Promise<boolean>;
-  } | null>(null);
   const promptInputRef = useRef<HTMLInputElement>(null);
   const autoEnabledAgentRef = useRef<string | undefined>();
+  const modelCatalogAgentRef = useRef<string>();
 
   const isDashboard = evoya?.type === 'dashboard';
   const hasPrompts = isDashboard && commands.length > 0;
@@ -286,67 +280,74 @@ export default function ConfigurationMenu({
   const privacyShieldConfig = evoya?.api?.privacyShield as
     PrivacyShieldConfig | undefined;
   const hasPrivacy = !!privacyShieldConfig?.enabled;
-  const hasModelPicker = canOverrideModel && Boolean(modelCatalog?.length);
+  // Every selected agent has an effective model. Model Hub choices only add
+  // alternatives, so they must never control whether model settings are shown.
+  const hasModelPicker = Boolean(evoya?.chat_uuid);
   const hasActions =
     hasModelPicker || hasPrompts || hasProjects || hasCreator || hasPrivacy;
-  const activeModelName =
-    modelCatalog?.find((model) => model.id === activeModel?.modelId)?.name ??
-    modelCatalog?.find((model) => model.isDefault)?.name;
-  const selectedSessionModel = activeModel?.key
-    ? modelCatalog?.find((model) => model.id === activeModel.modelId)
-    : undefined;
+  const selectedSessionModel =
+    modelCatalog?.find((model) => model.id === activeModel?.modelId) ??
+    modelCatalog?.find((model) => model.isDefault);
+  const activeModelName = selectedSessionModel?.name;
+  // Hide the inline model badge in the composer when the active model is the
+  // default one. The picker stays reachable from the configuration menu so
+  // reasoning and other settings can still be changed.
+  const isActiveModelDefault = Boolean(selectedSessionModel?.isDefault);
   const configurationDisabled = disabled;
-  const baseUrl = evoya?.api?.baseUrl?.replace(/\/$/, '');
-  const modelListEndpoint = baseUrl
-    ? `${baseUrl}/api/model/list/`
-    : apiClient.buildEndpoint('/api/model/list/');
 
-  const refreshModelCatalog = useCallback(async (): Promise<boolean> => {
+  useEffect(() => {
+    const agentUuid = evoya?.chat_uuid;
+    const agentChanged = modelCatalogAgentRef.current !== agentUuid;
+    if (modelCatalog?.length && !agentChanged) return;
+
+    const controller = new AbortController();
+    const baseUrl = evoya?.api?.baseUrl?.replace(/\/$/, '');
+    const baseEndpoint = baseUrl
+      ? `${baseUrl}/api/model/list/`
+      : apiClient.buildEndpoint('/api/model/list/');
+    const endpoint = agentUuid
+      ? `${baseEndpoint}${
+          baseEndpoint.includes('?') ? '&' : '?'
+        }agent_uuid=${encodeURIComponent(agentUuid)}`
+      : baseEndpoint;
     const token =
       accessToken ??
       getScopedSessionStorageItem('chainlit_token') ??
-      getScopedSessionStorageItem('chainlit_token_iframe') ??
-      undefined;
-    const pending = modelCatalogRequestRef.current;
-    if (
-      pending &&
-      !pending.controller.signal.aborted &&
-      pending.endpoint === modelListEndpoint &&
-      pending.token === token
-    ) {
-      return pending.promise;
-    }
-    pending?.controller.abort();
-    const controller = new AbortController();
+      getScopedSessionStorageItem('chainlit_token_iframe');
 
-    const promise = (async () => {
-      try {
-        const response = await fetch(modelListEndpoint, {
-          credentials: 'include',
-          cache: 'no-store',
-          signal: controller.signal,
-          headers: {
-            Accept: 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {})
-          }
-        });
+    // Do not leave another agent's catalog selectable while the next one is
+    // loading. The selected agent's configured model may not be in the Model
+    // Hub selection and is added by the API for this request.
+    setCanOverrideModel(false);
+
+    void fetch(endpoint, {
+      credentials: 'include',
+      signal: controller.signal,
+      headers: {
+        Accept: 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    })
+      .then(async (response) => {
         if (!response.ok) {
           throw new Error(`Model catalog request failed (${response.status})`);
         }
-        const normalizedModels = normalizeModelCatalogResponse(
-          (await response.json()) as unknown
-        );
-        if (controller.signal.aborted) return false;
-
+        return response.json() as Promise<unknown>;
+      })
+      .then((payload) => {
+        const { models: normalizedModels, active: envelopeActive } =
+          normalizeModelCatalogResponse(payload);
+        modelCatalogAgentRef.current = agentUuid;
         if (!normalizedModels.length) {
-          setModelCatalog([]);
+          setModelCatalog(undefined);
           setActiveModel(undefined);
           setCanOverrideModel(false);
-          return false;
+          return;
         }
 
         const defaultModel =
           normalizedModels.find((model) => model.isDefault) ??
+          normalizedModels.find((model) => model.id === activeModel?.modelId) ??
           normalizedModels[0];
         const models = normalizedModels
           .map((model) => ({
@@ -357,63 +358,43 @@ export default function ConfigurationMenu({
             (left, right) => Number(right.isDefault) - Number(left.isDefault)
           );
         setModelCatalog(models);
-        setActiveModel((current) =>
-          current && models.some((model) => model.id === current.modelId)
-            ? current
-            : undefined
-        );
+        // The backend reports the active model for the current agent in the
+        // envelope. Prefer it so the picker always has a selected model id
+        // immediately after login, even before the user opens the picker.
+        const resolvedActive =
+          (envelopeActive &&
+            models.some((model) => model.id === envelopeActive.modelId) &&
+            envelopeActive) ||
+          undefined;
+        setActiveModel((current) => {
+          if (
+            !agentChanged &&
+            current &&
+            models.some((model) => model.id === current.modelId)
+          ) {
+            return current;
+          }
+          if (resolvedActive) {
+            return { modelId: resolvedActive.modelId, key: resolvedActive.key };
+          }
+          return { modelId: defaultModel.id, key: defaultModel.key };
+        });
         setCanOverrideModel(true);
-        return true;
-      } catch (error) {
-        if (controller.signal.aborted) return false;
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
         setCanOverrideModel(false);
         console.error('Unable to load model catalog', error);
-        return false;
-      } finally {
-        if (modelCatalogRequestRef.current?.controller === controller) {
-          modelCatalogRequestRef.current = null;
-        }
-      }
-    })();
-    modelCatalogRequestRef.current = {
-      controller,
-      endpoint: modelListEndpoint,
-      token,
-      promise
-    };
-    return promise;
+      });
+
+    return () => controller.abort();
   }, [
     accessToken,
-    modelListEndpoint,
-    setActiveModel,
-    setCanOverrideModel,
-    setModelCatalog
-  ]);
-
-  useEffect(() => {
-    setModelCatalog([]);
-    setActiveModel(undefined);
-    setCanOverrideModel(false);
-    void refreshModelCatalog();
-
-    const onFocus = () => {
-      void refreshModelCatalog();
-    };
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') onFocus();
-    };
-    window.addEventListener('focus', onFocus);
-    window.addEventListener('chainlit:model-catalog-received', onFocus);
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    return () => {
-      window.removeEventListener('focus', onFocus);
-      window.removeEventListener('chainlit:model-catalog-received', onFocus);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-      modelCatalogRequestRef.current?.controller.abort();
-    };
-  }, [
+    activeModel?.modelId,
+    apiClient,
+    evoya?.api?.baseUrl,
     evoya?.chat_uuid,
-    refreshModelCatalog,
+    modelCatalog?.length,
     setActiveModel,
     setCanOverrideModel,
     setModelCatalog
@@ -627,9 +608,7 @@ export default function ConfigurationMenu({
   const handleOpenModelPicker = () => {
     dismissConfigurationTooltip();
     setOpen(false);
-    void refreshModelCatalog().then((hasModels) => {
-      if (hasModels) setModelPickerOpen(true);
-    });
+    setModelPickerOpen(true);
   };
 
   if (!hasActions) return null;
@@ -872,7 +851,7 @@ export default function ConfigurationMenu({
         </PopoverContent>
       </Popover>
 
-      {hasModelPicker && selectedSessionModel ? (
+      {hasModelPicker && selectedSessionModel && !isActiveModelDefault ? (
         <button
           type="button"
           onClick={handleOpenModelPicker}
@@ -890,6 +869,7 @@ export default function ConfigurationMenu({
           open={modelPickerOpen}
           disabled={disabled}
           onOpenChange={setModelPickerOpen}
+          agentUuid={evoya?.chat_uuid}
         />
       ) : null}
 
