@@ -435,6 +435,11 @@
         }
     },
     "chat": {
+        "quote": {
+            "action": "Demander au chat",
+            "label": "Texte cité",
+            "remove": "Supprimer la citation"
+        },
         "temporary": {
             "title": "Discussion temporaire",
             "locked": "La discussion temporaire ne peut être modifiée qu’avant l’envoi d’un message",

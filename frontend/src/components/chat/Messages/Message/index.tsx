@@ -16,6 +16,7 @@ import { AskFileButton } from './AskFileButton';
 import { MessageAvatar } from './Avatar';
 import { MessageButtons } from './Buttons';
 import { MessageContent } from './Content';
+import QuotableContent from './QuotableContent';
 import Step from './Step';
 import UserMessage from './UserMessage';
 import ToolStepInfo from './ToolStepInfo';
@@ -174,12 +175,18 @@ const Message = memo(
                   ) : (
                     // Display an assistant message
                     <div className="flex flex-col items-start min-w-[150px] flex-grow gap-2">
-                      <MessageContent
-                        elements={elements}
-                        message={message}
-                        allowHtml={allowHtml}
-                        latex={latex}
-                      />
+                      <QuotableContent
+                        messageId={message.id}
+                        author={message.name}
+                        disabled={!!message.streaming || isRunning}
+                      >
+                        <MessageContent
+                          elements={elements}
+                          message={message}
+                          allowHtml={allowHtml}
+                          latex={latex}
+                        />
+                      </QuotableContent>
                       {!isRunning && isAsk ? (
                         <>
                           <AskFileButton onError={onError} />

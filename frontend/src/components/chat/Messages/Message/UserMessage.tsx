@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { MessageContext } from 'contexts/MessageContext';
+import { Quote } from 'lucide-react';
 import { memo, useContext, useMemo, useState } from 'react';
 import { useSetRecoilState } from 'recoil';
 
@@ -17,6 +18,8 @@ import { Button } from '@/components/ui/button';
 import { Translator } from 'components/i18n';
 
 import { InlinedElements } from './Content/InlinedElements';
+
+import type { IQuotedSelection } from '@/state/chat';
 
 interface Props {
   message: IStep;
@@ -41,6 +44,10 @@ const UserMessage = memo(function UserMessage({
       (el) => el.forId === message.id && el.display === 'inline'
     );
   }, [message.id, elements]);
+
+  const quotedSelection = message.metadata?.quotedSelection as
+    | IQuotedSelection
+    | undefined;
 
   const isEditable = !!config.config?.features.edit_message;
 
@@ -118,6 +125,14 @@ const UserMessage = memo(function UserMessage({
               {message.command ? (
                 <div className="font-bold text-[#08f] command-span">
                   {message.command}
+                </div>
+              ) : null}
+              {quotedSelection?.text ? (
+                <div className="quoted-selection mb-1.5 flex gap-2 border-l-2 border-muted-foreground/40 pl-2 text-sm italic text-muted-foreground">
+                  <Quote className="mt-0.5 !size-5 shrink-0" />
+                  <span className="line-clamp-3 whitespace-pre-wrap">
+                    {quotedSelection.text}
+                  </span>
                 </div>
               ) : null}
               {children}

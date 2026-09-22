@@ -31,7 +31,12 @@ import { cn } from '@/lib/utils';
 
 import { evoyaAttachmentsState, EvoyaAttachment } from '@/state/evoya';
 import { chatSettingsOpenState } from '@/state/project';
-import { IAttachment, attachmentsState } from 'state/chat';
+import {
+  IAttachment,
+  IQuotedSelection,
+  attachmentsState,
+  quotedSelectionState
+} from 'state/chat';
 
 import { Attachments } from './Attachments';
 import ConfigurationMenu, {
@@ -39,6 +44,7 @@ import ConfigurationMenu, {
   removeDashboardProject
 } from './ConfigurationMenu';
 import Input, { InputMethods } from './Input';
+import QuotedContext from './QuotedContext';
 import SubmitButton from './SubmitButton';
 import UploadButton from './UploadButton';
 import UploadButtonDropdown from './UploadButtonDropdown';
@@ -71,6 +77,8 @@ export default function MessageComposer({
   const [openProjectsRequest, setOpenProjectsRequest] = useState(0);
   const setChatSettingsOpen = useSetRecoilState(chatSettingsOpenState);
   const [attachments, setAttachments] = useRecoilState(attachmentsState);
+  const quotedSelection = useRecoilValue(quotedSelectionState);
+  const resetQuotedSelection = useResetRecoilState(quotedSelectionState);
   const [evoyaAttachments, setEvoyaAttachments] = useRecoilState(evoyaAttachmentsState);
   const initialTranscript = useRecoilValue(initialTranscriptState);
   const isChatArchived = useRecoilValue(chatArchived);
@@ -140,8 +148,28 @@ export default function MessageComposer({
       evoyaAttachments?: EvoyaAttachment[],
       selectedCommand?: string,
       selectedAgents?: string[],
-      collapsedPromptDisplayOutput?: string
+      collapsedPromptDisplayOutput?: string,
+      quotedSelection?: IQuotedSelection
     ) => {
+      // The quote is inlined in the payload sent to the LLM as a markdown
+      // blockquote, while the bubble only displays the user question (the
+      // quote is rendered separately from the metadata).
+      const quoteBlock = quotedSelection?.text
+        ? quotedSelection.text
+            .split('\n')
+            .map((line) => `> ${line}`)
+            .join('\n')
+        : undefined;
+
+      const outputWithQuote = quoteBlock ? `${quoteBlock}\n\n${msg}` : msg;
+
+      const displayOutput =
+        collapsedPromptDisplayOutput !== undefined
+          ? collapsedPromptDisplayOutput
+          : quoteBlock
+            ? msg
+            : undefined;
+
       const message: IStep = {
         threadId: '',
         command: selectedCommand,
@@ -149,13 +177,14 @@ export default function MessageComposer({
         id: uuidv4(),
         name: user?.identifier || 'User',
         type: 'user_message',
-        output: msg,
+        output: outputWithQuote,
         createdAt: new Date().toISOString(),
         metadata: {
           location: window.location.href,
-          ...(collapsedPromptDisplayOutput !== undefined
-            ? { evoyaCollapsedPromptDisplayOutput: collapsedPromptDisplayOutput }
-            : {})
+          ...(displayOutput !== undefined
+            ? { evoyaCollapsedPromptDisplayOutput: displayOutput }
+            : {}),
+          ...(quotedSelection ? { quotedSelection } : {})
         }
       };
 
@@ -228,11 +257,13 @@ export default function MessageComposer({
             evoyaAttachments,
             selectedCommand?.id,
             selectedAgents,
-            isCollapsedCreatorPrompt ? value : undefined
+            isCollapsedCreatorPrompt ? value : undefined,
+            quotedSelection
           );
         }
         setAttachments([]);
         setValue('');
+        resetQuotedSelection();
         inputRef.current?.reset();
       });
     } else {
@@ -268,12 +299,14 @@ export default function MessageComposer({
         evoyaAttachments,
         selectedCommand?.id,
         selectedAgents,
-        isCollapsedCreatorPrompt ? value : undefined
+        isCollapsedCreatorPrompt ? value : undefined,
+        quotedSelection
       );
     }
     setAttachments([]);
     setEvoyaAttachments([]);
     setSelectedAgents([]);
+    resetQuotedSelection();
     inputRef.current?.reset();
   }, [
     value,
@@ -285,6 +318,8 @@ export default function MessageComposer({
     selectedCommand,
     selectedAgents,
     creatorEnabled,
+    quotedSelection,
+    resetQuotedSelection,
     setAttachments,
     setSelectedAgents,
     onSubmit
@@ -304,6 +339,9 @@ export default function MessageComposer({
         (evoya && evoya.type == 'dashboard') || evoya == undefined
           ? 'min-h-24 rounded-3xl'
           : 'rounded-full',
+        // The pill layout (copilot) needs square-ish corners to host the
+        // quoted context chip.
+        quotedSelection && 'rounded-3xl',
         isChatArchived && 'border border-primary',
         temporaryChat &&
           'border border-dashed border-gray-400 dark:border-gray-500'
@@ -318,6 +356,11 @@ export default function MessageComposer({
       {(attachments.length > 0 || evoyaAttachments.length > 0) ? (
         <div className="mb-1">
           <Attachments />
+        </div>
+      ) : null}
+      {quotedSelection ? (
+        <div className="mb-1">
+          <QuotedContext disabled={inputDisabled} />
         </div>
       ) : null}
       {evoya?.type === 'dashboard' && selectedProjects.length > 0 ? (

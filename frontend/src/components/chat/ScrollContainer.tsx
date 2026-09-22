@@ -9,6 +9,7 @@ import {
 } from 'react';
 
 import { useChatMessages } from '@chainlit/react-client';
+
 import { Button } from '@/components/ui/button';
 
 interface Props {
@@ -143,13 +144,23 @@ export default function ScrollContainer({
       updateSpacerHeight();
     };
 
+    // The composer grows when quoted context is added. That changes this
+    // viewport's height without resizing the window, so keep the bottom
+    // spacer in sync with the actual space available for messages.
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' && ref.current
+        ? new ResizeObserver(handleResize)
+        : undefined;
+
     window.addEventListener('resize', handleResize);
+    if (ref.current) resizeObserver?.observe(ref.current);
 
     // Initial update
     updateSpacerHeight();
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      resizeObserver?.disconnect();
     };
   }, [autoScrollUserMessage, updateSpacerHeight]);
 

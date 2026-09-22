@@ -438,6 +438,11 @@
         }
     },
     "chat": {
+        "quote": {
+            "action": "Chat fragen",
+            "label": "Zitierter Text",
+            "remove": "Zitat entfernen"
+        },
         "temporary": {
             "title": "Temporärer Chat",
             "locked": "Der temporäre Chat kann nur vor dem Senden einer Nachricht geändert werden",

@@ -435,6 +435,11 @@
         }
     },
     "chat": {
+        "quote": {
+            "action": "Chiedi alla chat",
+            "label": "Testo citato",
+            "remove": "Rimuovi citazione"
+        },
         "temporary": {
             "title": "Chat temporanea",
             "locked": "La chat temporanea può essere modificata solo prima di inviare un messaggio",
