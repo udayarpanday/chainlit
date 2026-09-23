@@ -439,6 +439,11 @@
         }
     },
     "chat": {
+        "quote": {
+            "action": "Ask Chat",
+            "label": "Quoted text",
+            "remove": "Remove quote"
+        },
         "temporary": {
             "title": "Temporary chat",
             "locked": "Temporary chat can only be changed before sending a message",
