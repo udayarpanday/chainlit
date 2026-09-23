@@ -120,9 +120,9 @@ const normalizeActiveModelFromEnvelope = (
 ): { modelId: number; key?: string } | undefined => {
   const raw = asObject(value);
   if (!raw) return undefined;
-  const modelId = Number(raw.modelId ?? raw.model_id);
+  const modelId = Number(raw.modelId ?? raw.model_id ?? raw.id);
   if (!Number.isFinite(modelId)) return undefined;
-  const key = raw.key ?? raw.model_key;
+  const key = raw.key ?? raw.model_key ?? raw.model;
   return {
     modelId,
     ...(typeof key === 'string' && key ? { key } : {})
@@ -151,17 +151,28 @@ export const normalizeModelCatalogResponse = (
           ? data
           : [];
 
-  const models = rawModels
+  const configuredModel =
+    envelope?.agentModel ??
+    envelope?.agent_model ??
+    envelope?.defaultModel ??
+    envelope?.default_model ??
+    envelope?.active;
+
+  const models = [...rawModels, configuredModel]
     .map(normalizeModel)
     .filter((model): model is ModelCatalogItem => Boolean(model))
-    .sort(
-      (left, right) => Number(right.isDefault) - Number(left.isDefault)
-    );
+    .filter(
+      (model, index, items) =>
+        items.findIndex((item) => item.id === model.id) === index
+    )
+    .sort((left, right) => Number(right.isDefault) - Number(left.isDefault));
 
   // The backend may return an `active` model in the envelope so the picker
   // always has a selected model id immediately after login, even before the
   // user opens the picker or sends a message.
-  const active = normalizeActiveModelFromEnvelope(envelope?.active);
+  const active = normalizeActiveModelFromEnvelope(
+    envelope?.active ?? configuredModel
+  );
 
   return { models, active };
 };

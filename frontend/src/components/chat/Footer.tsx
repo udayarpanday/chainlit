@@ -1,10 +1,15 @@
-import { cn, hasMessage } from '@/lib/utils';
 import { useContext } from 'react';
 import { useRecoilValue } from 'recoil';
 
 import { WidgetContext } from '@chainlit/copilot/src/context';
+import type {
+  EvoyaDataProcessingCategory,
+  EvoyaDataProcessingRegion
+} from '@chainlit/copilot/src/evoya/types';
 import {
   FileSpec,
+  activeModelOverrideState,
+  modelCatalogState,
   temporaryChatState,
   useChatMessages
 } from '@chainlit/react-client';
@@ -27,6 +32,41 @@ interface Props {
   submitProxy?: (text: string, submitFunction: (text: string) => void) => void;
 }
 
+const modelDataLocationRegions: Record<string, EvoyaDataProcessingRegion> = {
+  switzerland: 'CH',
+  ch: 'CH',
+  europe: 'EU',
+  eu: 'EU',
+  'united states': 'US',
+  'united states of america': 'US',
+  usa: 'US',
+  us: 'US',
+  other: 'OTHER',
+  global: 'OTHER'
+};
+
+const regionFlags: Record<EvoyaDataProcessingRegion, string> = {
+  CH: '\uD83C\uDDE8\uD83C\uDDED',
+  EU: '\uD83C\uDDEA\uD83C\uDDFA',
+  US: '\uD83C\uDDFA\uD83C\uDDF8',
+  OTHER: '\uD83C\uDF10'
+};
+
+const updateLanguageModelDataProcessingRegion = (
+  categories: EvoyaDataProcessingCategory[],
+  dataLocation?: string
+) => {
+  const region =
+    modelDataLocationRegions[dataLocation?.trim().toLowerCase() ?? ''] ??
+    'OTHER';
+
+  return categories.map((category) =>
+    category.key === 'language_model'
+      ? { ...category, region, flag: regionFlags[region] }
+      : category
+  );
+};
+
 export default function ChatFooter({
   autoScroll,
   showIfEmptyThread,
@@ -34,9 +74,20 @@ export default function ChatFooter({
 }: Props) {
   const { messages } = useChatMessages();
   const temporaryChat = useRecoilValue(temporaryChatState);
+  const modelCatalog = useRecoilValue(modelCatalogState);
+  const activeModel = useRecoilValue(activeModelOverrideState);
   const { evoya } = useContext(WidgetContext);
-  const dataProcessingCategories =
+  const configuredDataProcessingCategories =
     evoya?.additionalInfo?.dataProcessingCategories ?? [];
+  const selectedModel =
+    modelCatalog?.find((model) => model.id === activeModel?.modelId) ??
+    modelCatalog?.find((model) => model.isDefault);
+  const dataProcessingCategories = selectedModel
+    ? updateLanguageModelDataProcessingRegion(
+        configuredDataProcessingCategories,
+        selectedModel.dataLocation
+      )
+    : configuredDataProcessingCategories;
   const showDataProcessing =
     evoya?.type === 'dashboard' &&
     evoya?.additionalInfo?.dataProcessing !== false &&
@@ -58,9 +109,13 @@ export default function ChatFooter({
             : 'justify-center flex-col'
         )}
       >
-        {temporaryChat ? <TemporaryChatNotice /> : <WaterMark />}
+        {temporaryChat ? (
+          <TemporaryChatNotice />
+        ) : (
+          <WaterMark />
+        )}
         {showDataProcessing ? (
-          <div className="ml-auto shrink-0">
+          <div className="absolute right-0 top-1/2 -translate-y-1/2">
             <DataProcessingPopover categories={dataProcessingCategories} />
           </div>
         ) : null}

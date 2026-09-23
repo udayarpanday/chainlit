@@ -716,10 +716,10 @@ const useChatSession = () => {
 
         setModelCatalog(models.length ? models : undefined);
         setActiveModelOverride((current) => {
-          if (active) return active;
           if (current && models.some((model) => model.id === current.modelId)) {
             return current;
           }
+          if (active) return active;
           return defaultModel ? { modelId: defaultModel.id } : undefined;
         });
         setCanOverrideModel(
@@ -911,7 +911,10 @@ const useChatSession = () => {
   );
 
   const setModelOverride = useCallback(
-    (selection: ActiveModelOverride): Promise<SetModelOverrideResponse> => {
+    (
+      selection: ActiveModelOverride,
+      agentUuid?: string
+    ): Promise<SetModelOverrideResponse> => {
       const socket = session?.socket;
       if (!socket?.connected) {
         return Promise.resolve({
@@ -976,8 +979,9 @@ const useChatSession = () => {
           'set_model_override',
           {
             model_id: selection.modelId,
-            ...(selection.key ? { model_key: selection.key } : {}),
-            ...(selection.reasoning ? { reasoning: selection.reasoning } : {})
+            model_key: selection.key,
+            agent_uuid: agentUuid,
+            reasoning: selection.reasoning
           },
           finish
         );

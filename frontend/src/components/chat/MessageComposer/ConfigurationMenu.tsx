@@ -297,27 +297,36 @@ export default function ConfigurationMenu({
 
   useEffect(() => {
     const agentUuid = evoya?.chat_uuid;
+    if (!agentUuid) {
+      modelCatalogAgentRef.current = undefined;
+      setModelCatalog(undefined);
+      setActiveModel(undefined);
+      setCanOverrideModel(false);
+      return;
+    }
+
     const agentChanged = modelCatalogAgentRef.current !== agentUuid;
-    if (modelCatalog?.length && !agentChanged) return;
+    modelCatalogAgentRef.current = agentUuid;
 
     const controller = new AbortController();
     const baseUrl = evoya?.api?.baseUrl?.replace(/\/$/, '');
     const baseEndpoint = baseUrl
       ? `${baseUrl}/api/model/list/`
       : apiClient.buildEndpoint('/api/model/list/');
-    const endpoint = agentUuid
-      ? `${baseEndpoint}${
-          baseEndpoint.includes('?') ? '&' : '?'
-        }agent_uuid=${encodeURIComponent(agentUuid)}`
-      : baseEndpoint;
+    const endpoint = `${baseEndpoint}${
+      baseEndpoint.includes('?') ? '&' : '?'
+    }agent_uuid=${encodeURIComponent(agentUuid)}`;
     const token =
       accessToken ??
       getScopedSessionStorageItem('chainlit_token') ??
       getScopedSessionStorageItem('chainlit_token_iframe');
 
-    // Do not leave another agent's catalog selectable while the next one is
-    // loading. The selected agent's configured model may not be in the Model
-    // Hub selection and is added by the API for this request.
+    // Do not leave another agent's model selectable while the next catalog is
+    // loading. This does not hide or disable the picker.
+    if (agentChanged) {
+      setModelCatalog(undefined);
+      setActiveModel(undefined);
+    }
     setCanOverrideModel(false);
 
     void fetch(endpoint, {
@@ -337,7 +346,6 @@ export default function ConfigurationMenu({
       .then((payload) => {
         const { models: normalizedModels, active: envelopeActive } =
           normalizeModelCatalogResponse(payload);
-        modelCatalogAgentRef.current = agentUuid;
         if (!normalizedModels.length) {
           setModelCatalog(undefined);
           setActiveModel(undefined);
@@ -367,11 +375,10 @@ export default function ConfigurationMenu({
             envelopeActive) ||
           undefined;
         setActiveModel((current) => {
-          if (
-            !agentChanged &&
-            current &&
-            models.some((model) => model.id === current.modelId)
-          ) {
+          // A socket event may establish the session override while this HTTP
+          // request is in flight. Preserve it when it belongs to this catalog
+          // instead of snapping the picker back to the agent default.
+          if (current && models.some((model) => model.id === current.modelId)) {
             return current;
           }
           if (resolvedActive) {
@@ -394,7 +401,6 @@ export default function ConfigurationMenu({
     apiClient,
     evoya?.api?.baseUrl,
     evoya?.chat_uuid,
-    modelCatalog?.length,
     setActiveModel,
     setCanOverrideModel,
     setModelCatalog
@@ -852,16 +858,16 @@ export default function ConfigurationMenu({
       </Popover>
 
       {hasModelPicker && selectedSessionModel && !isActiveModelDefault ? (
-        <button
+        <Button
           type="button"
           onClick={handleOpenModelPicker}
           disabled={disabled}
           aria-label={`Change model. Current model: ${selectedSessionModel.name}`}
-          className="flex h-7 max-w-48 items-center gap-1.5 rounded-md border border-primary/25 bg-primary/10 px-2 text-xs font-medium text-primary transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-7 max-w-48 mx-2 items-center gap-1.5  rounded-md border border-primary/25 bg-primary/10 px-2 text-xs font-medium text-primary transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Brain className="!size-5 shrink-0" />
           <span className="truncate">{selectedSessionModel.name}</span>
-        </button>
+        </Button>
       ) : null}
 
       {hasModelPicker ? (
