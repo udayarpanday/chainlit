@@ -115,9 +115,28 @@ const normalizeModel = (value: unknown): ModelCatalogItem | undefined => {
   };
 };
 
+const normalizeActiveModelFromEnvelope = (
+  value: unknown
+): { modelId: number; key?: string } | undefined => {
+  const raw = asObject(value);
+  if (!raw) return undefined;
+  const modelId = Number(raw.modelId ?? raw.model_id ?? raw.id);
+  if (!Number.isFinite(modelId)) return undefined;
+  const key = raw.key ?? raw.model_key ?? raw.model;
+  return {
+    modelId,
+    ...(typeof key === 'string' && key ? { key } : {})
+  };
+};
+
+export interface NormalizedModelCatalog {
+  models: ModelCatalogItem[];
+  active?: { modelId: number; key?: string };
+}
+
 export const normalizeModelCatalogResponse = (
   payload: unknown
-): ModelCatalogItem[] => {
+): NormalizedModelCatalog => {
   const envelope = asObject(payload);
   const results = envelope?.results;
   const envelopeModels = envelope?.models;
@@ -132,11 +151,28 @@ export const normalizeModelCatalogResponse = (
           ? data
           : [];
 
-  const models = rawModels
-    .map(normalizeModel)
-    .filter((model): model is ModelCatalogItem => Boolean(model));
+  const configuredModel =
+    envelope?.agentModel ??
+    envelope?.agent_model ??
+    envelope?.defaultModel ??
+    envelope?.default_model ??
+    envelope?.active;
 
-  return models.sort(
-    (left, right) => Number(right.isDefault) - Number(left.isDefault)
+  const models = [...rawModels, configuredModel]
+    .map(normalizeModel)
+    .filter((model): model is ModelCatalogItem => Boolean(model))
+    .filter(
+      (model, index, items) =>
+        items.findIndex((item) => item.id === model.id) === index
+    )
+    .sort((left, right) => Number(right.isDefault) - Number(left.isDefault));
+
+  // The backend may return an `active` model in the envelope so the picker
+  // always has a selected model id immediately after login, even before the
+  // user opens the picker or sends a message.
+  const active = normalizeActiveModelFromEnvelope(
+    envelope?.active ?? configuredModel
   );
+
+  return { models, active };
 };
