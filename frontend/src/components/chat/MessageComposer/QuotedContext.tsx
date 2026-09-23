@@ -1,12 +1,6 @@
 import {
-  getTextRangeFromOffsets,
-  getUIElementById,
-  scrollTextRangeIntoView
-} from '@/lib/dom';
-import {
   clearQuotedTextHighlight,
-  findQuotedTextRanges,
-  highlightQuotedText
+  scrollToQuotedSelection
 } from '@/lib/quotedTextHighlight';
 import { cn } from '@/lib/utils';
 import { CornerDownRight, X } from 'lucide-react';
@@ -35,30 +29,7 @@ const QuotedContext = ({ className, disabled }: Props) => {
   if (!quotedSelection?.text) return null;
 
   const scrollToSource = () => {
-    if (!quotedSelection.messageId) return;
-    const source = getUIElementById(
-      `step-${quotedSelection.messageId}`,
-      containerRef.current
-    );
-    if (!source) return;
-
-    const sourceContent =
-      source.querySelector<HTMLElement>('.quotable-content');
-    const { sourceStart, sourceEnd } = quotedSelection;
-    const offsetRange =
-      sourceContent && sourceStart !== undefined && sourceEnd !== undefined
-        ? getTextRangeFromOffsets(sourceContent, sourceStart, sourceEnd)
-        : null;
-    const range =
-      offsetRange ??
-      findQuotedTextRanges(sourceContent ?? source, quotedSelection.text)[0] ??
-      null;
-
-    if (!range || !scrollTextRangeIntoView(range)) {
-      source.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-    // Flash the quoted passage in the source message for a few seconds.
-    highlightQuotedText(source, quotedSelection.text, range);
+    scrollToQuotedSelection(quotedSelection, containerRef.current);
   };
 
   return (

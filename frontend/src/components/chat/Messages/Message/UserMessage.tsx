@@ -1,6 +1,7 @@
+import { scrollToQuotedSelection } from '@/lib/quotedTextHighlight';
 import { cn } from '@/lib/utils';
 import { MessageContext } from 'contexts/MessageContext';
-import { Quote } from 'lucide-react';
+import { CornerDownRight } from 'lucide-react';
 import { memo, useContext, useMemo, useState } from 'react';
 import { useSetRecoilState } from 'recoil';
 
@@ -17,9 +18,10 @@ import { Pencil } from '@/components/icons/Pencil';
 import { Button } from '@/components/ui/button';
 import { Translator } from 'components/i18n';
 
-import { InlinedElements } from './Content/InlinedElements';
-
 import type { IQuotedSelection } from '@/state/chat';
+
+import { InlinedElements } from './Content/InlinedElements';
+import QuotableContent from './QuotableContent';
 
 interface Props {
   message: IStep;
@@ -46,8 +48,7 @@ const UserMessage = memo(function UserMessage({
   }, [message.id, elements]);
 
   const quotedSelection = message.metadata?.quotedSelection as
-    | IQuotedSelection
-    | undefined;
+    IQuotedSelection | undefined;
 
   const isEditable = !!config.config?.features.edit_message;
 
@@ -70,12 +71,12 @@ const UserMessage = memo(function UserMessage({
     <div className="flex flex-col w-full gap-1">
       <InlinedElements elements={inlineElements} className="items-end" />
 
-      <div className="flex flex-row items-center gap-1 w-full group">
+      <div className="group flex w-full flex-row items-start gap-1">
         {!isEditing && isEditable && (
           <Button
             variant="ghost"
             size="icon"
-            className="edit-message ml-auto invisible group-hover:visible"
+            className="edit-message ml-auto invisible self-end group-hover:visible"
             onClick={() => {
               setEditValue(message.output);
               setIsEditing(true);
@@ -87,57 +88,78 @@ const UserMessage = memo(function UserMessage({
         )}
         <div
           className={cn(
-            'px-5 py-2.5 relative bg-accent rounded-3xl',
-            inlineElements.length ? 'rounded-tr-lg' : '',
-            isEditing ? 'w-full flex-grow' : 'max-w-[70%] flex-grow-0',
+            'flex min-w-0 flex-col gap-1',
+            isEditing ? 'w-full flex-grow' : 'w-fit max-w-[70%] flex-grow-0',
             isEditable ? '' : 'ml-auto'
           )}
         >
-          {isEditing ? (
-            <div className="bg-accent flex flex-col">
-              <AutoResizeTextarea
-                id="edit-chat-input"
-                autoFocus
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                className="mt-1 bg-transparent placeholder:text-base placeholder:font-medium text-base"
-                maxHeight={250}
-              />
-              <div className="flex justify-end gap-4">
-                <Button variant="ghost" onClick={() => setIsEditing(false)}>
-                  <Translator path="common.actions.cancel" />
-                </Button>
-                <Button
-                  className="confirm-edit"
-                  disabled={disabled}
-                  onClick={handleEdit}
-                >
-                  <Translator path="common.actions.confirm" />
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div
-              className={`flex ${
-                message.command ? 'flex-col gap-1' : 'flex-col'
-              }`}
+          {!isEditing && quotedSelection?.text ? (
+            <button
+              type="button"
+              title={quotedSelection.text}
+              onClick={(event) =>
+                scrollToQuotedSelection(quotedSelection, event.currentTarget)
+              }
+              className="quoted-selection flex min-w-0 max-w-full items-center gap-2 self-start text-left text-sm text-muted-foreground hover:text-foreground"
             >
-              {message.command ? (
-                <div className="font-bold text-[#08f] command-span">
-                  {message.command}
+              <CornerDownRight className="size-4 shrink-0" />
+              <span className="block min-w-0 truncate">
+                {quotedSelection.text.replace(/\s+/g, ' ')}
+              </span>
+            </button>
+          ) : null}
+
+          <div
+            className={cn(
+              'relative rounded-3xl bg-accent px-5 py-2.5',
+              inlineElements.length ? 'rounded-tr-lg' : '',
+              isEditing ? 'w-full flex-grow' : 'w-fit max-w-full'
+            )}
+          >
+            {isEditing ? (
+              <div className="flex flex-col bg-accent">
+                <AutoResizeTextarea
+                  id="edit-chat-input"
+                  autoFocus
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  className="mt-1 bg-transparent placeholder:text-base placeholder:font-medium text-base"
+                  maxHeight={250}
+                />
+                <div className="flex justify-end gap-4">
+                  <Button variant="ghost" onClick={() => setIsEditing(false)}>
+                    <Translator path="common.actions.cancel" />
+                  </Button>
+                  <Button
+                    className="confirm-edit"
+                    disabled={disabled}
+                    onClick={handleEdit}
+                  >
+                    <Translator path="common.actions.confirm" />
+                  </Button>
                 </div>
-              ) : null}
-              {quotedSelection?.text ? (
-                <div className="quoted-selection mb-1.5 flex gap-2 border-l-2 border-muted-foreground/40 pl-2 text-sm italic text-muted-foreground">
-                  <Quote className="mt-0.5 !size-5 shrink-0" />
-                  <span className="line-clamp-3 whitespace-pre-wrap">
-                    {quotedSelection.text}
-                  </span>
+              </div>
+            ) : (
+              <QuotableContent
+                messageId={message.id}
+                author={message.name}
+                disabled={loading}
+              >
+                <div
+                  className={`flex ${
+                    message.command ? 'flex-col gap-1' : 'flex-col'
+                  }`}
+                >
+                  {message.command ? (
+                    <div className="command-span font-bold text-[#08f]">
+                      {message.command}
+                    </div>
+                  ) : null}
+                  {children}
                 </div>
-              ) : null}
-              {children}
-            </div>
-          )}
+              </QuotableContent>
+            )}
+          </div>
         </div>
       </div>
     </div>

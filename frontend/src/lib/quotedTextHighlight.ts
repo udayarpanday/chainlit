@@ -11,7 +11,14 @@
  * element, while the highlight itself is registered on the document
  * registry (highlights cross shadow boundaries by design).
  */
-import { getUIRoot } from '@/lib/dom';
+import {
+  getTextRangeFromOffsets,
+  getUIElementById,
+  getUIRoot,
+  scrollTextRangeIntoView
+} from '@/lib/dom';
+
+import type { IQuotedSelection } from '@/state/chat';
 
 /** Name under which the highlight is registered in `CSS.highlights`. */
 const HIGHLIGHT_NAME = 'quoted-context-highlight';
@@ -147,12 +154,7 @@ const buildHaystack = (root: HTMLElement) => {
   let text = '';
   const positions: CharPosition[] = [];
 
-  const append = (
-    node: Text,
-    offset: number,
-    char: string,
-    length: number
-  ) => {
+  const append = (node: Text, offset: number, char: string, length: number) => {
     text += char;
     positions.push({ node, offset, length });
   };
@@ -219,9 +221,11 @@ export const findQuotedTextRanges = (root: HTMLElement, quote: string) => {
   return needle ? findRanges(root, needle) : [];
 };
 
-const HIGHLIGHT_CSS = `::highlight(${HIGHLIGHT_NAME}) {
-  background-color: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
+const HIGHLIGHT_BACKGROUND_ALPHA = 0.2;
+const HIGHLIGHT_FADE_DURATION_MS = 700;
+
+const getHighlightCss = (alpha: number) => `::highlight(${HIGHLIGHT_NAME}) {
+  background-color: hsl(var(--primary) / ${alpha});
 }`;
 
 /**
@@ -232,21 +236,32 @@ const HIGHLIGHT_CSS = `::highlight(${HIGHLIGHT_NAME}) {
 const ensureHighlightStyle = (element: HTMLElement) => {
   const root = getUIRoot(element);
   const container = root instanceof ShadowRoot ? root : (root as Document).head;
-  if (!container || container.querySelector(`#${HIGHLIGHT_STYLE_ID}`)) return;
+  if (!container) return;
 
-  const style = document.createElement('style');
+  const existing = container.querySelector<HTMLStyleElement>(
+    `#${HIGHLIGHT_STYLE_ID}`
+  );
+  if (existing) return existing;
+
+  const style = element.ownerDocument.createElement('style');
   style.id = HIGHLIGHT_STYLE_ID;
-  style.textContent = HIGHLIGHT_CSS;
+  style.textContent = getHighlightCss(HIGHLIGHT_BACKGROUND_ALPHA);
   container.appendChild(style);
+  return style;
 };
 
 let clearTimer: ReturnType<typeof setTimeout> | undefined;
+let fadeFrame: number | undefined;
 
 /** Removes any active quote highlight and cancels its auto-clear timer. */
 export const clearQuotedTextHighlight = () => {
   if (clearTimer) {
     clearTimeout(clearTimer);
     clearTimer = undefined;
+  }
+  if (fadeFrame !== undefined) {
+    cancelAnimationFrame(fadeFrame);
+    fadeFrame = undefined;
   }
   getHighlightRegistry()?.delete(HIGHLIGHT_NAME);
 };
@@ -278,13 +293,69 @@ export const highlightQuotedText = (
     range && !range.collapsed ? [range] : findQuotedTextRanges(root, quote);
   if (ranges.length === 0) return false;
 
-  ensureHighlightStyle(root);
+  const style = ensureHighlightStyle(root);
+  if (!style) return false;
+
+  style.textContent = getHighlightCss(HIGHLIGHT_BACKGROUND_ALPHA);
   registry.set(HIGHLIGHT_NAME, new Highlight(...ranges));
 
-  clearTimer = setTimeout(() => {
-    clearTimer = undefined;
-    registry.delete(HIGHLIGHT_NAME);
-  }, durationMs);
+  const fadeDuration = Math.min(HIGHLIGHT_FADE_DURATION_MS, durationMs);
+  clearTimer = setTimeout(
+    () => {
+      clearTimer = undefined;
+      const fadeStartedAt = performance.now();
 
+      const fade = (timestamp: number) => {
+        const progress =
+          fadeDuration === 0
+            ? 1
+            : Math.min(1, (timestamp - fadeStartedAt) / fadeDuration);
+        style.textContent = getHighlightCss(
+          HIGHLIGHT_BACKGROUND_ALPHA * (1 - progress)
+        );
+
+        if (progress < 1) {
+          fadeFrame = requestAnimationFrame(fade);
+          return;
+        }
+
+        fadeFrame = undefined;
+        registry.delete(HIGHLIGHT_NAME);
+        style.textContent = getHighlightCss(HIGHLIGHT_BACKGROUND_ALPHA);
+      };
+
+      fadeFrame = requestAnimationFrame(fade);
+    },
+    Math.max(0, durationMs - fadeDuration)
+  );
+
+  return true;
+};
+
+/** Scrolls to and briefly highlights the exact source of a quote. */
+export const scrollToQuotedSelection = (
+  quotedSelection: IQuotedSelection,
+  anchor?: Node | null
+) => {
+  if (!quotedSelection.messageId) return false;
+
+  const source = getUIElementById(`step-${quotedSelection.messageId}`, anchor);
+  if (!source) return false;
+
+  const sourceContent = source.querySelector<HTMLElement>('.quotable-content');
+  const { sourceStart, sourceEnd } = quotedSelection;
+  const offsetRange =
+    sourceContent && sourceStart !== undefined && sourceEnd !== undefined
+      ? getTextRangeFromOffsets(sourceContent, sourceStart, sourceEnd)
+      : null;
+  const range =
+    offsetRange ??
+    findQuotedTextRanges(sourceContent ?? source, quotedSelection.text)[0] ??
+    null;
+
+  if (!range || !scrollTextRangeIntoView(range)) {
+    source.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  highlightQuotedText(source, quotedSelection.text, range);
   return true;
 };
