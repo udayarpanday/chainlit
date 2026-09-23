@@ -359,7 +359,7 @@ export default function MessageComposer({
         </div>
       ) : null}
       {quotedSelection ? (
-        <div className="mb-1">
+        <div className="mb-2">
           <QuotedContext disabled={inputDisabled} />
         </div>
       ) : null}
