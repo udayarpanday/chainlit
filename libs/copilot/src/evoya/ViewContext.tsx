@@ -26,7 +26,7 @@ import {
 } from '@chainlit/app/src/components/ui/tooltip';
 import { promptState } from '@chainlit/react-client';
 
-type ContextTab = 'context' | 'exact';
+type ContextTab = 'context' | 'exact' | 'timings';
 
 type ReadableValueProps = {
   label?: string;
@@ -36,7 +36,8 @@ type ReadableValueProps = {
 
 const TAB_LABELS: Record<ContextTab, string> = {
   exact: 'Last prompt sent to LLM',
-  context: 'Context summary'
+  context: 'Context summary',
+  timings: 'Chat init timings'
 };
 
 const isTokenBoundary = (value: string, index: number) => {
@@ -228,11 +229,7 @@ const sortEntries = (entries: [string, unknown][]) => {
     regularEntries.push(entry);
   });
 
-  return [
-    ...regularEntries,
-    ...trailingMessageEntries,
-    ...trailingToolEntries
-  ];
+  return [...regularEntries, ...trailingMessageEntries, ...trailingToolEntries];
 };
 
 const formatLabel = (label?: string) => {
@@ -479,6 +476,7 @@ const ViewContext = () => {
   if (!context?.is_superuser) return null;
 
   const contextPrompt = context?.context_prompt || '';
+  const initTimings = context?.init_timings_md || '';
   const exactContextValue = parseNestedJsonValues(
     context?.context_prompt_exact_sent_to_llm ?? ''
   );
@@ -491,15 +489,23 @@ const ViewContext = () => {
     {
       id: 'context',
       label: TAB_LABELS.context
+    },
+    {
+      id: 'timings',
+      label: TAB_LABELS.timings
     }
   ];
 
+  const getTabValue = (tab: ContextTab) => {
+    if (tab === 'exact') return exactContextValue;
+    if (tab === 'timings') return initTimings;
+
+    return contextPrompt;
+  };
+
   const handleCopyMarkdown = async () => {
     try {
-      const markdown = buildMarkdownDocument(
-        activeTab,
-        activeTab === 'exact' ? exactContextValue : contextPrompt
-      );
+      const markdown = buildMarkdownDocument(activeTab, getTabValue(activeTab));
       const didCopy = await copyToClipboard(markdown);
 
       if (!didCopy) {
@@ -592,7 +598,7 @@ const ViewContext = () => {
                     </div>
                   ) : (
                     <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-6">
-                      {contextPrompt}
+                      {tab.id === 'timings' ? initTimings : contextPrompt}
                     </pre>
                   )}
                 </TabsContent>
