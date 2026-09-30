@@ -341,6 +341,7 @@ export const initialTranscriptState = atom<InitialTranscriptStateValue | null>({
 export interface EvoyaPromptContext {
   context_prompt: string;
   context_prompt_exact_sent_to_llm?: unknown;
+  init_timings_md?: string;
   is_superuser: boolean | undefined;
 }
 
