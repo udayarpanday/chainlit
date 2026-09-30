@@ -1,5 +1,23 @@
 import type { ShortcutKey } from '../types';
 
+type DatasourceAwareItem = {
+  connectedToDatasource?: boolean;
+  datasources?: unknown[];
+};
+
+export const isConnectedToDatasource = (item: DatasourceAwareItem) =>
+  item.connectedToDatasource === true ||
+  (Array.isArray(item.datasources) && item.datasources.length > 0);
+
+export const getDatasourceConnectionState = (
+  item: DatasourceAwareItem
+): boolean | undefined => {
+  const hasDatasourceState =
+    item.connectedToDatasource !== undefined || item.datasources !== undefined;
+
+  return hasDatasourceState ? isConnectedToDatasource(item) : undefined;
+};
+
 export const buildFilesUrl = (
   apiBaseUrl: string,
   path: string,
@@ -38,9 +56,8 @@ export const buildShortcutUrl = (
   return `${apiBaseUrl}/api/files/${endpoint}/?${params.toString()}`;
 };
 
-export const isShortcutKey = (
-  value?: string | null
-): value is ShortcutKey => SHORTCUT_KEYS.includes(value as ShortcutKey);
+export const isShortcutKey = (value?: string | null): value is ShortcutKey =>
+  SHORTCUT_KEYS.includes(value as ShortcutKey);
 
 export const isRootPath = (path: string) =>
   path.replace(/^\/+|\/+$/g, '') === '';

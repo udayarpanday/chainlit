@@ -608,7 +608,13 @@
     "evoyaFiles": {
         "datasource": {
             "connected": "Connected to a datasource",
-            "not_connected": "Not connected to a datasource"
+            "not_connected": "Not connected to a datasource",
+            "warning": {
+                "title": "Connected to a datasource",
+                "move": "Moving this item will break its current datasource path. You may need to update and sync the datasource.",
+                "rename": "Renaming this item will break its current datasource path. You may need to update and sync the datasource.",
+                "delete": "Deleting this item will remove content used by a datasource. You may need to update and sync the datasource."
+            }
         },
         "actions": {
             "attachments": {

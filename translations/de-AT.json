@@ -607,7 +607,13 @@
     "evoyaFiles": {
         "datasource": {
             "connected": "Mit einer Datenquelle verbunden",
-            "not_connected": "Nicht mit einer Datenquelle verbunden"
+            "not_connected": "Nicht mit einer Datenquelle verbunden",
+            "warning": {
+                "title": "Mit einer Datenquelle verbunden",
+                "move": "Durch das Verschieben wird der aktuelle Dateipfad in der Datenquelle ungültig. Möglicherweise müssen Sie die Datenquelle aktualisieren und synchronisieren.",
+                "rename": "Durch das Umbenennen wird der aktuelle Dateipfad in der Datenquelle ungültig. Möglicherweise müssen Sie die Datenquelle aktualisieren und synchronisieren.",
+                "delete": "Durch das Löschen werden von einer Datenquelle verwendete Inhalte entfernt. Möglicherweise müssen Sie die Datenquelle aktualisieren und synchronisieren."
+            }
         },
         "actions": {
             "attachments": {

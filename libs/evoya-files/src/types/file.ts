@@ -48,6 +48,8 @@ export type RecentFileDto = {
   mime: string;
   location: string;
   location_name?: string;
+  connectedToDatasource?: boolean;
+  datasources?: DatasourceConnection[];
 };
 
 export type RecentFile = Omit<EvoyaFile, 'created' | 'modified'> & {
@@ -77,6 +79,8 @@ export type ShortcutItemDto = {
   project_uuid?: string;
   access_type?: string;
   download_url?: string;
+  connectedToDatasource?: boolean;
+  datasources?: DatasourceConnection[];
   last_modified_at?: string | null;
   last_modified_by?: ActivityActor | null;
   last_opened_at?: string | null;
@@ -112,4 +116,6 @@ type FilePickerShortcutItem =
       modified: Date | null;
       path: string;
       download_url?: string;
+      connectedToDatasource?: boolean;
+      datasources?: DatasourceConnection[];
     };

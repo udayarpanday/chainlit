@@ -4,7 +4,7 @@ import {
   FileImage,
   FileText,
   Folder,
-  FolderClock
+  FolderSync
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -15,6 +15,10 @@ import { cn } from '@chainlit/app/src/lib/utils';
 
 import type { FilePickerItem } from '../types';
 import { getDateDisplay, getSizeDisplay } from '../utils/file';
+import {
+  getDatasourceConnectionState,
+  isConnectedToDatasource
+} from '../utils/files-api';
 import FileItemActions from './FileItemActions';
 
 export type PickerCheckedState = boolean | 'indeterminate';
@@ -42,20 +46,18 @@ type Props = {
 
 export const getItemIcon = (item: FilePickerItem): ReactNode => {
   const isSharePoint = isSharePointItem(item);
+  const connectedToDatasource = isConnectedToDatasource(item);
   const iconClassName = cn(
     'h-4 shrink-0',
-    isSharePoint && 'text-sky-600 dark:text-sky-400'
+    (isSharePoint || connectedToDatasource) && 'text-sky-600 dark:text-sky-400'
   );
 
-  if (isSharePoint) {
-    const isConnectedToDatasource =
-      'size' in item && item.connectedToDatasource === true;
+  if (connectedToDatasource) {
+    return <FolderSync className={iconClassName} />;
+  }
 
-    return isConnectedToDatasource ? (
-      <FolderClock className={iconClassName} />
-    ) : (
-      <Folder className={iconClassName} />
-    );
+  if (isSharePoint) {
+    return <Folder className={iconClassName} />;
   }
 
   if (!('size' in item)) {
@@ -98,8 +100,7 @@ export default function FilePickerItemComponent({
 }: Props) {
   const { t } = useTranslation();
   const isFile = 'size' in item;
-  const datasourceConnectionState =
-    isFile && isSharePointItem(item) ? item.connectedToDatasource : undefined;
+  const datasourceConnectionState = getDatasourceConnectionState(item);
   const datasourceLabel =
     datasourceConnectionState === undefined
       ? undefined
