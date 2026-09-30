@@ -163,7 +163,7 @@ export default function Uploader({
         </div>
         {currentPath === '/' && showConnectButton && (
           <Button asChild>
-            <a href="/files/manage/sharepoint/mounts/">
+            <a href="/files/manage/connect/">
               <Translator path="evoyaFiles.actions.connect.label" />
             </a>
           </Button>
