@@ -11,7 +11,10 @@ import AudioPresence from '@chainlit/app/src/components/AudioPresence';
 import ChatProfiles from '@chainlit/app/src/components/header/ChatProfiles';
 import NewChatButton from '@chainlit/app/src/components/header/NewChat';
 import { Button } from '@chainlit/app/src/components/ui/button';
-import { ChainlitContext } from '@chainlit/react-client';
+import {
+  ChainlitContext,
+  getScopedSessionStorageItem
+} from '@chainlit/react-client';
 import {
   chatArchived,
   evoyaCreatorEnabledState,
@@ -99,12 +102,17 @@ const Header = ({
   const temporaryChat = useRecoilValue(temporaryChatState);
 
   const hasChatProfiles = !!config?.chatProfiles?.length;
-  const [sessionUuidState, setSessionUuidState] = useState({
+  const [sessionUuidState, setSessionUuidState] = useState(() => ({
     sessionId,
-    uuid: evoya?.session_uuid ?? ''
-  });
+    uuid:
+      evoya?.session_uuid ||
+      getScopedSessionStorageItem(sessionTokenKey) ||
+      ''
+  }));
   const sessionUuid =
-    sessionUuidState.sessionId === sessionId ? sessionUuidState.uuid : '';
+    (sessionUuidState.sessionId === sessionId ? sessionUuidState.uuid : '') ||
+    getScopedSessionStorageItem(sessionTokenKey) ||
+    '';
   const pendingPinsRef = useRef(new Set<string>());
   const [pendingPinUuids, setPendingPinUuids] = useState<ReadonlySet<string>>(
     new Set()
@@ -510,7 +518,7 @@ const Header = ({
         {evoya?.type === 'dashboard' && !creatorEnabled && (
           <>
             <ViewContext />
-            <TemporaryChatButton /> 
+            {!sessionUuid ? <TemporaryChatButton /> : null}
             {!temporaryChat ? (
               <FavoriteSessionButton
                 sessionUuid={sessionUuid}
