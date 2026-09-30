@@ -560,7 +560,13 @@
     "evoyaFiles": {
         "datasource": {
             "connected": "Connesso a un'origine dati",
-            "not_connected": "Non connesso a un'origine dati"
+            "not_connected": "Non connesso a un'origine dati",
+            "warning": {
+                "title": "Connesso a un'origine dati",
+                "move": "Lo spostamento di questo elemento renderà non valido il percorso corrente nell'origine dati. Potrebbe essere necessario aggiornare e sincronizzare l'origine dati.",
+                "rename": "La ridenominazione di questo elemento renderà non valido il percorso corrente nell'origine dati. Potrebbe essere necessario aggiornare e sincronizzare l'origine dati.",
+                "delete": "L'eliminazione di questo elemento rimuoverà contenuti usati da un'origine dati. Potrebbe essere necessario aggiornare e sincronizzare l'origine dati."
+            }
         },
         "actions": {
             "connect": {

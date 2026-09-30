@@ -36,6 +36,7 @@ import { downloadBlob } from '../utils/file';
 import {
   buildFilesUrl,
   buildShortcutUrl,
+  isConnectedToDatasource,
   isShortcutKey,
   shouldShowRecentFiles
 } from '../utils/files-api';
@@ -47,6 +48,7 @@ import {
   mergeShortcutItems,
   normalizeShortcutItems
 } from '../utils/shortcuts';
+import DatasourceChangeWarning from './DatasourceChangeWarning';
 import FilePickerItemComponent, { PickerCheckedState } from './FilePickerItem';
 import FileSearch from './FileSearch';
 import FolderBreadcrumbs from './FolderBreadcrumbs';
@@ -478,12 +480,12 @@ export default function FilePicker({
     }
   };
 
-  const deleteItemsHandler = () => {
-    const items = (isSearch ? searchItems : pathData.items).filter((item) =>
+  const getSelectedItems = () =>
+    (isSearch ? searchItems : pathData.items).filter((item) =>
       selectedElements.includes(item.id)
     );
-    deleteItems(items);
-  };
+
+  const deleteItemsHandler = () => deleteItems(getSelectedItems());
 
   const deleteItems = async (items: FilePickerItem[]) => {
     setIsLoading(true);
@@ -696,6 +698,9 @@ export default function FilePicker({
         ? 'indeterminate'
         : false
     : allSelectableItemsSelected;
+  const bulkDeleteIncludesDatasourceItems = getSelectedItems().some(
+    isConnectedToDatasource
+  );
 
   return (
     <>
@@ -1056,6 +1061,9 @@ export default function FilePicker({
                 <Translator path="evoyaFiles.actions.delete_bulk.description" />
               </DialogDescription>
             </DialogHeader>
+            {bulkDeleteIncludesDatasourceItems && (
+              <DatasourceChangeWarning action="delete" />
+            )}
             <DialogFooter>
               <Button variant="secondary" onClick={() => setDeleteOpen(false)}>
                 <Translator path="common.actions.cancel" />

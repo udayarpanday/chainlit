@@ -141,10 +141,11 @@ export function ImageLibraryItem({
           onClick={() => onOpen(item)}
         >
           <span
-            className="block truncate text-sm font-medium"
+            className="flex min-w-0 items-center gap-2 text-sm font-medium"
             title={item.name}
           >
-            {item.name}
+            {getItemIcon(item as FilePickerItem)}
+            <span className="truncate">{item.name}</span>
           </span>
           <span className="mt-1 block truncate text-xs text-gray-400">
             {date ? getDateDisplay(date) : item.owner}

@@ -597,7 +597,13 @@
     "evoyaFiles": {
         "datasource": {
             "connected": "Connecté à une source de données",
-            "not_connected": "Non connecté à une source de données"
+            "not_connected": "Non connecté à une source de données",
+            "warning": {
+                "title": "Connecté à une source de données",
+                "move": "Le déplacement de cet élément invalidera son chemin actuel dans la source de données. Vous devrez peut-être mettre à jour et synchroniser la source de données.",
+                "rename": "Le changement de nom de cet élément invalidera son chemin actuel dans la source de données. Vous devrez peut-être mettre à jour et synchroniser la source de données.",
+                "delete": "La suppression de cet élément retirera du contenu utilisé par une source de données. Vous devrez peut-être mettre à jour et synchroniser la source de données."
+            }
         },
         "actions": {
             "attachments": {

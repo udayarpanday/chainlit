@@ -63,6 +63,8 @@ export const normalizeShortcutItems = (value: unknown): ShortcutItem[] => {
       readOnly: Boolean(item.readOnly) || !path,
       path,
       download_url: downloadUrl,
+      connectedToDatasource: item.connectedToDatasource,
+      datasources: item.datasources,
       created: parseDate(item.created),
       modified: parseDate(item.modified),
       lastModifiedAt: parseDate(item.last_modified_at),

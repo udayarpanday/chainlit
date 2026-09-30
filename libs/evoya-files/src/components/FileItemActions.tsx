@@ -36,7 +36,8 @@ import {
 
 import { FilePickerContext } from '../context/file-context';
 import type { FilePickerItem } from '../types';
-import { canMutateFileItem } from '../utils/files-api';
+import { canMutateFileItem, isConnectedToDatasource } from '../utils/files-api';
+import DatasourceChangeWarning from './DatasourceChangeWarning';
 import FilePicker from './FilePicker';
 
 export type FileItemActionsMode = 'standard-row' | 'menu-only';
@@ -71,6 +72,7 @@ export default function FileItemActions({
   const isFile = 'size' in item;
   const mime = isFile ? item.mime : '';
   const canMutate = canMutateFileItem(item);
+  const isDatasourceConnected = isConnectedToDatasource(item);
 
   const stopPropagation = (event: MouseEvent) => event.stopPropagation();
 
@@ -217,6 +219,9 @@ export default function FileItemActions({
                   <Translator path={isFile ? 'evoyaFiles.actions.move.description' : 'evoyaFiles.actions.move_folder.description'} />
                 </DialogDescription>
               </DialogHeader>
+              {isDatasourceConnected && (
+                <DatasourceChangeWarning action="move" />
+              )}
               <form onSubmit={moveItemHandler} id={`move-file-form-${formId}`}>
                 <FilePicker
                   initialPath="/"
@@ -250,6 +255,9 @@ export default function FileItemActions({
                   <Translator path={isFile ? 'evoyaFiles.actions.rename.title' : 'evoyaFiles.actions.rename_folder.title'} />
                 </DialogTitle>
               </DialogHeader>
+              {isDatasourceConnected && (
+                <DatasourceChangeWarning action="rename" />
+              )}
               <form onSubmit={renameItemHandler} id={`rename-file-form-${formId}`}>
                 <Input
                   value={renameValue}
@@ -284,6 +292,9 @@ export default function FileItemActions({
                   <Translator path={isFile ? 'evoyaFiles.actions.delete.description' : 'evoyaFiles.actions.delete_folder.description'} />
                 </DialogDescription>
               </DialogHeader>
+              {isDatasourceConnected && (
+                <DatasourceChangeWarning action="delete" />
+              )}
               <DialogFooter>
                 <Button variant="secondary" onClick={() => setDeleteOpen(false)}>
                   <Translator path="common.actions.cancel" />

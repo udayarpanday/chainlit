@@ -1,3 +1,5 @@
+import type { DatasourceConnection } from './file';
+
 export type EvoyaDirectory = {
   type?: string;
   name: string;
@@ -8,6 +10,8 @@ export type EvoyaDirectory = {
   modified: Date | null;
   created: Date | null;
   path: string;
-}
+  connectedToDatasource?: boolean;
+  datasources?: DatasourceConnection[];
+};
 
 export type EvoyaPermission = 'read' | 'write';
