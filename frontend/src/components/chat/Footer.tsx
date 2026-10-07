@@ -92,6 +92,7 @@ export default function ChatFooter({
     evoya?.type === 'dashboard' &&
     evoya?.additionalInfo?.dataProcessing !== false &&
     dataProcessingCategories.length > 0;
+  const isTemporaryChat = evoya?.type === 'dashboard' && temporaryChat;
 
   if (!hasMessage(messages) && !showIfEmptyThread) return null;
 
@@ -109,7 +110,7 @@ export default function ChatFooter({
             : 'justify-center flex-col'
         )}
       >
-        {temporaryChat ? (
+        {isTemporaryChat ? (
           <TemporaryChatNotice />
         ) : (
           <WaterMark />

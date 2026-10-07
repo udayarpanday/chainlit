@@ -7,3 +7,8 @@ export interface IAgent {
 export interface IAgents {
   agents: IAgent[];
 }
+
+export interface ISttModel {
+  model?: string | null;
+  name?: string | null;
+}

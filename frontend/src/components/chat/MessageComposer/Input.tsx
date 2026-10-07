@@ -9,7 +9,12 @@ import React, {
 } from 'react';
 import { useRecoilValue } from 'recoil';
 
-import { ICommand, agentState, commandsState } from '@chainlit/react-client';
+import {
+  ICommand,
+  agentState,
+  audioConnectionState,
+  commandsState
+} from '@chainlit/react-client';
 
 import { Translator } from '@/components/i18n';
 import {
@@ -44,6 +49,9 @@ export interface InputMethods {
   isCommandExpanded: () => boolean;
   setContent: (value: string) => void;
   appendContent: (value: string) => void;
+  beginDictation: () => void;
+  cancelDictation: () => void;
+  insertTranscript: (value: string, mode: 'append' | 'replace') => boolean;
 }
 
 const escapeHtml = (unsafe?: string) => {
@@ -81,6 +89,7 @@ const Input = forwardRef<InputMethods, Props>(
   ) => {
     const commands = useRecoilValue(commandsState);
     const agents = useRecoilValue(agentState);
+    const audioConnection = useRecoilValue(audioConnectionState);
     const [isComposing, setIsComposing] = useState(false);
     const [showCommands, setShowCommands] = useState(false);
     const [showAgents, setShowAgents] = useState(false);
@@ -100,6 +109,12 @@ const Input = forwardRef<InputMethods, Props>(
         : _setLocalSelectedAgents;
 
     const contentEditableRef = useRef<HTMLDivElement>(null);
+    const dictationRangeRef = useRef<Range | null>(null);
+    const lastTranscriptRef = useRef('');
+    const committedTranscriptRef = useRef('');
+    const dictationStatusRef = useRef<
+      'idle' | 'active' | 'cancelled' | 'edited'
+    >('idle');
     const lastCommandSpanRef = useRef<HTMLElement | null>(null);
     const lastAgentSpanRef = useRef<HTMLElement | null>(null);
     const mutationObserverRef = useRef<MutationObserver | null>(null);
@@ -171,6 +186,10 @@ const Input = forwardRef<InputMethods, Props>(
     };
 
     const reset = () => {
+      dictationRangeRef.current = null;
+      dictationStatusRef.current = 'idle';
+      lastTranscriptRef.current = '';
+      committedTranscriptRef.current = '';
       setSelectedCommand(undefined);
       setSelectedIndex(0);
       setCommandInput('');
@@ -215,12 +234,88 @@ const Input = forwardRef<InputMethods, Props>(
       placeCursorAtEnd(content);
     };
 
+    const beginDictation = () => {
+        const content = contentEditableRef.current;
+        if (!content || disabled) return;
+        const selection = window.getSelection();
+        const selectedRange = selection?.rangeCount ? selection.getRangeAt(0) : null;
+        const range = document.createRange();
+        if (selectedRange && content.contains(selectedRange.startContainer)) {
+          range.setStart(selectedRange.startContainer, selectedRange.startOffset);
+          range.collapse(true);
+        } else {
+          range.selectNodeContents(content);
+          range.collapse(false);
+        }
+        dictationRangeRef.current = range;
+        dictationStatusRef.current = 'active';
+        lastTranscriptRef.current = '';
+        committedTranscriptRef.current = '';
+    };
+
     useImperativeHandle(ref, () => ({
       reset,
       getFullContent,
       isCommandExpanded: () => isCommandExpanded,
       setContent: (value: string) => syncContent(value, 'replace'),
-      appendContent: (value: string) => syncContent(value, 'append')
+      appendContent: (value: string) => syncContent(value, 'append'),
+      beginDictation,
+      cancelDictation: () => {
+        const range = dictationRangeRef.current;
+        if (range && contentEditableRef.current?.contains(range.commonAncestorContainer)) {
+          range.deleteContents();
+          onChange(getContentWithoutCommand());
+        }
+        dictationRangeRef.current = null;
+        dictationStatusRef.current = 'cancelled';
+      },
+      insertTranscript: (value, mode) => {
+        if (
+          dictationStatusRef.current === 'cancelled' ||
+          (dictationStatusRef.current === 'edited' && audioConnection === 'off') ||
+          disabled
+        ) return true;
+        // Transcripts can also arrive without the microphone's start callback.
+        // They must never fall back to replacing the entire draft.
+        if (dictationStatusRef.current === 'idle') beginDictation();
+        if (dictationStatusRef.current === 'edited') {
+          const previousTranscript = lastTranscriptRef.current;
+          beginDictation();
+          committedTranscriptRef.current = previousTranscript;
+        }
+        const transcriptText = mode === 'replace' &&
+          value.startsWith(committedTranscriptRef.current)
+          ? value.slice(committedTranscriptRef.current.length)
+          : value;
+        lastTranscriptRef.current = mode === 'replace'
+          ? value
+          : lastTranscriptRef.current + value;
+        const content = contentEditableRef.current;
+        const range = dictationRangeRef.current;
+        if (!content || !range || !content.contains(range.commonAncestorContainer)) return true;
+        if (mode === 'replace') range.deleteContents();
+        const insertion = range.cloneRange();
+        insertion.collapse(false);
+        const fragment = document.createDocumentFragment();
+        transcriptText.split('\n').forEach((line, index) => {
+          if (index) fragment.appendChild(document.createElement('br'));
+          fragment.appendChild(document.createTextNode(line));
+        });
+        const first = fragment.firstChild!;
+        const last = fragment.lastChild!;
+        const wasCollapsed = range.collapsed;
+        insertion.insertNode(fragment);
+        if (wasCollapsed) range.setStartBefore(first);
+        range.setEndAfter(last);
+        onChange(getContentWithoutCommand());
+        const caret = range.cloneRange();
+        caret.collapse(false);
+        content.focus();
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(caret);
+        return true;
+      }
     }));
 
     // Set up mutation observer to detect command span removal
@@ -548,6 +643,13 @@ const Input = forwardRef<InputMethods, Props>(
     const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
       if (disabled) return;
       if (isUpdatingRef.current) return;
+
+      // Manual edits commit the previous dictated region, even while audio is on.
+      // Further speech starts a new region instead of deleting the user's edits.
+      if (dictationStatusRef.current === 'active') {
+        dictationRangeRef.current = null;
+        dictationStatusRef.current = 'edited';
+      }
 
       const textContent = getContentWithoutCommand();
       onChange(textContent);

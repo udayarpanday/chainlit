@@ -1,3 +1,5 @@
+import { cn } from '@/lib/utils';
+import { Archive, FolderOpen, Plus, X } from 'lucide-react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -10,11 +12,12 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { WidgetContext } from '@chainlit/copilot/src/context';
 import {
-  chatArchived,
-  evoyaCreatorEnabledState,
   FileSpec,
   ICommand,
   IStep,
+  chatArchived,
+  audioConnectionState,
+  evoyaCreatorEnabledState,
   initialTranscriptState,
   projectAccess,
   promptState,
@@ -23,13 +26,11 @@ import {
   useChatData,
   useChatInteract
 } from '@chainlit/react-client';
-import { Archive, FolderOpen, Plus, X } from 'lucide-react';
 
 import { Settings } from '@/components/icons/Settings';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
-import { evoyaAttachmentsState, EvoyaAttachment } from '@/state/evoya';
+import { EvoyaAttachment, evoyaAttachmentsState } from '@/state/evoya';
 import { chatSettingsOpenState } from '@/state/project';
 import {
   IAttachment,
@@ -79,12 +80,15 @@ export default function MessageComposer({
   const [attachments, setAttachments] = useRecoilState(attachmentsState);
   const quotedSelection = useRecoilValue(quotedSelectionState);
   const resetQuotedSelection = useResetRecoilState(quotedSelectionState);
-  const [evoyaAttachments, setEvoyaAttachments] = useRecoilState(evoyaAttachmentsState);
+  const [evoyaAttachments, setEvoyaAttachments] = useRecoilState(
+    evoyaAttachmentsState
+  );
   const initialTranscript = useRecoilValue(initialTranscriptState);
+  const audioConnection = useRecoilValue(audioConnectionState);
   const isChatArchived = useRecoilValue(chatArchived);
   const isProjectAccessible = useRecoilValue(projectAccess);
   const temporaryChat = useRecoilValue(temporaryChatState);
-  console.log(isProjectAccessible)
+  const isTemporaryChat = evoya?.type === 'dashboard' && temporaryChat;
   const resetInitialTranscript = useResetRecoilState(initialTranscriptState);
   const { t } = useTranslation();
 
@@ -116,6 +120,10 @@ export default function MessageComposer({
       return;
     }
 
+    if (inputRef.current.insertTranscript(transcriptText, initialTranscript.mode)) {
+      resetInitialTranscript();
+      return;
+    }
     if (initialTranscript.mode === 'append') {
       inputRef.current.appendContent(transcriptText);
     } else {
@@ -192,8 +200,7 @@ export default function MessageComposer({
         ?.filter((a) => !!a.serverId)
         .map((a) => ({ id: a.serverId! }));
 
-      const evoyaReferences = evoyaAttachments
-        ?.map((a) => ({ path: a.path }));
+      const evoyaReferences = evoyaAttachments?.map((a) => ({ path: a.path }));
 
       if (setAutoScroll) {
         setAutoScroll(true);
@@ -230,6 +237,7 @@ export default function MessageComposer({
 
   const submit = async () => {
     if (
+      audioConnection !== 'off' ||
       disabled ||
       (!selectedCommand &&
         value === '' &&
@@ -343,7 +351,7 @@ export default function MessageComposer({
         // quoted context chip.
         quotedSelection && 'rounded-3xl',
         isChatArchived && 'border border-primary',
-        temporaryChat &&
+        isTemporaryChat &&
           'border border-dashed border-gray-400 dark:border-gray-500'
       )}
     >
@@ -353,7 +361,7 @@ export default function MessageComposer({
           <p>{t('chat.input.archived')}</p>
         </div>
       ) : null}
-      {(attachments.length > 0 || evoyaAttachments.length > 0) ? (
+      {attachments.length > 0 || evoyaAttachments.length > 0 ? (
         <div className="mb-1">
           <Attachments />
         </div>
@@ -413,7 +421,8 @@ export default function MessageComposer({
       )}
       <div className="flex items-center justify-between">
         <div className="flex items-center -ml-1.5">
-          {((evoya && evoya?.type != 'dashboard') || !context?.is_superuser) && (
+          {((evoya && evoya?.type != 'dashboard') ||
+            !context?.is_superuser) && (
             <UploadButton
               disabled={disabled}
               fileSpec={fileSpec}
@@ -421,7 +430,7 @@ export default function MessageComposer({
               onFileUpload={onFileUpload}
             />
           )}
-          {(evoya && evoya?.type == 'dashboard' && context?.is_superuser) && (
+          {evoya && evoya?.type == 'dashboard' && context?.is_superuser && (
             <UploadButtonDropdown
               disabled={disabled}
               fileSpec={fileSpec}
@@ -429,14 +438,16 @@ export default function MessageComposer({
               onFileUpload={onFileUpload}
             />
           )}
-          <ConfigurationMenu
-            disabled={disabled}
-            isProjectAccessible={isProjectAccessible}
-            openProjectsRequest={openProjectsRequest}
-            onSelectedProjectsChange={setSelectedProjects}
-            selectedCommand={selectedCommand}
-            onCommandSelect={setSelectedCommand}
-          />
+          {evoya && evoya?.type == 'dashboard' && (
+            <ConfigurationMenu
+              disabled={disabled}
+              isProjectAccessible={isProjectAccessible}
+              openProjectsRequest={openProjectsRequest}
+              onSelectedProjectsChange={setSelectedProjects}
+              selectedCommand={selectedCommand}
+              onCommandSelect={setSelectedCommand}
+            />
+          )}
           {chatSettingsInputs.length > 0 && (
             <Button
               id="chat-settings-open-modal"
@@ -470,6 +481,8 @@ export default function MessageComposer({
         )}
         <div className="flex items-center gap-1">
           <SubmitButton
+            onDictationStart={() => inputRef.current?.beginDictation()}
+            onDictationCancel={() => inputRef.current?.cancelDictation()}
             onSubmit={submit}
             disabled={disabled}
             value={selectedCommand ? selectedCommand.id : value}

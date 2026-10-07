@@ -10,7 +10,8 @@ import {
   configState,
   evoyaCreatorEnabledState,
   useAuth,
-  useChatInteract
+  useChatInteract,
+  useChatSession
 } from '@chainlit/react-client';
 
 import { useCopilotInteract } from './hooks/useCopilotInteract';
@@ -49,6 +50,7 @@ export default function App({ widgetConfig }: Props) {
   const { i18n } = useTranslation();
   const { startNewChat } = useCopilotInteract();
   const { clear } = useChatInteract();
+  const { temporaryChat, setTemporaryChat } = useChatSession();
   const languageInUse =
     evoya?.locale || widgetConfig.language || navigator.language || 'en-US';
   const [authError, setAuthError] = useState<string>();
@@ -72,6 +74,12 @@ export default function App({ widgetConfig }: Props) {
       clear();
     }
   }, [evoya]);
+
+  useEffect(() => {
+    if (evoya?.type !== 'dashboard' && temporaryChat) {
+      setTemporaryChat(false);
+    }
+  }, [evoya?.type, setTemporaryChat, temporaryChat]);
 
   useEffect(() => {
     if (config && config?.ui && config?.ui?.cot !== 'full') {
