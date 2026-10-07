@@ -4,6 +4,7 @@ import {
   actionState,
   activeModelOverrideState,
   askUserState,
+  audioConnectionState,
   canOverrideModelState,
   chatArchived,
   chatSettingsInputsState,
@@ -12,6 +13,7 @@ import {
   elementState,
   favoriteMessagesState,
   firstUserInteraction,
+  generatingMessageIdState,
   loadingState,
   messagesState,
   modelCatalogState,
@@ -36,6 +38,9 @@ const useChatInteract = () => {
   const session = useRecoilValue(sessionState);
   const askUser = useRecoilValue(askUserState);
   const sessionId = useRecoilValue(sessionIdState);
+  const generatingMessageId = useRecoilValue(generatingMessageIdState);
+  const audioConnection = useRecoilValue(audioConnectionState);
+  const setGeneratingMessageId = useSetRecoilState(generatingMessageIdState);
 
   const resetChatSettings = useResetRecoilState(chatSettingsInputsState);
   const resetSessionId = useResetRecoilState(sessionIdState);
@@ -65,6 +70,7 @@ const useChatInteract = () => {
     session?.socket.emit('clear_session');
     session?.socket.disconnect();
     resetSession();
+    setGeneratingMessageId(undefined);
     setIdToResume(undefined);
     resetSessionId();
     setFirstUserInteraction(undefined);
@@ -98,13 +104,14 @@ const useChatInteract = () => {
       }
       setMessages((oldMessages) => addMessage(oldMessages, message as IStep));
 
+      setGeneratingMessageId(message.id);
       session?.socket.emit('client_message', {
         message,
         fileReferences,
         evoyaAttachments
       });
     },
-    [session?.socket]
+    [session?.socket, setGeneratingMessageId, setMessages]
   );
 
   const editMessage = useCallback(
@@ -208,6 +215,14 @@ const useChatInteract = () => {
   );
 
   const stopTask = useCallback(() => {
+    if (generatingMessageId) {
+      session?.socket.emit('stop_message', { messageId: generatingMessageId });
+    } else if (audioConnection === 'on') {
+      session?.socket.emit('stop');
+    } else {
+      return;
+    }
+
     setMessages((oldMessages) =>
       oldMessages.map((m) => {
         m.streaming = false;
@@ -216,9 +231,13 @@ const useChatInteract = () => {
     );
 
     setLoading(false);
-
-    session?.socket.emit('stop');
-  }, [session?.socket]);
+  }, [
+    session?.socket,
+    generatingMessageId,
+    audioConnection,
+    setMessages,
+    setLoading
+  ]);
 
   const passAudioType = useCallback(
     (type: string) => {

@@ -26,6 +26,7 @@ import {
   elementState,
   favoriteMessagesState,
   firstUserInteraction,
+  generatingMessageIdState,
   initialTranscriptState,
   isAiSpeakingState,
   loadingState,
@@ -260,6 +261,7 @@ const useChatSession = () => {
   const setChatSettingsValue = useSetRecoilState(chatSettingsValueState);
   const setFirstUserInteraction = useSetRecoilState(firstUserInteraction);
   const setLoading = useSetRecoilState(loadingState);
+  const setGeneratingMessageId = useSetRecoilState(generatingMessageIdState);
   const setMcps = useSetRecoilState(mcpState);
   const wavStreamPlayer = useRecoilValue(wavStreamPlayerState);
   const wavRecorder = useRecoilValue(wavRecorderState);
@@ -477,6 +479,12 @@ const useChatSession = () => {
 
       socket.on('task_end', () => {
         setLoading(markTaskEnded());
+      });
+
+      socket.on('message_task_end', ({ messageId }: { messageId: string }) => {
+        setGeneratingMessageId((current) =>
+          current === messageId ? undefined : current
+        );
       });
 
       socket.on('reload', () => {
@@ -912,6 +920,7 @@ const useChatSession = () => {
     );
     resetTaskLoading();
     setLoading(false);
+    setGeneratingMessageId(undefined);
   }, [connect, session, setSession, setLoading]);
 
   const setTemporaryChat = useCallback(
