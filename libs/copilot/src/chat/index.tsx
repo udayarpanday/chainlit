@@ -40,9 +40,9 @@ export default function ChatWrapper() {
       transports: window.transports,
       userEnv: {},
       accessToken,
-      evoya: { session_uuid: evoyaSessionUuid }
+      evoya: { session_uuid: evoyaSessionUuid, type: evoya?.type }
     });
-  }, [accessToken, connect, evoyaSessionUuid, session?.socket]);
+  }, [accessToken, connect, evoya?.type, evoyaSessionUuid, session?.socket]);
 
   useEffect(() => {
     // @ts-expect-error is not a valid prop

@@ -1,4 +1,5 @@
 import { MessageCircleDashed } from 'lucide-react';
+import { useContext } from 'react';
 import { useRecoilValue } from 'recoil';
 
 import { useTranslation } from '@chainlit/app/src/components/i18n/Translator';
@@ -9,19 +10,17 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from '@chainlit/app/src/components/ui/tooltip';
-import {
-  firstUserInteraction,
-  useChatInteract,
-  useChatSession
-} from '@chainlit/react-client';
+import { firstUserInteraction, useChatSession } from '@chainlit/react-client';
+
+import { WidgetContext } from '../context';
 
 export default function TemporaryChatButton() {
+  const { evoya } = useContext(WidgetContext);
   const firstInteraction = useRecoilValue(firstUserInteraction);
   const { temporaryChat, setTemporaryChat } = useChatSession();
-  const { clear } = useChatInteract();
   const { t } = useTranslation();
 
-  if (firstInteraction) return null;
+  if (evoya?.type !== 'dashboard' || firstInteraction) return null;
 
   return (
     <TooltipProvider delayDuration={100}>
@@ -40,7 +39,6 @@ export default function TemporaryChatButton() {
                   : 'text-muted-foreground hover:text-muted-foreground'
               }
               onClick={() => {
-                clear();
                 setTemporaryChat(!temporaryChat);
               }}
             >

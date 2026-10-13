@@ -2,7 +2,7 @@ import { isEqual } from 'lodash';
 import { AtomEffect, DefaultValue, atom, selector } from 'recoil';
 import { Socket } from 'socket.io-client';
 
-import { IAgents } from './types/agents';
+import { IAgents, ISttModel } from './types/agents';
 import { ICommand } from './types/command';
 import { IMode } from './types/mode';
 
@@ -318,6 +318,11 @@ export const chatArchived = atom<boolean>({
 export const projectAccess = atom<boolean>({
   key: 'ProjectAccess',
   default: false
+});
+
+export const sttModelState = atom<ISttModel | null>({
+  key: 'SttModel',
+  default: null
 });
 
 export const agentState = atom<IAgents>({

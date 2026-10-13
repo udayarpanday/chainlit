@@ -7,7 +7,8 @@ import {
   chatArchived,
   useChatData,
   useChatInteract,
-  useChatMessages
+  useChatMessages,
+  audioConnectionState
 } from '@chainlit/react-client';
 
 import { Stop } from '@/components/icons/Stop';
@@ -26,16 +27,21 @@ interface SubmitButtonProps {
   disabled?: boolean;
   value?: string;
   onSubmit: () => void;
+  onDictationStart: () => void;
+  onDictationCancel: () => void;
 }
 
 export default function SubmitButton({
   disabled,
   onSubmit,
-  value
+  value,
+  onDictationStart,
+  onDictationCancel
 }: SubmitButtonProps) {
   const { evoya } = useContext(WidgetContext);
   const isChatArchived = useRecoilValue(chatArchived);
   const { loading } = useChatData();
+  const audioConnection = useRecoilValue(audioConnectionState);
   const { firstInteraction } = useChatMessages();
   const { stopTask } = useChatInteract();
 
@@ -52,11 +58,10 @@ export default function SubmitButton({
 
   return (
     <TooltipProvider>
-      {!loading &&
-      isValueEmpty(value) &&
-      ((evoya && evoya?.speechToText == true) || evoya == undefined) ? (
-        <VoiceButton disabled={disabled} />
-      ) : loading && firstInteraction ? (
+      {(!loading || audioConnection !== 'off') && ((evoya && evoya.speechToText === true) || !evoya) && (
+        <VoiceButton disabled={disabled} onDictationStart={onDictationStart} onDictationCancel={onDictationCancel} />
+      )}
+      {audioConnection !== 'off' || (!loading && isValueEmpty(value) && ((evoya && evoya.speechToText === true) || !evoya)) ? null : loading && firstInteraction ? (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

@@ -2,8 +2,9 @@ import { cn } from '@/lib/utils';
 import { WidgetContext } from 'context';
 import { Check, X, Clock, Mic } from 'lucide-react';
 import { useContext, useEffect, useState } from 'react';
+import { useRecoilValue } from 'recoil';
 
-import { useAudio, useConfig } from '@chainlit/react-client';
+import { sttModelState, useAudio, useConfig } from '@chainlit/react-client';
 
 import AudioPresence from '@/components/AudioPresence';
 import {
@@ -20,11 +21,15 @@ import { Button } from '../../ui/button';
 
 interface Props {
   disabled?: boolean;
+  onDictationStart: () => void;
+  onDictationCancel: () => void;
 }
 
-const VoiceButton = ({ disabled }: Props) => {
+const VoiceButton = ({ disabled, onDictationStart, onDictationCancel }: Props) => {
   const { config } = useConfig();
+  const sttModel = useRecoilValue(sttModelState);
   const { evoya } = useContext(WidgetContext);
+  console.log(evoya, 'evoya');
   const { startConversation, endConversation, audioConnection } = useAudio();
   const [modalityType, setModalityType] = useState<
     'realtime' | 'speech' | null
@@ -33,6 +38,9 @@ const VoiceButton = ({ disabled }: Props) => {
   const [timerActive, setTimerActive] = useState<boolean>(false);
 
   const isEnabled = !!config?.features.audio.enabled;
+  const isLive = (sttModel?.model || sttModel?.name || '')
+    .toLowerCase()
+    .includes('voxtral');
   const isAudioOn = audioConnection === 'on';
   const isAudioOff = audioConnection === 'off';
   const isConnecting = audioConnection === 'connecting';
@@ -48,7 +56,7 @@ const VoiceButton = ({ disabled }: Props) => {
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
 
-    if (isAudioOn && modalityType === 'speech' && timerActive) {
+    if (isAudioOn && modalityType === 'speech' && timerActive && !isLive) {
       interval = setInterval(() => {
         setTimeRemaining((prev) => {
           if (prev <= 1) {
@@ -66,7 +74,7 @@ const VoiceButton = ({ disabled }: Props) => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isAudioOn, modalityType, timerActive, endConversation]);
+  }, [isAudioOn, modalityType, timerActive, endConversation, isLive]);
 
   if (!isEnabled) return null;
 
@@ -76,6 +84,7 @@ const VoiceButton = ({ disabled }: Props) => {
       setTimerActive(false);
       endConversation();
     } else if (isAudioOff) {
+      onDictationStart();
       setModalityType(mode);
       if (mode === 'speech') {
         setTimeRemaining(480);
@@ -103,16 +112,26 @@ const VoiceButton = ({ disabled }: Props) => {
       {isAudioOn && modalityType === 'speech' && (
         <>
           <div
+            role={isLive ? 'status' : undefined}
+            aria-label={isLive ? 'Live transcription is recording' : undefined}
             className={cn(
-              'flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors',
-              'bg-muted/50 border',
-              getTimerColor(timeRemaining),
-              timeRemaining < 60 &&
+              'flex items-center border text-xs font-medium transition-colors',
+              isLive
+                ? 'gap-2 rounded-full border-red-200 bg-white px-2.5 py-1 text-red-700'
+                : cn('gap-1 rounded-md bg-muted/50 px-2 py-1 tabular-nums', getTimerColor(timeRemaining)),
+              !isLive && timeRemaining < 60 &&
                 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800/30'
             )}
           >
-            <Clock className="size-3 mr-1" />
-            <span>{formatTime(timeRemaining)}</span>
+            {isLive ? (
+              <span aria-hidden="true" className="relative flex size-2 shrink-0">
+                <span className="absolute inline-flex size-full rounded-full bg-red-500 opacity-40 motion-safe:animate-ping" />
+                <span className="relative inline-flex size-2 rounded-full bg-red-500 dark:bg-red-400" />
+              </span>
+            ) : (
+              <Clock className="size-3 mr-1" />
+            )}
+            <span>{isLive ? 'Live' : formatTime(timeRemaining)}</span>
           </div>
         </>
       )}
@@ -126,7 +145,11 @@ const VoiceButton = ({ disabled }: Props) => {
                   variant="ghost"
                   size="icon"
                   className="hover:bg-muted"
-                  onClick={() => endConversation(!(modalityType === 'speech'))}
+                  aria-label="Cancel transcription"
+                  onClick={() => {
+                    onDictationCancel();
+                    endConversation(!(modalityType === 'speech'));
+                  }}
                 >
                   <X className="!size-6" />
                 </Button>
@@ -148,6 +171,7 @@ const VoiceButton = ({ disabled }: Props) => {
                     size="icon"
                     className="hover:bg-muted"
                     onClick={endConversation}
+                    aria-label="Confirm transcription"
                   >
                     <Check className="!size-6" />
                   </Button>
@@ -196,6 +220,7 @@ const VoiceButton = ({ disabled }: Props) => {
           ) : null} */}
 
           {/* Speech Mode Button */}
+          {isConnecting && <Loader className="!size-5" />}
           {isAudioOff && (
             <TooltipProvider>
               <Tooltip>
@@ -206,6 +231,8 @@ const VoiceButton = ({ disabled }: Props) => {
                     size="icon"
                     className="hover:bg-muted"
                     onClick={() => handleToggle('speech')}
+                    onMouseDown={(event) => event.preventDefault()}
+                    aria-label="Start dictation"
                   >
                     <Mic className="!size-6" />
                   </Button>

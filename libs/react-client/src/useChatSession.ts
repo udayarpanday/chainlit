@@ -35,6 +35,7 @@ import {
   modesState,
   projectAccess,
   promptState,
+  sttModelState,
   resumeThreadErrorState,
   sessionIdState,
   sessionState,
@@ -57,6 +58,7 @@ import {
   IMessageElement,
   IMode,
   IStep,
+  ISttModel,
   ITasklistElement,
   IThread,
   ModelCatalogItem,
@@ -284,6 +286,7 @@ const useChatSession = () => {
   const setInitialTranscript = useSetRecoilState(initialTranscriptState);
   const setChatArchived = useSetRecoilState(chatArchived);
   const setProjectAccess = useSetRecoilState(projectAccess);
+    const setSttModel = useSetRecoilState(sttModelState);
 
   const token = getScopedSessionStorageItem('chainlit_token') || '';
   const tabId = getChainlitTabId();
@@ -324,7 +327,7 @@ const useChatSession = () => {
     }: {
       transports?: string[];
       userEnv: Record<string, string>;
-      evoya: { session_uuid: string };
+      evoya?: { session_uuid?: string; type?: string };
     }) => {
       setModelCatalog(undefined);
       setActiveModelOverride(undefined);
@@ -360,7 +363,8 @@ const useChatSession = () => {
             clientTabId: tabId,
             socketReconnection: isReconnectingRef.current ? 'true' : 'false',
             reconnectAttempt: String(reconnectAttemptRef.current),
-            temporaryChat: temporaryChatRef.current,
+            temporaryChat:
+              evoya?.type === 'dashboard' && temporaryChatRef.current,
             chatSessionUuid:
               evoya?.session_uuid ||
               getScopedSessionStorageItem('session_token') ||
@@ -780,6 +784,11 @@ const useChatSession = () => {
         });
       });
 
+      socket.on('stt_model', (payload: ISttModel) => {
+        console.log(payload);
+        setSttModel(payload ?? null);
+      });
+
       socket.on('chat_session_uuid', (data: { session_uuid: string }) => {
         if (data?.session_uuid) {
           sessionStorage.setItem('chat_session_uuid', data.session_uuid);
@@ -893,13 +902,17 @@ const useChatSession = () => {
   const connect = useCallback(debounce(_connect, 200), [_connect]);
 
   const disconnect = useCallback(() => {
+    connect.cancel();
     if (session?.socket) {
       session.socket.removeAllListeners();
       session.socket.close();
     }
+    setSession((current) =>
+      current?.socket === session?.socket ? undefined : current
+    );
     resetTaskLoading();
     setLoading(false);
-  }, [session]);
+  }, [connect, session, setSession, setLoading]);
 
   const setTemporaryChat = useCallback(
     (enabled: boolean) => {
