@@ -704,7 +704,7 @@ export default function FilePicker({
 
   return (
     <>
-      {showActions && hasUpload && !activeShortcut && (
+      {(showActions || pickerType === 'picker') && hasUpload && !activeShortcut && (
         <Uploader
           setIsLoading={setIsLoading}
           isLoading={isLoading}

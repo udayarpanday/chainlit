@@ -106,6 +106,7 @@ export default function WidgetPicker({
         <div className="min-h-0 flex-1">
           <FilePicker
             initialPath={initialPath || '/'}
+            hasUpload
             multiselect
             selectedItemPaths={[...selections.keys()]}
             onItemSelectionChange={changeItemSelection}
