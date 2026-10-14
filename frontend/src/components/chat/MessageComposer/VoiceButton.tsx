@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import { WidgetContext } from 'context';
 import { Check, X, Clock, Mic } from 'lucide-react';
-import { useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useRecoilValue } from 'recoil';
 
 import { sttModelState, useAudio, useConfig } from '@chainlit/react-client';
@@ -44,6 +44,33 @@ const VoiceButton = ({ disabled, onDictationStart, onDictationCancel }: Props) =
   const isAudioOn = audioConnection === 'on';
   const isAudioOff = audioConnection === 'off';
   const isConnecting = audioConnection === 'connecting';
+  const confirmingRef = useRef(false);
+  const confirmTranscription = useCallback(() => {
+    if (disabled || confirmingRef.current) return;
+    confirmingRef.current = true;
+    setTimerActive(false);
+    void endConversation();
+  }, [disabled, endConversation]);
+
+  useEffect(() => {
+    if (!isAudioOn) confirmingRef.current = false;
+  }, [isAudioOn]);
+
+  useEffect(() => {
+    if (!isEnabled || !isAudioOn || modalityType !== 'speech' || disabled) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.isComposing || event.keyCode === 229 ||
+        event.ctrlKey || event.altKey || event.metaKey || event.shiftKey ||
+        event.key !== 'Enter'
+      ) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (!event.repeat) confirmTranscription();
+    };
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, [isEnabled, isAudioOn, modalityType, disabled, confirmTranscription]);
 
   const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
@@ -137,7 +164,7 @@ const VoiceButton = ({ disabled, onDictationStart, onDictationCancel }: Props) =
       )}
       {isAudioOn ? (
         <>
-          <TooltipProvider>
+          {!isLive && <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -160,7 +187,7 @@ const VoiceButton = ({ disabled, onDictationStart, onDictationCancel }: Props) =
                 </p>
               </TooltipContent>
             </Tooltip>
-          </TooltipProvider>
+          </TooltipProvider>}
           {modalityType === 'speech' && (
             <TooltipProvider>
               <Tooltip>
@@ -170,7 +197,7 @@ const VoiceButton = ({ disabled, onDictationStart, onDictationCancel }: Props) =
                     variant="ghost"
                     size="icon"
                     className="hover:bg-muted"
-                    onClick={endConversation}
+                    onClick={confirmTranscription}
                     aria-label="Confirm transcription"
                   >
                     <Check className="!size-6" />
