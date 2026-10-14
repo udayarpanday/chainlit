@@ -15,6 +15,7 @@ import {
   agentState,
   askUserState,
   audioConnectionState,
+  audioSubmittedState,
   callFnState,
   canOverrideModelState,
   chatArchived,
@@ -260,6 +261,7 @@ const useChatSession = () => {
   const setFirstUserInteraction = useSetRecoilState(firstUserInteraction);
   const setLoading = useSetRecoilState(loadingState);
   const setGeneratingMessageId = useSetRecoilState(generatingMessageIdState);
+  const setAudioSubmitted = useSetRecoilState(audioSubmittedState);
   const setMcps = useSetRecoilState(mcpState);
   const wavStreamPlayer = useRecoilValue(wavStreamPlayerState);
   const wavRecorder = useRecoilValue(wavRecorderState);
@@ -408,6 +410,7 @@ const useChatSession = () => {
       socket.on('connect', () => {
         socket.emit('connection_successful');
         setLoading(resetTaskLoading());
+        setAudioSubmitted(false);
         setSession((s) => ({ ...s!, error: false }));
         isReconnectingRef.current = false;
         if (!temporaryChatRef.current) {
@@ -474,7 +477,9 @@ const useChatSession = () => {
       });
 
       socket.on('task_end', () => {
-        setLoading(markTaskEnded());
+        const loading = markTaskEnded();
+        setLoading(loading);
+        if (!loading) setAudioSubmitted(false);
       });
 
       socket.on('message_task_end', ({ messageId }: { messageId: string }) => {
@@ -908,6 +913,7 @@ const useChatSession = () => {
     resetTaskLoading();
     setLoading(false);
     setGeneratingMessageId(undefined);
+    setAudioSubmitted(false);
   }, [session]);
 
   const setTemporaryChat = useCallback(

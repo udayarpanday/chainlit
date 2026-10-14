@@ -129,6 +129,11 @@ export const generatingMessageIdState = atom<string | undefined>({
   default: undefined
 });
 
+export const audioSubmittedState = atom<boolean>({
+  key: 'AudioSubmitted',
+  default: false
+});
+
 export const askUserState = atom<IAsk | undefined>({
   key: 'AskUser',
   default: undefined

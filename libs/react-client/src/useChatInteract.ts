@@ -5,6 +5,7 @@ import {
   activeModelOverrideState,
   askUserState,
   audioConnectionState,
+  audioSubmittedState,
   canOverrideModelState,
   chatArchived,
   chatSettingsInputsState,
@@ -41,6 +42,7 @@ const useChatInteract = () => {
   const generatingMessageId = useRecoilValue(generatingMessageIdState);
   const audioConnection = useRecoilValue(audioConnectionState);
   const setGeneratingMessageId = useSetRecoilState(generatingMessageIdState);
+  const setAudioSubmitted = useSetRecoilState(audioSubmittedState);
 
   const resetChatSettings = useResetRecoilState(chatSettingsInputsState);
   const resetSessionId = useResetRecoilState(sessionIdState);
@@ -71,6 +73,7 @@ const useChatInteract = () => {
     session?.socket.disconnect();
     resetSession();
     setGeneratingMessageId(undefined);
+    setAudioSubmitted(false);
     setIdToResume(undefined);
     resetSessionId();
     setFirstUserInteraction(undefined);
@@ -186,8 +189,13 @@ const useChatInteract = () => {
   );
 
   const endAudioStream = useCallback(() => {
-    session?.socket.emit('audio_end');
-  }, [session?.socket]);
+    const messageId = uuidv4();
+    setGeneratingMessageId(messageId);
+    setAudioSubmitted(true);
+    session?.socket.emit('audio_end', {
+      messageId
+    });
+  }, [session?.socket, setGeneratingMessageId, setAudioSubmitted]);
 
   const replyMessage = useCallback(
     (message: IStep) => {
@@ -230,11 +238,13 @@ const useChatInteract = () => {
       })
     );
 
+    setAudioSubmitted(false);
     setLoading(false);
   }, [
     session?.socket,
     generatingMessageId,
     audioConnection,
+    setAudioSubmitted,
     setMessages,
     setLoading
   ]);
