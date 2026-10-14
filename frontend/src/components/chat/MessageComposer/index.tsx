@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { Archive, FolderOpen, Plus, X } from 'lucide-react';
+import { Archive, Brain, FolderOpen, Plus, X } from 'lucide-react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -70,6 +70,7 @@ export default function MessageComposer({
   const { evoya } = useContext(WidgetContext);
   const inputRef = useRef<InputMethods>(null);
   const [value, setValue] = useState('');
+  const [thinkEnabled, setThinkEnabled] = useState(false);
   const [selectedCommand, setSelectedCommand] = useState<ICommand>();
   const [selectedAgents, setSelectedAgents] = useState<any[]>([]);
   const [selectedProjects, setSelectedProjects] = useState<ProjectListItem[]>(
@@ -189,6 +190,7 @@ export default function MessageComposer({
         createdAt: new Date().toISOString(),
         metadata: {
           location: window.location.href,
+          think_enabled: thinkEnabled,
           ...(displayOutput !== undefined
             ? { evoyaCollapsedPromptDisplayOutput: displayOutput }
             : {}),
@@ -214,7 +216,7 @@ export default function MessageComposer({
         sendMessage(message, fileReferences, evoyaReferences);
       }
     },
-    [user, sendMessage, creatorEnabled]
+    [user, sendMessage, creatorEnabled, thinkEnabled]
   );
 
   const onReply = useCallback(
@@ -448,6 +450,19 @@ export default function MessageComposer({
               onCommandSelect={setSelectedCommand}
             />
           )}
+          <Button
+            id="think-toggle"
+            type="button"
+            aria-pressed={thinkEnabled}
+            disabled={disabled || inputDisabled}
+            onClick={() => setThinkEnabled((enabled) => !enabled)}
+            variant={thinkEnabled ? 'secondary' : 'ghost'}
+            size="sm"
+            className={cn('gap-2', thinkEnabled && 'bg-accent text-accent-foreground')}
+          >
+            <Brain className="!size-4" />
+            {t('chat.input.think', { defaultValue: 'Think' })}
+          </Button>
           {chatSettingsInputs.length > 0 && (
             <Button
               id="chat-settings-open-modal"
