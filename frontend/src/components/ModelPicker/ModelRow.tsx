@@ -189,9 +189,6 @@ export default function ModelRow({
                       'components.molecules.modelPicker.toolsUnsupported'
                     )}
                     className="inline-flex shrink-0 cursor-help text-amber-600"
-                    onPointerDown={stopPropagation}
-                    onClick={stopPropagation}
-                    onKeyDown={stopPropagation}
                   >
                     <TriangleAlert aria-hidden="true" className="size-3.5" />
                   </button>
@@ -216,11 +213,8 @@ export default function ModelRow({
       <div
         className={cn(
           'ml-auto flex shrink-0 items-center justify-end gap-2',
-          maxTokensSpec ? 'w-[180px] sm:w-[280px]' : 'w-[150px] sm:w-[190px]'
+          'min-w-6'
         )}
-        onPointerDown={stopPropagation}
-        onClick={stopPropagation}
-        onKeyDown={stopPropagation}
       >
         {pending ? (
           <LoaderCircle
@@ -237,6 +231,12 @@ export default function ModelRow({
           </span>
         ) : null}
 
+        {model.reasoning.type !== 'none' ? (
+          <span className="text-xs text-muted-foreground">
+            {t('components.molecules.modelPicker.thinking')}
+          </span>
+        ) : null}
+        {/* Advanced reasoning controls are temporarily hidden; use Think in the composer.
         {model.reasoning.type === 'effort' ? (
           <div className="flex items-center gap-2">
             <span className="hidden text-xs text-muted-foreground xl:inline">
@@ -325,6 +325,7 @@ export default function ModelRow({
             />
           </div>
         ) : null}
+        */}
       </div>
     </CommandItem>
   );

@@ -13,6 +13,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { WidgetContext } from '@chainlit/copilot/src/context';
 import {
   FileSpec,
+  activeModelOverrideState,
+  modelCatalogState,
   ICommand,
   IStep,
   chatArchived,
@@ -71,6 +73,17 @@ export default function MessageComposer({
   const inputRef = useRef<InputMethods>(null);
   const [value, setValue] = useState('');
   const [thinkEnabled, setThinkEnabled] = useState(false);
+  const modelCatalog = useRecoilValue(modelCatalogState);
+  const activeModel = useRecoilValue(activeModelOverrideState);
+  const selectedModel =
+    modelCatalog?.find((model) => model.id === activeModel?.modelId) ??
+    modelCatalog?.find((model) => model.isDefault);
+  const supportsThinking = selectedModel?.reasoning.type !== undefined &&
+    selectedModel.reasoning.type !== 'none';
+
+  useEffect(() => {
+    setThinkEnabled(false);
+  }, [selectedModel?.id, evoya?.chat_uuid]);
   const [selectedCommand, setSelectedCommand] = useState<ICommand>();
   const [selectedAgents, setSelectedAgents] = useState<any[]>([]);
   const [selectedProjects, setSelectedProjects] = useState<ProjectListItem[]>(
@@ -190,7 +203,7 @@ export default function MessageComposer({
         createdAt: new Date().toISOString(),
         metadata: {
           location: window.location.href,
-          think_enabled: thinkEnabled,
+          ...(supportsThinking ? { think_enabled: thinkEnabled } : {}),
           ...(displayOutput !== undefined
             ? { evoyaCollapsedPromptDisplayOutput: displayOutput }
             : {}),
@@ -216,7 +229,7 @@ export default function MessageComposer({
         sendMessage(message, fileReferences, evoyaReferences);
       }
     },
-    [user, sendMessage, creatorEnabled, thinkEnabled]
+    [user, sendMessage, creatorEnabled, thinkEnabled, supportsThinking]
   );
 
   const onReply = useCallback(
@@ -450,6 +463,7 @@ export default function MessageComposer({
               onCommandSelect={setSelectedCommand}
             />
           )}
+          {supportsThinking && (
           <Button
             id="think-toggle"
             type="button"
@@ -458,11 +472,17 @@ export default function MessageComposer({
             onClick={() => setThinkEnabled((enabled) => !enabled)}
             variant={thinkEnabled ? 'secondary' : 'ghost'}
             size="sm"
-            className={cn('gap-2', thinkEnabled && 'bg-accent text-accent-foreground')}
+            className={cn(
+              'mx-2 h-7 gap-1.5 rounded-md border px-2 text-xs font-medium',
+              thinkEnabled
+                ? 'border-primary/25 bg-primary/10 text-primary hover:bg-primary/15'
+                : 'border-border bg-muted text-muted-foreground hover:bg-muted/80'
+            )}
           >
-            <Brain className="!size-4" />
+            <Brain className="!size-5 shrink-0" />
             {t('chat.input.think', { defaultValue: 'Think' })}
           </Button>
+          )}
           {chatSettingsInputs.length > 0 && (
             <Button
               id="chat-settings-open-modal"
