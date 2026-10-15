@@ -15,7 +15,7 @@
         "molecules": {
             "modelPicker": {
                 "model": "Model",
-                "title": "Model picker (this chat session only)",
+                "title": "Models",
                 "search": "Search models...",
                 "default": "Default",
                 "noThinking": "No thinking",

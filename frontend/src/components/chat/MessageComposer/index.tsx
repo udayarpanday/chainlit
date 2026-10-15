@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { Archive, FolderOpen, Plus, X } from 'lucide-react';
+import { Archive, Brain, FolderOpen, Plus, X } from 'lucide-react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -15,10 +15,12 @@ import {
   FileSpec,
   ICommand,
   IStep,
-  chatArchived,
+  activeModelOverrideState,
   audioConnectionState,
+  chatArchived,
   evoyaCreatorEnabledState,
   initialTranscriptState,
+  modelCatalogState,
   projectAccess,
   promptState,
   temporaryChatState,
@@ -29,6 +31,12 @@ import {
 
 import { Settings } from '@/components/icons/Settings';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from '@/components/ui/tooltip';
 
 import { EvoyaAttachment, evoyaAttachmentsState } from '@/state/evoya';
 import { chatSettingsOpenState } from '@/state/project';
@@ -70,12 +78,26 @@ export default function MessageComposer({
   const { evoya } = useContext(WidgetContext);
   const inputRef = useRef<InputMethods>(null);
   const [value, setValue] = useState('');
+  const [thinkEnabled, setThinkEnabled] = useState(false);
+  const modelCatalog = useRecoilValue(modelCatalogState);
+  const activeModel = useRecoilValue(activeModelOverrideState);
+  const selectedModel =
+    modelCatalog?.find((model) => model.id === activeModel?.modelId) ??
+    modelCatalog?.find((model) => model.isDefault);
+  const supportsThinking =
+    selectedModel?.reasoning.type !== undefined &&
+    selectedModel.reasoning.type !== 'none';
+
+  useEffect(() => {
+    setThinkEnabled(false);
+  }, [selectedModel?.id, evoya?.chat_uuid]);
   const [selectedCommand, setSelectedCommand] = useState<ICommand>();
   const [selectedAgents, setSelectedAgents] = useState<any[]>([]);
   const [selectedProjects, setSelectedProjects] = useState<ProjectListItem[]>(
     []
   );
   const [openProjectsRequest, setOpenProjectsRequest] = useState(0);
+  const [openModelPickerRequest, setOpenModelPickerRequest] = useState(0);
   const setChatSettingsOpen = useSetRecoilState(chatSettingsOpenState);
   const [attachments, setAttachments] = useRecoilState(attachmentsState);
   const quotedSelection = useRecoilValue(quotedSelectionState);
@@ -120,7 +142,9 @@ export default function MessageComposer({
       return;
     }
 
-    if (inputRef.current.insertTranscript(transcriptText, initialTranscript.mode)) {
+    if (
+      inputRef.current.insertTranscript(transcriptText, initialTranscript.mode)
+    ) {
       resetInitialTranscript();
       return;
     }
@@ -189,6 +213,7 @@ export default function MessageComposer({
         createdAt: new Date().toISOString(),
         metadata: {
           location: window.location.href,
+          ...(supportsThinking ? { think_enabled: thinkEnabled } : {}),
           ...(displayOutput !== undefined
             ? { evoyaCollapsedPromptDisplayOutput: displayOutput }
             : {}),
@@ -214,7 +239,7 @@ export default function MessageComposer({
         sendMessage(message, fileReferences, evoyaReferences);
       }
     },
-    [user, sendMessage, creatorEnabled]
+    [user, sendMessage, creatorEnabled, thinkEnabled, supportsThinking]
   );
 
   const onReply = useCallback(
@@ -443,6 +468,7 @@ export default function MessageComposer({
               disabled={disabled}
               isProjectAccessible={isProjectAccessible}
               openProjectsRequest={openProjectsRequest}
+              openModelPickerRequest={openModelPickerRequest}
               onSelectedProjectsChange={setSelectedProjects}
               selectedCommand={selectedCommand}
               onCommandSelect={setSelectedCommand}
@@ -480,6 +506,53 @@ export default function MessageComposer({
           />
         )}
         <div className="flex items-center gap-1">
+          {evoya?.type === 'dashboard' &&
+          evoya.chat_uuid &&
+          selectedModel &&
+          !selectedModel.isDefault ? (
+            <Button
+              type="button"
+              onClick={() =>
+                setOpenModelPickerRequest((request) => request + 1)
+              }
+              disabled={disabled}
+              aria-label={`Change model. Current model: ${selectedModel.name}`}
+              className="mx-2 flex h-7 max-w-48 items-center gap-1.5 rounded-md border border-primary/25 bg-primary/10 px-2 text-xs font-medium text-primary transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <span className="truncate">{selectedModel.name}</span>
+            </Button>
+          ) : null}
+          {supportsThinking && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    id="think-toggle"
+                    type="button"
+                    aria-pressed={thinkEnabled}
+                    disabled={disabled || inputDisabled}
+                    onClick={() => setThinkEnabled((enabled) => !enabled)}
+                    variant={thinkEnabled ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className={cn(
+                      'mx-2 h-7 gap-1.5 rounded-md border px-2 text-xs font-medium',
+                      thinkEnabled
+                        ? 'border-primary/25 bg-primary/10 text-primary hover:bg-primary/15'
+                        : 'border-border bg-muted text-muted-foreground hover:bg-muted/80'
+                    )}
+                  >
+                    <Brain className="!size-5 shrink-0" />
+                    {t('chat.input.think', { defaultValue: 'Think' })}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t('chat.input.thinkTooltip', {
+                    defaultValue: 'Think longer to handle complex tasks'
+                  })}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           <SubmitButton
             onDictationStart={() => inputRef.current?.beginDictation()}
             onDictationCancel={() => inputRef.current?.cancelDictation()}
