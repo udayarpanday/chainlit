@@ -113,7 +113,7 @@ const Input = forwardRef<InputMethods, Props>(
     const lastTranscriptRef = useRef('');
     const committedTranscriptRef = useRef('');
     const dictationStatusRef = useRef<
-      'idle' | 'active' | 'cancelled' | 'edited'
+      'idle' | 'active' | 'cancelled' | 'edited' | 'submitted'
     >('idle');
     const lastCommandSpanRef = useRef<HTMLElement | null>(null);
     const lastAgentSpanRef = useRef<HTMLElement | null>(null);
@@ -187,7 +187,7 @@ const Input = forwardRef<InputMethods, Props>(
 
     const reset = () => {
       dictationRangeRef.current = null;
-      dictationStatusRef.current = 'idle';
+      dictationStatusRef.current = 'submitted';
       lastTranscriptRef.current = '';
       committedTranscriptRef.current = '';
       setSelectedCommand(undefined);
@@ -272,6 +272,7 @@ const Input = forwardRef<InputMethods, Props>(
       insertTranscript: (value, mode) => {
         if (
           dictationStatusRef.current === 'cancelled' ||
+          dictationStatusRef.current === 'submitted' ||
           (dictationStatusRef.current === 'edited' && audioConnection === 'off') ||
           disabled
         ) return true;
@@ -651,9 +652,6 @@ const Input = forwardRef<InputMethods, Props>(
         dictationStatusRef.current = 'edited';
       }
 
-      const textContent = getContentWithoutCommand();
-      onChange(textContent);
-
       // For command detection, use the full content including command input
       const fullContent = e.currentTarget.textContent || '';
       const lastWord = fullContent.split(' ').pop() || '';
@@ -679,6 +677,7 @@ const Input = forwardRef<InputMethods, Props>(
       if (!fullContent.trim() || fullContent.trim() === '\u200B') {
         e.currentTarget.innerHTML = '';
       }
+      onChange(getContentWithoutCommand());
     };
 
     const normalizedAgentInput = agentInput.toLowerCase().slice(1);

@@ -235,12 +235,12 @@ export default function MessageComposer({
     [user, replyMessage]
   );
 
-  const submit = async () => {
+  const submit = async (allowActiveDictation = false) => {
     if (
-      audioConnection !== 'off' ||
+      (!allowActiveDictation && audioConnection !== 'off') ||
       disabled ||
       (!selectedCommand &&
-        value === '' &&
+        (inputRef.current?.getFullContent() ?? value).trim() === '' &&
         attachments.length === 0 &&
         evoyaAttachments.length === 0)
     ) {
@@ -252,7 +252,7 @@ export default function MessageComposer({
       !!selectedCommand &&
       !inputRef.current?.isCommandExpanded();
     const fullContent =
-      inputRef.current?.getFullContent?.(isCollapsedCreatorPrompt) || value;
+      inputRef.current?.getFullContent?.(isCollapsedCreatorPrompt) ?? value;
 
     if (submitProxy) {
       submitProxy(fullContent, (text: string) => {
@@ -283,7 +283,7 @@ export default function MessageComposer({
     if (
       disabled ||
       (!selectedCommand &&
-        value === '' &&
+        (inputRef.current?.getFullContent() ?? value).trim() === '' &&
         attachments.length === 0 &&
         evoyaAttachments.length === 0)
     ) {
@@ -296,7 +296,7 @@ export default function MessageComposer({
       !!selectedCommand &&
       !inputRef.current?.isCommandExpanded();
     const fullContent =
-      inputRef.current?.getFullContent?.(isCollapsedCreatorPrompt) || value;
+      inputRef.current?.getFullContent?.(isCollapsedCreatorPrompt) ?? value;
 
     if (askUser) {
       onReply(fullContent);
@@ -411,7 +411,7 @@ export default function MessageComposer({
           selectedCommand={selectedCommand}
           setSelectedCommand={setSelectedCommand}
           onChange={setValue}
-          onEnter={submit}
+          onEnter={() => void submit()}
           onPaste={onPaste}
           submitProxy={submitProxy}
           placeholder={t('chat.input.placeholder')}
@@ -470,7 +470,7 @@ export default function MessageComposer({
             selectedCommand={selectedCommand}
             setSelectedCommand={setSelectedCommand}
             onChange={setValue}
-            onEnter={submit}
+            onEnter={() => void submit()}
             onPaste={onPaste}
             submitProxy={submitProxy}
             placeholder={t('chat.input.placeholder')}
@@ -483,7 +483,8 @@ export default function MessageComposer({
           <SubmitButton
             onDictationStart={() => inputRef.current?.beginDictation()}
             onDictationCancel={() => inputRef.current?.cancelDictation()}
-            onSubmit={submit}
+            onDictationSubmit={() => void submit(true)}
+            onSubmit={() => void submit()}
             disabled={disabled}
             value={selectedCommand ? selectedCommand.id : value}
           />
