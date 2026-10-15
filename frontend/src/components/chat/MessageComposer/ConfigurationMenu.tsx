@@ -104,6 +104,7 @@ interface Props {
   disabled?: boolean;
   isProjectAccessible?: boolean;
   openProjectsRequest?: number;
+  openModelPickerRequest?: number;
   onSelectedProjectsChange?: (projects: ProjectListItem[]) => void;
   selectedCommand?: PromptCommand;
   onCommandSelect: (command: PromptCommand) => void;
@@ -231,6 +232,7 @@ export default function ConfigurationMenu({
   disabled = false,
   isProjectAccessible = false,
   openProjectsRequest = 0,
+  openModelPickerRequest = 0,
   onSelectedProjectsChange,
   selectedCommand,
   onCommandSelect
@@ -292,7 +294,6 @@ export default function ConfigurationMenu({
   // Hide the inline model badge in the composer when the active model is the
   // default one. The picker stays reachable from the configuration menu so
   // reasoning and other settings can still be changed.
-  const isActiveModelDefault = Boolean(selectedSessionModel?.isDefault);
   const configurationDisabled = disabled;
 
   useEffect(() => {
@@ -478,6 +479,10 @@ export default function ConfigurationMenu({
 
     window.setTimeout(() => promptInputRef.current?.focus(), 100);
   }, [open, panel]);
+
+  useEffect(() => {
+    if (hasModelPicker && openModelPickerRequest > 0) setModelPickerOpen(true);
+  }, [hasModelPicker, openModelPickerRequest]);
 
   useEffect(() => {
     if (!hasModelPicker) setModelPickerOpen(false);
@@ -856,19 +861,6 @@ export default function ConfigurationMenu({
           ) : null}
         </PopoverContent>
       </Popover>
-
-      {hasModelPicker && selectedSessionModel && !isActiveModelDefault ? (
-        <Button
-          type="button"
-          onClick={handleOpenModelPicker}
-          disabled={disabled}
-          aria-label={`Change model. Current model: ${selectedSessionModel.name}`}
-          className="flex h-7 max-w-48 mx-2 items-center gap-1.5  rounded-md border border-primary/25 bg-primary/10 px-2 text-xs font-medium text-primary transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <Brain className="!size-5 shrink-0" />
-          <span className="truncate">{selectedSessionModel.name}</span>
-        </Button>
-      ) : null}
 
       {hasModelPicker ? (
         <ModelPickerModal
