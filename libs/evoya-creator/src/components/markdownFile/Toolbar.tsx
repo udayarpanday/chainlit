@@ -13,6 +13,7 @@ import {
   ChangeCodeMirrorLanguage,
   InsertImage,
   DiffSourceToggleWrapper,
+  InsertFrontmatter,
 } from '@mdxeditor/editor';
 
 export default function Toolbar() {
@@ -43,6 +44,8 @@ export default function Toolbar() {
                   <InsertTable />
                   <Separator />
                   <InsertCodeBlock />
+                  <Separator />
+                  <InsertFrontmatter />
                 </>
               )
             }

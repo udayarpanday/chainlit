@@ -111,7 +111,7 @@ export const MDX_PLUGINS = [
   linkDialogPlugin(),
   tablePlugin(),
   thematicBreakPlugin(),
-  // frontmatterPlugin(),
+  frontmatterPlugin(),
   codeBlockPlugin({
     codeBlockEditorDescriptors: [
       SimpleMermaidCodeEditorDescriptor,

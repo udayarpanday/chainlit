@@ -6,6 +6,7 @@ import {
   BoldItalicUnderlineToggles,
   ConditionalContents,
   ChangeCodeMirrorLanguage,
+  InsertFrontmatter,
 } from '@mdxeditor/editor';
 
 import {
@@ -38,6 +39,8 @@ export default function MDXEditorToolbar({ setMdDiffContent }: { setMdDiffConten
                   <EvoyaBlockTypeSelect />
                   <Separator />
                   <CreateLink />
+                  <Separator />
+                  <InsertFrontmatter />
                   <Separator />
                   <EvoyaAdvanced />
                   <EvoyaDropdown setMdDiffContent={setMdDiffContent} />

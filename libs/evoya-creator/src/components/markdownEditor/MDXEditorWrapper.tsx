@@ -29,6 +29,7 @@ import {
   sandpackPlugin,
   MDXEditorMethods,
   CodeMirrorEditor,
+  frontmatterPlugin,
 } from '@mdxeditor/editor';
 import mdxCss from '@mdxeditor/editor/style.css?inline';
 import mdxCustomCss from './custom.css?inline';
@@ -267,6 +268,7 @@ export const MDX_PLUGINS = [
   linkDialogPlugin(),
   tablePlugin(),
   thematicBreakPlugin(),
+  frontmatterPlugin(),
   codeBlockPlugin({
     codeBlockEditorDescriptors: [
       MermaidCodeEditorDescriptor,
