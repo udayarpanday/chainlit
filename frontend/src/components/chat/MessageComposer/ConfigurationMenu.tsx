@@ -37,6 +37,7 @@ import {
 } from '@chainlit/react-client';
 
 import ModelPickerModal from '@/components/ModelPicker/ModelPickerModal';
+import AgentResourceSettings from './AgentResourceSettings';
 import { normalizeModelCatalogResponse } from '@/components/ModelPicker/catalog';
 import { Button } from '@/components/ui/button';
 import {
@@ -62,7 +63,8 @@ import {
 
 import { useIsMobile } from '@/hooks/use-mobile';
 
-type Panel = 'menu' | 'prompts' | 'projects';
+type Panel =
+  'menu' | 'prompts' | 'projects' | 'dataSources' | 'skills' | 'tools';
 type ProjectId = string | number;
 
 interface DashboardBridgeProject {
@@ -383,7 +385,7 @@ export default function ConfigurationMenu({
             return current;
           }
           if (resolvedActive) {
-            return { modelId: resolvedActive.modelId, key: resolvedActive.key };
+            return resolvedActive;
           }
           return { modelId: defaultModel.id, key: defaultModel.key };
         });
@@ -670,7 +672,10 @@ export default function ConfigurationMenu({
             'focus:outline-none p-0',
             panel === 'menu'
               ? 'w-[300px]'
-              : panel === 'projects'
+              : panel === 'projects' ||
+                  panel === 'dataSources' ||
+                  panel === 'skills' ||
+                  panel === 'tools'
                 ? 'w-[27vw] min-w-[320px] overflow-hidden p-0'
                 : 'w-[50vw] min-w-[320px]'
           )}
@@ -704,7 +709,8 @@ export default function ConfigurationMenu({
               <MenuRow
                 icon={StickyNote}
                 label={t(
-                  'components.molecules.configurationMenu.promptLibrary'
+                  'components.molecules.configurationMenu.prompts',
+                  'Prompts'
                 )}
                 active={!!selectedCommand}
                 disabled={!hasPrompts || disabled}
@@ -722,7 +728,10 @@ export default function ConfigurationMenu({
               />
               <MenuRow
                 icon={FilePen}
-                label={t('components.molecules.evoyaCreatorButton.label')}
+                label={t(
+                  'components.molecules.configurationMenu.creator',
+                  'Creator'
+                )}
                 disabled={!hasCreator || disabled}
                 onClick={handleOpenCreator}
               />
@@ -743,6 +752,12 @@ export default function ConfigurationMenu({
               />
             </div>
           ) : null}
+
+          <AgentResourceSettings
+            disabled={disabled}
+            panel={panel}
+            onCategoryChange={(category) => openPanel(category ?? 'menu')}
+          />
 
           {panel === 'prompts' ? (
             <div className="w-full">
