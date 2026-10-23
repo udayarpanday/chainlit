@@ -1,14 +1,16 @@
+import { ArrowLeft, Database, GraduationCap, Wrench } from 'lucide-react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Database, GraduationCap, Wrench } from 'lucide-react';
+
 import { WidgetContext } from '@chainlit/copilot/src/context';
 import {
   ChainlitContext,
   getScopedSessionStorageItem
 } from '@chainlit/react-client';
+
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import {
   Tooltip,
   TooltipContent,
@@ -93,10 +95,7 @@ export default function AgentResourceSettings({
         .catch(() => {
           if (!controller.signal.aborted)
             setError(
-              t(
-                'components.molecules.configurationMenu.resources.loadError',
-                'Unable to load agent settings. Reopen the menu to retry.'
-              )
+              t('components.molecules.configurationMenu.resources.loadError')
             );
         });
     return () => {
@@ -112,46 +111,44 @@ export default function AgentResourceSettings({
         .filter((entry) => entry.active)
         .map((entry) => entry.id)
     );
+  }, [category, configuration]);
+
+  useEffect(() => {
     setQuery('');
     setError('');
-  }, [category, configuration]);
+  }, [category]);
 
   const labels: Record<Category, string> = {
     dataSources: t(
-      'components.molecules.configurationMenu.resources.dataSources',
-      'Data Sources'
+      'components.molecules.configurationMenu.resources.dataSources'
     ),
-    skills: t(
-      'components.molecules.configurationMenu.resources.skills',
-      'Skills'
-    ),
-    tools: t('components.molecules.configurationMenu.resources.tools', 'Tools')
+    skills: t('components.molecules.configurationMenu.resources.skills'),
+    tools: t('components.molecules.configurationMenu.resources.tools')
   };
   if (evoya?.type !== 'dashboard' || (panel !== 'menu' && !category))
     return null;
   const restricted = t(
-    'components.molecules.configurationMenu.resources.privateOnly',
-    'Only available for private agents. Manage these settings for team and curated agents on the agent edit page.'
+    'components.molecules.configurationMenu.resources.privateOnly'
   );
-  const save = async () => {
+  const save = async (nextSelected: string[]) => {
     if (!category || !configuration?.canEdit || saving) return;
+    const previousSelected = selected;
+    setSelected(nextSelected);
     setSaving(true);
     setError('');
     const controller = new AbortController();
     saveController.current = controller;
     try {
-      const next = await request(controller.signal, { category, selected });
+      const next = await request(controller.signal, {
+        category,
+        selected: nextSelected
+      });
       if (controller.signal.aborted) return;
       setConfiguration(next);
-      onCategoryChange(undefined);
     } catch {
       if (controller.signal.aborted) return;
-      setError(
-        t(
-          'components.molecules.configurationMenu.resources.saveError',
-          'Unable to save settings. Your changes have not been saved.'
-        )
-      );
+      setSelected(previousSelected);
+      setError(t('components.molecules.configurationMenu.resources.saveError'));
     } finally {
       if (!controller.signal.aborted) setSaving(false);
     }
@@ -159,9 +156,6 @@ export default function AgentResourceSettings({
 
   if (category && configuration) {
     const entries = configuration.groups[category];
-    const dirty = entries.some(
-      (entry) => entry.active !== selected.includes(entry.id)
-    );
     return (
       <div className="w-full">
         <div className="border-b px-3 py-2.5 space-y-2">
@@ -176,20 +170,15 @@ export default function AgentResourceSettings({
                 setError('');
               }}
             >
-              {t(
-                'components.molecules.configurationMenu.resources.back',
-                'Back'
-              )}
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
           <Input
             aria-label={t(
-              'components.molecules.configurationMenu.resources.search',
-              'Search by title'
+              'components.molecules.configurationMenu.resources.search'
             )}
             placeholder={t(
-              'components.molecules.configurationMenu.resources.search',
-              'Search by title'
+              'components.molecules.configurationMenu.resources.search'
             )}
             className="h-10 rounded-xl border-transparent bg-white/55 text-base shadow-sm focus-visible:ring-1 focus-visible:ring-primary/20 md:text-sm"
             autoFocus
@@ -216,10 +205,10 @@ export default function AgentResourceSettings({
                     saving
                   }
                   onCheckedChange={(checked) =>
-                    setSelected((current) =>
+                    void save(
                       checked === true
-                        ? [...current, entry.id]
-                        : current.filter((id) => id !== entry.id)
+                        ? [...selected, entry.id]
+                        : selected.filter((id) => id !== entry.id)
                     )
                   }
                 />
@@ -239,37 +228,18 @@ export default function AgentResourceSettings({
             {error}
           </p>
         )}
-        <div className="flex items-center justify-between gap-2 border-t px-3 py-2.5">
-          {configuration.managementUrls[category] && (
+        {configuration.managementUrls[category] && (
+          <div className="flex items-center justify-between gap-2 border-t px-3 py-2.5">
             <a
               className="text-sm text-primary underline"
               href={configuration.managementUrls[category]}
             >
-              {t(
-                'components.molecules.configurationMenu.resources.manage',
-                'Manage {{category}}',
-                { category: labels[category] }
-              )}
+              {t('components.molecules.configurationMenu.resources.manage', {
+                category: labels[category]
+              })}
             </a>
-          )}
-          {configuration.canEdit && (
-            <Button
-              size="sm"
-              disabled={disabled || saving || !dirty}
-              onClick={() => void save()}
-            >
-              {saving
-                ? t(
-                    'components.molecules.configurationMenu.resources.saving',
-                    'Saving…'
-                  )
-                : t(
-                    'components.molecules.configurationMenu.resources.save',
-                    'Save'
-                  )}
-            </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -283,43 +253,47 @@ export default function AgentResourceSettings({
         }[key];
         const unavailable = disabled || !configuration?.available;
         return (
-          <TooltipProvider key={key}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span tabIndex={unavailable ? 0 : undefined} className="block">
-                  <button
-                    type="button"
-                    disabled={unavailable}
-                    className="flex h-11 w-full items-center gap-3 rounded-md px-3 text-left text-[15px] hover:bg-accent disabled:cursor-not-allowed disabled:opacity-45"
-                    onClick={() => {
-                      setSelected(
-                        configuration!.groups[key]
-                          .filter((entry) => entry.active)
-                          .map((entry) => entry.id)
-                      );
-                      setQuery('');
-                      setError('');
-                      onCategoryChange(key);
-                    }}
+          <div className="space-y-1 p-1">
+            <TooltipProvider key={key}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    tabIndex={unavailable ? 0 : undefined}
+                    className="block"
                   >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    {labels[key]}
-                  </button>
-                </span>
-              </TooltipTrigger>
-              {unavailable && (
-                <TooltipContent className="max-w-xs">
-                  {configuration
-                    ? restricted
-                    : error ||
-                      t(
-                        'components.molecules.configurationMenu.resources.loading',
-                        'Loading agent settings…'
-                      )}
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
+                    <button
+                      type="button"
+                      disabled={unavailable}
+                      className="flex h-11 w-full items-center gap-3 rounded-md px-3 text-left text-[15px] hover:bg-accent disabled:cursor-not-allowed disabled:opacity-45"
+                      onClick={() => {
+                        setSelected(
+                          configuration!.groups[key]
+                            .filter((entry) => entry.active)
+                            .map((entry) => entry.id)
+                        );
+                        setQuery('');
+                        setError('');
+                        onCategoryChange(key);
+                      }}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      {labels[key]}
+                    </button>
+                  </span>
+                </TooltipTrigger>
+                {unavailable && (
+                  <TooltipContent className="max-w-xs">
+                    {configuration
+                      ? restricted
+                      : error ||
+                        t(
+                          'components.molecules.configurationMenu.resources.loading'
+                        )}
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         );
       })}
     </>

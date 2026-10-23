@@ -37,7 +37,6 @@ import {
 } from '@chainlit/react-client';
 
 import ModelPickerModal from '@/components/ModelPicker/ModelPickerModal';
-import AgentResourceSettings from './AgentResourceSettings';
 import { normalizeModelCatalogResponse } from '@/components/ModelPicker/catalog';
 import { Button } from '@/components/ui/button';
 import {
@@ -62,6 +61,8 @@ import {
 } from '@/components/ui/tooltip';
 
 import { useIsMobile } from '@/hooks/use-mobile';
+
+import AgentResourceSettings from './AgentResourceSettings';
 
 type Panel =
   'menu' | 'prompts' | 'projects' | 'dataSources' | 'skills' | 'tools';
@@ -708,10 +709,7 @@ export default function ConfigurationMenu({
               ) : null}
               <MenuRow
                 icon={StickyNote}
-                label={t(
-                  'components.molecules.configurationMenu.prompts',
-                  'Prompts'
-                )}
+                label={t('components.molecules.configurationMenu.prompts')}
                 active={!!selectedCommand}
                 disabled={!hasPrompts || disabled}
                 onClick={() => openPanel('prompts')}
@@ -728,10 +726,7 @@ export default function ConfigurationMenu({
               />
               <MenuRow
                 icon={FilePen}
-                label={t(
-                  'components.molecules.configurationMenu.creator',
-                  'Creator'
-                )}
+                label={t('components.molecules.configurationMenu.creator')}
                 disabled={!hasCreator || disabled}
                 onClick={handleOpenCreator}
               />

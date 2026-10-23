@@ -116,7 +116,21 @@
                 "untitledProject": "Unbenanntes Projekt",
                 "privacyActive": "Datenschutzschild aktiv",
                 "hideAnonymizedText": "Anonymisierten Text ausblenden",
-                "showAnonymizedText": "Anonymisierten Text anzeigen"
+                "showAnonymizedText": "Anonymisierten Text anzeigen",
+                "prompts": "Prompts",
+                "creator": "Creator",
+                "resources": {
+                    "dataSources": "Datenquellen",
+                    "skills": "Fähigkeiten",
+                    "tools": "Werkzeuge",
+                    "back": "Zurück",
+                    "search": "Nach Titel suchen",
+                    "manage": "{{category}} verwalten",
+                    "loading": "Agenteneinstellungen werden geladen…",
+                    "loadError": "Die Agenteneinstellungen konnten nicht geladen werden. Öffnen Sie das Menü erneut, um es noch einmal zu versuchen.",
+                    "saveError": "Die Einstellungen konnten nicht gespeichert werden. Ihre Änderungen wurden nicht gespeichert.",
+                    "privateOnly": "Nur für private Agenten verfügbar. Verwalten Sie diese Einstellungen für Team- und kuratierte Agenten auf der Bearbeitungsseite des Agenten."
+                }
             },
             "tasklist": {
                 "TaskList": {
