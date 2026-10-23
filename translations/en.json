@@ -116,7 +116,21 @@
                 "untitledProject": "Untitled Project",
                 "privacyActive": "Privacy shield active",
                 "hideAnonymizedText": "Hide anonymized text",
-                "showAnonymizedText": "Show anonymized text"
+                "showAnonymizedText": "Show anonymized text",
+                "prompts": "Prompts",
+                "creator": "Creator",
+                "resources": {
+                    "dataSources": "Data Sources",
+                    "skills": "Skills",
+                    "tools": "Tools",
+                    "back": "Back",
+                    "search": "Search by title",
+                    "manage": "Manage {{category}}",
+                    "loading": "Loading agent settings…",
+                    "loadError": "Unable to load agent settings. Reopen the menu to retry.",
+                    "saveError": "Unable to save settings. Your changes have not been saved.",
+                    "privateOnly": "Only available for private agents. Manage these settings for team and curated agents on the agent edit page."
+                }
             },
             "tasklist": {
                 "TaskList": {

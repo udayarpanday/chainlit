@@ -62,7 +62,10 @@ import {
 
 import { useIsMobile } from '@/hooks/use-mobile';
 
-type Panel = 'menu' | 'prompts' | 'projects';
+import AgentResourceSettings from './AgentResourceSettings';
+
+type Panel =
+  'menu' | 'prompts' | 'projects' | 'dataSources' | 'skills' | 'tools';
 type ProjectId = string | number;
 
 interface DashboardBridgeProject {
@@ -670,7 +673,10 @@ export default function ConfigurationMenu({
             'focus:outline-none p-0',
             panel === 'menu'
               ? 'w-[300px]'
-              : panel === 'projects'
+              : panel === 'projects' ||
+                  panel === 'dataSources' ||
+                  panel === 'skills' ||
+                  panel === 'tools'
                 ? 'w-[27vw] min-w-[320px] overflow-hidden p-0'
                 : 'w-[50vw] min-w-[320px]'
           )}
@@ -703,9 +709,7 @@ export default function ConfigurationMenu({
               ) : null}
               <MenuRow
                 icon={StickyNote}
-                label={t(
-                  'components.molecules.configurationMenu.promptLibrary'
-                )}
+                label={t('components.molecules.configurationMenu.prompts')}
                 active={!!selectedCommand}
                 disabled={!hasPrompts || disabled}
                 onClick={() => openPanel('prompts')}
@@ -722,7 +726,7 @@ export default function ConfigurationMenu({
               />
               <MenuRow
                 icon={FilePen}
-                label={t('components.molecules.evoyaCreatorButton.label')}
+                label={t('components.molecules.configurationMenu.creator')}
                 disabled={!hasCreator || disabled}
                 onClick={handleOpenCreator}
               />
@@ -743,6 +747,12 @@ export default function ConfigurationMenu({
               />
             </div>
           ) : null}
+
+          <AgentResourceSettings
+            disabled={disabled}
+            panel={panel}
+            onCategoryChange={(category) => openPanel(category ?? 'menu')}
+          />
 
           {panel === 'prompts' ? (
             <div className="w-full">

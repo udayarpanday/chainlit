@@ -116,7 +116,21 @@
                 "untitledProject": "Progetto senza titolo",
                 "privacyActive": "Protezione della privacy attiva",
                 "hideAnonymizedText": "Nascondi il testo anonimizzato",
-                "showAnonymizedText": "Mostra il testo anonimizzato"
+                "showAnonymizedText": "Mostra il testo anonimizzato",
+                "prompts": "Prompt",
+                "creator": "Creator",
+                "resources": {
+                    "dataSources": "Fonti di dati",
+                    "skills": "Competenze",
+                    "tools": "Strumenti",
+                    "back": "Indietro",
+                    "search": "Cerca per titolo",
+                    "manage": "Gestisci {{category}}",
+                    "loading": "Caricamento delle impostazioni dell’agente…",
+                    "loadError": "Impossibile caricare le impostazioni dell’agente. Riapri il menu per riprovare.",
+                    "saveError": "Impossibile salvare le impostazioni. Le modifiche non sono state salvate.",
+                    "privateOnly": "Disponibile solo per gli agenti privati. Gestisci queste impostazioni per gli agenti del team e quelli curati nella pagina di modifica dell’agente."
+                }
             },
             "tasklist": {
                 "TaskList": {

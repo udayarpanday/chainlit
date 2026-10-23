@@ -116,7 +116,21 @@
                 "untitledProject": "Projet sans titre",
                 "privacyActive": "Bouclier de confidentialité activé",
                 "hideAnonymizedText": "Masquer le texte anonymisé",
-                "showAnonymizedText": "Afficher le texte anonymisé"
+                "showAnonymizedText": "Afficher le texte anonymisé",
+                "prompts": "Prompts",
+                "creator": "Creator",
+                "resources": {
+                    "dataSources": "Sources de données",
+                    "skills": "Compétences",
+                    "tools": "Outils",
+                    "back": "Retour",
+                    "search": "Rechercher par titre",
+                    "manage": "Gérer {{category}}",
+                    "loading": "Chargement des paramètres de l’agent…",
+                    "loadError": "Impossible de charger les paramètres de l’agent. Rouvrez le menu pour réessayer.",
+                    "saveError": "Impossible d’enregistrer les paramètres. Vos modifications n’ont pas été enregistrées.",
+                    "privateOnly": "Disponible uniquement pour les agents privés. Gérez ces paramètres pour les agents d’équipe et les agents sélectionnés sur la page de modification de l’agent."
+                }
             },
             "tasklist": {
                 "TaskList": {
