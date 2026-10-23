@@ -23,10 +23,9 @@ interface Props {
   disabled?: boolean;
   onDictationStart: () => void;
   onDictationCancel: () => void;
-  onDictationSubmit: () => void;
 }
 
-const VoiceButton = ({ disabled, onDictationStart, onDictationCancel, onDictationSubmit }: Props) => {
+const VoiceButton = ({ disabled, onDictationStart, onDictationCancel }: Props) => {
   const { config } = useConfig();
   const sttModel = useRecoilValue(sttModelState);
   const { evoya } = useContext(WidgetContext);
@@ -50,15 +49,10 @@ const VoiceButton = ({ disabled, onDictationStart, onDictationCancel, onDictatio
     if (disabled || confirmingRef.current) return;
     confirmingRef.current = true;
     setTimerActive(false);
-    if (isLive) {
-      // The editor owns the live draft, including manual corrections. Do not
-      // trigger audio_end, which submits the server's unedited transcript.
-      onDictationSubmit();
-      void endConversation(false);
-    } else {
-      void endConversation();
-    }
-  }, [disabled, endConversation, isLive, onDictationSubmit]);
+    // The server applies the user's transcription submission preference.
+    // Sending the editor draft here bypasses that preference for live models.
+    void endConversation();
+  }, [disabled, endConversation]);
 
   useEffect(() => {
     if (!isAudioOn) confirmingRef.current = false;

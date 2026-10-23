@@ -1,4 +1,4 @@
-import type { ModelCatalogItem, ReasoningSpec } from '@chainlit/react-client';
+import type { ActiveModelOverride, ModelCatalogItem, ModelReasoningSelection, ReasoningSpec } from '@chainlit/react-client';
 
 const asObject = (value: unknown): Record<string, unknown> | undefined =>
   value !== null && typeof value === 'object'
@@ -117,21 +117,28 @@ const normalizeModel = (value: unknown): ModelCatalogItem | undefined => {
 
 const normalizeActiveModelFromEnvelope = (
   value: unknown
-): { modelId: number; key?: string } | undefined => {
+): ActiveModelOverride | undefined => {
   const raw = asObject(value);
   if (!raw) return undefined;
   const modelId = Number(raw.modelId ?? raw.model_id ?? raw.id);
   if (!Number.isFinite(modelId)) return undefined;
   const key = raw.key ?? raw.model_key ?? raw.model;
+  const reasoning = asObject(raw.reasoning);
+  const selection: ModelReasoningSelection = {};
+  if (typeof reasoning?.effort === 'string') selection.effort = reasoning.effort;
+  if (typeof reasoning?.max_tokens === 'number' && Number.isFinite(reasoning.max_tokens)) {
+    selection.max_tokens = reasoning.max_tokens;
+  }
   return {
     modelId,
-    ...(typeof key === 'string' && key ? { key } : {})
+    ...(typeof key === 'string' && key ? { key } : {}),
+    ...(Object.keys(selection).length ? { reasoning: selection } : {})
   };
 };
 
 export interface NormalizedModelCatalog {
   models: ModelCatalogItem[];
-  active?: { modelId: number; key?: string };
+  active?: ActiveModelOverride;
 }
 
 export const normalizeModelCatalogResponse = (

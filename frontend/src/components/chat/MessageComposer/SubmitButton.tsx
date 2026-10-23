@@ -29,7 +29,6 @@ interface SubmitButtonProps {
   onSubmit: () => void;
   onDictationStart: () => void;
   onDictationCancel: () => void;
-  onDictationSubmit: () => void;
 }
 
 export default function SubmitButton({
@@ -37,8 +36,7 @@ export default function SubmitButton({
   onSubmit,
   value,
   onDictationStart,
-  onDictationCancel,
-  onDictationSubmit
+  onDictationCancel
 }: SubmitButtonProps) {
   const { evoya } = useContext(WidgetContext);
   const isChatArchived = useRecoilValue(chatArchived);
@@ -61,7 +59,7 @@ export default function SubmitButton({
   return (
     <TooltipProvider>
       {(!loading || audioConnection !== 'off') && ((evoya && evoya.speechToText === true) || !evoya) && (
-        <VoiceButton disabled={disabled} onDictationStart={onDictationStart} onDictationCancel={onDictationCancel} onDictationSubmit={onDictationSubmit} />
+        <VoiceButton disabled={disabled} onDictationStart={onDictationStart} onDictationCancel={onDictationCancel} />
       )}
       {audioConnection !== 'off' || (!loading && isValueEmpty(value) && ((evoya && evoya.speechToText === true) || !evoya)) ? null : loading && firstInteraction ? (
         <Tooltip>

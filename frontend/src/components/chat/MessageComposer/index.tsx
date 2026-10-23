@@ -260,9 +260,9 @@ export default function MessageComposer({
     [user, replyMessage]
   );
 
-  const submit = async (allowActiveDictation = false) => {
+  const submit = async () => {
     if (
-      (!allowActiveDictation && audioConnection !== 'off') ||
+      audioConnection !== 'off' ||
       disabled ||
       (!selectedCommand &&
         (inputRef.current?.getFullContent() ?? value).trim() === '' &&
@@ -556,7 +556,6 @@ export default function MessageComposer({
           <SubmitButton
             onDictationStart={() => inputRef.current?.beginDictation()}
             onDictationCancel={() => inputRef.current?.cancelDictation()}
-            onDictationSubmit={() => void submit(true)}
             onSubmit={() => void submit()}
             disabled={disabled}
             value={selectedCommand ? selectedCommand.id : value}

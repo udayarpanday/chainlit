@@ -65,11 +65,13 @@ export default function ModelPickerModal({
       const next: Record<number, ModelReasoningSelection | undefined> = {};
       models.forEach((model) => {
         next[model.id] =
-          current[model.id] ?? getInitialReasoning(model, active);
+          model.id === active?.modelId
+            ? getInitialReasoning(model, active)
+            : (current[model.id] ?? getInitialReasoning(model, active));
       });
       return next;
     });
-  }, [models, active?.modelId]);
+  }, [models, active]);
 
   useEffect(() => {
     if (!open) {

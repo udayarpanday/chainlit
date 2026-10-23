@@ -383,7 +383,7 @@ export default function ConfigurationMenu({
             return current;
           }
           if (resolvedActive) {
-            return { modelId: resolvedActive.modelId, key: resolvedActive.key };
+            return resolvedActive;
           }
           return { modelId: defaultModel.id, key: defaultModel.key };
         });
