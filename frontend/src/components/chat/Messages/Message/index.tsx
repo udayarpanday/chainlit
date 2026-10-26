@@ -54,7 +54,7 @@ const Message = memo(
     scorableRun
   }: Props) => {
     
-    const { allowHtml, cot, latex, onError } = useContext(MessageContext);
+    const { allowHtml, cot, latex, onError, loading } = useContext(MessageContext);
     const layoutMaxWidth = useLayoutMaxWidth();
     const isAsk = message.waitForAnswer;
     const isUserMessage = message.type === 'user_message';
@@ -92,6 +92,20 @@ const Message = memo(
       },
       [message, allowHtml, latex]
     );
+
+    const isEmptyInactiveAssistant =
+      message.type === 'assistant_message' &&
+      !loading &&
+      !isRunning &&
+      !message.streaming &&
+      !hasVisibleOutput(message.output) &&
+      !(message.showInput && hasVisibleOutput(message.input)) &&
+      !isAsk &&
+      !message.steps?.length &&
+      !elements.some((element) => element.forId === message.id) &&
+      !actions.some((action) => action.forId === message.id);
+
+    if (isEmptyInactiveAssistant) return null;
 
     if (skip) {
       if (!message.steps) {

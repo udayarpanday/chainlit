@@ -231,12 +231,13 @@ const useChatInteract = () => {
       return;
     }
 
-    setMessages((oldMessages) =>
-      oldMessages.map((m) => {
-        m.streaming = false;
-        return m;
-      })
-    );
+    const stopStreaming = (steps: IStep[]): IStep[] =>
+      steps.map((step) => ({
+        ...step,
+        streaming: false,
+        steps: step.steps ? stopStreaming(step.steps) : step.steps
+      }));
+    setMessages((oldMessages) => stopStreaming(oldMessages));
 
     setAudioSubmitted(false);
     setLoading(false);
