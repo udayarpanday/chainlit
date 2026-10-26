@@ -33,7 +33,7 @@ export default function AgentResourceSettings({
   onCategoryChange
 }: {
   disabled: boolean;
-  panel: 'menu' | 'prompts' | 'projects' | Category;
+  panel: 'menu' | 'models' | 'prompts' | 'projects' | Category;
   onCategoryChange: (category?: Category) => void;
 }) {
   const { t } = useTranslation();
@@ -159,8 +159,7 @@ export default function AgentResourceSettings({
     return (
       <div className="w-full">
         <div className="border-b px-3 py-2.5 space-y-2">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium">{labels[category]}</h3>
+          <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
@@ -172,6 +171,7 @@ export default function AgentResourceSettings({
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             </Button>
+            <h3 className="font-medium">{labels[category]}</h3>
           </div>
           <Input
             aria-label={t(
@@ -252,9 +252,12 @@ export default function AgentResourceSettings({
           tools: Wrench
         }[key];
         const unavailable = disabled || !configuration?.available;
+        const activeCount =
+          configuration?.groups[key].filter((entry) => entry.active).length ??
+          0;
         return (
-          <div className="space-y-1 p-1">
-            <TooltipProvider key={key}>
+          <div key={key} className="space-y-1 p-1">
+            <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span
@@ -264,7 +267,7 @@ export default function AgentResourceSettings({
                     <button
                       type="button"
                       disabled={unavailable}
-                      className="flex h-11 w-full items-center gap-3 rounded-md px-3 text-left text-[15px] hover:bg-accent disabled:cursor-not-allowed disabled:opacity-45"
+                      className="flex h-11 w-full items-center gap-3 rounded-md px-3 text-left text-[15px] text-foreground transition-colors hover:bg-accent focus:bg-accent focus:outline-none disabled:cursor-not-allowed disabled:opacity-45"
                       onClick={() => {
                         setSelected(
                           configuration!.groups[key]
@@ -277,7 +280,14 @@ export default function AgentResourceSettings({
                       }}
                     >
                       <Icon className="h-4 w-4 shrink-0" />
-                      {labels[key]}
+                      <span className="min-w-0 flex-1 truncate">
+                        {labels[key]}
+                      </span>
+                      {activeCount > 0 ? (
+                        <span className="shrink-0 text-xs text-primary">
+                          {activeCount}
+                        </span>
+                      ) : null}
                     </button>
                   </span>
                 </TooltipTrigger>
