@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import {
+  ArrowLeft,
   Brain,
   Eye,
   EyeOff,
@@ -10,8 +11,7 @@ import {
   Search,
   ShieldCheck,
   SlidersHorizontal,
-  StickyNote,
-  X
+  StickyNote
 } from 'lucide-react';
 import {
   useCallback,
@@ -36,9 +36,10 @@ import {
   modelCatalogState
 } from '@chainlit/react-client';
 
-import ModelPickerModal from '@/components/ModelPicker/ModelPickerModal';
+import ModelPickerPanel from '@/components/ModelPicker/ModelPickerPanel';
 import { normalizeModelCatalogResponse } from '@/components/ModelPicker/catalog';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Command,
   CommandEmpty,
@@ -65,7 +66,13 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import AgentResourceSettings from './AgentResourceSettings';
 
 type Panel =
-  'menu' | 'prompts' | 'projects' | 'dataSources' | 'skills' | 'tools';
+  | 'menu'
+  | 'models'
+  | 'prompts'
+  | 'projects'
+  | 'dataSources'
+  | 'skills'
+  | 'tools';
 type ProjectId = string | number;
 
 interface DashboardBridgeProject {
@@ -176,9 +183,6 @@ const mapProject = (
   };
 };
 
-const truncateProjectName = (name: string, length = 36) =>
-  name.length > length ? `${name.slice(0, length)}...` : name;
-
 function escapeBrackets(text?: string) {
   const pattern =
     /(```[\s\S]*?```|`.*?`)|\\\[([\s\S]*?[^\\])\\\]|\\\((.*?)\\\)|(\${1})/g;
@@ -195,14 +199,12 @@ function escapeBrackets(text?: string) {
 }
 
 function MenuRow({
-  active,
   disabled,
   icon: Icon,
   label,
   status,
   onClick
 }: {
-  active?: boolean;
   disabled?: boolean;
   icon: LucideIcon;
   label: string;
@@ -216,7 +218,7 @@ function MenuRow({
       onClick={onClick}
       className={cn(
         'flex h-11 w-full items-center gap-3 rounded-md px-3 text-left text-[15px] transition-colors',
-        active ? 'text-primary' : 'text-foreground',
+        'text-foreground',
         disabled
           ? 'cursor-not-allowed opacity-45'
           : 'hover:bg-accent focus:bg-accent focus:outline-none'
@@ -258,7 +260,6 @@ export default function ConfigurationMenu({
     sections
   } = usePrivacyShield();
   const [open, setOpen] = useState(false);
-  const [modelPickerOpen, setModelPickerOpen] = useState(false);
   const [configurationTooltipOpen, setConfigurationTooltipOpen] =
     useState(false);
   const [panel, setPanel] = useState<Panel>('menu');
@@ -484,11 +485,15 @@ export default function ConfigurationMenu({
   }, [open, panel]);
 
   useEffect(() => {
-    if (hasModelPicker && openModelPickerRequest > 0) setModelPickerOpen(true);
+    if (hasModelPicker && openModelPickerRequest > 0) {
+      setPanel('models');
+      setOpen(true);
+    }
   }, [hasModelPicker, openModelPickerRequest]);
 
   useEffect(() => {
-    if (!hasModelPicker) setModelPickerOpen(false);
+    if (!hasModelPicker)
+      setPanel((current) => (current === 'models' ? 'menu' : current));
   }, [hasModelPicker]);
 
   useEffect(() => {
@@ -587,7 +592,6 @@ export default function ConfigurationMenu({
     data?.toggleProject?.(project.raw);
     data?.syncProjectContext?.();
     window.setTimeout(syncProjectsFromBridge, 0);
-    setOpen(false);
   };
 
   const handleOpenCreator = () => {
@@ -621,8 +625,7 @@ export default function ConfigurationMenu({
 
   const handleOpenModelPicker = () => {
     dismissConfigurationTooltip();
-    setOpen(false);
-    setModelPickerOpen(true);
+    openPanel('models');
   };
 
   if (!hasActions) return null;
@@ -673,7 +676,8 @@ export default function ConfigurationMenu({
             'focus:outline-none p-0',
             panel === 'menu'
               ? 'w-[300px]'
-              : panel === 'projects' ||
+              : panel === 'models' ||
+                  panel === 'projects' ||
                   panel === 'dataSources' ||
                   panel === 'skills' ||
                   panel === 'tools'
@@ -696,13 +700,6 @@ export default function ConfigurationMenu({
                   icon={Brain}
                   label={t('components.molecules.modelPicker.model')}
                   status={activeModelName}
-                  active={Boolean(
-                    activeModel &&
-                    !modelCatalog?.find(
-                      (model) =>
-                        model.id === activeModel.modelId && model.isDefault
-                    )
-                  )}
                   disabled={disabled}
                   onClick={handleOpenModelPicker}
                 />
@@ -710,14 +707,12 @@ export default function ConfigurationMenu({
               <MenuRow
                 icon={StickyNote}
                 label={t('components.molecules.configurationMenu.prompts')}
-                active={!!selectedCommand}
                 disabled={!hasPrompts || disabled}
                 onClick={() => openPanel('prompts')}
               />
               <MenuRow
                 icon={FolderOpen}
                 label={t('components.molecules.project.title')}
-                active={selectedProjects.length > 0}
                 status={
                   selectedProjects.length ? selectedProjects.length : undefined
                 }
@@ -733,7 +728,6 @@ export default function ConfigurationMenu({
               <MenuRow
                 icon={ShieldCheck}
                 label={t('components.organisms.privacyShield.title')}
-                active={privacyEnabled}
                 status={
                   privacyEnabled
                     ? t('components.molecules.configurationMenu.enabled')
@@ -748,11 +742,41 @@ export default function ConfigurationMenu({
             </div>
           ) : null}
 
+          {panel === 'models' && hasModelPicker ? (
+            <ModelPickerPanel
+              disabled={disabled}
+              onBack={() => openPanel('menu')}
+              onSelected={() => handleOpenChange(false)}
+              agentUuid={evoya?.chat_uuid}
+            />
+          ) : null}
+
           <AgentResourceSettings
             disabled={disabled}
             panel={panel}
             onCategoryChange={(category) => openPanel(category ?? 'menu')}
           />
+
+          {panel === 'prompts' || panel === 'projects' ? (
+            <div className="flex items-center gap-2 border-b px-3 py-2.5">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                aria-label={t('common.actions.back', { defaultValue: 'Back' })}
+                onClick={() => openPanel('menu')}
+              >
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              </Button>
+              <h3 className="font-medium">
+                {t(
+                  panel === 'prompts'
+                    ? 'components.molecules.configurationMenu.prompts'
+                    : 'components.molecules.project.title'
+                )}
+              </h3>
+            </div>
+          ) : null}
 
           {panel === 'prompts' ? (
             <div className="w-full">
@@ -839,26 +863,19 @@ export default function ConfigurationMenu({
               <div className="max-h-[280px] overflow-y-auto p-2 [scrollbar-width:thin]">
                 <div className="space-y-1">
                   {visibleProjects.map((project) => (
-                    <button
+                    <label
                       key={project.id}
-                      type="button"
-                      onClick={() => handleToggleProject(project)}
-                      aria-pressed={selectedProjectIds.has(project.id)}
-                      className={cn(
-                        'group flex h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-[15px] transition-colors',
-                        selectedProjectIds.has(project.id)
-                          ? 'bg-accent text-accent-foreground'
-                          : 'hover:bg-accent/70'
-                      )}
+                      className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent/70"
                     >
-                      <FolderOpen className="h-4 w-4 shrink-0 text-foreground" />
-                      <span className="min-w-0 flex-1 truncate font-medium">
-                        {truncateProjectName(project.name)}
+                      <Checkbox
+                        checked={selectedProjectIds.has(project.id)}
+                        disabled={disabled || !hasProjects}
+                        onCheckedChange={() => handleToggleProject(project)}
+                      />
+                      <span className="break-words text-sm">
+                        {project.name}
                       </span>
-                      {selectedProjectIds.has(project.id) ? (
-                        <X className="h-4 w-4 shrink-0 text-primary" />
-                      ) : null}
-                    </button>
+                    </label>
                   ))}
                   {!visibleProjects.length ? (
                     <p className="px-3 py-4 text-sm text-muted-foreground">
@@ -871,15 +888,6 @@ export default function ConfigurationMenu({
           ) : null}
         </PopoverContent>
       </Popover>
-
-      {hasModelPicker ? (
-        <ModelPickerModal
-          open={modelPickerOpen}
-          disabled={disabled}
-          onOpenChange={setModelPickerOpen}
-          agentUuid={evoya?.chat_uuid}
-        />
-      ) : null}
 
       {selectedProjects.length > 0 ? (
         <TooltipProvider delayDuration={100}>

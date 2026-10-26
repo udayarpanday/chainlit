@@ -8,6 +8,7 @@ import {
   useResetRecoilState,
   useSetRecoilState
 } from 'recoil';
+import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
 import { WidgetContext } from '@chainlit/copilot/src/context';
@@ -23,10 +24,12 @@ import {
   modelCatalogState,
   projectAccess,
   promptState,
+  sessionState,
   temporaryChatState,
   useAuth,
   useChatData,
-  useChatInteract
+  useChatInteract,
+  useChatSession
 } from '@chainlit/react-client';
 
 import { Settings } from '@/components/icons/Settings';
@@ -76,11 +79,53 @@ export default function MessageComposer({
   const context = useRecoilValue(promptState);
   const creatorEnabled = useRecoilValue(evoyaCreatorEnabledState);
   const { evoya } = useContext(WidgetContext);
+  const session = useRecoilValue(sessionState);
+  useEffect(() => {
+    if (evoya?.type !== 'dashboard' || !session?.socket) return;
+    const socket = session.socket;
+    const syncProjectSelection = () => {
+      socket.emit('project_selection', {
+        project_uuids: new URL(window.location.href).searchParams.getAll(
+          'project_uuids'
+        )
+      });
+    };
+    window.addEventListener('project-context-changed', syncProjectSelection);
+    socket.on('connect', syncProjectSelection);
+    if (socket.connected) syncProjectSelection();
+    return () => {
+      window.removeEventListener(
+        'project-context-changed',
+        syncProjectSelection
+      );
+      socket.off('connect', syncProjectSelection);
+    };
+  }, [evoya?.type, session?.socket]);
   const inputRef = useRef<InputMethods>(null);
   const [value, setValue] = useState('');
   const [thinkEnabled, setThinkEnabled] = useState(false);
   const modelCatalog = useRecoilValue(modelCatalogState);
   const activeModel = useRecoilValue(activeModelOverrideState);
+  const { setModelOverride } = useChatSession();
+  const [removingModel, setRemovingModel] = useState(false);
+  const defaultModel = modelCatalog?.find((model) => model.isDefault);
+  const removeModel = async () => {
+    if (!defaultModel || removingModel || disabled) return;
+    setRemovingModel(true);
+    try {
+      const result = await setModelOverride(
+        { modelId: defaultModel.id, key: defaultModel.key },
+        evoya?.chat_uuid
+      );
+      if (!result.ok) {
+        toast.error(t('components.molecules.modelPicker.changeFailed'));
+      }
+    } catch {
+      toast.error(t('components.molecules.modelPicker.changeFailed'));
+    } finally {
+      setRemovingModel(false);
+    }
+  };
   const selectedModel =
     modelCatalog?.find((model) => model.id === activeModel?.modelId) ??
     modelCatalog?.find((model) => model.isDefault);
@@ -510,17 +555,28 @@ export default function MessageComposer({
           evoya.chat_uuid &&
           selectedModel &&
           !selectedModel.isDefault ? (
-            <Button
-              type="button"
-              onClick={() =>
-                setOpenModelPickerRequest((request) => request + 1)
-              }
-              disabled={disabled}
-              aria-label={`Change model. Current model: ${selectedModel.name}`}
-              className="mx-2 flex h-7 max-w-48 items-center gap-1.5 rounded-md border border-primary/25 bg-primary/10 px-2 text-xs font-medium text-primary transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <span className="truncate">{selectedModel.name}</span>
-            </Button>
+            <div className="group mx-2 flex h-7 max-w-48 items-center rounded-md border border-primary/25 bg-primary/10 text-xs font-medium text-primary transition-colors hover:bg-primary/15">
+              <button
+                type="button"
+                onClick={() =>
+                  setOpenModelPickerRequest((request) => request + 1)
+                }
+                disabled={disabled || removingModel}
+                aria-label={`Change model. Current model: ${selectedModel.name}`}
+                className="min-w-0 truncate rounded-md px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {selectedModel.name}
+              </button>
+              <button
+                type="button"
+                onClick={() => void removeModel()}
+                disabled={disabled || removingModel || !defaultModel}
+                aria-label={`Remove ${selectedModel.name} and use default model`}
+                className="w-0 shrink-0 overflow-hidden rounded-sm opacity-0 transition-all hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 group-hover:mr-1 group-hover:w-4 group-hover:p-0.5 group-hover:opacity-100 group-focus-within:mr-1 group-focus-within:w-4 group-focus-within:p-0.5 group-focus-within:opacity-100 disabled:cursor-not-allowed [@media(hover:none)]:mr-1 [@media(hover:none)]:w-4 [@media(hover:none)]:p-0.5 [@media(hover:none)]:opacity-100"
+              >
+                <X className="size-3" aria-hidden="true" />
+              </button>
+            </div>
           ) : null}
           {supportsThinking && (
             <TooltipProvider>

@@ -121,11 +121,11 @@ export default function ModelRow({
       disabled={disabled}
       aria-current={selected ? 'true' : undefined}
       className={cn(
-        'my-1 min-h-[76px] cursor-pointer rounded-xl border border-transparent px-3 py-3 data-[selected=true]:bg-accent/50',
+        'my-1 min-h-11 cursor-pointer rounded-lg border border-transparent px-3 py-2 data-[selected=true]:bg-accent/50',
         selected && '!border-primary/50 !bg-primary/10 text-primary'
       )}
     >
-      <Avatar className="size-10 rounded-xl border bg-background">
+      <Avatar className="size-7 shrink-0 rounded-md border bg-background">
         {model.providerLogoUrl ? (
           <AvatarImage
             src={model.providerLogoUrl}
@@ -135,7 +135,7 @@ export default function ModelRow({
         ) : null}
         <AvatarFallback
           className={cn(
-            'rounded-xl text-xs font-semibold',
+            'rounded-md text-[10px] font-semibold',
             getProviderColor(model.provider)
           )}
         >
@@ -144,7 +144,7 @@ export default function ModelRow({
       </Avatar>
 
       <div className="min-w-0 flex-1">
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <span className="truncate font-medium">{model.name}</span>
           {model.isDefault ? (
             <Badge
@@ -212,7 +212,7 @@ export default function ModelRow({
 
       <div
         className={cn(
-          'ml-auto flex shrink-0 items-center justify-end gap-2',
+          'ml-auto flex shrink-0 flex-col items-end justify-center gap-1',
           'min-w-6'
         )}
       >
