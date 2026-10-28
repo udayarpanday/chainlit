@@ -398,15 +398,6 @@ const Header = ({
     window.location.href = `${location.origin}/chat/edit-chat/${agent.numericId}/`;
   };
 
-  const handleOpenTestChat = (agent: AgentListItem) => {
-    const agentUuid = getAgentUuid(agent);
-    if (!agentUuid) return;
-    window.open(
-      `${location.origin}/chat/authorize-chat/${agentUuid}/`,
-      '_blank'
-    );
-  };
-
   const handleSetDefaultAgent = (agent: AgentListItem) => {
     const agentUuid = getAgentUuid(agent);
     if (!agentUuid) return;
@@ -470,7 +461,6 @@ const Header = ({
                   onSelectAgent={handleAgentSelect}
                   onEditAgent={handleEditAgent}
                   onSetDefaultAgent={handleSetDefaultAgent}
-                  onOpenTestChat={handleOpenTestChat}
                   onTogglePin={canTogglePin ? handleTogglePin : undefined}
                   pendingPinUuids={pendingPinUuids}
                 />

@@ -253,6 +253,8 @@ export default function AgentList({
   );
   const allAgents = [...filteredAgents].sort(
     (first, second) =>
+      Number(second.id === selectedAgent?.id) -
+        Number(first.id === selectedAgent?.id) ||
       Number(!!second.isDefault) - Number(!!first.isDefault) ||
       Number(!!second.isPinned) - Number(!!first.isPinned) ||
       first.name.localeCompare(second.name)
