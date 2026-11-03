@@ -273,7 +273,7 @@ export default function AgentList({
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className="border-primary text-primary hover:text-primary"
+            className="min-w-0 max-w-full border-primary text-primary hover:text-primary"
             onClick={(event) => {
               event.preventDefault();
               setIsOpen((open) => !open);

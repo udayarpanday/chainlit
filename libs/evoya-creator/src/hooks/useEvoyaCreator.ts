@@ -1,24 +1,17 @@
-import {
-  useContext,
-} from 'react';
-import {
-  useRecoilValue,
-  useSetRecoilState
-} from 'recoil';
-
+import { WidgetContext } from '@/context';
 import {
   creatorActiveState,
   creatorContentState,
-  creatorTypeState,
-  creatorMessageState,
   creatorFileState,
+  creatorMessageState,
+  creatorTypeState
 } from '@/state';
-
-import { WidgetContext } from '@/context';
-
-import type { IStep } from 'client-types/';
+import { useContext } from 'react';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 
 import { toast } from '@chainlit/app/src/lib/evoya-toast';
+
+import type { IStep } from 'client-types/';
 
 export default function useEvoyaCreator() {
   const { config } = useContext(WidgetContext);
@@ -34,7 +27,9 @@ export default function useEvoyaCreator() {
   const setCreatorMessage = useSetRecoilState(creatorMessageState);
 
   const openCreatorWithContent = (message: IStep, openConfig: any) => {
-    window.dispatchEvent(new CustomEvent('open-evoya-creator', { detail: { config: openConfig }}));
+    window.dispatchEvent(
+      new CustomEvent('open-evoya-creator', { detail: { config: openConfig } })
+    );
     setCreatorType(openConfig.type ?? 'markdown');
     setCreatorMessage(message);
     setCreatorContent(message.output);
@@ -42,53 +37,80 @@ export default function useEvoyaCreator() {
     setActive(true);
     // @ts-expect-error is not a valid prop
     window.evoyaCreatorEnabled = true;
-  }
-  
-  const openCreatorWithFile = (file: { path: string; name: string; mime: string; }, openConfig: any) => {
-    window.dispatchEvent(new CustomEvent('open-evoya-creator', { detail: { config: openConfig }}));
+  };
+
+  const openCreatorWithFile = (
+    file: {
+      path: string;
+      name: string;
+      mime: string;
+    },
+    openConfig: any = {}
+  ) => {
+    // Creator edits text; binary artifacts stay available through chat downloads.
+    const editableText =
+      /\.(md|markdown|txt)$/i.test(file.name) ||
+      /^text\/(?:plain|(?:x-)?markdown)(?:;|$)/i.test(file.mime);
+    if (!editableText) {
+      toast.error(
+        'Creator supports Markdown and text editing. Download this file from chat.'
+      );
+      return;
+    }
+    if (!config?.apiBaseUrl) return;
+    window.dispatchEvent(
+      new CustomEvent('open-evoya-creator', { detail: { config: openConfig } })
+    );
     setCreatorType(openConfig.type ?? 'markdown');
     const filePathArr = file.path.split('/');
     filePathArr.pop();
-    const filePath = filePathArr.join('/') + "/"
-    setFileInfo({ ...file, folderPath: filePath});
+    const filePath = filePathArr.join('/') + '/';
+    setFileInfo({ ...file, folderPath: filePath });
 
-    fetch(`${config.apiBaseUrl}/api/files/download/?path=${file.path}`).then(async (response) => {
-      const text = await response.text();
-      setCreatorContent(text);
-      // @ts-expect-error is not a valid prop
-      if (window.setEvoyaCreatorContent) {
+    const query = new URLSearchParams({ path: file.path });
+    fetch(`${config.apiBaseUrl}/api/files/download/?${query}`).then(
+      async (response) => {
+        const text = await response.text();
+        setCreatorContent(text);
         // @ts-expect-error is not a valid prop
-        window.setEvoyaCreatorContent(text)
+        if (window.setEvoyaCreatorContent) {
+          // @ts-expect-error is not a valid prop
+          window.setEvoyaCreatorContent(text);
+        }
+        window.dispatchEvent(new CustomEvent('enable-creator-mode'));
+        setActive(true);
+        // @ts-expect-error is not a valid prop
+        window.evoyaCreatorEnabled = true;
       }
-      window.dispatchEvent(new CustomEvent('enable-creator-mode'));
-      setActive(true);
-      // @ts-expect-error is not a valid prop
-      window.evoyaCreatorEnabled = true;
-    })
-  }
+    );
+  };
 
-  const saveCreatorContent = async (dFileInfo?: { path: string; name: string; mime: string; }) => {
+  const saveCreatorContent = async (dFileInfo?: {
+    path: string;
+    name: string;
+    mime: string;
+  }) => {
     let saveFileInfo = fileInfo;
     if (dFileInfo) {
-      saveFileInfo = dFileInfo
+      saveFileInfo = dFileInfo;
     }
     if (!saveFileInfo || !config) return;
     const blob = new Blob([creatorContent], {
-      type: saveFileInfo?.mime,
+      type: saveFileInfo?.mime
     });
     const newFile = new File([blob as BlobPart], saveFileInfo?.name ?? 'file');
     try {
       const data = new FormData();
       const filePath = saveFileInfo.path.split('/');
       filePath.pop();
-      data.append('file', newFile)
-      data.append('path', filePath.join('/') + "/")
+      data.append('file', newFile);
+      data.append('path', filePath.join('/') + '/');
       const response = await fetch(`${config.apiBaseUrl}/api/files/upload/`, {
         method: 'POST',
         body: data,
         headers: {
-          'X-CSRFToken': config.csrfToken,
-        },
+          'X-CSRFToken': config.csrfToken
+        }
       });
       const json = await response.json();
       if (json.success) {
@@ -96,19 +118,19 @@ export default function useEvoyaCreator() {
       } else {
         toast.error('Failed to save file!');
       }
-    } catch(err) {
+    } catch (err) {
       console.error(err);
-      toast.error('Failed to save file!')
+      toast.error('Failed to save file!');
     }
-  }
+  };
 
   const closeCreatorOverlay = () => {
     window.dispatchEvent(new CustomEvent('disable-creator-mode'));
     setActive(false);
     // @ts-expect-error is not a valid prop
     window.evoyaCreatorEnabled = false;
-  }
-  
+  };
+
   return {
     enabled: config?.enabled ?? false,
     fileInfo,
@@ -123,6 +145,6 @@ export default function useEvoyaCreator() {
     openCreatorWithContent,
     openCreatorWithFile,
     saveCreatorContent,
-    closeCreatorOverlay,
+    closeCreatorOverlay
   };
 }

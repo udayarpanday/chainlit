@@ -1,6 +1,6 @@
 import FilePicker from './components/FilePicker';
 import { FilePickerContext } from './context/file-context';
-import { FilePickerItem } from './types';
+import { EvoyaFile, FilePickerItem } from './types';
 import { downloadBlob, isPreviewSupported } from './utils/file';
 
 interface Props {
@@ -10,12 +10,17 @@ interface Props {
   workspaceId?: string;
   projectId?: string;
   brandColor?: string | null;
+  onFileOpen?: (file: EvoyaFile) => void;
 }
 
-export default function WidgetCompact({ initialPath, apiBaseUrl, csrfToken, workspaceId, projectId, brandColor }: Props) {
+export default function WidgetCompact({ initialPath, apiBaseUrl, csrfToken, workspaceId, projectId, brandColor, onFileOpen }: Props) {
   const handleItemClick = (item: FilePickerItem) => {
     const isFile = "size" in item;
     if (isFile) {
+      if (onFileOpen) {
+        onFileOpen(item as EvoyaFile);
+        return;
+      }
       if (isPreviewSupported(item.mime)) {
         const filePathArr = item.path.split('/');
         filePathArr.pop();

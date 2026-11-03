@@ -1,0 +1,96 @@
+.document-code-preview {
+  --source-comment: #475569;
+  --source-keyword: #6d28d9;
+  --source-string: #166534;
+  --source-number: #92400e;
+  --source-title: #1e40af;
+  --source-tag: #9f1239;
+}
+.dark .document-code-preview {
+  --source-comment: #94a3b8;
+  --source-keyword: #c084fc;
+  --source-string: #4ade80;
+  --source-number: #fbbf24;
+  --source-title: #60a5fa;
+  --source-tag: #fb7185;
+}
+.document-code-preview .source-layout {
+  display: flex;
+  width: max-content;
+  min-width: 100%;
+  min-height: 100%;
+  align-items: stretch;
+}
+.document-code-preview pre {
+  margin: 0;
+  border-radius: 0;
+  font:
+    13px/22px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    monospace;
+  white-space: pre;
+  tab-size: 4;
+}
+.document-code-preview .source-gutter {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  flex-shrink: 0;
+  padding: 16px 12px;
+  border-right: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+  color: hsl(var(--muted-foreground));
+  text-align: right;
+  user-select: none;
+}
+.document-code-preview .source-content {
+  flex: 1;
+  padding: 16px;
+  color: inherit;
+  background: transparent;
+}
+.document-code-preview .source-content code {
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+}
+.document-code-preview [class^='hljs-'] {
+  color: inherit;
+  font: inherit;
+  background: transparent;
+}
+.document-code-preview .hljs-comment,
+.document-code-preview .hljs-quote {
+  color: var(--source-comment);
+}
+.document-code-preview .hljs-keyword,
+.document-code-preview .hljs-selector-tag,
+.document-code-preview .hljs-literal,
+.document-code-preview .hljs-meta {
+  color: var(--source-keyword);
+}
+.document-code-preview .hljs-string,
+.document-code-preview .hljs-regexp,
+.document-code-preview .hljs-addition {
+  color: var(--source-string);
+}
+.document-code-preview .hljs-number,
+.document-code-preview .hljs-symbol,
+.document-code-preview .hljs-built_in,
+.document-code-preview .hljs-attr {
+  color: var(--source-number);
+}
+.document-code-preview .hljs-title,
+.document-code-preview .hljs-type,
+.document-code-preview .hljs-section {
+  color: var(--source-title);
+}
+.document-code-preview .hljs-tag,
+.document-code-preview .hljs-name,
+.document-code-preview .hljs-deletion {
+  color: var(--source-tag);
+}

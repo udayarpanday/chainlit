@@ -24,6 +24,7 @@ import {
 import { Messages } from '@/components/chat/Messages';
 import CancellingToolCall from '@/components/chat/Messages/CancellingToolCall';
 import { useTranslation } from 'components/i18n/Translator';
+import { useDocumentAutoPreview } from '@/hooks/useDocumentAutoPreview';
 
 interface Props {
   navigate?: (to: string) => void;
@@ -34,6 +35,7 @@ const MessagesContainer = ({ navigate }: Props) => {
   const { config } = useConfig();
   const { elements, askUser, loading, actions } = useChatData();
   const { messages } = useChatMessages();
+  useDocumentAutoPreview(messages, elements, loading, apiClient.httpEndpoint);
   const { uploadFile: _uploadFile } = useChatInteract();
   const setMessages = useSetRecoilState(messagesState);
   const setSideView = useSetRecoilState(sideViewState);

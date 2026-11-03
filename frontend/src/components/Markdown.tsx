@@ -1,3 +1,4 @@
+import { documentFromLink, documentKind } from '@/lib/documentPreview';
 import { cn } from '@/lib/utils';
 import { omit } from 'lodash';
 import { isValidElement, useContext, useMemo } from 'react';
@@ -28,6 +29,7 @@ import {
 
 import BlinkingCursor from './BlinkingCursor';
 import CodeSnippet from './CodeSnippet';
+import { DocumentCard } from './Elements/DocumentCard';
 import { ElementRef } from './Elements/ElementRef';
 import { MarkdownAlert, alertComponents } from './MarkdownAlert';
 import { MermaidDiagram } from './Mermaid';
@@ -92,10 +94,10 @@ const fixDirectiveColonPlugin = () => {
     visit(tree, (node: any, index: number, parent: any) => {
       if (
         (node.type === 'textDirective' ||
-         node.type === 'leafDirective' ||
-         node.type === 'containerDirective') &&
+          node.type === 'leafDirective' ||
+          node.type === 'containerDirective') &&
         !node.data?.hName &&
-        /^[a-zA-Z0-9_-]+$/.test(node.name) 
+        /^[a-zA-Z0-9_-]+$/.test(node.name)
       ) {
         const directiveText = `:${node.name}`;
         parent.children.splice(index, 1, {
@@ -175,23 +177,32 @@ const Markdown = ({
           try {
             if (children && isValidElement(children)) {
               const { className, children: rawContent } = children?.props || {};
-        
-              if (className?.includes('-vega') || className?.includes('-json')) {
+
+              if (
+                className?.includes('-vega') ||
+                className?.includes('-json')
+              ) {
                 const parsed = JSON.parse(rawContent);
                 const isVega = parsed?.$schema?.includes('vega.github.io');
-        
+
                 if (isVega) {
                   if (!parsed.width) parsed.width = 'container';
                   if (!parsed.height) parsed.height = 'container';
-        
+
                   return (
-                    <div style={{ width: '100%', height: '400px', position: 'relative' }}>
+                    <div
+                      style={{
+                        width: '100%',
+                        height: '400px',
+                        position: 'relative'
+                      }}
+                    >
                       <VegaLite spec={parsed} data={parsed.data} />
                     </div>
                   );
                 }
               }
-        
+
               if (className?.includes('-mermaid')) {
                 return <MermaidDiagram>{rawContent}</MermaidDiagram>;
               }
@@ -200,7 +211,7 @@ const Markdown = ({
             console.error('Render error:', e);
             return <CodeSnippet {...props} />;
           }
-        
+
           return <CodeSnippet {...props} />;
         },
         a({ children, ...props }) {
@@ -209,11 +220,25 @@ const Markdown = ({
           if (element) {
             return <ElementRef element={element} />;
           } else {
+            const document =
+              props.href &&
+              documentFromLink(
+                props.href,
+                typeof children === 'string'
+                  ? children
+                  : name?.toString() || '',
+                '',
+                window.location.href,
+                [apiClient.httpEndpoint],
+                true
+              );
+            if (document) return <DocumentCard element={document} />;
             return (
               <a
                 {...props}
                 className="text-primary hover:underline"
                 target="_blank"
+                rel="noopener noreferrer"
               >
                 {children}
               </a>
@@ -221,6 +246,22 @@ const Markdown = ({
           }
         },
         img: (image: any) => {
+          const source = image.src?.startsWith('/public')
+            ? apiClient.buildEndpoint(image.src)
+            : image.src;
+          const preview =
+            source &&
+            documentFromLink(
+              source,
+              image.alt || 'Image',
+              '',
+              window.location.href,
+              [apiClient.httpEndpoint],
+              true,
+              true
+            );
+          if (preview && documentKind(preview) === 'image')
+            return <DocumentCard element={preview} />;
           return (
             <div className="relative">
               <AspectRatio
@@ -228,11 +269,7 @@ const Markdown = ({
                 className="bg-muted rounded-md overflow-hidden"
               >
                 <img
-                  src={
-                    image.src && image.src.startsWith('/public')
-                      ? apiClient.buildEndpoint(image.src)
-                      : image.src
-                  }
+                  src={source}
                   alt={image.alt}
                   className="h-full w-full object-contain"
                 />
@@ -255,7 +292,7 @@ const Markdown = ({
           // Check if the strong text contains an agent mention (starts with @)
           const text = typeof props.children === 'string' ? props.children : '';
           const isAgentMention = text.trim().startsWith('@');
-          
+
           return (
             <span
               {...omit(props, ['node'])}
@@ -344,7 +381,11 @@ const Markdown = ({
           );
         },
         li({ children, ...props }) {
-          return <li {...omit(props, ['node'])} className="mb-2">{children}</li>
+          return (
+            <li {...omit(props, ['node'])} className="mb-2">
+              {children}
+            </li>
+          );
         },
         thead({ children, ...props }) {
           return <TableHeader {...(props as any)}>{children}</TableHeader>;
