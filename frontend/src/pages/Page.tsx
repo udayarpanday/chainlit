@@ -1,3 +1,4 @@
+import { isDocumentPreviewRequest } from '@/lib/documentPreviewBridge';
 import { Navigate } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 
@@ -21,6 +22,7 @@ const Page = ({ children }: Props) => {
   const { data } = useAuth();
   const userEnv = useRecoilValue(userEnvState);
   const sideView = useRecoilValue(sideViewState);
+  const documentOpen = isDocumentPreviewRequest(sideView);
 
   if (config?.userEnv) {
     for (const key of config.userEnv || []) {
@@ -29,15 +31,17 @@ const Page = ({ children }: Props) => {
   }
 
   const mainContent = (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex min-h-0 flex-col h-full w-full">
       <ResizablePanelGroup
         direction="horizontal"
-        className="flex flex-row flex-grow"
+        className="flex min-h-0 flex-row flex-grow"
       >
         <ResizablePanel
           className="flex flex-col h-full w-full"
-          minSize={60}
-          defaultSize={50}
+          id="chat"
+          order={1}
+          minSize={documentOpen ? 25 : 35}
+          defaultSize={documentOpen ? 38 : 50}
         >
           <div className="flex flex-row flex-grow overflow-auto">
             {children}
@@ -51,7 +55,7 @@ const Page = ({ children }: Props) => {
   const historyEnabled = config?.dataPersistence && data?.requireLogin;
 
   return (
-    <SidebarProvider>
+    <SidebarProvider className="h-svh min-h-0 overflow-hidden">
       {historyEnabled ? (
         <>
           <LeftSidebar />

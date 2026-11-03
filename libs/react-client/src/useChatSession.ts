@@ -88,6 +88,7 @@ import {
   resetTaskLoading
 } from './taskLoading';
 import type { IToken } from './useChatData';
+import { applySidebarElements, SidebarElementsPayload } from './sidebar';
 
 type EvoyaCreatorWindow = Window &
   typeof globalThis & {
@@ -739,12 +740,6 @@ const useChatSession = () => {
         setAgents(agents);
       });
 
-      socket.on('set_sidebar_title', (title: string) => {
-        setSideView((prev) => {
-          return { title, elements: prev?.elements || [] };
-        });
-      });
-
       socket.on('context_prompt', (context: EvoyaPromptContext | undefined) => {
         if (context) {
           setContextPrompt(context);
@@ -780,7 +775,7 @@ const useChatSession = () => {
       socket.on('set_sidebar_title', (title: string) => {
         setSideView((prev) => {
           if (prev?.title === title) return prev;
-          return { title, elements: prev?.elements || [] };
+          return { ...prev, title, elements: prev?.elements || [] };
         });
       });
 
@@ -796,22 +791,12 @@ const useChatSession = () => {
         }
       });
 
-      socket.on('set_sidebar_elements', (elements: IMessageElement[]) => {
-        if (!elements.length) {
-          setSideView(undefined);
-        } else {
-          elements.forEach((element) => {
-            if (!element.url && element.chainlitKey) {
-              element.url = client.getElementUrl(
-                element.chainlitKey,
-                sessionId
-              );
-            }
-          });
-          setSideView((prev) => {
-            return { title: prev?.title || '', elements: elements };
-          });
-        }
+      socket.on('set_sidebar_elements', (payload: SidebarElementsPayload) => {
+        setSideView((previous) =>
+          applySidebarElements(previous, payload, (key) =>
+            client.getElementUrl(key, sessionId)
+          )
+        );
       });
 
       socket.on('element', (element: IElement) => {
@@ -829,6 +814,16 @@ const useChatSession = () => {
             }
           });
         } else {
+          setSideView((current) =>
+            current?.elements.some((item) => item.id === element.id)
+              ? {
+                  ...current,
+                  elements: current.elements.map((item) =>
+                    item.id === element.id ? element : item
+                  )
+                }
+              : current
+          );
           setElements((old) => {
             const index = old.findIndex((e) => e.id === element.id);
             if (index === -1) {
@@ -841,6 +836,14 @@ const useChatSession = () => {
       });
 
       socket.on('remove_element', (remove: { id: string }) => {
+        setSideView((current) => {
+          if (!current?.elements.some((element) => element.id === remove.id))
+            return current;
+          const elements = current.elements.filter(
+            (element) => element.id !== remove.id
+          );
+          return elements.length ? { ...current, elements } : undefined;
+        });
         setElements((old) => {
           return old.filter((e) => e.id !== remove.id);
         });

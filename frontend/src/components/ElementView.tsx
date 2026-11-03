@@ -1,3 +1,4 @@
+import { documentKind } from '@/lib/documentPreview';
 import { ArrowLeft } from 'lucide-react';
 
 import type { IMessageElement } from '@chainlit/react-client';
@@ -5,6 +6,7 @@ import type { IMessageElement } from '@chainlit/react-client';
 import { useLayoutMaxWidth } from 'hooks/useLayoutMaxWidth';
 
 import { Element } from './Elements';
+import DocumentPreview from './Elements/DocumentPreview';
 import { Button } from './ui/button';
 
 interface ElementViewProps {
@@ -34,7 +36,11 @@ const ElementView = ({ element, onGoBack }: ElementViewProps) => {
         </div>
       </div>
 
-      <Element element={element} />
+      {documentKind(element) ? (
+        <DocumentPreview elements={[element]} />
+      ) : (
+        <Element element={element} />
+      )}
     </div>
   );
 };
