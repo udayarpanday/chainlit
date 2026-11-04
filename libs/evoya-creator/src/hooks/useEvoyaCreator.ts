@@ -114,6 +114,9 @@ export default function useEvoyaCreator() {
       });
       const json = await response.json();
       if (json.success) {
+        window.dispatchEvent(new CustomEvent('evoya-file-saved', {
+          detail: { path: json.path || saveFileInfo.path, content: creatorContent }
+        }));
         toast.success('File saved!');
       } else {
         toast.error('Failed to save file!');
