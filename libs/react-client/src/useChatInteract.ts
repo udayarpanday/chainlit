@@ -4,6 +4,8 @@ import {
   actionState,
   activeModelOverrideState,
   askUserState,
+  audioConnectionState,
+  audioSubmittedState,
   canOverrideModelState,
   chatArchived,
   chatSettingsInputsState,
@@ -12,6 +14,7 @@ import {
   elementState,
   favoriteMessagesState,
   firstUserInteraction,
+  generatingMessageIdState,
   loadingState,
   messagesState,
   modelCatalogState,
@@ -36,6 +39,10 @@ const useChatInteract = () => {
   const session = useRecoilValue(sessionState);
   const askUser = useRecoilValue(askUserState);
   const sessionId = useRecoilValue(sessionIdState);
+  const generatingMessageId = useRecoilValue(generatingMessageIdState);
+  const audioConnection = useRecoilValue(audioConnectionState);
+  const setGeneratingMessageId = useSetRecoilState(generatingMessageIdState);
+  const setAudioSubmitted = useSetRecoilState(audioSubmittedState);
 
   const resetChatSettings = useResetRecoilState(chatSettingsInputsState);
   const resetSessionId = useResetRecoilState(sessionIdState);
@@ -65,6 +72,8 @@ const useChatInteract = () => {
     session?.socket.emit('clear_session');
     session?.socket.disconnect();
     resetSession();
+    setGeneratingMessageId(undefined);
+    setAudioSubmitted(false);
     setIdToResume(undefined);
     resetSessionId();
     setFirstUserInteraction(undefined);
@@ -98,13 +107,14 @@ const useChatInteract = () => {
       }
       setMessages((oldMessages) => addMessage(oldMessages, message as IStep));
 
+      setGeneratingMessageId(message.id);
       session?.socket.emit('client_message', {
         message,
         fileReferences,
         evoyaAttachments
       });
     },
-    [session?.socket]
+    [session?.socket, setGeneratingMessageId, setMessages]
   );
 
   const editMessage = useCallback(
@@ -179,8 +189,13 @@ const useChatInteract = () => {
   );
 
   const endAudioStream = useCallback(() => {
-    session?.socket.emit('audio_end');
-  }, [session?.socket]);
+    const messageId = uuidv4();
+    setGeneratingMessageId(messageId);
+    setAudioSubmitted(true);
+    session?.socket.emit('audio_end', {
+      messageId
+    });
+  }, [session?.socket, setGeneratingMessageId, setAudioSubmitted]);
 
   const replyMessage = useCallback(
     (message: IStep) => {
@@ -208,17 +223,32 @@ const useChatInteract = () => {
   );
 
   const stopTask = useCallback(() => {
-    setMessages((oldMessages) =>
-      oldMessages.map((m) => {
-        m.streaming = false;
-        return m;
-      })
-    );
+    if (generatingMessageId) {
+      session?.socket.emit('stop_message', { messageId: generatingMessageId });
+    } else if (audioConnection === 'on') {
+      session?.socket.emit('stop');
+    } else {
+      return;
+    }
 
+    const stopStreaming = (steps: IStep[]): IStep[] =>
+      steps.map((step) => ({
+        ...step,
+        streaming: false,
+        steps: step.steps ? stopStreaming(step.steps) : step.steps
+      }));
+    setMessages((oldMessages) => stopStreaming(oldMessages));
+
+    setAudioSubmitted(false);
     setLoading(false);
-
-    session?.socket.emit('stop');
-  }, [session?.socket]);
+  }, [
+    session?.socket,
+    generatingMessageId,
+    audioConnection,
+    setAudioSubmitted,
+    setMessages,
+    setLoading
+  ]);
 
   const passAudioType = useCallback(
     (type: string) => {
