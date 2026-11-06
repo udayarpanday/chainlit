@@ -4,6 +4,7 @@ import type { IMessageElement, IStep } from '@chainlit/react-client';
 
 import { textFileInfo } from './codePreview';
 import { documentPreviewOrigins } from './documentPreviewOrigins';
+import { isApplicationDocumentUrl } from './externalDocumentPreview';
 
 export type DocumentKind =
   'pdf' | 'docx' | 'pptx' | 'xlsx' | 'html' | 'image' | 'code';
@@ -268,7 +269,8 @@ export function messageDocuments(
     (element) =>
       element.forId === message.id &&
       documentKind(element) &&
-      safeDocumentUrl(element.url)
+      safeDocumentUrl(element.url) &&
+      isApplicationDocumentUrl(element.url!, trustedServers)
   );
   const linked = documentsFromMarkdown(
     message.output || '',

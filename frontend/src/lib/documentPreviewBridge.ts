@@ -1,6 +1,10 @@
 import type { IMessageElement } from '@chainlit/react-client';
 
 import { documentKind, safeDocumentUrl } from './documentPreview';
+import {
+  EXTERNAL_DOCUMENT_PREVIEW_KEY,
+  externalPreviewUrl
+} from './externalDocumentPreview';
 
 export interface DocumentPreviewRequest {
   title: string;
@@ -27,7 +31,11 @@ export function isDocumentPreviewRequest(
         typeof element.id === 'string' &&
         typeof element.name === 'string' &&
         (documentKind(element) ||
-          (request.key === 'document-preview' && element.type === 'file')) &&
+          (request.key === 'document-preview' && element.type === 'file') ||
+          (request.key === EXTERNAL_DOCUMENT_PREVIEW_KEY &&
+            element.type === 'file' &&
+            !!element.url &&
+            externalPreviewUrl(element.url))) &&
         safeDocumentUrl(element.url)
     )
   );

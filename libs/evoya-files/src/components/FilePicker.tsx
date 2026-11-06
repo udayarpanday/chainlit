@@ -113,6 +113,7 @@ export default function FilePicker({
   const {
     apiBaseUrl,
     csrfToken,
+    projectId,
     type: pickerType
   } = useContext(FilePickerContext);
   const { t } = useTranslation();
@@ -121,6 +122,16 @@ export default function FilePicker({
     path: [],
     items: []
   });
+  // Keep the compact project trail rooted at the projects folder.
+  const projectBreadcrumbRoot = compact && projectId
+    ? selectionKey(initialPath).split('/').slice(0, -1).join('/')
+    : '';
+  const breadcrumbPath = projectBreadcrumbRoot
+    ? pathData.path.filter((item) => {
+        const path = selectionKey(item.path || '');
+        return path === projectBreadcrumbRoot || path.startsWith(`${projectBreadcrumbRoot}/`);
+      }).slice(0, 2)
+    : pathData.path;
   const [folderFiles, setFolderFiles] = useState<FilePickerItem[]>([]);
   const [searchItems, setSearchItems] = useState<FilePickerItem[]>([]);
   const [recentFiles, setRecentFiles] = useState<RecentFile[]>([]);
@@ -722,7 +733,7 @@ export default function FilePicker({
       >
         <div className="flex justify-between items-center mb-2 pt-2 overflow-hidden flex-shrink-0">
           <FolderBreadcrumbs
-            pathData={pathData}
+            pathData={{ ...pathData, path: breadcrumbPath }}
             fetchDirectory={fetchDirectory}
             isLoading={isLoading}
             attachmentMode={attachmentMode}

@@ -179,8 +179,8 @@ export default function Uploader({
               <DropdownMenuTrigger asChild>
                 <Button
                   size={type === 'compact' ? 'sm' : 'default'}
+                  variant={type === 'compact' && projectId ? 'secondary' : 'default'}
                   disabled={isLoading || isSearch}
-                  className=""
                 >
                   <PlusCircle />
                   <Translator path="evoyaFiles.actions.new.label" />

@@ -1,4 +1,5 @@
 import { documentFromLink, documentKind } from '@/lib/documentPreview';
+import { externalDocumentFromLink } from '@/lib/externalDocumentPreview';
 import { cn } from '@/lib/utils';
 import { omit } from 'lodash';
 import { isValidElement, useContext, useMemo } from 'react';
@@ -31,6 +32,7 @@ import BlinkingCursor from './BlinkingCursor';
 import CodeSnippet from './CodeSnippet';
 import { DocumentCard } from './Elements/DocumentCard';
 import { ElementRef } from './Elements/ElementRef';
+import ExternalDocumentLink from './Elements/ExternalDocumentLink';
 import { MarkdownAlert, alertComponents } from './MarkdownAlert';
 import { MermaidDiagram } from './Mermaid';
 import Step from './chat/Messages/Message/Step';
@@ -233,6 +235,19 @@ const Markdown = ({
                 true
               );
             if (document) return <DocumentCard element={document} />;
+            const external =
+              props.href &&
+              externalDocumentFromLink(
+                props.href,
+                typeof children === 'string' ? children : '',
+                [apiClient.httpEndpoint]
+              );
+            if (external)
+              return (
+                <ExternalDocumentLink element={external}>
+                  {children}
+                </ExternalDocumentLink>
+              );
             return (
               <a
                 {...props}

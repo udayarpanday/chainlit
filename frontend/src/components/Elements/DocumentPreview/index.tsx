@@ -17,6 +17,7 @@ import {
   documentKind,
   safeDocumentUrl
 } from '../../../lib/documentPreview';
+import { isApplicationDocumentUrl } from '../../../lib/externalDocumentPreview';
 import { loadDocument } from '../../../lib/loadDocument';
 import { Button } from '../../ui/button';
 import PreviewLoading from './PreviewLoading';
@@ -57,6 +58,9 @@ function Viewer({
   element: IMessageElement;
   fileServer?: string;
 }) {
+  const external =
+    !!element.url &&
+    !isApplicationDocumentUrl(element.url, fileServer ? [fileServer] : []);
   const [kind, setKind] = useState(documentKind(element));
   const [data, setData] = useState<ArrayBuffer>();
   const [sourceInfo, setSourceInfo] = useState({
@@ -92,7 +96,7 @@ function Viewer({
             .then((module) => module.preparePdfWorker())
             .catch(() => {});
         };
-        const expectedKind = documentKind(element);
+        const expectedKind = external ? 'pdf' : documentKind(element);
         if (expectedKind) prepareViewer(expectedKind);
         return loadDocument(
           element.url!,
@@ -117,7 +121,9 @@ function Viewer({
               error.name === 'AbortError'
                 ? 'The preview timed out. Download the original or reopen the preview to retry.'
                 : error instanceof TypeError
-                  ? 'The document could not be loaded. Open the original file to sign in or check access, then retry.'
+                  ? external
+                    ? 'This site could not provide a preview. Open the original instead.'
+                    : 'The document could not be loaded. Open the original file to sign in or check access, then retry.'
                   : error.message
             );
         })
@@ -140,12 +146,25 @@ function Viewer({
     element.type,
     element.mime,
     fileServer,
+    external,
     attempt
   ]);
   if (error)
     return (
       <div className="p-4 text-sm text-muted-foreground">
         <p role="alert">{error}</p>
+        {external && (
+          <Button asChild variant="outline" className="mt-3 mr-2">
+            <a
+              href={safeDocumentUrl(element.url)}
+              target="_blank"
+              rel="noopener noreferrer"
+              referrerPolicy="no-referrer"
+            >
+              Open original
+            </a>
+          </Button>
+        )}
         <Button
           variant="outline"
           className="mt-3"
@@ -201,6 +220,8 @@ export default function DocumentPreview({
   if (!element) return null;
   const downloadUrl = safeDocumentUrl(element.url);
   const name = documentDisplayName(element);
+  const external =
+    !!downloadUrl && !isApplicationDocumentUrl(downloadUrl, [sourceServer]);
   return (
     <section
       className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background"
@@ -286,6 +307,12 @@ export default function DocumentPreview({
           )}
         </div>
       </header>
+      {external && (
+        <p className="shrink-0 border-b border-border px-4 py-2 text-xs text-foreground">
+          Source: {new URL(downloadUrl!, window.location.href).hostname} · PDF
+          preview
+        </p>
+      )}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <PreviewSession
           key={`${element.id}:${element.url}:${sourceServer}`}

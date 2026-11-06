@@ -6,6 +6,10 @@ import {
   isStorageDownload
 } from './documentPreview';
 import { documentPreviewOrigins } from './documentPreviewOrigins';
+import {
+  externalPreviewUrl,
+  isApplicationDocumentUrl
+} from './externalDocumentPreview';
 
 export const MAX_DOCUMENT_BYTES = 25 * 1024 * 1024;
 
@@ -45,12 +49,16 @@ async function fetchDocument(
   signal: AbortSignal,
   fileServer?: string
 ) {
+  const external = !isApplicationDocumentUrl(
+    target.href,
+    fileServer ? [fileServer] : []
+  );
+  const options = documentRequestOptions(target.href, signal, fileServer);
   for (let attempt = 0; ; attempt++) {
     try {
-      const response = await fetch(
-        target.href,
-        documentRequestOptions(target.href, signal, fileServer)
-      );
+      const response = await fetch(target.href, options);
+      // External sites receive one request per explicit preview/retry click.
+      if (external) return response;
       // A newly registered artifact can briefly be unavailable. Recover from
       // that and transient server failures, but never retry denied access.
       const transient =
@@ -59,7 +67,12 @@ async function fetchDocument(
       if (!transient || attempt >= 2) return response;
       await response.body?.cancel();
     } catch (error) {
-      if (signal.aborted || !(error instanceof TypeError) || attempt >= 2)
+      if (
+        external ||
+        signal.aborted ||
+        !(error instanceof TypeError) ||
+        attempt >= 2
+      )
         throw error;
     }
     await retryDelay(signal, 500 * (attempt + 1));
@@ -78,6 +91,20 @@ export function documentRequestOptions(
     target.password
   )
     throw new Error('This file URL cannot be previewed.');
+  if (!isApplicationDocumentUrl(target.href, fileServer ? [fileServer] : [])) {
+    if (!externalPreviewUrl(target.href))
+      throw new Error(
+        'This address cannot be previewed. Open the original instead.'
+      );
+    return {
+      method: 'GET',
+      signal,
+      mode: 'cors',
+      credentials: 'omit',
+      redirect: 'error',
+      referrerPolicy: 'no-referrer'
+    };
+  }
   const server = fileServer
     ? new URL(fileServer, window.location.href)
     : undefined;
@@ -124,13 +151,19 @@ export async function loadDocument(
   mime?: string;
 }> {
   const target = new URL(url, window.location.href);
+  const external = !isApplicationDocumentUrl(
+    target.href,
+    fileServer ? [fileServer] : []
+  );
   const response = await fetchDocument(target, signal, fileServer);
-  if (!response.ok)
+  if (!response.ok) {
+    await response.body?.cancel();
     throw new Error(
       response.status === 401 || response.status === 403
         ? 'You need access to this file. Open the original to sign in or check permissions, then retry.'
         : 'The file could not be loaded. Try downloading it instead.'
     );
+  }
   const mime = response.headers
     .get('content-type')
     ?.split(';')[0]
@@ -139,6 +172,16 @@ export async function loadDocument(
   const filename = dispositionFilename(
     response.headers.get('content-disposition') || ''
   );
+  if (
+    external &&
+    (response.redirected ||
+      (mime && !['application/pdf', 'application/octet-stream'].includes(mime)))
+  ) {
+    await response.body?.cancel();
+    throw new Error(
+      'This link does not provide a direct PDF preview. Open the original instead.'
+    );
+  }
   const headerKind = documentKind({ type: 'file', name: filename || '', mime });
   if (
     mime === 'text/html' &&
@@ -151,12 +194,26 @@ export async function loadDocument(
       'The file server returned a sign-in page instead of the document. Open the original to sign in, then retry the preview.'
     );
   }
-  const kind = headerKind || expectedKind;
+  const kind = external ? 'pdf' : headerKind || expectedKind;
   if (!kind) {
     await response.body?.cancel();
     throw new Error('This file type is available as a download only.');
   }
   onHeaders?.(kind);
+  const finish = (data: ArrayBuffer) => {
+    if (
+      external &&
+      !/^%PDF-\d\.\d/.test(
+        new TextDecoder().decode(
+          new Uint8Array(data, 0, Math.min(8, data.byteLength))
+        )
+      )
+    )
+      throw new Error(
+        'This response is not a PDF document. Open the original instead.'
+      );
+    return { data, kind, filename, mime };
+  };
   if (Number(response.headers.get('content-length')) > MAX_DOCUMENT_BYTES) {
     await response.body?.cancel();
     throw new Error('Files larger than 25 MB are available as downloads only.');
@@ -168,7 +225,7 @@ export async function loadDocument(
       throw new Error(
         'Files larger than 25 MB are available as downloads only.'
       );
-    return { data: buffer, kind, filename, mime };
+    return finish(buffer);
   }
   const chunks: Uint8Array[] = [];
   let size = 0;
@@ -195,7 +252,7 @@ export async function loadDocument(
     result.set(chunk, offset);
     offset += chunk.byteLength;
   });
-  return { data: result.buffer, kind, filename, mime };
+  return finish(result.buffer);
 }
 
 export async function validateOfficeArchive(

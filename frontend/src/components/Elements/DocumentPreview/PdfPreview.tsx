@@ -107,7 +107,10 @@ export default function PdfPreview({
   initialPage?: number;
 }) {
   const file = useMemo(() => ({ data: new Uint8Array(data.slice(0)) }), [data]);
-  const options = useMemo(() => ({ worker: preparePdfWorker() }), []);
+  const options = useMemo(
+    () => ({ worker: preparePdfWorker(), isEvalSupported: false }),
+    []
+  );
   const [pages, setPages] = useState(0);
   const theme = usePreviewTheme();
   const [saved, save] = usePreviewSettings('pdf', {
