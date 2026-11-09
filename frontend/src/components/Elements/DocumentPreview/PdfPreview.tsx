@@ -20,6 +20,7 @@ import { Document, Page, Thumbnail, pdfjs } from 'react-pdf';
 
 import textLayerCss from 'react-pdf/dist/Page/TextLayer.css?raw';
 
+import type { ImportedPdfSource } from '../../../lib/importExternalPdf';
 import { escapeSource, markedText } from '../../../lib/previewSearch';
 import { Button } from '../../ui/button';
 import PreviewLoading from './PreviewLoading';
@@ -101,14 +102,28 @@ function ContinuousPage({
 
 export default function PdfPreview({
   data,
+  source,
   initialPage = 1
 }: {
-  data: ArrayBuffer;
+  data?: ArrayBuffer;
+  source?: ImportedPdfSource;
   initialPage?: number;
 }) {
-  const file = useMemo(() => ({ data: new Uint8Array(data.slice(0)) }), [data]);
+  const file = useMemo(
+    () =>
+      source || (data ? { data: new Uint8Array(data.slice(0)) } : undefined),
+    [data, source]
+  );
   const options = useMemo(
-    () => ({ worker: preparePdfWorker(), isEvalSupported: false }),
+    () => ({
+      worker: preparePdfWorker(),
+      isEvalSupported: false,
+      // Imported PDFs support authenticated local ranges. Avoid downloading the
+      // entire stored PDF before first paint or automatically fetching all of it.
+      rangeChunkSize: 256 * 1024,
+      disableAutoFetch: true,
+      disableStream: true
+    }),
     []
   );
   const [pages, setPages] = useState(0);

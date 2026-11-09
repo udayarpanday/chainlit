@@ -180,6 +180,7 @@ export default function Uploader({
                 <Button
                   size={type === 'compact' ? 'sm' : 'default'}
                   variant={type === 'compact' && projectId ? 'secondary' : 'default'}
+                  className={type === 'compact' && projectId ? 'bg-[#7b809a] text-white hover:bg-[#7b809a]/90' : undefined}
                   disabled={isLoading || isSearch}
                 >
                   <PlusCircle />

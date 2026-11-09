@@ -56,6 +56,7 @@ from chainlit.config import (
 )
 from chainlit.data import get_data_layer
 from chainlit.data.acl import is_thread_author
+from chainlit.external_pdf import close_external_pdf_cache, router as external_pdf_router
 from chainlit.logger import logger
 from chainlit.markdown import get_markdown_str
 from chainlit.oauth_providers import get_oauth_provider
@@ -167,6 +168,7 @@ async def lifespan(app: FastAPI):
         yield
     finally:
         try:
+            await close_external_pdf_cache()
             if config.code.on_app_shutdown:
                 await config.code.on_app_shutdown()
 
@@ -260,6 +262,7 @@ app.add_middleware(SafariWebSocketsCompatibleGZipMiddleware)
 
 # config.run.root_path is only set when started with --root-path. Not on submounts.
 router = APIRouter(prefix=config.run.root_path)
+router.include_router(external_pdf_router)
 
 
 @router.get("/public/{filename:path}")

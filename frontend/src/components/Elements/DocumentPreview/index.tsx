@@ -9,7 +9,11 @@ import {
   useState
 } from 'react';
 
-import { ChainlitContext, type IMessageElement } from '@chainlit/react-client';
+import {
+  ChainlitContext,
+  ClientError,
+  type IMessageElement
+} from '@chainlit/react-client';
 
 import { beginDocumentDownload } from '../../../lib/documentDownloadState';
 import {
@@ -18,6 +22,10 @@ import {
   safeDocumentUrl
 } from '../../../lib/documentPreview';
 import { isApplicationDocumentUrl } from '../../../lib/externalDocumentPreview';
+import {
+  type ImportedPdfSource,
+  importExternalPdf
+} from '../../../lib/importExternalPdf';
 import { loadDocument } from '../../../lib/loadDocument';
 import { Button } from '../../ui/button';
 import PreviewLoading from './PreviewLoading';
@@ -58,26 +66,33 @@ function Viewer({
   element: IMessageElement;
   fileServer?: string;
 }) {
+  const client = useContext(ChainlitContext);
   const external =
     !!element.url &&
     !isApplicationDocumentUrl(element.url, fileServer ? [fileServer] : []);
   const [kind, setKind] = useState(documentKind(element));
   const [data, setData] = useState<ArrayBuffer>();
+  const [pdfSource, setPdfSource] = useState<ImportedPdfSource>();
   const [sourceInfo, setSourceInfo] = useState({
     name: element.name,
     mime: element.mime
   });
   const [error, setError] = useState<string>();
   const [attempt, setAttempt] = useState(0);
-  const status =
-    documentKind(element) === 'image'
+  const status = external
+    ? 'Preparing PDF preview…'
+    : documentKind(element) === 'image'
       ? 'Downloading image…'
       : 'Downloading document…';
   useEffect(() => {
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 30000);
+    const timeout = window.setTimeout(
+      () => controller.abort(),
+      external ? 330000 : 30000
+    );
     let active = true;
     setData(undefined);
+    setPdfSource(undefined);
     setError(undefined);
     const finishDownload = element.url
       ? beginDocumentDownload(element.url)
@@ -98,6 +113,18 @@ function Viewer({
         };
         const expectedKind = external ? 'pdf' : documentKind(element);
         if (expectedKind) prepareViewer(expectedKind);
+        if (external) {
+          const imported = await importExternalPdf(
+            client,
+            element.url!,
+            controller.signal
+          );
+          if (active) {
+            setSourceInfo({ name: imported.filename, mime: 'application/pdf' });
+            setPdfSource(imported.source);
+          }
+          return;
+        }
         return loadDocument(
           element.url!,
           controller.signal,
@@ -107,7 +134,7 @@ function Viewer({
         );
       })()
         .then((document) => {
-          if (active) {
+          if (active && document) {
             setSourceInfo({
               name: document.filename || element.name,
               mime: document.mime || element.mime
@@ -120,11 +147,14 @@ function Viewer({
             setError(
               error.name === 'AbortError'
                 ? 'The preview timed out. Download the original or reopen the preview to retry.'
-                : error instanceof TypeError
-                  ? external
-                    ? 'This site could not provide a preview. Open the original instead.'
-                    : 'The document could not be loaded. Open the original file to sign in or check access, then retry.'
-                  : error.message
+                : error instanceof ClientError
+                  ? error.detail ||
+                    'The preview service is unavailable. Open the original instead.'
+                  : error instanceof TypeError
+                    ? external
+                      ? 'This site could not provide a preview. Open the original instead.'
+                      : 'The document could not be loaded. Open the original file to sign in or check access, then retry.'
+                    : error.message
             );
         })
         .finally(() => {
@@ -146,6 +176,7 @@ function Viewer({
     element.type,
     element.mime,
     fileServer,
+    client,
     external,
     attempt
   ]);
@@ -174,8 +205,20 @@ function Viewer({
         </Button>
       </div>
     );
-  if (!data) return <PreviewLoading label={status} />;
+  if (!data && !pdfSource) return <PreviewLoading label={status} />;
   if (!kind) return <p>Preview is unavailable for this file type.</p>;
+  if (pdfSource)
+    return (
+      <PreviewBoundary>
+        <Suspense fallback={<PreviewLoading label="Loading viewer…" />}>
+          <PdfPreview
+            source={pdfSource}
+            initialPage={element.type === 'pdf' ? element.page : undefined}
+          />
+        </Suspense>
+      </PreviewBoundary>
+    );
+  if (!data) return null;
   return (
     <PreviewBoundary>
       <Suspense fallback={<PreviewLoading label="Loading viewer…" />}>
