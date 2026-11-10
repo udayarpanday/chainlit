@@ -54,7 +54,7 @@ const Message = memo(
     scorableRun
   }: Props) => {
     
-    const { allowHtml, cot, latex, onError, loading } = useContext(MessageContext);
+    const { allowHtml, cot, latex, onError } = useContext(MessageContext);
     const layoutMaxWidth = useLayoutMaxWidth();
     const isAsk = message.waitForAnswer;
     const isUserMessage = message.type === 'user_message';
@@ -95,7 +95,6 @@ const Message = memo(
 
     const isEmptyInactiveAssistant =
       message.type === 'assistant_message' &&
-      !loading &&
       !isRunning &&
       !message.streaming &&
       !hasVisibleOutput(message.output) &&
@@ -154,12 +153,13 @@ const Message = memo(
                       <MessageAvatar
                         author={message.name}
                         content={message.output}
+                        isRunning={isRunning}
                         hide={message.name === 'LangGraph'}
                       />
                     </div>
                   ) : null}
                   {!isStep &&
-                  (isRunning || (toolCalls && toolCalls.length > 0)) &&
+                  isRunning &&
                   !hasVisibleOutput(message.output) &&
                   evoyaMode !== 'default' ? (
                     <ToolStepInfo toolCalls={toolCalls ?? []} />

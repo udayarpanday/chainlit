@@ -20,9 +20,10 @@ interface Props {
   author?: string;
   content?: string;
   hide?: boolean;
+  isRunning?: boolean;
 }
 
-const MessageAvatar = ({ author, hide, content }: Props) => {
+const MessageAvatar = ({ author, hide, content, isRunning }: Props) => {
   const apiClient = useContext(ChainlitContext);
   const { chatProfile } = useChatSession();
   const { config } = useConfig();
@@ -57,7 +58,7 @@ const MessageAvatar = ({ author, hide, content }: Props) => {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      {content == '' && <BlinkingCursor />}
+      {isRunning && content === '' && <BlinkingCursor />}
     </span>
   );
 };

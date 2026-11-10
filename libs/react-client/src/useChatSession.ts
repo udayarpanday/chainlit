@@ -18,6 +18,7 @@ import {
   audioSubmittedState,
   callFnState,
   canOverrideModelState,
+  cancellingToolCallState,
   chatArchived,
   chatProfileState,
   chatSettingsInputsState,
@@ -263,6 +264,7 @@ const useChatSession = () => {
   const setFirstUserInteraction = useSetRecoilState(firstUserInteraction);
   const setLoading = useSetRecoilState(loadingState);
   const setGeneratingMessageId = useSetRecoilState(generatingMessageIdState);
+  const setCancellingToolCall = useSetRecoilState(cancellingToolCallState);
   const setAudioSubmitted = useSetRecoilState(audioSubmittedState);
   const setMcps = useSetRecoilState(mcpState);
   const wavStreamPlayer = useRecoilValue(wavStreamPlayerState);
@@ -414,6 +416,7 @@ const useChatSession = () => {
       socket.on('connect', () => {
         socket.emit('connection_successful');
         setLoading(resetTaskLoading());
+        setCancellingToolCall(undefined);
         setAudioSubmitted(false);
         setSession((s) => ({ ...s!, error: false }));
         isReconnectingRef.current = false;
@@ -483,10 +486,16 @@ const useChatSession = () => {
       socket.on('task_end', () => {
         const loading = markTaskEnded();
         setLoading(loading);
-        if (!loading) setAudioSubmitted(false);
+        if (!loading) {
+          setAudioSubmitted(false);
+          setCancellingToolCall(undefined);
+        }
       });
 
       socket.on('message_task_end', ({ messageId }: { messageId: string }) => {
+        setCancellingToolCall((current) =>
+          current?.messageId === messageId ? undefined : current
+        );
         setGeneratingMessageId((current) =>
           current === messageId ? undefined : current
         );
@@ -926,6 +935,7 @@ const useChatSession = () => {
     resetTaskLoading();
     setLoading(false);
     setGeneratingMessageId(undefined);
+    setCancellingToolCall(undefined);
     setAudioSubmitted(false);
   }, [connect, session, setSession, setLoading]);
 

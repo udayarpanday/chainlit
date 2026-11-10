@@ -8,6 +8,9 @@ import {
   IFeedback,
   IMessageElement,
   IStep,
+  cancellingToolCallState,
+  generatingMessageIdState,
+  getMessageTurnIds,
   messagesState,
   sideViewState,
   updateMessageById,
@@ -19,6 +22,7 @@ import {
 } from '@chainlit/react-client';
 
 import { Messages } from '@/components/chat/Messages';
+import CancellingToolCall from '@/components/chat/Messages/CancellingToolCall';
 import { useTranslation } from 'components/i18n/Translator';
 
 interface Props {
@@ -34,6 +38,15 @@ const MessagesContainer = ({ navigate }: Props) => {
   const setMessages = useSetRecoilState(messagesState);
   const setSideView = useSetRecoilState(sideViewState);
   const creatorEnabled = useRecoilValue(evoyaCreatorEnabledState);
+  const cancellingToolCall = useRecoilValue(cancellingToolCallState);
+  const generatingMessageId = useRecoilValue(generatingMessageIdState);
+  const activeMessageIds = useMemo(
+    () =>
+      generatingMessageId
+        ? getMessageTurnIds(messages, generatingMessageId)
+        : undefined,
+    [messages, generatingMessageId]
+  );
 
   const { t } = useTranslation();
 
@@ -125,6 +138,7 @@ const MessagesContainer = ({ navigate }: Props) => {
       allowHtml: config?.features?.unsafe_allow_html,
       latex: config?.features?.latex,
       loading,
+      activeMessageIds,
       showEvoyaCreatorButton: config?.showEvoyaCreatorButton && !creatorEnabled,
       showFeedbackButtons: enableFeedback,
       uiName: config?.ui?.name || '',
@@ -138,6 +152,7 @@ const MessagesContainer = ({ navigate }: Props) => {
     askUser,
     enableFeedback,
     loading,
+    activeMessageIds,
     config?.ui?.name,
     config?.ui?.cot,
     config?.features?.unsafe_allow_html,
@@ -154,6 +169,9 @@ const MessagesContainer = ({ navigate }: Props) => {
         elements={elements}
         actions={actions}
       />
+      {cancellingToolCall ? (
+        <CancellingToolCall toolCalls={cancellingToolCall.toolCalls} />
+      ) : null}
     </MessageContext.Provider>
   );
 };

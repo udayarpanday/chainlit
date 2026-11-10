@@ -129,6 +129,13 @@ export const generatingMessageIdState = atom<string | undefined>({
   default: undefined
 });
 
+export const cancellingToolCallState = atom<
+  { messageId: string; toolCalls: IStep[] } | undefined
+>({
+  key: 'CancellingToolCall',
+  default: undefined
+});
+
 export const audioSubmittedState = atom<boolean>({
   key: 'AudioSubmitted',
   default: false
