@@ -728,7 +728,7 @@ export default function FilePicker({
       <div
         className={cn(
           'relative flex min-h-0 flex-col overflow-y-auto',
-          compact ? 'max-h-[300px]' : 'h-full'
+          compact ? (projectId ? 'max-h-[500px]' : 'max-h-[300px]') : 'h-full'
         )}
       >
         <div className="flex justify-between items-center mb-2 pt-2 overflow-hidden flex-shrink-0">

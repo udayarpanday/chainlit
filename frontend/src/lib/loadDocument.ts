@@ -320,3 +320,23 @@ export async function presentationPreviewData(
   );
   return archive.generateAsync({ type: 'arraybuffer' });
 }
+
+export async function spreadsheetPreviewData(
+  data: ArrayBuffer,
+  archive: Awaited<ReturnType<typeof validateOfficeArchive>>
+) {
+  const drawings = archive.file(/^xl\/drawings\/[^/]+\.xml$/);
+  if (!drawings.length) return { data, omittedDrawings: false };
+  // Parse charts separately: ExcelJS can reject a whole workbook on drawing
+  // namespaces. Keep the source archive intact for our chart reader.
+  const { default: JSZip } = await import('jszip');
+  const copy = new JSZip();
+  const excluded = new Set(drawings.map((drawing) => drawing.name));
+  for (const file of Object.values(archive.files)) {
+    if (!excluded.has(file.name)) copy.files[file.name] = file;
+  }
+  return {
+    data: await copy.generateAsync({ type: 'arraybuffer' }),
+    omittedDrawings: true
+  };
+}

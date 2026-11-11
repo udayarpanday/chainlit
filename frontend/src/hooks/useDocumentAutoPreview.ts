@@ -5,13 +5,15 @@ import {
   IMessageElement,
   IStep,
   evoyaCreatorEnabledState,
+  generatingMessageIdState,
+  getMessageTurnIds,
   sideViewState
 } from '@chainlit/react-client';
 
 import { messageDocuments } from '../lib/documentPreview';
 
-// History is seeded without opening anything. Only documents observed during a
-// live assistant turn open automatically, once the response has finished.
+// Loading also occurs when restoring history. Only documents belonging to a
+// locally started turn open automatically, once the response has finished.
 export function useDocumentAutoPreview(
   messages: IStep[],
   elements: IMessageElement[],
@@ -20,26 +22,26 @@ export function useDocumentAutoPreview(
 ) {
   const setSideView = useSetRecoilState(sideViewState);
   const creatorEnabled = useRecoilValue(evoyaCreatorEnabledState);
+  const generatingMessageId = useRecoilValue(generatingMessageIdState);
   const seen = useRef(new Set<string>());
-  const pending = useRef(new Map<string, IMessageElement>());
-  const initialized = useRef(false);
-  const wasLoading = useRef(false);
+  // Keep the turn after message_task_end clears generatingMessageId so late
+  // file elements can still open, without including earlier chat history.
+  const activeTurnId = useRef<string>();
 
   useEffect(() => {
     if (!messages.length) {
       seen.current.clear();
-      pending.current.clear();
-      initialized.current = true;
-      wasLoading.current = loading;
+      activeTurnId.current = undefined;
       return;
     }
+    if (generatingMessageId) activeTurnId.current = generatingMessageId;
     // Scan the completed response once rather than reparsing the entire chat
     // history for every streamed token.
-    if (loading) {
-      wasLoading.current = true;
-      return;
-    }
-    const available = new Set<string>();
+    if (loading) return;
+    const activeMessageIds = activeTurnId.current
+      ? getMessageTurnIds(messages, activeTurnId.current)
+      : new Set<string>();
+    const documents: IMessageElement[] = [];
     const visit = (steps: IStep[]) => {
       for (const step of steps) {
         if (step.type === 'assistant_message') {
@@ -49,13 +51,9 @@ export function useDocumentAutoPreview(
             fileServer ? [fileServer] : [],
             true
           )) {
-            available.add(document.id);
             if (!seen.current.has(document.id)) {
               seen.current.add(document.id);
-              if (initialized.current && (loading || wasLoading.current))
-                pending.current.set(document.id, document);
-            } else if (pending.current.has(document.id)) {
-              pending.current.set(document.id, document);
+              if (activeMessageIds.has(step.id)) documents.push(document);
             }
           }
         }
@@ -63,14 +61,7 @@ export function useDocumentAutoPreview(
       }
     };
     visit(messages);
-    for (const id of pending.current.keys()) {
-      if (!available.has(id)) pending.current.delete(id);
-    }
-    initialized.current = true;
-    wasLoading.current = loading;
-    if (!loading && pending.current.size) {
-      const documents = [...pending.current.values()];
-      pending.current.clear();
+    if (documents.length) {
       if (creatorEnabled) return;
       // Open the panel as soon as the response completes. The viewer resolves
       // unknown types and reports access failures without hiding the artifact.
@@ -84,5 +75,13 @@ export function useDocumentAutoPreview(
             }
       );
     }
-  }, [messages, elements, loading, fileServer, creatorEnabled, setSideView]);
+  }, [
+    messages,
+    elements,
+    loading,
+    fileServer,
+    creatorEnabled,
+    generatingMessageId,
+    setSideView
+  ]);
 }

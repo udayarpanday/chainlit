@@ -4,7 +4,15 @@ import { useEffect, useMemo, useState } from 'react';
 
 import scrollbarStyles from '../../../styles/scrollbars.css?raw';
 
-import { validateOfficeArchive } from '../../../lib/loadDocument';
+import {
+  spreadsheetPreviewData,
+  validateOfficeArchive
+} from '../../../lib/loadDocument';
+import { renderSpreadsheetCharts } from '../../../lib/renderSpreadsheetCharts';
+import {
+  type WorkbookCharts,
+  readSpreadsheetCharts
+} from '../../../lib/spreadsheetCharts';
 import {
   type SpreadsheetSelection,
   renderSpreadsheet,
@@ -26,6 +34,10 @@ export default function SpreadsheetPreview({ data }: { data: ArrayBuffer }) {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string>();
   const [truncated, setTruncated] = useState(false);
+  const [charts, setCharts] = useState<WorkbookCharts>({
+    bySheet: new Map(),
+    unavailable: 0
+  });
   const [selection, setSelection] = useState<SpreadsheetSelection>({
     address: 'A1',
     value: ''
@@ -48,12 +60,19 @@ export default function SpreadsheetPreview({ data }: { data: ArrayBuffer }) {
     }, 30000);
     (async () => {
       const archive = await validateOfficeArchive(data, 'xlsx');
+      const preview = await spreadsheetPreviewData(data, archive);
       const { default: ExcelJS } = await import('exceljs');
       const book = new ExcelJS.Workbook();
-      await book.xlsx.load(data);
+      await book.xlsx.load(preview.data, { ignoreNodes: ['drawing'] });
       const colors = spreadsheetTheme(
         await archive.file('xl/theme/theme1.xml')?.async('text')
       );
+      const chartData = preview.omittedDrawings
+        ? await readSpreadsheetCharts(archive, book, colors).catch((error) => {
+            console.warn('Workbook charts could not be read', error);
+            return { bySheet: new Map(), unavailable: 1 };
+          })
+        : { bySheet: new Map(), unavailable: 0 };
       if (!book.worksheets.some((item) => item.state === 'visible'))
         throw new Error('This workbook has no visible worksheets.');
       if (active) {
@@ -65,10 +84,12 @@ export default function SpreadsheetPreview({ data }: { data: ArrayBuffer }) {
           )
         );
         setTheme(colors);
+        setCharts(chartData);
         setWorkbook(book);
       }
     })()
-      .catch(() => {
+      .catch((error) => {
+        console.warn('Workbook preview failed', error);
         if (active)
           setError(
             'This workbook could not be opened. Download the original instead.'
@@ -94,6 +115,13 @@ export default function SpreadsheetPreview({ data }: { data: ArrayBuffer }) {
         theme,
         setSelection
       );
+      renderSpreadsheetCharts(
+        document,
+        host,
+        worksheet,
+        charts.bySheet.get(worksheet.name) || [],
+        theme
+      );
       setTruncated(rendered.truncated);
       setReady(true);
       frame?.contentWindow?.scrollTo(0, 0);
@@ -104,7 +132,7 @@ export default function SpreadsheetPreview({ data }: { data: ArrayBuffer }) {
         'This worksheet could not be displayed. Download the original instead.'
       );
     }
-  }, [frame, worksheets, sheet, theme]);
+  }, [frame, worksheets, sheet, theme, charts]);
 
   useEffect(() => {
     frame?.contentDocument?.body.style.setProperty('zoom', String(scale));
@@ -227,6 +255,12 @@ export default function SpreadsheetPreview({ data }: { data: ArrayBuffer }) {
         <div className="flex h-6 shrink-0 items-center border-t border-slate-200 bg-slate-50 px-3 text-[10px] text-slate-500">
           Showing the first 500 rows and 50 columns
         </div>
+      )}
+      {charts.unavailable > 0 && (
+        <p className="shrink-0 border-t border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-500">
+          Some charts or drawings cannot be previewed. Download the workbook to
+          view them.
+        </p>
       )}
     </div>
   );

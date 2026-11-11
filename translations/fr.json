@@ -1,5 +1,6 @@
 {
     "notices": {
+        "taskStopped": "Tâche arrêtée manuellement.",
         "cancellationRequested": "L'annulation a été demandée. L'étape en cours sera d'abord terminée afin d'éviter des données incomplètes ou corrompues.",
         "stepCompleted": "L'étape est terminée. Vous pouvez maintenant envoyer de nouveaux messages."
     },
