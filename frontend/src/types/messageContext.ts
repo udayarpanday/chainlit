@@ -14,6 +14,7 @@ interface IMessageContext {
   cot: 'hidden' | 'tool_call' | 'full';
   askUser?: IAsk;
   loading: boolean;
+  activeMessageIds?: ReadonlySet<string>;
   showFeedbackButtons: boolean;
   showEvoyaCreatorButton?: boolean;
   uiName: string;

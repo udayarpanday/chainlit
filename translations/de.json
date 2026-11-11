@@ -1,4 +1,8 @@
 {
+    "notices": {
+        "cancellationRequested": "Abbruch angefordert. Der aktuelle Schritt wird zunächst abgeschlossen, um unvollständige oder beschädigte Daten zu vermeiden.",
+        "stepCompleted": "Der Schritt wurde abgeschlossen. Neue Nachrichten können jetzt gesendet werden."
+    },
     "components": {
         "atoms": {
             "buttons": {

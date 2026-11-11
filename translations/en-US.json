@@ -1,4 +1,8 @@
 {
+    "notices": {
+        "cancellationRequested": "Cancellation requested. The current step is being completed first to avoid incomplete or broken data.",
+        "stepCompleted": "The step has been completed. New messages can now be sent."
+    },
     "components": {
         "atoms": {
             "buttons": {
