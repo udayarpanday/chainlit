@@ -1,3 +1,4 @@
+import { getMessageNotice } from '@/lib/messageNotice';
 import { cn } from '@/lib/utils';
 import { MessageContext } from 'contexts/MessageContext';
 import { memo, useContext, useMemo } from 'react';
@@ -16,10 +17,11 @@ import { AskFileButton } from './AskFileButton';
 import { MessageAvatar } from './Avatar';
 import { MessageButtons } from './Buttons';
 import { MessageContent } from './Content';
+import Notice from './Notice';
 import QuotableContent from './QuotableContent';
 import Step from './Step';
-import UserMessage from './UserMessage';
 import ToolStepInfo from './ToolStepInfo';
+import UserMessage from './UserMessage';
 
 interface Props {
   message: IStep;
@@ -53,12 +55,12 @@ const Message = memo(
     isScorable,
     scorableRun
   }: Props) => {
-    
     const { allowHtml, cot, latex, onError } = useContext(MessageContext);
     const layoutMaxWidth = useLayoutMaxWidth();
     const isAsk = message.waitForAnswer;
     const isUserMessage = message.type === 'user_message';
     const isStep = !message.type.includes('message');
+    const notice = getMessageNotice(message);
     // Only keep tool calls if Chain of Thought is tool_call
     const toolCallSkip =
       isStep && cot === 'tool_call' && message.type !== 'tool';
@@ -95,6 +97,7 @@ const Message = memo(
 
     const isEmptyInactiveAssistant =
       message.type === 'assistant_message' &&
+      !notice &&
       !isRunning &&
       !message.streaming &&
       !hasVisibleOutput(message.output) &&
@@ -159,6 +162,7 @@ const Message = memo(
                     </div>
                   ) : null}
                   {!isStep &&
+                  !notice &&
                   isRunning &&
                   !hasVisibleOutput(message.output) &&
                   evoyaMode !== 'default' ? (
@@ -189,34 +193,42 @@ const Message = memo(
                   ) : (
                     // Display an assistant message
                     <div className="flex flex-col items-start min-w-[150px] flex-grow gap-2">
-                      <QuotableContent
-                        messageId={message.id}
-                        author={message.name}
-                        disabled={!!message.streaming || isRunning}
-                      >
-                        <MessageContent
-                          elements={elements}
-                          message={message}
-                          allowHtml={allowHtml}
-                          latex={latex}
-                        />
-                      </QuotableContent>
-                      {!isRunning && isAsk ? (
+                      {notice ? (
+                        <Notice notice={notice} />
+                      ) : (
                         <>
-                          <AskFileButton onError={onError} />
-                          <AskActionButtons
-                            actions={actions}
+                          <QuotableContent
                             messageId={message.id}
+                            author={message.name}
+                            disabled={!!message.streaming || isRunning}
+                          >
+                            <MessageContent
+                              elements={elements}
+                              message={message}
+                              allowHtml={allowHtml}
+                              latex={latex}
+                            />
+                          </QuotableContent>
+                          {!isRunning && isAsk ? (
+                            <>
+                              <AskFileButton onError={onError} />
+                              <AskActionButtons
+                                actions={actions}
+                                messageId={message.id}
+                              />
+                            </>
+                          ) : null}
+                          <MessageButtons
+                            message={message}
+                            actions={actions}
+                            run={
+                              scorableRun && isScorable
+                                ? scorableRun
+                                : undefined
+                            }
                           />
                         </>
-                      ) : null}
-                      <MessageButtons
-                        message={message}
-                        actions={actions}
-                        run={
-                          scorableRun && isScorable ? scorableRun : undefined
-                        }
-                      />
+                      )}
                     </div>
                   )}
                 </div>

@@ -1,4 +1,8 @@
 {
+    "notices": {
+        "cancellationRequested": "Annullamento richiesto. Il passaggio in corso viene prima completato per evitare dati incompleti o danneggiati.",
+        "stepCompleted": "Il passaggio è stato completato. Ora è possibile inviare nuovi messaggi."
+    },
     "evoyaFiles": {
         "shortcuts": {
             "title": "Accesso",
