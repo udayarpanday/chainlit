@@ -105,9 +105,7 @@ const Header = ({
   const [sessionUuidState, setSessionUuidState] = useState(() => ({
     sessionId,
     uuid:
-      evoya?.session_uuid ||
-      getScopedSessionStorageItem(sessionTokenKey) ||
-      ''
+      evoya?.session_uuid || getScopedSessionStorageItem(sessionTokenKey) || ''
   }));
   const sessionUuid =
     (sessionUuidState.sessionId === sessionId ? sessionUuidState.uuid : '') ||
@@ -298,7 +296,14 @@ const Header = ({
     return () => {
       cancelled = true;
     };
-  }, [sessionUuid, firstInteraction, loading, apiClient, sessionId, accessToken]);
+  }, [
+    sessionUuid,
+    firstInteraction,
+    loading,
+    apiClient,
+    sessionId,
+    accessToken
+  ]);
 
   useEffect(() => {
     if (evoya?.type !== 'dashboard') return;
@@ -442,9 +447,9 @@ const Header = ({
           ? { backgroundColor: evoya.chainlitConfig.style.bgcolor }
           : {}
       }
-      className={`flex align-center justify-between p-4 border-b border-[#f4f4f4]`}
+      className={`flex min-w-0 shrink-0 flex-wrap items-center gap-y-2 p-4 border-b border-[#f4f4f4] ${evoya?.type === 'dashboard' ? 'justify-between gap-x-3' : 'justify-between'}`}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 max-w-full flex-wrap items-center gap-3">
         {hasChatProfiles ? <ChatProfiles /> : ''}
         {evoya?.type === 'dashboard' ? (
           <>
@@ -455,6 +460,7 @@ const Header = ({
             {!creatorEnabled && (
               <>
                 <AgentList
+                  className="min-w-0 max-w-full"
                   agents={agents.length ? agents : undefined}
                   recentAgents={recentAgents}
                   selectedAgentId={selectedAgentId}
@@ -465,7 +471,9 @@ const Header = ({
                   pendingPinUuids={pendingPinUuids}
                 />
                 <NewChatButton
-                  newSession={() => setSessionUuidState({ sessionId, uuid: '' })}
+                  newSession={() =>
+                    setSessionUuidState({ sessionId, uuid: '' })
+                  }
                 />
               </>
             )}
@@ -495,7 +503,7 @@ const Header = ({
           />
         )}
       </div>
-      <div className="flex items-center">
+      <div className="flex shrink-0 items-center" aria-label="Chat controls">
         {audioConnection === 'on' ? (
           <AudioPresence
             type="server"
@@ -510,9 +518,7 @@ const Header = ({
             <ViewContext />
             {!sessionUuid ? <TemporaryChatButton /> : null}
             {!temporaryChat ? (
-              <FavoriteSessionButton
-                sessionUuid={sessionUuid}
-              />
+              <FavoriteSessionButton sessionUuid={sessionUuid} />
             ) : null}
             {!temporaryChat ? (
               <ShareSessionButton

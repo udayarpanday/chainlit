@@ -10,7 +10,7 @@ let root: ReactDOM.Root | null = null;
 
 declare global {
   interface Window {
-    mountMDXEditor: ({ onChange, selector }: { onChange: (value: string) => void; selector: string;}) => void;
+    mountMDXEditor: ({ onChange, selector, onError }: { onChange: (value: string) => void; selector: string; onError?: (error: { error: string; source: string }) => void; }) => void;
     updateMDXEditor: ({ content }: { content: string; }) => void;
     unmountMDXEditor: () => void;
   }
@@ -18,7 +18,7 @@ declare global {
 
 const id = 'evoya-mdx-editor';
 
-window.mountMDXEditor = ({ selector, onChange }) => {
+window.mountMDXEditor = ({ selector, onChange, onError }) => {
   const textarea = document.querySelector(selector);
 
   if (!textarea || !(textarea instanceof HTMLTextAreaElement)) return;
@@ -41,7 +41,7 @@ window.mountMDXEditor = ({ selector, onChange }) => {
   root = ReactDOM.createRoot(container);
   root.render(
     <React.StrictMode>
-      <Editor content={content} onChange={onChange} />
+      <Editor content={content} onChange={onChange} onError={onError} />
     </React.StrictMode>
   );
 };

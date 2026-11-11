@@ -194,7 +194,7 @@ export default function ModelPickerPanel({
             />
           </div>
         </div>
-        <CommandList className="max-h-[280px] overflow-y-auto p-2 [scrollbar-width:thin]">
+        <CommandList className="max-h-[280px] overflow-y-auto p-2">
           <CommandEmpty>
             {t('components.molecules.modelPicker.empty')}
           </CommandEmpty>

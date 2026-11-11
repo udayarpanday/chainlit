@@ -66,6 +66,7 @@ const MessageContent = memo(
           </div>
         ) : null}
         <Markdown
+          isStreaming={message.streaming}
           allowHtml={true}
           latex={latex}
           refElements={outputRefElements}
@@ -99,6 +100,7 @@ const MessageContent = memo(
             Input
           </div>
           <Markdown
+            isStreaming={message.streaming}
             allowHtml={allowHtml}
             latex={latex}
             refElements={inputRefElements}

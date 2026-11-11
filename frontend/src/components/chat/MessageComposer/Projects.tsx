@@ -308,7 +308,7 @@ export default function Projects({ disabled = false }: Props) {
           />
         </div>
 
-        <div className="mt-3 max-h-[280px] overflow-y-auto pb-1 [scrollbar-width:thin]">
+        <div className="mt-3 max-h-[280px] overflow-y-auto pb-1">
           <div className="space-y-1">
             {visibleProjects.map((project) => (
               <ProjectRow

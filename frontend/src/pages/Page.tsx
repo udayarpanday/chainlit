@@ -1,3 +1,4 @@
+import { isDocumentPreviewRequest } from '@/lib/documentPreviewBridge';
 import { Navigate } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
 
@@ -6,9 +7,11 @@ import { sideViewState, useAuth, useConfig } from '@chainlit/react-client';
 import ElementSideView from '@/components/ElementSideView';
 import LeftSidebar from '@/components/LeftSidebar';
 import { TaskList } from '@/components/Tasklist';
-import { Header } from '@/components/header';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useDocumentPreviewExpansion } from '@/hooks/useDocumentPreviewExpansion';
 
 import { userEnvState } from 'state/user';
 
@@ -21,6 +24,12 @@ const Page = ({ children }: Props) => {
   const { data } = useAuth();
   const userEnv = useRecoilValue(userEnvState);
   const sideView = useRecoilValue(sideViewState);
+  const documentOpen = isDocumentPreviewRequest(sideView);
+  const isMobile = useIsMobile();
+  const { groupRef, expanded, toggleExpanded } = useDocumentPreviewExpansion(
+    documentOpen,
+    documentOpen && !isMobile
+  );
 
   if (config?.userEnv) {
     for (const key of config.userEnv || []) {
@@ -29,21 +38,35 @@ const Page = ({ children }: Props) => {
   }
 
   const mainContent = (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex min-h-0 min-w-0 flex-col h-full w-full">
       <ResizablePanelGroup
+        ref={groupRef}
         direction="horizontal"
-        className="flex flex-row flex-grow"
+        className="flex min-h-0 flex-row flex-grow"
       >
         <ResizablePanel
-          className="flex flex-col h-full w-full"
-          minSize={60}
-          defaultSize={50}
+          className="flex min-h-0 min-w-0 flex-col h-full w-full"
+          id="chat"
+          order={1}
+          minSize={documentOpen ? (expanded ? 0 : 25) : 35}
+          defaultSize={documentOpen ? 38 : 50}
         >
-          <div className="flex flex-row flex-grow overflow-auto">
+          <div
+            className="flex min-h-0 min-w-0 flex-row flex-grow overflow-auto"
+            aria-hidden={expanded || undefined}
+            {...{ inert: expanded ? '' : undefined }}
+          >
             {children}
           </div>
         </ResizablePanel>
-        {sideView ? <ElementSideView /> : <TaskList isMobile={false} />}
+        {sideView ? (
+          <ElementSideView
+            expanded={expanded}
+            onToggleExpanded={toggleExpanded}
+          />
+        ) : (
+          <TaskList isMobile={false} />
+        )}
       </ResizablePanelGroup>
     </div>
   );
@@ -51,14 +74,19 @@ const Page = ({ children }: Props) => {
   const historyEnabled = config?.dataPersistence && data?.requireLogin;
 
   return (
-    <SidebarProvider>
+    <SidebarProvider
+      autoHide={documentOpen}
+      className="h-svh min-h-0 min-w-0 overflow-hidden"
+    >
       {historyEnabled ? (
         <>
           <LeftSidebar />
-          <SidebarInset className="max-h-svh">{mainContent}</SidebarInset>
+          <SidebarInset className="min-w-0 max-h-svh">
+            {mainContent}
+          </SidebarInset>
         </>
       ) : (
-        <div className="h-screen w-screen flex">{mainContent}</div>
+        <div className="h-screen min-w-0 w-full flex">{mainContent}</div>
       )}
     </SidebarProvider>
   );

@@ -179,8 +179,9 @@ export default function Uploader({
               <DropdownMenuTrigger asChild>
                 <Button
                   size={type === 'compact' ? 'sm' : 'default'}
+                  variant={type === 'compact' && projectId ? 'secondary' : 'default'}
+                  className={type === 'compact' && projectId ? 'bg-[#7b809a] text-white hover:bg-[#7b809a]/90' : undefined}
                   disabled={isLoading || isSearch}
-                  className=""
                 >
                   <PlusCircle />
                   <Translator path="evoyaFiles.actions.new.label" />

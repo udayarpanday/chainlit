@@ -1,6 +1,15 @@
+import { codeBlockElement } from '@/lib/codeBlockPreview';
 import hljs from 'highlight.js';
-import { useEffect, useRef } from 'react';
+import { PanelRightOpen } from 'lucide-react';
+import { useEffect, useId, useRef } from 'react';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 
+import {
+  evoyaCreatorEnabledState,
+  sideViewState
+} from '@chainlit/react-client';
+
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 import 'highlight.js/styles/monokai-sublime.css';
@@ -39,6 +48,7 @@ const HighlightedCode = ({ language, children }: CodeSnippetProps) => {
 
 interface CodeProps {
   children: React.ReactNode;
+  isStreaming?: boolean;
   node?: {
     children?: Array<{
       properties?: {
@@ -51,11 +61,15 @@ interface CodeProps {
   };
 }
 
-export default function CodeSnippet({ ...props }: CodeProps) {
+export default function CodeSnippet({ isStreaming, ...props }: CodeProps) {
+  const id = useId();
+  const setSideView = useSetRecoilState(sideViewState);
+  const creatorEnabled = useRecoilValue(evoyaCreatorEnabledState);
   const codeChildren = props.node?.children?.[0];
-  const className = codeChildren?.properties?.className?.[0];
-  const match = /language-(\w+)/.exec(className || '');
-  const code = codeChildren?.children?.[0]?.value;
+  const className = codeChildren?.properties?.className?.join(' ');
+  const match = /language-([^\s]+)/.exec(className || '');
+  const code =
+    codeChildren?.children?.map((child) => child.value || '').join('') || '';
 
   const showSyntaxHighlighter = match && code;
 
@@ -71,11 +85,43 @@ export default function CodeSnippet({ ...props }: CodeProps) {
 
   return (
     <Card className="relative">
-      <CardHeader className="flex flex-row items-center justify-between py-1 px-4">
-        <span className="text-sm text-muted-foreground">
+      <CardHeader className="flex flex-row items-center justify-between gap-2 py-1 px-4">
+        <span className="min-w-0 truncate text-sm text-muted-foreground">
           {match?.[1] || 'Raw code'}
         </span>
-        <CopyButton content={code} />
+        <div className="flex shrink-0 items-center gap-1">
+          {!creatorEnabled && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2 text-xs text-muted-foreground"
+              aria-label="Open in side panel"
+              disabled={isStreaming || !code.trim()}
+              title={
+                isStreaming
+                  ? 'Available when the response finishes'
+                  : 'Open in side panel'
+              }
+              onClick={() => {
+                const element = codeBlockElement(
+                  `code-block:${id}`,
+                  code,
+                  match?.[1]
+                );
+                setSideView({
+                  title: element.name,
+                  elements: [element],
+                  key: 'document-preview'
+                });
+              }}
+            >
+              <PanelRightOpen />
+              Open in side panel
+            </Button>
+          )}
+          <CopyButton content={code} />
+        </div>
       </CardHeader>
       <CardContent className="p-0">
         {highlightedCode}

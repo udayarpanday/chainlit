@@ -49,7 +49,7 @@ import {
   SimpleVegaLiteCodeEditorDescriptor,
 } from '../markdownEditor/plugins/extend/codeblocks';
 
-export default function MDXEditorWrapper({ content, onChange }: { content: string; onChange: (value: string) => void; }) {
+export default function MDXEditorWrapper({ content, onChange, onError }: { content: string; onChange: (value: string) => void; onError?: (error: { error: string; source: string }) => void; }) {
   const [mdContent, setMdContent] = useState(content);
   const mdxEditorRef = useRef<MDXEditorMethods>(null);
   const containerRef = useRef<HTMLElement>(null);
@@ -76,6 +76,7 @@ export default function MDXEditorWrapper({ content, onChange }: { content: strin
           className="evoya-mdx-editor"
           ref={mdxEditorRef}
           markdown={content}
+          onError={onError}
           iconComponentFor={getSvgIcon}
           overlayContainer={containerRef.current}
           autoFocus

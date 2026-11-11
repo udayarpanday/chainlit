@@ -9,9 +9,11 @@ import {
   TooltipTrigger
 } from '@chainlit/app/src/components/ui/tooltip';
 
+import { toggleDashboardSidebar } from '../lib/dashboardSidebar';
+
 export default function DashboardSidebarButton() {
   const handleClick = () => {
-    window.dispatchEvent(new CustomEvent('copilot-dashboard-sidebar'));
+    toggleDashboardSidebar();
   };
   return (
     <TooltipProvider>
