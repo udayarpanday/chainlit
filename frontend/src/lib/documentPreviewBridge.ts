@@ -1,5 +1,6 @@
 import type { IMessageElement } from '@chainlit/react-client';
 
+import { getCodeBlockSource } from './codeBlockPreview';
 import { documentKind, safeDocumentUrl } from './documentPreview';
 import {
   EXTERNAL_DOCUMENT_PREVIEW_KEY,
@@ -30,13 +31,14 @@ export function isDocumentPreviewRequest(
         element &&
         typeof element.id === 'string' &&
         typeof element.name === 'string' &&
-        (documentKind(element) ||
-          (request.key === 'document-preview' && element.type === 'file') ||
-          (request.key === EXTERNAL_DOCUMENT_PREVIEW_KEY &&
-            element.type === 'file' &&
-            !!element.url &&
-            externalPreviewUrl(element.url))) &&
-        safeDocumentUrl(element.url)
+        (getCodeBlockSource(element) ||
+          ((documentKind(element) ||
+            (request.key === 'document-preview' && element.type === 'file') ||
+            (request.key === EXTERNAL_DOCUMENT_PREVIEW_KEY &&
+              element.type === 'file' &&
+              !!element.url &&
+              externalPreviewUrl(element.url))) &&
+            safeDocumentUrl(element.url)))
     )
   );
 }

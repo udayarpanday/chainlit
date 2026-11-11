@@ -155,7 +155,11 @@ export function ThreadHistory() {
   }, [shouldLoadMore, isLoadingMore, threadHistory]);
 
   return (
-    <SidebarContent onScroll={handleScroll} ref={scrollRef}>
+    <SidebarContent
+      className="history-collapse"
+      onScroll={handleScroll}
+      ref={scrollRef}
+    >
       <SidebarGroup>
         <SidebarMenu>
           {threadHistory ? (

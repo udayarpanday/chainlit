@@ -22,16 +22,16 @@ export default function WidgetEmbedded() {
   return (
     <div
       className={cn(
-        'flex h-full w-full flex-col bg-background relative shadow-lg',
+        'flex h-full min-h-0 min-w-0 w-full flex-col bg-background relative shadow-lg',
         expanded ? 'copilot-container-expanded' : 'copilot-container-collapsed'
       )}
     >
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <ElementSideView>
           {!evoya?.headerConfig?.hideHeaderBar && (
             <Header expanded={expanded} setExpanded={setExpanded} />
           )}
-          <div className="min-h-0 flex-1">
+          <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
             <Chat />
           </div>
         </ElementSideView>

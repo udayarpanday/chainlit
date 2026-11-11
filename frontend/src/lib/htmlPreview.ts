@@ -1,5 +1,7 @@
 import DOMPurify from 'dompurify';
 
+import scrollbarStyles from '../styles/scrollbars.css?raw';
+
 const contentPolicy =
   "default-src 'none'; script-src 'none'; connect-src 'none'; img-src data: blob:; font-src data: blob:; style-src 'unsafe-inline'; form-action 'none'; base-uri 'none'";
 
@@ -23,5 +25,8 @@ export function htmlPreviewDocument(data: ArrayBuffer): string {
   // Authored styles follow these defaults and retain their normal precedence.
   // The policy precedes every resource-bearing element in the resulting frame.
   document.head.prepend(policy, defaults);
+  const scrollbars = document.createElement('style');
+  scrollbars.textContent = scrollbarStyles;
+  document.head.append(scrollbars);
   return `<!doctype html>${document.documentElement.outerHTML}`;
 }

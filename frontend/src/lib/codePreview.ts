@@ -19,6 +19,7 @@ const languages: [string, string, string][] = [
   ['java', 'Java', 'java'],
   ['cpp', 'C++', 'cpp cc cxx hpp hh hxx h'],
   ['c', 'C', 'c'],
+  ['csharp', 'C#', 'cs'],
   ['bash', 'Shell', 'sh bash zsh ksh'],
   ['powershell', 'PowerShell', 'ps1 psm1 psd1'],
   ['dos', 'Batch', 'bat cmd'],
@@ -46,6 +47,29 @@ const extensions = new Map<string, TextFileInfo>();
 for (const [language, label, suffixes] of languages)
   for (const extension of suffixes.split(' '))
     extensions.set(extension, { language, label, extension });
+
+export function codeBlockFileInfo(language = ''): TextFileInfo {
+  const tag = language.trim().toLowerCase();
+  const aliases: Record<string, string> = {
+    'c++': 'cpp',
+    'c#': 'csharp',
+    shell: 'bash',
+    shellscript: 'bash',
+    plain: 'plaintext',
+    raw: 'plaintext'
+  };
+  const normalized = aliases[tag] || tag;
+  if (normalized === 'plaintext') return extensions.get('txt')!;
+  const extension = extensions.get(normalized);
+  if (extension) return extension;
+  const match = languages.find(([name]) => name === normalized);
+  if (match) return extensions.get(match[2].split(' ')[0])!;
+  return {
+    language: normalized || 'plaintext',
+    label: tag || 'Text',
+    extension: 'txt'
+  };
+}
 
 export function textFileInfo({
   name = '',
@@ -84,6 +108,7 @@ export function textFileInfo({
     'text/csv': 'csv',
     'text/tab-separated-values': 'tsv',
     'text/markdown': 'md',
+    'text/x-markdown': 'md',
     'text/yaml': 'yaml',
     'application/yaml': 'yaml',
     'application/x-yaml': 'yaml',

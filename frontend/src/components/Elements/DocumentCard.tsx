@@ -34,11 +34,13 @@ export function DocumentCard({ element }: { element: IMessageElement }) {
   const format =
     kind === 'image'
       ? imageFileExtension(element)?.toUpperCase() || 'Image'
-      : kind === 'code'
-        ? textFileInfo(element)?.extension?.toUpperCase() ||
-          textFileInfo(element)?.label ||
-          'Text'
-        : kind?.toUpperCase();
+      : kind === 'markdown'
+        ? 'MD'
+        : kind === 'code'
+          ? textFileInfo(element)?.extension?.toUpperCase() ||
+            textFileInfo(element)?.label ||
+            'Text'
+          : kind?.toUpperCase();
   const accent =
     kind === 'pdf'
       ? 'text-red-500'
@@ -69,7 +71,7 @@ export function DocumentCard({ element }: { element: IMessageElement }) {
     </>
   );
   const labelClass =
-    'flex min-w-0 flex-1 items-center gap-3 p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring';
+    'flex min-w-0 flex-1 items-center gap-3 p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring';
   return (
     <span
       className="group my-3 flex w-full max-w-[480px] items-center overflow-hidden rounded-2xl border border-border/80 bg-muted/40 text-sm transition-colors hover:bg-muted/70"

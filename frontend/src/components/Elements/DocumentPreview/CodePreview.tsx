@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import hljs from 'highlight.js';
 import { Check, Copy } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 // Widgets load a JavaScript bundle and copilot renders inside a shadow root.
 // Keep these scoped styles with the component instead of an extracted CSS asset.
@@ -15,19 +15,50 @@ import {
 } from '../../../lib/previewSearch';
 import { Button } from '../../ui/button';
 import PreviewSearch, { searchStyles } from './PreviewSearch';
-import { useRememberScroll } from './PreviewSession';
+import { usePreviewTheme, useRememberScroll } from './PreviewSession';
 
 export default function CodePreview({
   data,
   name,
-  mime
+  mime,
+  language: sourceLanguage
 }: {
   data: ArrayBuffer;
   name?: string;
   mime?: string;
+  language?: string;
 }) {
+  const theme = usePreviewTheme();
+  const [previewRoot, setPreviewRoot] = useState<HTMLDivElement | null>(null);
+  const [darkSurface, setDarkSurface] = useState(theme.dark);
+  useLayoutEffect(() => {
+    if (!previewRoot) return;
+    // Embedded widgets can have a dark ancestor while the preview stays white.
+    const color = getComputedStyle(previewRoot).backgroundColor;
+    const channels = /^rgba?\(([^)]+)\)/
+      .exec(color)?.[1]
+      .split(/[,\s/]+/)
+      .filter(Boolean)
+      .map(Number);
+    if (
+      !channels ||
+      channels.length < 3 ||
+      channels.some(Number.isNaN) ||
+      (channels.length > 3 && channels[3] < 1)
+    ) {
+      setDarkSurface(theme.dark);
+      return;
+    }
+    const [r, g, b] = channels.slice(0, 3).map((channel) => {
+      const value = channel / 255;
+      return value <= 0.04045
+        ? value / 12.92
+        : ((value + 0.055) / 1.055) ** 2.4;
+    });
+    setDarkSurface(0.2126 * r + 0.7152 * g + 0.0722 * b < 0.18);
+  }, [previewRoot, theme]);
   const info = textFileInfo({ name, mime });
-  const language = info?.language || 'plaintext';
+  const language = sourceLanguage || info?.language || 'plaintext';
   const source = useMemo(() => {
     try {
       return { ...decodeSource(data), error: undefined };
@@ -128,7 +159,9 @@ export default function CodePreview({
     );
   return (
     <div
+      ref={setPreviewRoot}
       className="document-code-preview flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background text-foreground"
+      data-source-theme={darkSurface ? 'dark' : 'light'}
       onKeyDown={(event) => {
         if (
           (event.ctrlKey || event.metaKey) &&
@@ -145,9 +178,6 @@ export default function CodePreview({
       <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-b px-3 text-xs">
         <div className="flex min-w-0 items-center gap-3">
           <span className="truncate font-medium">{info?.label || 'Text'}</span>
-          <span className="whitespace-nowrap text-muted-foreground">
-            Read-only
-          </span>
         </div>
         <Button
           variant="ghost"

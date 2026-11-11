@@ -324,7 +324,7 @@ export default function AgentList({
           </div>
         </div>
 
-        <div className="max-h-[560px] overflow-x-hidden overflow-y-auto max-md:max-h-[calc(100dvh-62px)] [scrollbar-color:rgba(148,163,184,0.8)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-0 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-slate-50 [&::-webkit-scrollbar-thumb]:bg-slate-300">
+        <div className="max-h-[560px] overflow-x-hidden overflow-y-auto max-md:max-h-[calc(100dvh-62px)]">
           <div className="grid min-w-0 grid-cols-1 md:grid-cols-[1.75fr_1fr]">
             <div className="space-y-4 p-3 md:border-r md">
               <div className="space-y-1">

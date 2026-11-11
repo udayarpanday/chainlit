@@ -186,7 +186,7 @@ export default function AgentResourceSettings({
             onChange={(event) => setQuery(event.target.value)}
           />
         </div>
-        <div className="max-h-[280px] overflow-y-auto p-2 space-y-1 [scrollbar-width:thin]">
+        <div className="max-h-[280px] overflow-y-auto p-2 space-y-1">
           {entries
             .filter((entry) =>
               entry.name.toLowerCase().includes(query.trim().toLowerCase())

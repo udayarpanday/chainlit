@@ -24,7 +24,13 @@ import { Element } from './Elements';
 import DocumentPreview from './Elements/DocumentPreview';
 import { Button } from './ui/button';
 
-export default function ElementSideView() {
+export default function ElementSideView({
+  expanded = false,
+  onToggleExpanded
+}: {
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
+}) {
   const [sideView, setSideView] = useRecoilState(sideViewState);
   const creatorEnabled = useRecoilValue(evoyaCreatorEnabledState);
   const isMobile = useIsMobile();
@@ -39,6 +45,8 @@ export default function ElementSideView() {
     <DocumentPreview
       elements={sideView!.elements}
       onClose={() => setSideView(undefined)}
+      expanded={expanded}
+      onToggleExpanded={isMobile ? undefined : onToggleExpanded}
     />
   ) : (
     sideView?.elements.map((element) => (
@@ -71,7 +79,7 @@ export default function ElementSideView() {
     if (isMobile)
       return (
         <Sheet open onOpenChange={(open) => !open && setSideView(undefined)}>
-          <SheetContent className="flex w-full flex-col gap-0 p-0 [&>button]:hidden">
+          <SheetContent className="flex min-h-0 min-w-0 w-full flex-col gap-0 overflow-hidden p-0 [&>button]:hidden">
             <SheetHeader className="sr-only">
               <SheetTitle>{sideView.title}</SheetTitle>
             </SheetHeader>
@@ -81,13 +89,16 @@ export default function ElementSideView() {
       );
     return (
       <>
-        <ResizableHandle className="border-0 bg-border/60" />
+        <ResizableHandle
+          disabled={expanded}
+          className={cn('border-0 bg-border/60', expanded && 'hidden')}
+        />
         <ResizablePanel
           id="document-preview"
           order={2}
           minSize={40}
           defaultSize={62}
-          maxSize={75}
+          maxSize={expanded ? 100 : 75}
           className="flex min-h-0 min-w-0 flex-col overflow-hidden"
         >
           {preview}

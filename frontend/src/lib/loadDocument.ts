@@ -10,6 +10,7 @@ import {
   externalPreviewUrl,
   isApplicationDocumentUrl
 } from './externalDocumentPreview';
+import { resolveDocumentUrl } from './fileManagerDocument';
 
 export const MAX_DOCUMENT_BYTES = 25 * 1024 * 1024;
 
@@ -84,7 +85,7 @@ export function documentRequestOptions(
   signal: AbortSignal,
   fileServer?: string
 ): RequestInit {
-  const target = new URL(url, window.location.href);
+  const target = resolveDocumentUrl(url, fileServer ? [fileServer] : []);
   if (
     !['http:', 'https:'].includes(target.protocol) ||
     target.username ||
@@ -150,7 +151,7 @@ export async function loadDocument(
   filename?: string;
   mime?: string;
 }> {
-  const target = new URL(url, window.location.href);
+  const target = resolveDocumentUrl(url, fileServer ? [fileServer] : []);
   const external = !isApplicationDocumentUrl(
     target.href,
     fileServer ? [fileServer] : []
@@ -183,18 +184,25 @@ export async function loadDocument(
     );
   }
   const headerKind = documentKind({ type: 'file', name: filename || '', mime });
+  const filenameKind = documentKind({ type: 'file', name: filename || '' });
   if (
     mime === 'text/html' &&
     ((expectedKind && expectedKind !== 'html') ||
       response.redirected ||
-      (!expectedKind && !documentKind({ type: 'file', name: filename || '' })))
+      (!expectedKind && !filenameKind))
   ) {
     await response.body?.cancel();
     throw new Error(
-      'The file server returned a sign-in page instead of the document. Open the original to sign in, then retry the preview.'
+      'The link returned a web page instead of the requested file. The file may be missing, or the link may require sign-in.'
     );
   }
-  const kind = external ? 'pdf' : headerKind || expectedKind;
+  const kind = external
+    ? 'pdf'
+    : expectedKind === 'markdown' &&
+        headerKind === 'code' &&
+        (!mime || ['text/plain', 'application/octet-stream'].includes(mime))
+      ? 'markdown'
+      : headerKind || expectedKind;
   if (!kind) {
     await response.body?.cancel();
     throw new Error('This file type is available as a download only.');

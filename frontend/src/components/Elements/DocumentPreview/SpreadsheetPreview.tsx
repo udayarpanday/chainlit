@@ -2,6 +2,8 @@ import type { Workbook } from 'exceljs';
 import { ZoomIn, ZoomOut } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
+import scrollbarStyles from '../../../styles/scrollbars.css?raw';
+
 import { validateOfficeArchive } from '../../../lib/loadDocument';
 import {
   type SpreadsheetSelection,
@@ -12,7 +14,7 @@ import {
 import { Button } from '../../ui/button';
 import { usePreviewSettings, useRememberScroll } from './PreviewSession';
 
-const frameHtml = `<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; connect-src 'none'; img-src data: blob:; font-src data: blob:; style-src 'unsafe-inline'; form-action 'none'; base-uri 'none'"><style>${spreadsheetCss}</style></head><body><div id="sheet"></div></body></html>`;
+const frameHtml = `<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; connect-src 'none'; img-src data: blob:; font-src data: blob:; style-src 'unsafe-inline'; form-action 'none'; base-uri 'none'"><style>${scrollbarStyles}${spreadsheetCss}</style></head><body><div id="sheet"></div></body></html>`;
 
 export default function SpreadsheetPreview({ data }: { data: ArrayBuffer }) {
   const [saved, save] = usePreviewSettings('workbook', { sheet: 0, zoom: 1 });
@@ -221,10 +223,11 @@ export default function SpreadsheetPreview({ data }: { data: ArrayBuffer }) {
           </Button>
         </div>
       </div>
-      <div className="flex h-6 shrink-0 items-center justify-between border-t border-slate-200 bg-slate-50 px-3 text-[10px] text-slate-500">
-        <span>Read-only</span>
-        {truncated && <span>Showing the first 500 rows and 50 columns</span>}
-      </div>
+      {truncated && (
+        <div className="flex h-6 shrink-0 items-center border-t border-slate-200 bg-slate-50 px-3 text-[10px] text-slate-500">
+          Showing the first 500 rows and 50 columns
+        </div>
+      )}
     </div>
   );
 }

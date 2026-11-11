@@ -1,4 +1,4 @@
-import { Download, ExternalLink, X } from 'lucide-react';
+import { Download, Maximize2, Minimize2, X } from 'lucide-react';
 import {
   Component,
   ReactNode,
@@ -15,6 +15,7 @@ import {
   type IMessageElement
 } from '@chainlit/react-client';
 
+import { getCodeBlockSource } from '../../../lib/codeBlockPreview';
 import { beginDocumentDownload } from '../../../lib/documentDownloadState';
 import {
   documentDisplayName,
@@ -38,7 +39,9 @@ const SpreadsheetPreview = lazy(() => import('./SpreadsheetPreview'));
 const PresentationPreview = lazy(() => import('./PresentationPreview'));
 const ImagePreview = lazy(() => import('./ImagePreview'));
 const HtmlPreview = lazy(() => import('./HtmlPreview'));
+const MarkdownPreview = lazy(() => import('./MarkdownPreview'));
 const CodePreview = lazy(() => import('./CodePreview'));
+const CodeBlockPreview = lazy(() => import('./CodeBlockPreview'));
 
 class PreviewBoundary extends Component<
   { children: ReactNode },
@@ -61,10 +64,12 @@ class PreviewBoundary extends Component<
 
 function Viewer({
   element,
-  fileServer
+  fileServer,
+  headerControls
 }: {
   element: IMessageElement;
   fileServer?: string;
+  headerControls: HTMLElement | null;
 }) {
   const client = useContext(ChainlitContext);
   const external =
@@ -234,7 +239,13 @@ function Viewer({
         ) : kind === 'image' ? (
           <ImagePreview data={data} name={documentDisplayName(element)} />
         ) : kind === 'html' ? (
-          <HtmlPreview data={data} />
+          <HtmlPreview data={data} headerControls={headerControls} />
+        ) : kind === 'markdown' ? (
+          <MarkdownPreview
+            data={data}
+            name={sourceInfo.name}
+            headerControls={headerControls}
+          />
         ) : kind === 'code' ? (
           <CodePreview data={data} {...sourceInfo} />
         ) : (
@@ -249,22 +260,64 @@ export default function DocumentPreview({
   elements,
   fileServer,
   onClose,
-  closeLabel = 'Close preview'
+  closeLabel = 'Close preview',
+  expanded = false,
+  onToggleExpanded
 }: {
   elements: IMessageElement[];
   fileServer?: string;
   onClose?: () => void;
   closeLabel?: string;
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
 }) {
   const client = useContext(ChainlitContext);
   const sourceServer = fileServer || client.httpEndpoint;
   const [selected, setSelected] = useState(elements[0]?.id);
+  const [headerControls, setHeaderControls] = useState<HTMLDivElement | null>(
+    null
+  );
   const element = elements.find((item) => item.id === selected) || elements[0];
+  const codeBlock = getCodeBlockSource(element);
+  const source = codeBlock?.source;
+  const sourceKind = codeBlock?.kind;
+  const [sourceDownload, setSourceDownload] = useState<{
+    source: string;
+    kind: string;
+    url: string;
+  }>();
+  useEffect(() => {
+    if (source === undefined || !sourceKind) {
+      setSourceDownload(undefined);
+      return;
+    }
+    const url = URL.createObjectURL(
+      new Blob([source], {
+        type:
+          sourceKind === 'html'
+            ? 'text/html;charset=utf-8'
+            : sourceKind === 'markdown'
+              ? 'text/markdown;charset=utf-8'
+              : 'text/plain;charset=utf-8'
+      })
+    );
+    setSourceDownload({ source, kind: sourceKind, url });
+    return () => URL.revokeObjectURL(url);
+  }, [source, sourceKind]);
   if (!element) return null;
-  const downloadUrl = safeDocumentUrl(element.url);
+  const downloadUrl = codeBlock
+    ? sourceDownload &&
+      sourceDownload.source === source &&
+      sourceDownload.kind === sourceKind
+      ? sourceDownload.url
+      : undefined
+    : safeDocumentUrl(element.url);
+  const downloadLabel = codeBlock ? 'Download source' : 'Download original';
   const name = documentDisplayName(element);
   const external =
-    !!downloadUrl && !isApplicationDocumentUrl(downloadUrl, [sourceServer]);
+    !codeBlock &&
+    !!downloadUrl &&
+    !isApplicationDocumentUrl(downloadUrl, [sourceServer]);
   return (
     <section
       className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background"
@@ -274,11 +327,11 @@ export default function DocumentPreview({
         aria-label="Document header"
         className="flex min-w-0 shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-[#f4f4f4] bg-background p-4 text-foreground"
       >
-        <div className="flex h-10 min-w-0 flex-1 items-center">
+        <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center gap-0.5">
           {elements.length > 1 ? (
             <select
               aria-label="Choose document"
-              className="h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-10 min-w-0 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               value={element.id}
               onChange={(event) => setSelected(event.target.value)}
             >
@@ -289,18 +342,19 @@ export default function DocumentPreview({
               ))}
             </select>
           ) : (
-            <span
-              className="min-w-0 flex-1 truncate text-sm font-medium"
-              title={name}
-            >
+            <span className="min-w-0 truncate text-sm font-medium" title={name}>
               {name}
             </span>
           )}
+          <span className="text-xs text-muted-foreground">
+            Read-only preview
+          </span>
         </div>
         <div
-          className="flex shrink-0 items-center"
+          className="flex max-w-full shrink-0 flex-wrap items-center justify-end"
           aria-label="Document controls"
         >
+          <div ref={setHeaderControls} className="mr-2 empty:hidden" />
           <Button
             asChild
             variant="ghost"
@@ -310,31 +364,33 @@ export default function DocumentPreview({
             <a
               href={downloadUrl}
               download={name}
-              target="_blank"
+              target={codeBlock ? undefined : '_blank'}
               rel="noopener noreferrer"
-              aria-label="Download original"
-              title="Download original"
+              aria-label={downloadLabel}
+              title={downloadLabel}
             >
               <Download className="!size-5" />
-              <span className="sr-only">Download original</span>
+              <span className="sr-only">{downloadLabel}</span>
             </a>
           </Button>
-          <Button
-            asChild
-            variant="ghost"
-            size="icon"
-            className="shrink-0 text-foreground"
-          >
-            <a
-              href={downloadUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Open original in new tab"
-              title="Open original in new tab"
+          {onToggleExpanded && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="shrink-0 text-foreground"
+              aria-label={expanded ? 'Restore preview size' : 'Expand preview'}
+              title={expanded ? 'Restore preview size' : 'Expand preview'}
+              aria-pressed={expanded}
+              onClick={onToggleExpanded}
             >
-              <ExternalLink className="!size-5" />
-            </a>
-          </Button>
+              {expanded ? (
+                <Minimize2 className="!size-5" />
+              ) : (
+                <Maximize2 className="!size-5" />
+              )}
+            </Button>
+          )}
           {onClose && (
             <Button
               variant="ghost"
@@ -361,11 +417,24 @@ export default function DocumentPreview({
           key={`${element.id}:${element.url}:${sourceServer}`}
           identity={element.url || element.id}
         >
-          <Viewer
-            key={`${element.id}:${element.url}:${sourceServer}`}
-            element={element}
-            fileServer={sourceServer}
-          />
+          {codeBlock ? (
+            <PreviewBoundary>
+              <Suspense fallback={<PreviewLoading label="Loading viewer…" />}>
+                <CodeBlockPreview
+                  {...codeBlock}
+                  name={element.name}
+                  headerControls={headerControls}
+                />
+              </Suspense>
+            </PreviewBoundary>
+          ) : (
+            <Viewer
+              key={`${element.id}:${element.url}:${sourceServer}`}
+              element={element}
+              fileServer={sourceServer}
+              headerControls={headerControls}
+            />
+          )}
         </PreviewSession>
       </div>
     </section>

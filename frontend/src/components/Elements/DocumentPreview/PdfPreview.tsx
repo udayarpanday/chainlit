@@ -462,7 +462,7 @@ export default function PdfPreview({
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: 32,
+              gap: 16,
               width: '100%',
               minWidth: scale > 1 ? Math.floor(width * scale) + 32 : undefined,
               padding: '16px 16px 128px',

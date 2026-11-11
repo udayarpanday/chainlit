@@ -64,6 +64,8 @@ window.mountChainlitWidget = (config: IWidgetConfig, evoya: EvoyaConfig) => {
   if (evoya.container !== null) {
     hostElement.style.height = '100%';
     hostElement.style.width = '100%';
+    hostElement.style.minWidth = '0';
+    hostElement.style.maxWidth = '100%';
     evoya.container.appendChild(hostElement);
   } else {
     document.body.appendChild(hostElement);
@@ -76,6 +78,8 @@ window.mountChainlitWidget = (config: IWidgetConfig, evoya: EvoyaConfig) => {
   if (evoya.container !== null) {
     shadowRootElement.style.height = '100%';
     shadowRootElement.style.width = '100%';
+    shadowRootElement.style.minWidth = '0';
+    shadowRootElement.style.maxWidth = '100%';
   }
 
   window.cl_shadowRootElement = shadowRootElement;

@@ -860,7 +860,7 @@ export default function ConfigurationMenu({
                 </div>
               </div>
 
-              <div className="max-h-[280px] overflow-y-auto p-2 [scrollbar-width:thin]">
+              <div className="max-h-[280px] overflow-y-auto p-2">
                 <div className="space-y-1">
                   {visibleProjects.map((project) => (
                     <label

@@ -7,6 +7,8 @@ import {
   useState
 } from 'react';
 
+import scrollbarStyles from '../../../styles/scrollbars.css?raw';
+
 import {
   presentationPreviewData,
   validateOfficeArchive
@@ -18,7 +20,7 @@ type PresentationViewer = ReturnType<(typeof import('pptx-preview'))['init']>;
 
 // The frame owns the only scrolling surface. App/global CSS cannot change slide
 // layout; the iframe itself stays fixed and only its inner slide column zooms.
-const frameHtml = `<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; connect-src 'none'; img-src data: blob:; font-src data: blob:; style-src 'unsafe-inline'; form-action 'none'; base-uri 'none'"><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--preview-canvas,#eef1f5);font-family:Calibri,"Segoe UI",Arial,sans-serif}#viewport{position:fixed;inset:0;overflow-y:scroll;overflow-x:hidden;overscroll-behavior:contain;color-scheme:var(--preview-scheme,light)}#strip{padding:16px 16px 128px}#slides{margin:0 auto}.pptx-preview-wrapper{margin:0!important;height:auto!important;overflow:visible!important;background:transparent!important;display:flex;flex-direction:column;gap:var(--slide-gap,32px)}.slide-slot{position:relative;flex:none;background:#fff;overflow:hidden}.pptx-preview-slide-wrapper{margin:0!important;top:0!important;left:0!important}</style></head><body><div id="viewport" tabindex="0" aria-label="Presentation pages"><div id="strip"><div id="slides"></div></div></div></body></html>`;
+const frameHtml = `<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; connect-src 'none'; img-src data: blob:; font-src data: blob:; style-src 'unsafe-inline'; form-action 'none'; base-uri 'none'"><style>${scrollbarStyles}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--preview-canvas,#eef1f5);font-family:Calibri,"Segoe UI",Arial,sans-serif}#viewport{position:fixed;inset:0;overflow-y:scroll;overflow-x:hidden;overscroll-behavior:contain;color-scheme:var(--preview-scheme,light)}#strip{padding:16px 16px 128px}#slides{margin:0 auto}.pptx-preview-wrapper{margin:0!important;height:auto!important;overflow:visible!important;background:transparent!important;display:flex;flex-direction:column;gap:var(--slide-gap,16px)}.slide-slot{position:relative;flex:none;background:#fff;overflow:hidden}.pptx-preview-slide-wrapper{margin:0!important;top:0!important;left:0!important}</style></head><body><div id="viewport" tabindex="0" aria-label="Presentation pages"><div id="strip"><div id="slides"></div></div></div></body></html>`;
 
 export default function PresentationPreview({ data }: { data: ArrayBuffer }) {
   const theme = usePreviewTheme();
@@ -202,7 +204,7 @@ export default function PresentationPreview({ data }: { data: ArrayBuffer }) {
     if (!root || !host || !strip || !ready || !viewportWidth) return;
     host.style.width = size.width + 'px';
     host.style.setProperty('zoom', String(scale));
-    host.style.setProperty('--slide-gap', 32 / scale + 'px');
+    host.style.setProperty('--slide-gap', 16 / scale + 'px');
     strip.style.width = Math.max(root.clientWidth, displayedWidth + 32) + 'px';
     root.style.overflowX = zoom > 1 ? 'auto' : 'hidden';
     goToSlide(currentPage.current, offset.current);

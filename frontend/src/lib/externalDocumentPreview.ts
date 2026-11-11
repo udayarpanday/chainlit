@@ -58,22 +58,16 @@ export function externalPreviewUrl(href: string): URL | undefined {
 
 function hasPdfHint(url: URL, label: string): boolean {
   if (/\bpdf\b/i.test(label)) return true;
-  let path = url.pathname;
+  let address = url.href;
   try {
-    path = decodeURIComponent(path);
+    address = decodeURIComponent(address);
   } catch {
-    // An invalid path escape must not break ordinary link rendering.
+    // Invalid escapes must not break ordinary link rendering.
   }
-  if (/(?:\.pdf|\/pdf)\/?$/i.test(path)) return true;
-  return [...url.searchParams].some(
-    ([key, value]) =>
-      /^(?:file(?:name)?|name|path|format|output|type|mime(?:type)?|content-type|response-content-type)$/i.test(
-        key
-      ) && /(?:\.pdf$|^pdf$|^application\/pdf$)/i.test(value.trim())
-  );
+  return /pdf/i.test(address);
 }
 
-// Offer explicit previews only for links with a PDF hint, leaving ordinary
+// Open previews only for links with a PDF hint, leaving ordinary
 // websites alone. Hints never replace response validation after a click, and
 // link rendering must never issue DNS, metadata, or download requests.
 export function externalDocumentFromLink(

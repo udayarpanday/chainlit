@@ -5,9 +5,10 @@ import type { IMessageElement, IStep } from '@chainlit/react-client';
 import { textFileInfo } from './codePreview';
 import { documentPreviewOrigins } from './documentPreviewOrigins';
 import { isApplicationDocumentUrl } from './externalDocumentPreview';
+import { resolveDocumentUrl } from './fileManagerDocument';
 
 export type DocumentKind =
-  'pdf' | 'docx' | 'pptx' | 'xlsx' | 'html' | 'image' | 'code';
+  'pdf' | 'docx' | 'pptx' | 'xlsx' | 'html' | 'markdown' | 'image' | 'code';
 
 const imageMimes: Record<string, string> = {
   png: 'image/png',
@@ -52,6 +53,8 @@ const mimeKinds: Record<string, DocumentKind> = {
     'pptx',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
   'text/html': 'html',
+  'text/markdown': 'markdown',
+  'text/x-markdown': 'markdown',
   'image/png': 'image',
   'image/jpeg': 'image',
   'image/webp': 'image'
@@ -60,13 +63,19 @@ const mimeKinds: Record<string, DocumentKind> = {
 export function documentKind(
   element: Pick<IMessageElement, 'type' | 'name' | 'mime'>
 ): DocumentKind | undefined {
+  const mime = element.mime?.split(';')[0].trim().toLowerCase();
   // Chainlit can publish named text files as Text elements rather than File
   // elements. Leave ordinary titled inline text in its existing renderer.
-  if (element.type === 'text')
-    return textFileInfo({ name: element.name }) ? 'code' : undefined;
+  if (element.type === 'text') {
+    const info = textFileInfo({ name: element.name });
+    return info?.language === 'markdown' || mimeKinds[mime || ''] === 'markdown'
+      ? 'markdown'
+      : info
+        ? 'code'
+        : undefined;
+  }
   if (!['pdf', 'file', 'image'].includes(element.type)) return;
   if (element.type === 'pdf') return 'pdf';
-  const mime = element.mime?.split(';')[0].trim().toLowerCase();
   if (
     element.type === 'image' &&
     mime?.startsWith('image/') &&
@@ -87,7 +96,8 @@ export function documentKind(
   if (['pdf', 'docx', 'pptx', 'xlsx', 'html'].includes(extension || '')) {
     return extension as DocumentKind;
   }
-  if (textFileInfo(element)) return 'code';
+  const info = textFileInfo(element);
+  if (info) return info.language === 'markdown' ? 'markdown' : 'code';
 }
 
 export function documentDisplayName(
@@ -95,6 +105,11 @@ export function documentDisplayName(
 ): string {
   const kind = documentKind(element);
   if (kind === 'code') return element.name || 'Source file';
+  if (kind === 'markdown') {
+    if (/\.(md|markdown)$/i.test(element.name)) return element.name;
+    const title = element.name.replace(/^download\s+/i, '').trim();
+    return `${title || 'Document'}.md`;
+  }
   if (kind === 'image') {
     if (/\.[a-z\d]{1,8}$/i.test(element.name)) return element.name;
     const extension = imageFileExtension(element);
@@ -129,7 +144,7 @@ export function documentFromLink(
   // Never turn that partial signed URL into a preview request or file card.
   if (/\u200b|%e2%80%8b/i.test(href)) return;
   try {
-    const url = new URL(href, baseUrl);
+    const url = resolveDocumentUrl(href, trustedServers, baseUrl);
     if (
       !['http:', 'https:'].includes(url.protocol) ||
       (url.origin !== new URL(baseUrl).origin &&
@@ -150,12 +165,15 @@ export function documentFromLink(
       /\/project\/file\//.test(url.pathname) ||
       isStorageDownload(url);
     const pathKind = documentKind({ type: 'file', name: pathName });
-    const name = pathKind ? pathName : isDownload ? label : '';
+    const markdownLabel = /\.(?:md|markdown)(?=$|[\s)\]])/i.test(label);
+    const name = pathKind ? pathName : isDownload || markdownLabel ? label : '';
     const labelFormat = isDownload
       ? /\b(pdf|docx|pptx|xlsx|html|png|jpe?g|webp|md|markdown|txt)\b/i
           .exec(label)?.[1]
           .toLowerCase()
-      : undefined;
+      : markdownLabel
+        ? 'markdown'
+        : undefined;
     const textMime =
       labelFormat === 'md' || labelFormat === 'markdown'
         ? 'text/markdown'
@@ -166,7 +184,9 @@ export function documentFromLink(
       labelFormat && imageMimes[labelFormat]
         ? 'image'
         : textMime
-          ? 'code'
+          ? textMime === 'text/markdown'
+            ? 'markdown'
+            : 'code'
           : (labelFormat as DocumentKind | undefined);
     const isImageDownload =
       (isStorageDownload(url) && url.searchParams.get('type') === 'image') ||

@@ -1,5 +1,6 @@
 import { documentFromLink, documentKind } from '@/lib/documentPreview';
 import { externalDocumentFromLink } from '@/lib/externalDocumentPreview';
+import { linkLabel } from '@/lib/linkLabel';
 import { cn } from '@/lib/utils';
 import { omit } from 'lodash';
 import { isValidElement, useContext, useMemo } from 'react';
@@ -33,11 +34,13 @@ import CodeSnippet from './CodeSnippet';
 import { DocumentCard } from './Elements/DocumentCard';
 import { ElementRef } from './Elements/ElementRef';
 import ExternalDocumentLink from './Elements/ExternalDocumentLink';
+import MessageLink from './MessageLink';
 import { MarkdownAlert, alertComponents } from './MarkdownAlert';
 import { MermaidDiagram } from './Mermaid';
 import Step from './chat/Messages/Message/Step';
 
 interface Props {
+  isStreaming?: boolean;
   allowHtml?: boolean;
   latex?: boolean;
   refElements?: IMessageElement[];
@@ -112,6 +115,7 @@ const fixDirectiveColonPlugin = () => {
 };
 
 const Markdown = ({
+  isStreaming,
   allowHtml,
   latex,
   refElements,
@@ -211,13 +215,13 @@ const Markdown = ({
             }
           } catch (e) {
             console.error('Render error:', e);
-            return <CodeSnippet {...props} />;
+            return <CodeSnippet {...props} isStreaming={isStreaming} />;
           }
 
-          return <CodeSnippet {...props} />;
+          return <CodeSnippet {...props} isStreaming={isStreaming} />;
         },
         a({ children, ...props }) {
-          const name = children as string;
+          const name = linkLabel(children);
           const element = refElements?.find((e) => e.name === name);
           if (element) {
             return <ElementRef element={element} />;
@@ -226,9 +230,7 @@ const Markdown = ({
               props.href &&
               documentFromLink(
                 props.href,
-                typeof children === 'string'
-                  ? children
-                  : name?.toString() || '',
+                name,
                 '',
                 window.location.href,
                 [apiClient.httpEndpoint],
@@ -239,7 +241,7 @@ const Markdown = ({
               props.href &&
               externalDocumentFromLink(
                 props.href,
-                typeof children === 'string' ? children : '',
+                name,
                 [apiClient.httpEndpoint]
               );
             if (external)
@@ -249,14 +251,14 @@ const Markdown = ({
                 </ExternalDocumentLink>
               );
             return (
-              <a
+              <MessageLink
                 {...props}
                 className="text-primary hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 {children}
-              </a>
+              </MessageLink>
             );
           }
         },

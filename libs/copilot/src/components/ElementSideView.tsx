@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useLayoutEffect } from 'react';
+import { type ReactNode, useContext, useEffect, useLayoutEffect } from 'react';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 
 import { Element } from '@chainlit/app/src/components/Elements';
@@ -15,13 +15,18 @@ import {
   SheetTitle
 } from '@chainlit/app/src/components/ui/sheet';
 import { useIsMobile } from '@chainlit/app/src/hooks/use-mobile';
+import { useDocumentPreviewExpansion } from '@chainlit/app/src/hooks/useDocumentPreviewExpansion';
 import { isDocumentPreviewRequest } from '@chainlit/app/src/lib/documentPreviewBridge';
 import {
   evoyaCreatorEnabledState,
   sideViewState
 } from '@chainlit/react-client';
 
+import { useDashboardPreviewLayout } from '../hooks/useDashboardPreviewLayout';
+
 import { documentPreviewDockedState } from '../state/documentPreview';
+
+import { WidgetContext } from '../context';
 
 export default function ElementSideView({
   children
@@ -33,9 +38,19 @@ export default function ElementSideView({
   const isDocument = isDocumentPreviewRequest(sideView);
   const isMobile = useIsMobile();
   const setDocked = useSetRecoilState(documentPreviewDockedState);
+  const { evoya } = useContext(WidgetContext);
+
+  useDashboardPreviewLayout(
+    evoya?.type === 'dashboard' ? evoya.container : null,
+    isDocument && !creatorEnabled
+  );
 
   const docked = !!sideView && isDocument && !creatorEnabled && !isMobile;
   const sheet = !!sideView && !creatorEnabled && (!isDocument || isMobile);
+  const { groupRef, expanded, toggleExpanded } = useDocumentPreviewExpansion(
+    isDocument && !creatorEnabled,
+    docked
+  );
 
   useLayoutEffect(() => setDocked(docked), [docked, setDocked]);
 
@@ -47,32 +62,38 @@ export default function ElementSideView({
   return (
     <>
       <ResizablePanelGroup
+        ref={groupRef}
         direction="horizontal"
-        className="h-full min-h-0 w-full"
+        className="h-full min-h-0 min-w-0 w-full"
       >
         <ResizablePanel
           id="copilot-chat"
           order={1}
-          minSize={25}
+          minSize={expanded ? 0 : 25}
           defaultSize={docked ? 38 : 100}
           className="min-h-0 min-w-0"
         >
           <div
             aria-label="Chat conversation"
             className="flex h-full min-h-0 min-w-0 flex-col"
+            aria-hidden={expanded || undefined}
+            {...{ inert: expanded ? '' : undefined }}
           >
             {children}
           </div>
         </ResizablePanel>
         {docked && (
           <>
-            <ResizableHandle className="border-0 bg-border/60" />
+            <ResizableHandle
+              disabled={expanded}
+              className={expanded ? 'hidden' : 'border-0 bg-border/60'}
+            />
             <ResizablePanel
               id="copilot-document"
               order={2}
               minSize={40}
               defaultSize={62}
-              maxSize={75}
+              maxSize={expanded ? 100 : 75}
               className="flex min-h-0 min-w-0 flex-col overflow-hidden"
             >
               <aside
@@ -82,6 +103,8 @@ export default function ElementSideView({
                 <DocumentPreview
                   elements={sideView!.elements}
                   onClose={() => setSideView(undefined)}
+                  expanded={expanded}
+                  onToggleExpanded={toggleExpanded}
                 />
               </aside>
             </ResizablePanel>
@@ -94,7 +117,7 @@ export default function ElementSideView({
             side={isDocument ? 'right' : 'left'}
             className={
               isDocument
-                ? 'flex w-full flex-col gap-0 p-0 [&>button]:hidden'
+                ? 'flex min-h-0 min-w-0 w-full flex-col gap-0 overflow-hidden p-0 [&>button]:hidden'
                 : 'flex flex-col'
             }
           >
@@ -104,7 +127,7 @@ export default function ElementSideView({
             <div
               className={
                 isDocument
-                  ? 'flex min-h-0 flex-1 flex-col overflow-auto'
+                  ? 'flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden'
                   : 'mt-4 overflow-y-auto flex-grow flex flex-col gap-4'
               }
             >
