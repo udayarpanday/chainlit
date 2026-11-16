@@ -33,6 +33,7 @@ import {
   canOverrideModelState,
   commandsState,
   getScopedSessionStorageItem,
+  evoyaCreatorEnabledState,
   modelCatalogState
 } from '@chainlit/react-client';
 
@@ -249,6 +250,7 @@ export default function ConfigurationMenu({
   const setModelCatalog = useSetRecoilState(modelCatalogState);
   const setActiveModel = useSetRecoilState(activeModelOverrideState);
   const setCanOverrideModel = useSetRecoilState(canOverrideModelState);
+  const creatorEnabled = useRecoilValue(evoyaCreatorEnabledState);
   const isMobile = useIsMobile();
   const {
     enabled: privacyEnabled,
@@ -724,12 +726,14 @@ export default function ConfigurationMenu({
                 disabled={!hasProjects || disabled}
                 onClick={() => openPanel('projects')}
               />
-              <MenuRow
-                icon={FilePen}
-                label={t('components.molecules.configurationMenu.creator')}
-                disabled={!hasCreator || disabled}
-                onClick={handleOpenCreator}
-              />
+              {!creatorEnabled &&
+                <MenuRow
+                  icon={FilePen}
+                  label={t('components.molecules.configurationMenu.creator')}
+                  disabled={!hasCreator || disabled}
+                  onClick={handleOpenCreator}
+                />
+              }
               <MenuRow
                 icon={ShieldCheck}
                 label={t('components.organisms.privacyShield.title')}

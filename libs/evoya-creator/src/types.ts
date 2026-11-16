@@ -16,6 +16,7 @@ export interface EvoyaCreatorConfig {
     linkText?: string;
     defaultText?: boolean;
   };
+  fileName?: string;
   apiBaseUrl?: string;
   csrfToken?: string;
   workspaceId?: string;

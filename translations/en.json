@@ -802,8 +802,15 @@
             "save_as": {
                 "label": "Save as"
             },
+            "document": {
+                "label": "Dokument"
+            },
             "open": {
-                "label": "Datei öffnen..."
+                "label": "Open",
+                "title": "Open file..."
+            },
+            "close": {
+                "label": "Close"
             }
         },
         "action": {

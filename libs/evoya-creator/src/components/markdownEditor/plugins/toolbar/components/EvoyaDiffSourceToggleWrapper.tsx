@@ -105,9 +105,9 @@ export const EvoyaDiffSourceToggleWrapper: React.FC<{ children: React.ReactNode;
                 </Button>
               </DropdownMenuTrigger>
             </TooltipWrap>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" container={window.mdx_shadowRootElement}>
               {toggleGroupItemsDropdown.map((item) => (
-                <DropdownMenuItem onClick={() => changeViewMode(item.value)}>
+                <DropdownMenuItem onClick={() => changeViewMode(item.value)} className={cn('gap-4')}>
                   <div className='flex flex-col'>
                     <span>{item.title}</span>
                     <span className="text-gray-400 text-xs">{item.subTitle}</span>

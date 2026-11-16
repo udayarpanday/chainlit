@@ -129,11 +129,17 @@ export default function MDXEditorWrapper() {
     window.sendCreatorMessage = (message) => {
       let context = editorSelectionContext;
       if (!context || !context.selectionType) {
-        context = {
-          lexical: null,
-          markdown: null,
-          rectangles: [],
-          selectionType: 'document' as const,
+        if (!creatorContent) {
+          context = {
+            lexical: null,
+            markdown: null,
+            rectangles: [],
+            selectionType: 'document' as const,
+          }
+        } else {
+          // @ts-expect-error is not a valid prop
+          window.sendChainlitMessage(message);
+          return;
         }
       }
       const newMsg = messageBuilder(context, message, creatorContent);
@@ -210,7 +216,7 @@ export default function MDXEditorWrapper() {
       </div>,
       document.getElementById('chainlit-copilot')?.shadowRoot?.getElementById('evoya-creator-context-ref')
     )}
-    <div ref={containerRef} className="overflow-auto h-full relative">
+    <div ref={containerRef} className="overflow-auto h-full relative z-10">
       <style type="text/css">
         {mdxCss}
       </style>
@@ -281,6 +287,8 @@ export const MDX_PLUGINS = [
     codeBlockLanguages: {
       python: 'Python',
       javascript: 'JavaScript',
+      js: 'JavaScript',
+      math: 'Math',
       json: 'JSON',
       vega: 'Vega',
       mermaid: 'Mermaid',

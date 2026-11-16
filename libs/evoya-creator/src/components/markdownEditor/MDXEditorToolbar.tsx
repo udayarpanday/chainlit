@@ -19,9 +19,22 @@ import {
   EvoyaBlockTypeSelect,
 } from './plugins/toolbar/components';
 import { AutoApproveToggle } from './plugins/toolbar/components/AutoApproveToggle';
+import { CloseCreator } from './plugins/toolbar/components/CloseCreator';
 
 export default function MDXEditorToolbar({ setMdDiffContent }: { setMdDiffContent: (md: string) => void }) {
   return (
+    <>
+    <div className="flex gap-1 items-start p-1 -ml-1 bg-white">
+      <div className="[&_svg]:!size-5">
+        <UndoRedo />
+      </div>
+      <EvoyaDropdown setMdDiffContent={setMdDiffContent} />
+      <SaveContent />
+      <OpenFile />
+      <div style={{ flexGrow: 1 }}></div>
+      <CloseCreator />
+    </div>
+    <div className="flex -ml-1 px-1 pb-1">
     <EvoyaDiffSourceToggleWrapper>
       <div style={{ flexGrow: 1 }} className="[&>div]:items-center">
         <ConditionalContents
@@ -30,8 +43,6 @@ export default function MDXEditorToolbar({ setMdDiffContent }: { setMdDiffConten
             {
               fallback: () => (
                 <>
-                  <UndoRedo />
-                  <Separator />
                   <BoldItalicUnderlineToggles />
                   <Separator />
                   <ListsToggle options={['bullet', 'number']} />
@@ -43,10 +54,10 @@ export default function MDXEditorToolbar({ setMdDiffContent }: { setMdDiffConten
                   <InsertFrontmatter />
                   <Separator />
                   <EvoyaAdvanced />
-                  <EvoyaDropdown setMdDiffContent={setMdDiffContent} />
+                  {/* <EvoyaDropdown setMdDiffContent={setMdDiffContent} />
                   <SaveContent />
                   <OpenFile />
-                  <Separator />
+                  <Separator /> */}
                   <AutoApproveToggle />
                   <div style={{ flexGrow: 1 }}></div>
                   <EvoyaAdvancedToggle />
@@ -57,5 +68,7 @@ export default function MDXEditorToolbar({ setMdDiffContent }: { setMdDiffConten
         />
       </div>
     </EvoyaDiffSourceToggleWrapper>
+    </div>
+    </>
   )
 }

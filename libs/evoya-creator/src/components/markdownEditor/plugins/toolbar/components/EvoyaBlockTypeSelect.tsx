@@ -101,7 +101,7 @@ export const EvoyaBlockTypeSelect = () => {
             </Button>
           </DropdownMenuTrigger>
         </TooltipWrap>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" container={window.mdx_shadowRootElement}>
           {baseItems.map((item) => (
             <DropdownMenuItem onClick={() => onTypeSelect(item.value)}>
               {item.icon}

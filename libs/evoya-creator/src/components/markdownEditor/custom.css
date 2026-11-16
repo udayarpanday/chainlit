@@ -1,5 +1,9 @@
 .mdxeditor .mdxeditor-toolbar {
     border-radius: 0;
+    padding: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: .25rem;
 }
 
 .mdxeditor-popup-container {

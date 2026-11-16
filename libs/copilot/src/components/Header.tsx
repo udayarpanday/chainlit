@@ -457,28 +457,21 @@ const Header = ({
         {hasChatProfiles ? <ChatProfiles /> : ''}
         {evoya?.type === 'dashboard' ? (
           <>
-            {!creatorEnabled && <DashboardSidebarButton />}
-            {creatorEnabled && (
-              <div className="h-9 flex items-center font-bold">Chat</div>
-            )}
-            {!creatorEnabled && (
-              <>
-                <AgentList
-                  agents={agents.length ? agents : undefined}
-                  recentAgents={recentAgents}
-                  selectedAgentId={selectedAgentId}
-                  onSelectAgent={handleAgentSelect}
-                  onEditAgent={handleEditAgent}
-                  onSetDefaultAgent={handleSetDefaultAgent}
-                  onOpenTestChat={handleOpenTestChat}
-                  onTogglePin={canTogglePin ? handleTogglePin : undefined}
-                  pendingPinUuids={pendingPinUuids}
-                />
-                <NewChatButton
-                  newSession={() => setSessionUuidState({ sessionId, uuid: '' })}
-                />
-              </>
-            )}
+            <DashboardSidebarButton />
+            <AgentList
+              agents={agents.length ? agents : undefined}
+              recentAgents={recentAgents}
+              selectedAgentId={selectedAgentId}
+              onSelectAgent={handleAgentSelect}
+              onEditAgent={handleEditAgent}
+              onSetDefaultAgent={handleSetDefaultAgent}
+              onOpenTestChat={handleOpenTestChat}
+              onTogglePin={canTogglePin ? handleTogglePin : undefined}
+              pendingPinUuids={pendingPinUuids}
+            />
+            <NewChatButton
+              newSession={() => setSessionUuidState({ sessionId, uuid: '' })}
+            />
           </>
         ) : evoya?.headerConfig && evoya?.headerConfig?.text_header ? (
           <div className="text-left leading-[1.25]">
@@ -515,7 +508,7 @@ const Header = ({
             barSpacing={2}
           />
         ) : null}
-        {evoya?.type === 'dashboard' && !creatorEnabled && (
+        {evoya?.type === 'dashboard' && (
           <>
             <ViewContext />
             {!sessionUuid ? <TemporaryChatButton /> : null}

@@ -106,16 +106,16 @@ export const SaveContent: React.FC = () => {
             <Button
               variant="ghost"
               size="icon"
-              className={cn("!w-auto text-sm !h-7 [&_svg]:!size-6 rounded-xs", styles.toolbarButton)}
+              className={cn("!w-auto text-xs !h-6 rounded-xs px-1 text-black", styles.toolbarButton)}
             >
-              <div className="flex">
-                {iconComponentFor('floppy')}
+              <div className="flex gap-1 items-center">
+                <span>{t('toolbar.save.label', 'Save')}</span>
                 <span className='-ml-1'>{iconComponentFor('arrow_drop_down')}</span>
               </div>
             </Button>
           </DropdownMenuTrigger>
         </TooltipWrap>
-        <DropdownMenuContent align="end" className="max-w-[300px]">
+        <DropdownMenuContent align="end" className="max-w-[300px]" container={window.mdx_shadowRootElement}>
           <DropdownMenuItem onClick={() => saveDocument(false)}>
             {t('toolbar.save.label', 'Save')}
           </DropdownMenuItem>

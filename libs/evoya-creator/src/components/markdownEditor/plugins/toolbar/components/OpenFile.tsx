@@ -34,12 +34,13 @@ export const OpenFile: React.FC = () => {
   return (
     <>
       <ButtonWithTooltip
-        title={t('toolbar.open.label', 'Open File')}
+        className="text-xs !h-6 rounded-xs font-medium px-1 text-black"
+        title={t('toolbar.open.title', 'Open File')}
         onClick={() => {
           setFileDialogOpen(true);
         }}
       >
-        {iconComponentFor('folder-open')}
+        {t('toolbar.open.label', 'Open File')}
       </ButtonWithTooltip>
       <FilePickerDialog
         initialPath={fileInfo?.folderPath ?? '/'}

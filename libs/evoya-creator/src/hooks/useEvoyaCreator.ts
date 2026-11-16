@@ -44,7 +44,7 @@ export default function useEvoyaCreator() {
     window.evoyaCreatorEnabled = true;
   }
   
-  const openCreatorWithFile = (file: { path: string; name: string; mime: string; }, openConfig: any) => {
+  const openCreatorWithFile = (file: { path: string; name?: string; mime?: string; }, openConfig: any) => {
     window.dispatchEvent(new CustomEvent('open-evoya-creator', { detail: { config: openConfig }}));
     setCreatorType(openConfig.type ?? 'markdown');
     const filePathArr = file.path.split('/');
@@ -53,6 +53,10 @@ export default function useEvoyaCreator() {
     setFileInfo({ ...file, folderPath: filePath});
 
     fetch(`${config.apiBaseUrl}/api/files/download/?path=${file.path}`).then(async (response) => {
+      const header = response.headers.get('Content-Disposition');
+      const parts = header?.split(';') ?? [];
+      const filename = parts[1].split('=')[1] ?? 'document.md';
+      setFileInfo({ ...file, folderPath: filePath, name: file.name ?? filename, mime: file.mime ?? 'markdown'});
       const text = await response.text();
       setCreatorContent(text);
       // @ts-expect-error is not a valid prop

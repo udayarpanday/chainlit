@@ -77,11 +77,13 @@ export default function FileItemActions({
   const stopPropagation = (event: MouseEvent) => event.stopPropagation();
 
   const openCreator = () => {
-    // @ts-expect-error Added by the host application.
-    window.openEvoyaCreatorWithFile(item, {
-      type: mime.indexOf('markdown') > -1 ? 'markdown' : 'text',
-      brand_color: brandColor
-    });
+    // // @ts-expect-error Added by the host application.
+    // window.openEvoyaCreatorWithFile(item, {
+    //   type: mime.indexOf('markdown') > -1 ? 'markdown' : 'text',
+    //   brand_color: brandColor
+    // });
+    console.log(item);
+    location.href = `/app/?creator_enabled=1&creator_file=${item.path}`
   };
 
   const renameItemHandler = (event: FormEvent<HTMLFormElement>) => {

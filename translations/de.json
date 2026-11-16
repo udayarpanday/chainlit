@@ -801,8 +801,15 @@
             "save_as": {
                 "label": "Speichern unter"
             },
+            "document": {
+                "label": "Dokument"
+            },
             "open": {
-                "label": "Datei öffnen..."
+                "label": "Öffnen",
+                "title": "Datei öffnen..."
+            },
+            "close": {
+                "label": "Schliessen"
             }
         },
         "action": {

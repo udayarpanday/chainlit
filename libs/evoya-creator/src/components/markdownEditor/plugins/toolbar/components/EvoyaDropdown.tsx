@@ -52,16 +52,16 @@ export const EvoyaDropdown: React.FC<{ setMdDiffContent: (md: string) => void; }
             <Button
               variant="ghost"
               size="icon"
-              className={cn("!w-auto text-sm !h-7 [&_svg]:!size-6 rounded-xs", styles.toolbarButton)}
+              className={cn("!w-auto text-xs !h-6 rounded-xs px-1 text-black", styles.toolbarButton)}
             >
-              <div className="flex">
-                {iconComponentFor('file')}
+              <div className="flex gap-1 items-center">
+                <span>{t('toolbar.document.label', 'Document')}</span>
                 <span className='-ml-1'>{iconComponentFor('arrow_drop_down')}</span>
               </div>
             </Button>
           </DropdownMenuTrigger>
         </TooltipWrap>
-        <DropdownMenuContent align="end" className="max-w-[300px]">
+        <DropdownMenuContent align="end" className="max-w-[300px]" container={window.mdx_shadowRootElement}>
           <DropdownMenuItem onClick={() => selectDocument()}>
             {/* {iconComponentFor('handPointer')} */}
             <div className="flex flex-col">
