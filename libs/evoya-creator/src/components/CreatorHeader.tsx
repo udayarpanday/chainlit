@@ -1,13 +1,11 @@
-import { Button } from '@chainlit/app/src/components/ui/button';
 import { X } from 'lucide-react';
+
+import { Button } from '@chainlit/app/src/components/ui/button';
 
 import useEvoyaCreator from '@/hooks/useEvoyaCreator';
 
 const CreatorHeader = (): JSX.Element => {
-  const {
-    closeCreatorOverlay,
-    fileInfo,
-  } = useEvoyaCreator();
+  const { closeCreatorOverlay, fileInfo } = useEvoyaCreator();
 
   const handleCloseCreator = () => {
     closeCreatorOverlay();
@@ -19,18 +17,23 @@ const CreatorHeader = (): JSX.Element => {
         <span>Creator</span>
         {fileInfo && (
           <>
-            <span className='px-2'>-</span>
+            <span className="px-2">-</span>
             <span>{fileInfo.name}</span>
           </>
         )}
       </div>
       <div className="flex gap-2">
-        <Button variant="ghost" size="icon" onClick={handleCloseCreator} className="!w-9 rounded-full">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleCloseCreator}
+          className="!w-9 rounded-full"
+        >
           <X />
         </Button>
       </div>
     </div>
-  )
+  );
 };
 
 export default CreatorHeader;

@@ -1,7 +1,10 @@
 import { MessageContext } from '@/contexts/MessageContext';
+import { documentKind } from '@/lib/documentPreview';
 import { useContext } from 'react';
 
 import type { IMessageElement } from '@chainlit/react-client';
+
+import { DocumentCard } from './DocumentCard';
 
 interface ElementRefProps {
   element: IMessageElement;
@@ -9,6 +12,7 @@ interface ElementRefProps {
 
 const ElementRef = ({ element }: ElementRefProps) => {
   const { onElementRefClick } = useContext(MessageContext);
+  if (documentKind(element)) return <DocumentCard element={element} />;
 
   // For inline elements, return a styled span
   if (element.display === 'inline') {

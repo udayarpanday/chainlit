@@ -4,6 +4,7 @@ import { useRecoilValue } from 'recoil';
 
 import { WidgetContext } from '@chainlit/copilot/src/context';
 import {
+  audioSubmittedState,
   chatArchived,
   useChatData,
   useChatInteract,
@@ -43,6 +44,7 @@ export default function SubmitButton({
   const { loading } = useChatData();
   const audioConnection = useRecoilValue(audioConnectionState);
   const { firstInteraction } = useChatMessages();
+  const audioSubmitted = useRecoilValue(audioSubmittedState);
   const { stopTask } = useChatInteract();
 
   const isValueEmpty = (val: string | undefined): boolean => {
@@ -61,7 +63,7 @@ export default function SubmitButton({
       {(!loading || audioConnection !== 'off') && ((evoya && evoya.speechToText === true) || !evoya) && (
         <VoiceButton disabled={disabled} onDictationStart={onDictationStart} onDictationCancel={onDictationCancel} />
       )}
-      {audioConnection !== 'off' || (!loading && isValueEmpty(value) && ((evoya && evoya.speechToText === true) || !evoya)) ? null : loading && firstInteraction ? (
+      {audioConnection !== 'off' || (!loading && isValueEmpty(value) && ((evoya && evoya.speechToText === true) || !evoya)) ? null : loading && (firstInteraction || audioSubmitted) ? (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

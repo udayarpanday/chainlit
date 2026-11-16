@@ -45,16 +45,20 @@ const checkToolStep = (step: IStep): boolean => {
   return step.steps?.some((s) => s.type === 'tool' && s.end == null || checkToolStep(s)) || false;
 };
 
-const collectToolCallSteps = (steps: IStep[]): IStep[] => {
+const collectToolCallSteps = (
+  steps: IStep[],
+  activeMessageIds?: ReadonlySet<string>
+): IStep[] => {
   const toolSteps: IStep[] = [];
 
   for (const step of steps) {
+    if (activeMessageIds && !activeMessageIds.has(step.id)) continue;
     if (step.name === 'tools' || step.type === 'tool') {
       toolSteps.push(step);
     }
 
     if (step.steps?.length) {
-      toolSteps.push(...collectToolCallSteps(step.steps));
+      toolSteps.push(...collectToolCallSteps(step.steps, activeMessageIds));
     }
   }
 
@@ -85,7 +89,8 @@ const Messages = memo(
         {messages.map((m) => {
           // Handle chainlit runs
           if (CL_RUN_NAMES.includes(m.name)) {
-            const isRunning = !m.end && !m.isError && messageContext.loading;
+            const isRunning = !m.end && !m.isError && messageContext.loading &&
+              (messageContext.activeMessageIds?.has(m.id) ?? true);
             const isToolCallCoT = messageContext.cot === 'tool_call';
             const isHiddenCoT = messageContext.cot === 'hidden';
 
@@ -140,7 +145,9 @@ const Messages = memo(
             const toolCalls: IStep[] = [];
 
             if (indent === 0 && m.type === 'assistant_message') {
-              toolCalls.push(...collectToolCallSteps(messages));
+              toolCalls.push(
+                ...collectToolCallSteps(messages, messageContext.activeMessageIds)
+              );
             }
 
             return (
@@ -152,7 +159,9 @@ const Messages = memo(
                 actions={actions}
                 key={m.id}
                 indent={indent}
-                isRunning={isRunning}
+                isRunning={
+                  isRunning && (messageContext.activeMessageIds?.has(m.id) ?? true)
+                }
                 scorableRun={_scorableRun}
                 isScorable={isScorable}
               />

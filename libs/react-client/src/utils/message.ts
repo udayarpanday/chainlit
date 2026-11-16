@@ -1,6 +1,50 @@
 import { isEqual } from 'lodash';
 
-import { IStep } from '..';
+import type { IStep } from '../types/step';
+
+// Include siblings belonging to this user message, stopping at the next turn.
+const getMessageTurn = (steps: IStep[], messageId: string): IStep[] => {
+  const index = steps.findIndex((step) => step.id === messageId);
+  if (index !== -1) {
+    const nextUser = steps.findIndex(
+      (step, i) => i > index && step.type === 'user_message'
+    );
+    return steps.slice(index, nextUser === -1 ? undefined : nextUser);
+  }
+
+  for (const step of steps) {
+    const turn = getMessageTurn(step.steps ?? [], messageId);
+    if (turn.length) return turn;
+  }
+
+  return [];
+};
+
+const getMessageTurnIds = (
+  messages: IStep[],
+  messageId: string
+): Set<string> => {
+  const ids = new Set<string>();
+  const collect = (steps: IStep[]) => {
+    for (const step of steps) {
+      ids.add(step.id);
+      collect(step.steps ?? []);
+    }
+  };
+  collect(getMessageTurn(messages, messageId));
+
+  // Ancestor runs must stay active so they can render this turn's children.
+  const includeAncestors = (steps: IStep[]): boolean => {
+    let containsActiveStep = false;
+    for (const step of steps) {
+      if (includeAncestors(step.steps ?? [])) ids.add(step.id);
+      if (ids.has(step.id)) containsActiveStep = true;
+    }
+    return containsActiveStep;
+  };
+  includeAncestors(messages);
+  return ids;
+};
 
 const nestMessages = (messages: IStep[]): IStep[] => {
   let nestedMessages: IStep[] = [];
@@ -234,6 +278,8 @@ const updateMessageContentById = (
 };
 
 export {
+  getMessageTurn,
+  getMessageTurnIds,
   addMessageToParent,
   addMessage,
   deleteMessageById,

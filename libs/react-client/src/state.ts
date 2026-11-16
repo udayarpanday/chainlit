@@ -124,6 +124,23 @@ export const loadingState = atom<boolean>({
   default: false
 });
 
+export const generatingMessageIdState = atom<string | undefined>({
+  key: 'GeneratingMessageId',
+  default: undefined
+});
+
+export const cancellingToolCallState = atom<
+  { messageId: string; toolCalls: IStep[] } | undefined
+>({
+  key: 'CancellingToolCall',
+  default: undefined
+});
+
+export const audioSubmittedState = atom<boolean>({
+  key: 'AudioSubmitted',
+  default: false
+});
+
 export const askUserState = atom<IAsk | undefined>({
   key: 'AskUser',
   default: undefined

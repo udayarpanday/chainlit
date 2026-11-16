@@ -6,6 +6,7 @@ import { i18nSetupLocalization } from '@chainlit/app/src/i18n';
 import { ThemeProvider } from '../../copilot/src/ThemeProvider';
 import Widget from './widget';
 import WidgetCompact from './widget-compact';
+import type { EvoyaFile } from './types';
 import WidgetPicker, { EvoyaFilesSelection } from './widget-picker';
 
 i18nSetupLocalization();
@@ -23,9 +24,10 @@ interface Props {
   type: 'default' | 'compact' | 'picker';
   initialSelections?: EvoyaFilesSelection[];
   onSelectionChange?: (selections: EvoyaFilesSelection[]) => void;
+  onFileOpen?: (file: EvoyaFile) => void;
 }
 
-export default function App({ initialPath, apiBaseUrl, csrfToken, isSuperuser = false, showConnectButton = false, workspaceId, projectId, type, file, mime, brandColor, initialSelections, onSelectionChange }: Props) {
+export default function App({ initialPath, apiBaseUrl, csrfToken, isSuperuser = false, showConnectButton = false, workspaceId, projectId, type, file, mime, brandColor, initialSelections, onSelectionChange, onFileOpen }: Props) {
   const { i18n } = useTranslation();
   const languageInUse = navigator.language || 'en-US';
 
@@ -81,6 +83,7 @@ export default function App({ initialPath, apiBaseUrl, csrfToken, isSuperuser = 
           csrfToken={csrfToken}
           workspaceId={workspaceId}
           projectId={projectId}
+          onFileOpen={onFileOpen}
           brandColor={brandColor}
         />
       </ThemeProvider>

@@ -1,6 +1,6 @@
 import type { IPdfElement } from '@chainlit/react-client';
 
-import { PDFElement } from '@/components/Elements/PDF';
+import { DocumentCard } from '@/components/Elements/DocumentCard';
 
 interface Props {
   items: IPdfElement[];
@@ -11,7 +11,7 @@ const InlinedPDFList = ({ items }: Props) => (
     {items.map((pdf, i) => {
       return (
         <div key={i}>
-          <PDFElement element={pdf} />
+          <DocumentCard element={pdf} />
         </div>
       );
     })}

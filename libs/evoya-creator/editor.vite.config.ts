@@ -3,13 +3,13 @@ import path from 'path';
 import { defineConfig } from 'vite';
 import svgr from 'vite-plugin-svgr';
 import tsconfigPaths from 'vite-tsconfig-paths';
-import { sentryVitePlugin } from "@sentry/vite-plugin";
 import tailwindcss from 'tailwindcss';
 import autoprefixer from 'autoprefixer';
 import pps from 'postcss-prefix-selector';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: './',
   plugins: [
     react(), 
     tsconfigPaths(), 
@@ -59,10 +59,13 @@ export default defineConfig({
     }
   },
   resolve: {
+    dedupe: ['react', 'react-dom', 'recoil'],
     alias: {
       '@chainlit/copilot/src': path.resolve(__dirname, '../copilot/src'),
       '@evoya/file-picker/src': path.resolve(__dirname, '../evoya-files/src'),
       react: path.resolve(__dirname, './node_modules/react'),
+      'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
+      recoil: path.resolve(__dirname, './node_modules/recoil'),
       "@mdxeditor/editor/dist/styles/ui.module.css.js": path.resolve(__dirname, "./node_modules/@mdxeditor/editor/dist/styles/ui.module.css.js"),
       "@mdxeditor/editor/dist/plugins/core/SharedHistoryPlugin.js": path.resolve(__dirname, "./node_modules/@mdxeditor/editor/dist/plugins/core/SharedHistoryPlugin.js"),
       // "./TableEditor.js": path.resolve(__dirname, "./src/components/markdownEditor/plugins/extend/table/TableEditorWrapper.tsx"),

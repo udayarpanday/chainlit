@@ -1,4 +1,9 @@
 {
+    "notices": {
+        "taskStopped": "Aufgabe manuell gestoppt.",
+        "cancellationRequested": "Abbruch angefordert. Der aktuelle Schritt wird zunächst abgeschlossen, um unvollständige oder beschädigte Daten zu vermeiden.",
+        "stepCompleted": "Der Schritt wurde abgeschlossen. Neue Nachrichten können jetzt gesendet werden."
+    },
     "components": {
         "atoms": {
             "buttons": {
@@ -819,11 +824,11 @@
     "agentList": {
         "title": "Agentenliste",
         "default": "Standard",
-        "edit_agent": "Agent bearbeiten",
+        "edit_agent": "Bearbeiten",
         "pinned_agent": "Angehefteter Agent",
-        "pin_agent": "Agent anheften",
-        "unpin_agent": "Agent lösen",
-        "set_default_agent": "Als Standard-Agent festlegen",
+        "pin_agent": "Anheften",
+        "unpin_agent": "Lösen",
+        "set_default_agent": "Als Standard festlegen",
         "remove_agent": "Standard-Agent entfernen",
         "open_test_chat": "Test-Chat öffnen",
         "all_agents": "Alle Agenten",

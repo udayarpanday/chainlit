@@ -1,8 +1,18 @@
+import {
+  documentDisplayName,
+  documentKind,
+  safeDocumentUrl
+} from '@/lib/documentPreview';
 import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 
-import { IImageElement } from '@chainlit/react-client';
+import {
+  IImageElement,
+  evoyaCreatorEnabledState,
+  sideViewState
+} from '@chainlit/react-client';
 
 import {
   Dialog,
@@ -11,18 +21,47 @@ import {
   DialogPortal
 } from '@/components/ui/dialog';
 
+import { DocumentCard } from './DocumentCard';
+
 const ImageElement = ({ element }: { element: IImageElement }) => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [thumbnailFailed, setThumbnailFailed] = useState(false);
+  const setSideView = useSetRecoilState(sideViewState);
+  const creatorEnabled = useRecoilValue(evoyaCreatorEnabledState);
+  const supported =
+    documentKind(element) === 'image' && !!safeDocumentUrl(element.url);
+  useEffect(() => setThumbnailFailed(false), [element.url]);
 
   if (!element.url) return null;
+  if (creatorEnabled)
+    return safeDocumentUrl(element.url) ? (
+      <DocumentCard element={element} />
+    ) : (
+      <img className="max-w-full h-auto" src={element.url} alt={element.name} />
+    );
+  if (supported && (element.display !== 'inline' || thumbnailFailed))
+    return <DocumentCard element={element} />;
 
   const handleClick = () => {
+    if (supported) {
+      setSideView({
+        title: documentDisplayName(element),
+        elements: [element],
+        key: 'document-preview'
+      });
+      return;
+    }
     setLightboxOpen(true);
   };
 
   return (
     <>
-      <div className="rounded-sm bg-accent overflow-hidden">
+      <button
+        type="button"
+        className="block w-full rounded-sm bg-accent overflow-hidden"
+        onClick={handleClick}
+        aria-label={`Preview ${element.name}`}
+      >
         <img
           className={cn(
             'mx-auto block max-w-full h-auto',
@@ -32,9 +71,9 @@ const ImageElement = ({ element }: { element: IImageElement }) => {
           src={element.url}
           alt={element.name}
           loading="lazy"
-          onClick={handleClick}
+          onError={supported ? () => setThumbnailFailed(true) : undefined}
         />
-      </div>
+      </button>
 
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogPortal>

@@ -1,10 +1,18 @@
 import { useCallback, useContext } from 'react';
-import { useRecoilValue, useResetRecoilState, useSetRecoilState } from 'recoil';
+import {
+  useRecoilCallback,
+  useRecoilValue,
+  useResetRecoilState,
+  useSetRecoilState
+} from 'recoil';
 import {
   actionState,
   activeModelOverrideState,
   askUserState,
+  audioConnectionState,
+  audioSubmittedState,
   canOverrideModelState,
+  cancellingToolCallState,
   chatArchived,
   chatSettingsInputsState,
   chatSettingsValueState,
@@ -12,6 +20,7 @@ import {
   elementState,
   favoriteMessagesState,
   firstUserInteraction,
+  generatingMessageIdState,
   loadingState,
   messagesState,
   modelCatalogState,
@@ -28,6 +37,7 @@ import { addMessage } from 'src/utils/message';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ChainlitContext } from './context';
+import { getCancellingToolCalls } from './utils/cancellation';
 
 type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
@@ -36,6 +46,11 @@ const useChatInteract = () => {
   const session = useRecoilValue(sessionState);
   const askUser = useRecoilValue(askUserState);
   const sessionId = useRecoilValue(sessionIdState);
+  const generatingMessageId = useRecoilValue(generatingMessageIdState);
+  const audioConnection = useRecoilValue(audioConnectionState);
+  const setGeneratingMessageId = useSetRecoilState(generatingMessageIdState);
+  const resetCancellingToolCall = useResetRecoilState(cancellingToolCallState);
+  const setAudioSubmitted = useSetRecoilState(audioSubmittedState);
 
   const resetChatSettings = useResetRecoilState(chatSettingsInputsState);
   const resetSessionId = useResetRecoilState(sessionIdState);
@@ -65,6 +80,9 @@ const useChatInteract = () => {
     session?.socket.emit('clear_session');
     session?.socket.disconnect();
     resetSession();
+    setGeneratingMessageId(undefined);
+    resetCancellingToolCall();
+    setAudioSubmitted(false);
     setIdToResume(undefined);
     resetSessionId();
     setFirstUserInteraction(undefined);
@@ -98,13 +116,14 @@ const useChatInteract = () => {
       }
       setMessages((oldMessages) => addMessage(oldMessages, message as IStep));
 
+      setGeneratingMessageId(message.id);
       session?.socket.emit('client_message', {
         message,
         fileReferences,
         evoyaAttachments
       });
     },
-    [session?.socket]
+    [session?.socket, setGeneratingMessageId, setMessages]
   );
 
   const editMessage = useCallback(
@@ -179,8 +198,13 @@ const useChatInteract = () => {
   );
 
   const endAudioStream = useCallback(() => {
-    session?.socket.emit('audio_end');
-  }, [session?.socket]);
+    const messageId = uuidv4();
+    setGeneratingMessageId(messageId);
+    setAudioSubmitted(true);
+    session?.socket.emit('audio_end', {
+      messageId
+    });
+  }, [session?.socket, setGeneratingMessageId, setAudioSubmitted]);
 
   const replyMessage = useCallback(
     (message: IStep) => {
@@ -207,18 +231,49 @@ const useChatInteract = () => {
     [session?.socket]
   );
 
-  const stopTask = useCallback(() => {
-    setMessages((oldMessages) =>
-      oldMessages.map((m) => {
-        m.streaming = false;
-        return m;
-      })
-    );
+  const stopTask = useRecoilCallback(
+    ({ snapshot, set }) =>
+      () => {
+        if (generatingMessageId) {
+          const toolCalls = getCancellingToolCalls(
+            snapshot.getLoadable(messagesState).getValue(),
+            generatingMessageId
+          );
+          if (toolCalls.length) {
+            set(cancellingToolCallState, {
+              messageId: generatingMessageId,
+              toolCalls
+            });
+          }
+          session?.socket.emit('stop_message', {
+            messageId: generatingMessageId
+          });
+        } else if (audioConnection === 'on') {
+          session?.socket.emit('stop');
+        } else {
+          return;
+        }
 
-    setLoading(false);
+        const stopStreaming = (steps: IStep[]): IStep[] =>
+          steps.map((step) => ({
+            ...step,
+            streaming: false,
+            steps: step.steps ? stopStreaming(step.steps) : step.steps
+          }));
+        setMessages((oldMessages) => stopStreaming(oldMessages));
 
-    session?.socket.emit('stop');
-  }, [session?.socket]);
+        setAudioSubmitted(false);
+        setLoading(false);
+      },
+    [
+      session?.socket,
+      generatingMessageId,
+      audioConnection,
+      setAudioSubmitted,
+      setMessages,
+      setLoading
+    ]
+  );
 
   const passAudioType = useCallback(
     (type: string) => {

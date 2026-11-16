@@ -290,7 +290,16 @@ async def disconnect(sid):
 async def stop(sid):
     if session := WebsocketSession.get(sid):
         init_ws_context(session)
-        await Message(content="Task manually stopped.").send()
+        language = (config.ui.language or session.language).split("-")[0].lower()
+        stop_messages = {
+            "de": "Aufgabe manuell gestoppt.",
+            "fr": "Tâche arrêtée manuellement.",
+            "it": "Attività interrotta manualmente.",
+        }
+        await Message(
+            content=stop_messages.get(language, "Task manually stopped."),
+            metadata={"avaiaNotice": "taskStopped"},
+        ).send()
 
         if session.current_task:
             session.current_task.cancel()

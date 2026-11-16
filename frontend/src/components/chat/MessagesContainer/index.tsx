@@ -8,6 +8,9 @@ import {
   IFeedback,
   IMessageElement,
   IStep,
+  cancellingToolCallState,
+  generatingMessageIdState,
+  getMessageTurnIds,
   messagesState,
   sideViewState,
   updateMessageById,
@@ -19,7 +22,9 @@ import {
 } from '@chainlit/react-client';
 
 import { Messages } from '@/components/chat/Messages';
+import CancellingToolCall from '@/components/chat/Messages/CancellingToolCall';
 import { useTranslation } from 'components/i18n/Translator';
+import { useDocumentAutoPreview } from '@/hooks/useDocumentAutoPreview';
 
 interface Props {
   navigate?: (to: string) => void;
@@ -30,10 +35,20 @@ const MessagesContainer = ({ navigate }: Props) => {
   const { config } = useConfig();
   const { elements, askUser, loading, actions } = useChatData();
   const { messages } = useChatMessages();
+  useDocumentAutoPreview(messages, elements, loading, apiClient.httpEndpoint);
   const { uploadFile: _uploadFile } = useChatInteract();
   const setMessages = useSetRecoilState(messagesState);
   const setSideView = useSetRecoilState(sideViewState);
   const creatorEnabled = useRecoilValue(evoyaCreatorEnabledState);
+  const cancellingToolCall = useRecoilValue(cancellingToolCallState);
+  const generatingMessageId = useRecoilValue(generatingMessageIdState);
+  const activeMessageIds = useMemo(
+    () =>
+      generatingMessageId
+        ? getMessageTurnIds(messages, generatingMessageId)
+        : undefined,
+    [messages, generatingMessageId]
+  );
 
   const { t } = useTranslation();
 
@@ -125,6 +140,7 @@ const MessagesContainer = ({ navigate }: Props) => {
       allowHtml: config?.features?.unsafe_allow_html,
       latex: config?.features?.latex,
       loading,
+      activeMessageIds,
       showEvoyaCreatorButton: config?.showEvoyaCreatorButton && !creatorEnabled,
       showFeedbackButtons: enableFeedback,
       uiName: config?.ui?.name || '',
@@ -138,6 +154,7 @@ const MessagesContainer = ({ navigate }: Props) => {
     askUser,
     enableFeedback,
     loading,
+    activeMessageIds,
     config?.ui?.name,
     config?.ui?.cot,
     config?.features?.unsafe_allow_html,
@@ -154,6 +171,9 @@ const MessagesContainer = ({ navigate }: Props) => {
         elements={elements}
         actions={actions}
       />
+      {cancellingToolCall ? (
+        <CancellingToolCall toolCalls={cancellingToolCall.toolCalls} />
+      ) : null}
     </MessageContext.Provider>
   );
 };

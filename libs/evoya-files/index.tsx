@@ -5,6 +5,7 @@ import sonnercss from '../copilot/sonner.css?inline';
 import tailwindcss from '../copilot/src/index.css?inline';
 
 import App from './src/app';
+import type { EvoyaFile } from './src/types';
 
 import themejson from './theme.json';
 
@@ -32,6 +33,7 @@ type EvoyaFilesConfig = {
   brand_color?: string | null;
   initialSelections?: EvoyaFilesSelection[];
   onSelectionChange?: (selections: EvoyaFilesSelection[]) => void;
+  onFileOpen?: (file: EvoyaFile) => void;
 }
 
 declare global {
@@ -111,6 +113,7 @@ window.mountEvoyaFilesWidget = (config: EvoyaFilesConfig) => {
         brandColor={config.brand_color}
         initialSelections={config.initialSelections}
         onSelectionChange={config.onSelectionChange}
+        onFileOpen={config.onFileOpen}
       />
     </React.StrictMode>
   );

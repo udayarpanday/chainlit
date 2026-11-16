@@ -1,3 +1,5 @@
+import { documentKind } from '@/lib/documentPreview';
+
 import { type ITextElement, useConfig } from '@chainlit/react-client';
 
 import Alert from '@/components/Alert';
@@ -6,11 +8,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 import { useFetch } from 'hooks/useFetch';
 
+import { DocumentCard } from './DocumentCard';
+
 interface TextElementProps {
   element: ITextElement;
 }
 
-const TextElement = ({ element }: TextElementProps) => {
+const TextContent = ({ element }: TextElementProps) => {
   const { data, error, isLoading } = useFetch(element.url || null);
   const { config } = useConfig();
   const allowHtml = config?.features?.unsafe_allow_html;
@@ -40,12 +44,18 @@ const TextElement = ({ element }: TextElementProps) => {
     <Markdown
       allowHtml={allowHtml}
       latex={latex}
-      renderMarkdown={true}
       className={`${element.display}-text`}
     >
       {content}
     </Markdown>
   );
 };
+
+const TextElement = ({ element }: TextElementProps) =>
+  element.url && documentKind(element) ? (
+    <DocumentCard element={element} />
+  ) : (
+    <TextContent element={element} />
+  );
 
 export { TextElement };

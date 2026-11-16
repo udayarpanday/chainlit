@@ -1,3 +1,5 @@
+import { documentKind } from '@/lib/documentPreview';
+
 import type { ITextElement } from '@chainlit/react-client';
 
 import { TextElement } from '@/components/Elements/Text';
@@ -10,6 +12,8 @@ interface Props {
 const InlinedTextList = ({ items }: Props) => (
   <div className="flex flex-col gap-2">
     {items.map((el) => {
+      if (el.url && documentKind(el))
+        return <TextElement key={el.id} element={el} />;
       return (
         <Card key={el.id}>
           <CardHeader>

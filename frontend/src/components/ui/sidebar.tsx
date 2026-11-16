@@ -50,6 +50,7 @@ const SidebarProvider = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<'div'> & {
     defaultOpen?: boolean;
+    autoHide?: boolean;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
   }
@@ -57,6 +58,7 @@ const SidebarProvider = React.forwardRef<
   (
     {
       defaultOpen = true,
+      autoHide = false,
       open: openProp,
       onOpenChange: setOpenProp,
       className,
@@ -67,15 +69,27 @@ const SidebarProvider = React.forwardRef<
     ref
   ) => {
     const isMobile = useIsMobile();
-    const [openMobile, setOpenMobile] = React.useState(false);
+    const [_openMobile, _setOpenMobile] = React.useState(false);
+    const [manuallyOpened, setManuallyOpened] = React.useState(false);
+    React.useLayoutEffect(() => setManuallyOpened(false), [autoHide]);
+    const temporarilyHidden = autoHide && !manuallyOpened;
+    const openMobile = !temporarilyHidden && _openMobile;
+    const setOpenMobile = React.useCallback(
+      (value: boolean | ((open: boolean) => boolean)) => {
+        setManuallyOpened(true);
+        _setOpenMobile(typeof value === 'function' ? value(openMobile) : value);
+      },
+      [openMobile]
+    );
 
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
     const [_open, _setOpen] = React.useState(defaultOpen);
-    const open = openProp ?? _open;
+    const open = !temporarilyHidden && (openProp ?? _open);
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
         const openState = typeof value === 'function' ? value(open) : value;
+        setManuallyOpened(true);
         if (setOpenProp) {
           setOpenProp(openState);
         } else {

@@ -1,0 +1,49 @@
+/* Shared by the main app, widget shadow roots, and preview iframe documents. */
+::-webkit-scrollbar {
+  width: 17px;
+  height: 17px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #adb5bd;
+  border-radius: 20px;
+  border: 6px solid transparent;
+  background-clip: content-box;
+}
+
+/* Firefox uses the standard properties rather than WebKit pseudo-elements. */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-color: #6b7280 transparent;
+    scrollbar-width: auto;
+  }
+
+  .navbar-collapse {
+    scrollbar-color: #56565a transparent;
+  }
+}
+
+/* Radix scroll areas draw their scrollbar with elements instead of native UI. */
+[data-app-scrollbar] {
+  box-sizing: border-box;
+  padding: 6px;
+  background: transparent;
+}
+
+[data-app-scrollbar][data-orientation='vertical'] {
+  width: 20px;
+}
+
+[data-app-scrollbar][data-orientation='horizontal'] {
+  height: 20px;
+}
+
+[data-app-scrollbar-thumb] {
+  border-radius: 20px;
+  background-color: #6b7280;
+}
