@@ -155,7 +155,10 @@
     height: 100dvh;
     z-index: 1000;
   }
-  [data-radix-popper-content-wrapper] {
+  /* Keep viewport positioning for the configuration menu and resource tooltips. */
+  [data-radix-popper-content-wrapper]:not(
+      :has(> [data-configuration-menu], > [data-resource-tooltip])
+    ) {
     transform: none !important;
   }
 }

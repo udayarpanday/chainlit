@@ -128,8 +128,10 @@
                     "manage": "Manage {{category}}",
                     "loading": "Loading agent settings…",
                     "loadError": "Unable to load agent settings. Reopen the menu to retry.",
+                    "saved": "Permanently saved",
+                    "permanentChanges": "Changes are saved permanently.",
                     "saveError": "Unable to save settings. Your changes have not been saved.",
-                    "privateOnly": "Only available for private agents. Manage these settings for team and curated agents on the agent edit page."
+                    "readOnly": "You don't have permission to change this selection."
                 }
             },
             "tasklist": {
@@ -475,6 +477,9 @@
             "footer": "Temporary chat, this chat won't be saved to your history"
         },
         "input": {
+            "reasoningOff": "Off",
+            "chooseReasoning": "Choose reasoning effort",
+            "reasoningTokens": "{{count}} tokens",
             "placeholder": "Your input...",
             "archived": "This chat belongs to an archived agent. Unarchive the agent to continue this chat, or select another agent to start a new chat.",
             "actions": {

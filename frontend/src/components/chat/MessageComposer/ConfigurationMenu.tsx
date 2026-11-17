@@ -54,6 +54,7 @@ import {
   PopoverContent,
   PopoverTrigger
 } from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
   TooltipContent,
@@ -668,6 +669,7 @@ export default function ConfigurationMenu({
         </TooltipProvider>
 
         <PopoverContent
+          data-configuration-menu
           onCloseAutoFocus={(event) => event.preventDefault()}
           align={isMobile ? 'center' : 'start'}
           side="top"
@@ -682,14 +684,19 @@ export default function ConfigurationMenu({
                   panel === 'skills' ||
                   panel === 'tools'
                 ? 'w-[27vw] min-w-[320px] overflow-hidden p-0'
-                : 'w-[50vw] min-w-[320px]'
+                : 'w-[50vw] min-w-[320px]',
+            isMobile && 'w-[calc(100vw-24px)] min-w-0'
           )}
           style={{
-            position: isMobile ? 'fixed' : 'relative',
-            bottom: isMobile ? '-82vh' : '-10px',
-            right: isMobile ? 'auto' : '-5px',
-            left: isMobile ? '45px' : 'auto',
-            transform: 'none',
+            ...(isMobile
+              ? {}
+              : {
+                  position: 'relative' as const,
+                  bottom: '-10px',
+                  right: '-5px',
+                  left: 'auto',
+                  transform: 'none'
+                }),
             zIndex: 50
           }}
         >
@@ -704,12 +711,7 @@ export default function ConfigurationMenu({
                   onClick={handleOpenModelPicker}
                 />
               ) : null}
-              <MenuRow
-                icon={StickyNote}
-                label={t('components.molecules.configurationMenu.prompts')}
-                disabled={!hasPrompts || disabled}
-                onClick={() => openPanel('prompts')}
-              />
+              {hasModelPicker ? <Separator className="!my-1" /> : null}
               <MenuRow
                 icon={FolderOpen}
                 label={t('components.molecules.project.title')}
@@ -738,6 +740,13 @@ export default function ConfigurationMenu({
                   dismissConfigurationTooltip();
                   setPrivacyEnabled(!privacyEnabled);
                 }}
+              />
+              <Separator className="!my-1" />
+              <MenuRow
+                icon={StickyNote}
+                label={t('components.molecules.configurationMenu.prompts')}
+                disabled={!hasPrompts || disabled}
+                onClick={() => openPanel('prompts')}
               />
             </div>
           ) : null}

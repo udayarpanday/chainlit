@@ -133,8 +133,10 @@
                     "manage": "Gestisci {{category}}",
                     "loading": "Caricamento delle impostazioni dell’agente…",
                     "loadError": "Impossibile caricare le impostazioni dell’agente. Riapri il menu per riprovare.",
+                    "saved": "Salvato definitivamente",
+                    "permanentChanges": "Le modifiche vengono salvate definitivamente.",
                     "saveError": "Impossibile salvare le impostazioni. Le modifiche non sono state salvate.",
-                    "privateOnly": "Disponibile solo per gli agenti privati. Gestisci queste impostazioni per gli agenti del team e quelli curati nella pagina di modifica dell’agente."
+                    "readOnly": "Non hai il permesso di modificare questa selezione."
                 }
             },
             "tasklist": {
@@ -476,6 +478,9 @@
             "footer": "Chat temporanea — questa chat non verrà salvata nella cronologia"
         },
         "input": {
+            "reasoningOff": "Disattivato",
+            "chooseReasoning": "Scegli il livello di ragionamento",
+            "reasoningTokens": "{{count}} token",
             "placeholder": "Scrivi il tuo messaggio qui...",
             "archived": "Questa chat appartiene a un agente archiviato. Rimuovi l’agente dall’archivio per continuare questa chat oppure seleziona un altro agente per avviare una nuova chat.",
             "actions": {
