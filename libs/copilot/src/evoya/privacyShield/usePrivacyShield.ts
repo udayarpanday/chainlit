@@ -20,10 +20,10 @@ import {
 } from '../state';
 
 import {
-  TextSection,
   PrivacyCategories,
   SectionItem,
-} from './types';
+} from '../types';
+import { splitPrivacyText } from './text';
 import { v4 as uuidv4 } from 'uuid';
 
 const usePrivacyShield = () => {
@@ -200,29 +200,7 @@ const usePrivacyShield = () => {
 
   const textSections = useMemo(() => {
     const catSections = Object.values(categories).flatMap((cat) => cat);
-    let secText = currentText;
-    catSections.forEach((section) => {
-      secText = secText.replaceAll(new RegExp(section.string.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&'), "gi"), `{$}{=${section.id}=}{$}`);
-    });
-
-    const secs = secText.split('{$}');
-    const textSections: TextSection[] = secs.map((sec) => {
-      if (sec.startsWith('{=')) {
-        const secId = sec.substring(2, sec.length - 2);
-        const secData = catSections.find((sec) => sec.id === secId);
-        if (secData) {
-          return {
-            ...secData
-          };
-        }
-      }
-
-      return {
-        string: sec
-      };
-    });
-
-    return textSections;
+    return splitPrivacyText(currentText, catSections);
   }, [categories, currentText]);
 
   const anonText = useMemo<string>(() => {

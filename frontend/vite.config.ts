@@ -32,6 +32,8 @@ export default defineConfig({
       '@evoya/file-picker/src': path.resolve(__dirname, '../libs/evoya-files/src'),
       // To prevent conflicts with packages in @chainlit/react-client, we need to specify the resolution paths for these dependencies.
       react: path.resolve(__dirname, './node_modules/react'),
+      i18next: path.resolve(__dirname, './node_modules/i18next'),
+      'react-i18next': path.resolve(__dirname, './node_modules/react-i18next'),
       'usehooks-ts': path.resolve(__dirname, './node_modules/usehooks-ts'),
       sonner: path.resolve(__dirname, './node_modules/sonner'),
       lodash: path.resolve(__dirname, './node_modules/lodash'),

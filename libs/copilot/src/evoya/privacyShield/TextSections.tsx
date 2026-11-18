@@ -6,7 +6,7 @@ import { Translator } from "@chainlit/app/src/components/i18n";
 
 import { usePrivacyShield } from "./usePrivacyShield";
 
-import { TextSection } from "./types";
+import { TextSection } from "../types";
 import TextSectionsItem from "./TextSectionsItem";
 import CreateSection from "./CreateSection";
 import TextSectionsCategories from "./TextSectionsCategories";
@@ -93,7 +93,6 @@ const TextSections = (): JSX.Element => {
       <CreateSection
         open={showCreateSectionPopup}
         closeDialog={closeDialog}
-        dialogClosed={dialogClosed}
         createSection={createPrivacySection}
         showTextField={!textSelection && !editSection}
         editSection={editSection}
@@ -115,10 +114,10 @@ const TextSections = (): JSX.Element => {
         )}
 
         <div onMouseUp={textSelected} ref={textContainer} className='block'>
-          {textSections.map((section) =>
+          {textSections.map((section, index) =>
             section.id ? (
               <TextSectionsItem
-                key={section.id}
+                key={`${section.id}-${index}`}
                 section={section}
                 isActive={section.id === activeSection}
                 setActive={(id) => setActiveSection(id)}
@@ -126,7 +125,7 @@ const TextSections = (): JSX.Element => {
                 setEdit={editSectionAction}
               />
             ) : (
-              <span key={section.string} className="whitespace-pre-wrap">
+              <span key={index} className="whitespace-pre-wrap">
                 {section.string}
               </span>
             )

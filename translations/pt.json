@@ -199,39 +199,51 @@
         },
         "organisms": {
             "privacyShield": {
-                "showPrivacyTable": "Show anonymized words table",
-                "hidePrivacyTable": "Hide anonymized words table",
-                "info": "Privacy Shield anonymizes sensitive details (e.g. names) before text is sent to the AI. It works only for text, not for uploaded documents.",
+                "showPrivacyTable": "Mostrar tabela de palavras anonimizadas",
+                "hidePrivacyTable": "Ocultar tabela de palavras anonimizadas",
+                "info": "O Privacy Shield anonimiza dados sensíveis (por exemplo, nomes) antes de o texto ser enviado à IA. Funciona apenas com texto, não com documentos carregados.",
                 "actions": {
-                    "cancel": "Cancel",
-                    "submit": "Submit",
-                    "createSection": "Create section"
+                    "cancel": "Cancelar",
+                    "submit": "Enviar",
+                    "createSection": "Criar secção",
+                    "editSection": "Editar secção",
+                    "removeSection": "Remover secção"
                 },
                 "word": {
-                    "anon": "Anonymized by Privacy Shield",
-                    "notAnon": "Not anonymized by Privacy Shield"
+                    "anon": "Anonimizado pelo Privacy Shield",
+                    "notAnon": "Não anonimizado pelo Privacy Shield"
                 },
                 "createSection": {
                     "title": {
-                        "edit": "Edit Privacy Section",
-                        "create": "Create Privacy Section"
+                        "edit": "Editar secção de privacidade",
+                        "create": "Criar secção de privacidade"
                     },
                     "actions": {
-                        "close": "Close",
-                        "save": "Save",
-                        "create": "Create"
+                        "close": "Fechar",
+                        "save": "Guardar",
+                        "create": "Criar"
                     },
                     "typefield": {
-                        "label": "Type",
+                        "label": "Tipo",
                         "options": {
-                            "name": "Name",
-                            "location": "Location",
-                            "phone": "Phone Number",
-                            "email": "Email address",
-                            "other": "Other"
+                            "name": "Nome",
+                            "organization": "Organização",
+                            "email": "Endereço de e-mail",
+                            "phone": "Número de telefone",
+                            "location": "Localização",
+                            "birthdate": "Data de nascimento",
+                            "id_number": "Número de identificação",
+                            "financial": "Dados financeiros",
+                            "online_id": "Identificador online",
+                            "credential": "Credenciais de acesso",
+                            "other": "Outro"
                         }
+                    },
+                    "textfield": {
+                        "label": "Texto"
                     }
-                }
+                },
+                "title": "Proteção de privacidade"
             },
             "chat": {
                 "history": {
