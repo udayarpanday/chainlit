@@ -237,7 +237,9 @@
                 "actions": {
                     "cancel": "Cancel",
                     "submit": "Submit",
-                    "createSection": "Create section"
+                    "createSection": "Create section",
+                    "editSection": "Edit section",
+                    "removeSection": "Remove section"
                 },
                 "word": {
                     "anon": "Anonymized by Privacy Shield",
@@ -257,11 +259,20 @@
                         "label": "Type",
                         "options": {
                             "name": "Name",
-                            "location": "Location",
-                            "phone": "Phone Number",
+                            "organization": "Organization",
                             "email": "Email address",
+                            "phone": "Phone Number",
+                            "location": "Location",
+                            "birthdate": "Date of birth",
+                            "id_number": "ID number",
+                            "financial": "Financial details",
+                            "online_id": "Online identifier",
+                            "credential": "Access credentials",
                             "other": "Other"
                         }
+                    },
+                    "textfield": {
+                        "label": "Text"
                     }
                 }
             },

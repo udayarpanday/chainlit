@@ -1,13 +1,11 @@
-import { useChatInteract } from '@chainlit/react-client';
+import { LoaderCircle, Lock, Send } from 'lucide-react';
 
-import { usePrivacyShield } from "./usePrivacyShield";
-import TextSections from "./TextSections";
+import { Translator } from '@chainlit/app/src/components/i18n';
+import { Button } from '@chainlit/app/src/components/ui/button';
+import { Card } from '@chainlit/app/src/components/ui/card';
 
-import { Translator } from "@chainlit/app/src/components/i18n";
-import { Button } from "@chainlit/app/src/components/ui/button";
-import { Card } from "@chainlit/app/src/components/ui/card";
-
-import { Lock, Send, LoaderCircle  } from "lucide-react";
+import TextSections from './TextSections';
+import { usePrivacyShield } from './usePrivacyShield';
 
 interface Props {
   submit: (text: string) => void;
@@ -37,10 +35,18 @@ const PrivacyShieldOverlay = ({ submit }: Props): JSX.Element => {
       <Card className="w-full mx-auto bg-muted rounded-lg overflow-hidden flex flex-col">
         <div className="p-4 flex items-center border-b">
           <Lock className="w-5 h-5" />
-          <span className="ml-2 font-bold">Privacy Shield</span>
+          <span className="ml-2 font-bold">
+            <Translator path="components.organisms.privacyShield.title" />
+          </span>
         </div>
-        <div className={`flex-grow bg-background overflow-hidden flex items-center ${loading ? 'justify-center' : 'justify-between'}  p-4`}>
-          {loading ? <LoaderCircle className="animate-spin text-primary" /> : <TextSections />}
+        <div
+          className={`flex-grow bg-background overflow-hidden flex items-center ${loading ? 'justify-center' : 'justify-between'}  p-4`}
+        >
+          {loading ? (
+            <LoaderCircle className="animate-spin text-primary" />
+          ) : (
+            <TextSections />
+          )}
         </div>
         <div className="p-4 flex justify-end gap-2 border-t">
           <Button variant="outline" onClick={cancelAction}>

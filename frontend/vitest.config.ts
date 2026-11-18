@@ -9,6 +9,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@chainlit/copilot/src': path.resolve(__dirname, '../libs/copilot/src'),
+      i18next: path.resolve(__dirname, './node_modules/i18next'),
+      'react-i18next': path.resolve(__dirname, './node_modules/react-i18next'),
       '@chainlit/react-client': path.resolve(
         __dirname,
         '../libs/react-client/src/index.ts'

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pencil } from 'lucide-react';
 
-import { TextSection } from './types';
+import { TextSection } from '../types';
 
 import { Badge } from "@chainlit/app/src/components/ui/badge";
 

@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import { Translator } from "@chainlit/app/src/components/i18n";
-import { Button } from "@chainlit/app/src/components/ui/button";
-import { Card } from "@chainlit/app/src/components/ui/card";
-import { Input } from "@chainlit/app/src/components/ui/input";
-import { Label } from "@chainlit/app/src/components/ui/label";
-import { TextSection } from "./types";
-import { Select } from "../ShareSessionButton";
+import { Translator } from '@chainlit/app/src/components/i18n';
+import { Button } from '@chainlit/app/src/components/ui/button';
+import { Card } from '@chainlit/app/src/components/ui/card';
+import { Input } from '@chainlit/app/src/components/ui/input';
+import { Label } from '@chainlit/app/src/components/ui/label';
+
+import { TextSection } from '../types';
+import { getPrivacyCategoryLabel, privacySectionTypes } from './categories';
 
 type Props = {
   textSelection: string;
@@ -14,50 +16,37 @@ type Props = {
   open: boolean;
   showTextField: boolean;
   closeDialog: () => void;
-  dialogClosed: () => void;
   createSection: (type: string, text: string | null) => void;
 };
 
 const CreateSection = ({
   open,
   closeDialog,
-  dialogClosed,
   createSection,
   showTextField,
   editSection,
-  textSelection,
+  textSelection
 }: Props) => {
-  const [sectionType, setSectionType] = useState<string>(editSection?.type ?? "other");
-  const [sectionText, setSectionText] = useState<string>("");
+  const { t } = useTranslation();
+  const [sectionType, setSectionType] = useState<string>(
+    editSection?.type ?? 'other'
+  );
+  const [sectionText, setSectionText] = useState<string>('');
 
-  const options = [
-    { 
-      value: "name", 
-      label: "components.organisms.privacyShield.createSection.typefield.options.name"
-    },
-    { 
-      value: "location", 
-      label: "components.organisms.privacyShield.createSection.typefield.options.location"
-    },
-    { 
-      value: "phone", 
-      label: "components.organisms.privacyShield.createSection.typefield.options.phone"
-    },
-    { 
-      value: "email", 
-      label: "components.organisms.privacyShield.createSection.typefield.options.email"
-    },
-    { 
-      value: "other", 
-      label: "components.organisms.privacyShield.createSection.typefield.options.other"
-    }
-  ];
+  // Retain an older category when editing an existing conversation.
+  const options = Array.from(
+    new Set<string>([
+      ...privacySectionTypes,
+      ...(editSection?.type ? [editSection.type] : [])
+    ])
+  );
 
   useEffect(() => {
-    if (editSection && editSection.type) {
-      setSectionType(editSection.type);
+    if (open) {
+      setSectionType(editSection?.type ?? 'other');
+      setSectionText('');
     }
-  }, [editSection]);
+  }, [open, editSection]);
 
   if (!open) return null;
 
@@ -72,37 +61,49 @@ const CreateSection = ({
           )}
         </h2>
         <div className="space-y-4">
-          <Label htmlFor="privacy-text">Text</Label>
+          <Label htmlFor="privacy-text">
+            <Translator path="components.organisms.privacyShield.createSection.textfield.label" />
+          </Label>
           {showTextField ? (
             <Input
               id="privacy-text"
-              label="Text"
-              variant="outlined"
               value={sectionText}
               onChange={(e) => setSectionText(e.target.value)}
             />
           ) : (
             <Input
               id="privacy-text"
-              label="Text"
-              variant="outlined"
               value={editSection ? editSection.string : textSelection}
-              sx={{ width: '100%', marginBottom: 4 }}
               disabled
             />
           )}
-          <Select
+          <Label htmlFor="privacy-type">
+            <Translator path="components.organisms.privacyShield.createSection.typefield.label" />
+          </Label>
+          <select
+            id="privacy-type"
+            className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
             value={sectionType}
             onChange={(e) => setSectionType(e.target.value)}
-            options={options}
-            label={'Type'}
-          />
+          >
+            {options.map((type) => (
+              <option key={type} value={type}>
+                {getPrivacyCategoryLabel(type, t)}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="flex justify-end gap-2 mt-4">
           <Button variant="outline" onClick={closeDialog}>
             <Translator path="components.organisms.privacyShield.createSection.actions.close" />
           </Button>
-          <Button onClick={() => { createSection(sectionType, showTextField ? sectionText : null); setSectionText('') }}>
+          <Button
+            disabled={showTextField && !sectionText.trim()}
+            onClick={() => {
+              createSection(sectionType, showTextField ? sectionText : null);
+              setSectionText('');
+            }}
+          >
             {editSection ? (
               <Translator path="components.organisms.privacyShield.createSection.actions.save" />
             ) : (
