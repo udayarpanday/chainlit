@@ -32,6 +32,19 @@ export const getInitialReasoning = (
   return { max_tokens: boundedTokens };
 };
 
+export const getOneClickReasoning = (
+  model: ModelCatalogItem
+): ModelReasoningSelection | undefined => {
+  const spec = model.reasoning;
+  if (spec.type !== 'effort') return getInitialReasoning(model);
+
+  const effort =
+    spec.oneClick && spec.values.includes(spec.oneClick)
+      ? spec.oneClick
+      : spec.default;
+  return effort ? { effort } : undefined;
+};
+
 export const getEffortTranslationKey = (effort: string) => {
   switch (effort.toLowerCase().replace('_', '-')) {
     case 'none':

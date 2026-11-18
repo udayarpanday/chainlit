@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { Archive, Brain, FolderOpen, Plus, X } from 'lucide-react';
+import { Archive, FolderOpen, Plus, X } from 'lucide-react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -58,6 +58,7 @@ import ConfigurationMenu, {
 import Input, { InputMethods } from './Input';
 import QuotedContext from './QuotedContext';
 import SubmitButton from './SubmitButton';
+import ThinkingControl from './ThinkingControl';
 import UploadButton from './UploadButton';
 import UploadButtonDropdown from './UploadButtonDropdown';
 
@@ -104,6 +105,7 @@ export default function MessageComposer({
   const inputRef = useRef<InputMethods>(null);
   const [value, setValue] = useState('');
   const [thinkEnabled, setThinkEnabled] = useState(false);
+  const [updatingReasoning, setUpdatingReasoning] = useState(false);
   const modelCatalog = useRecoilValue(modelCatalogState);
   const activeModel = useRecoilValue(activeModelOverrideState);
   const { setModelOverride } = useChatSession();
@@ -170,12 +172,13 @@ export default function MessageComposer({
   } = useChatData();
 
   const hasUploadingAttachment = !!attachments.find((a) => !a.uploaded);
-  const disabled = _disabled || hasUploadingAttachment;
+  const disabled = _disabled || hasUploadingAttachment || updatingReasoning;
   const inputDisabled =
     isDisabledByArchive ||
     !connected ||
     askUser?.spec.type === 'file' ||
     askUser?.spec.type === 'action' ||
+    updatingReasoning ||
     hasUploadingAttachment;
 
   useEffect(() => {
@@ -258,7 +261,7 @@ export default function MessageComposer({
         createdAt: new Date().toISOString(),
         metadata: {
           location: window.location.href,
-          ...(supportsThinking ? { think_enabled: thinkEnabled } : {}),
+          ...(supportsThinking && thinkEnabled ? { think_enabled: true } : {}),
           ...(displayOutput !== undefined
             ? { evoyaCollapsedPromptDisplayOutput: displayOutput }
             : {}),
@@ -578,37 +581,44 @@ export default function MessageComposer({
               </button>
             </div>
           ) : null}
-          {supportsThinking && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    id="think-toggle"
-                    type="button"
-                    aria-pressed={thinkEnabled}
-                    disabled={disabled || inputDisabled}
-                    onClick={() => setThinkEnabled((enabled) => !enabled)}
-                    variant={thinkEnabled ? 'secondary' : 'ghost'}
-                    size="sm"
-                    className={cn(
-                      'mx-2 h-7 gap-1.5 rounded-md border px-2 text-xs font-medium',
-                      thinkEnabled
-                        ? 'border-primary/25 bg-primary/10 text-primary hover:bg-primary/15'
-                        : 'border-border bg-muted text-muted-foreground hover:bg-muted/80'
-                    )}
-                  >
-                    <Brain className="!size-5 shrink-0" />
-                    {t('chat.input.think', { defaultValue: 'Think' })}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {t('chat.input.thinkTooltip', {
-                    defaultValue: 'Think longer to handle complex tasks'
-                  })}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+          {supportsThinking && selectedModel ? (
+            <ThinkingControl
+              key={`${evoya?.chat_uuid}:${selectedModel.id}`}
+              model={selectedModel}
+              active={activeModel}
+              enabled={thinkEnabled}
+              disabled={disabled || inputDisabled}
+              onToggle={() => setThinkEnabled((enabled) => !enabled)}
+              onSelect={async (reasoning) => {
+                setUpdatingReasoning(true);
+                try {
+                  const result = await setModelOverride(
+                    {
+                      modelId: selectedModel.id,
+                      key: selectedModel.key,
+                      reasoning
+                    },
+                    evoya?.chat_uuid
+                  );
+                  if (!result.ok) {
+                    toast.error(
+                      t('components.molecules.modelPicker.changeFailed')
+                    );
+                    return false;
+                  }
+                  setThinkEnabled(false);
+                  return true;
+                } catch {
+                  toast.error(
+                    t('components.molecules.modelPicker.changeFailed')
+                  );
+                  return false;
+                } finally {
+                  setUpdatingReasoning(false);
+                }
+              }}
+            />
+          ) : null}
           <SubmitButton
             onDictationStart={() => inputRef.current?.beginDictation()}
             onDictationCancel={() => inputRef.current?.cancelDictation()}

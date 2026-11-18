@@ -157,10 +157,17 @@ export default function Uploader({
           </a>
         </div>
       )}
-      <div className="flex justify-between items-center mb-2">
-        <div className={cn("font-bold", type === 'compact' ? 'text-xl' : 'text-2xl')}>
-          <Translator path="evoyaFiles.common.files" />
-        </div>
+      <div
+        className={cn(
+          'mb-2 flex items-center empty:hidden',
+          type === 'picker' ? 'justify-end' : 'justify-between'
+        )}
+      >
+        {type !== 'picker' && (
+          <div className={cn('font-bold', type === 'compact' ? 'text-xl' : 'text-2xl')}>
+            <Translator path="evoyaFiles.common.files" />
+          </div>
+        )}
         {currentPath === '/' && showConnectButton && (
           <Button asChild>
             <a href="/files/manage/connect/">

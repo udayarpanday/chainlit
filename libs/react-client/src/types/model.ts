@@ -1,6 +1,6 @@
 export type ReasoningSpec =
   | { type: 'none' }
-  | { type: 'effort'; values: string[]; default?: string }
+  | { type: 'effort'; values: string[]; default?: string; oneClick?: string }
   | {
       type: 'max_tokens';
       min: number;

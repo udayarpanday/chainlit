@@ -1,4 +1,9 @@
-import type { ActiveModelOverride, ModelCatalogItem, ModelReasoningSelection, ReasoningSpec } from '@chainlit/react-client';
+import type {
+  ActiveModelOverride,
+  ModelCatalogItem,
+  ModelReasoningSelection,
+  ReasoningSpec
+} from '@chainlit/react-client';
 
 const asObject = (value: unknown): Record<string, unknown> | undefined =>
   value !== null && typeof value === 'object'
@@ -24,9 +29,13 @@ const normalizeReasoningConfig = (
     const values = config.values.filter(
       (effort): effort is string => typeof effort === 'string'
     );
+    const oneClick = config.oneClick ?? config.one_click_thinking_effort;
     return {
       type: 'effort',
       values,
+      ...(typeof oneClick === 'string' && values.includes(oneClick)
+        ? { oneClick }
+        : {}),
       ...(typeof config.default === 'string' ? { default: config.default } : {})
     };
   }
@@ -53,14 +62,22 @@ const normalizeReasoning = (
   reasoningType: unknown,
   supportedParametersValue: unknown
 ): ReasoningSpec => {
+  const supportedParameters = parseObject(supportedParametersValue);
   const reasoning = asObject(value);
   if (reasoning) {
     if (reasoning.type === 'none') return { type: 'none' };
-    const normalized = normalizeReasoningConfig(reasoning.type, reasoning);
+    const config = asObject(
+      reasoning.type === 'effort'
+        ? supportedParameters?.reasoning_effort
+        : supportedParameters?.reasoning_max_tokens
+    );
+    const normalized = normalizeReasoningConfig(reasoning.type, {
+      ...config,
+      ...reasoning
+    });
     if (normalized) return normalized;
   }
 
-  const supportedParameters = parseObject(supportedParametersValue);
   const type =
     reasoningType === 'effort' || reasoningType === 'max_tokens'
       ? reasoningType
@@ -125,8 +142,12 @@ const normalizeActiveModelFromEnvelope = (
   const key = raw.key ?? raw.model_key ?? raw.model;
   const reasoning = asObject(raw.reasoning);
   const selection: ModelReasoningSelection = {};
-  if (typeof reasoning?.effort === 'string') selection.effort = reasoning.effort;
-  if (typeof reasoning?.max_tokens === 'number' && Number.isFinite(reasoning.max_tokens)) {
+  if (typeof reasoning?.effort === 'string')
+    selection.effort = reasoning.effort;
+  if (
+    typeof reasoning?.max_tokens === 'number' &&
+    Number.isFinite(reasoning.max_tokens)
+  ) {
     selection.max_tokens = reasoning.max_tokens;
   }
   return {

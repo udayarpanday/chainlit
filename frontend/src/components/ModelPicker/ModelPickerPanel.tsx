@@ -169,7 +169,9 @@ export default function ModelPickerPanel({
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         </Button>
         <h3 className="font-medium">
-          {t('components.molecules.modelPicker.model')}
+          {t('components.molecules.modelPicker.sessionTitle', {
+            defaultValue: 'Switch model (this session only)'
+          })}
         </h3>
       </div>
       <Command

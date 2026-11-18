@@ -19,6 +19,7 @@
         },
         "molecules": {
             "modelPicker": {
+                "sessionTitle": "Changer de modèle (pour cette session uniquement)",
                 "model": "Modèle",
                 "title": "Sélection du modèle (uniquement pour cette session)",
                 "search": "Rechercher des modèles...",
@@ -133,8 +134,11 @@
                     "manage": "Gérer {{category}}",
                     "loading": "Chargement des paramètres de l’agent…",
                     "loadError": "Impossible de charger les paramètres de l’agent. Rouvrez le menu pour réessayer.",
+                    "saved": "Enregistré définitivement",
+                    "noSelected": "Aucun élément sélectionné.",
+                    "permanentChanges": "Les modifications sont enregistrées définitivement.",
                     "saveError": "Impossible d’enregistrer les paramètres. Vos modifications n’ont pas été enregistrées.",
-                    "privateOnly": "Disponible uniquement pour les agents privés. Gérez ces paramètres pour les agents d’équipe et les agents sélectionnés sur la page de modification de l’agent."
+                    "readOnly": "Vous n'avez pas l'autorisation de modifier cette sélection."
                 }
             },
             "tasklist": {
@@ -476,6 +480,10 @@
             "footer": "Discussion temporaire — cette discussion ne sera pas enregistrée dans votre historique"
         },
         "input": {
+            "thinkEnableTooltip": "Activer la réflexion au niveau {{effort}}",
+            "reasoningOff": "Désactivé",
+            "chooseReasoning": "Choisir le niveau de réflexion",
+            "reasoningTokens": "{{count}} jetons",
             "placeholder": "Tapez votre message ici...",
             "archived": "Cette conversation appartient à un agent archivé. Désarchivez l’agent pour poursuivre cette conversation, ou sélectionnez un autre agent pour démarrer une nouvelle conversation.",
             "actions": {

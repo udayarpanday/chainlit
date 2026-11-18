@@ -19,6 +19,7 @@
         },
         "molecules": {
             "modelPicker": {
+                "sessionTitle": "Modell wechseln (nur für diese Sitzung)",
                 "model": "Modell",
                 "title": "Modellauswahl (nur für diese Chatsitzung)",
                 "search": "Modelle suchen...",
@@ -133,8 +134,11 @@
                     "manage": "{{category}} verwalten",
                     "loading": "Agenteneinstellungen werden geladen…",
                     "loadError": "Die Agenteneinstellungen konnten nicht geladen werden. Öffnen Sie das Menü erneut, um es noch einmal zu versuchen.",
+                    "saved": "Dauerhaft gespeichert",
+                    "noSelected": "Keine Einträge ausgewählt.",
+                    "permanentChanges": "Änderungen werden dauerhaft gespeichert.",
                     "saveError": "Die Einstellungen konnten nicht gespeichert werden. Ihre Änderungen wurden nicht gespeichert.",
-                    "privateOnly": "Nur für private Agenten verfügbar. Verwalten Sie diese Einstellungen für Team- und kuratierte Agenten auf der Bearbeitungsseite des Agenten."
+                    "readOnly": "Sie haben keine Berechtigung, diese Auswahl zu ändern."
                 }
             },
             "tasklist": {
@@ -479,6 +483,10 @@
             "footer": "Temporärer Chat — dieser Chat wird nicht in Ihrem Verlauf gespeichert"
         },
         "input": {
+            "thinkEnableTooltip": "Denken mit Stufe {{effort}} aktivieren",
+            "reasoningOff": "Aus",
+            "chooseReasoning": "Denkaufwand auswählen",
+            "reasoningTokens": "{{count}} Tokens",
             "placeholder": "Ihre Eingabe...",
             "archived": "Dieser Chat gehört zu einem archivierten Agenten. Archivieren Sie den Agenten wieder aus, um diesen Chat fortzusetzen, oder wählen Sie einen anderen Agenten aus, um einen neuen Chat zu starten.",
             "actions": {

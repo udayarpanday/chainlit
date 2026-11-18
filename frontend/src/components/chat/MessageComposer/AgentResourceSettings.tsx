@@ -1,4 +1,11 @@
-import { ArrowLeft, Database, GraduationCap, Wrench } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  ArrowLeft,
+  Check,
+  Database,
+  GraduationCap,
+  Wrench
+} from 'lucide-react';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -14,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import {
   Tooltip,
   TooltipContent,
+  TooltipPortal,
   TooltipProvider,
   TooltipTrigger
 } from '@/components/ui/tooltip';
@@ -48,6 +56,7 @@ export default function AgentResourceSettings({
   const [selected, setSelected] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState<{ category: Category }>();
   const saveController = useRef<AbortController>();
   const agentUuid = evoya?.chat_uuid;
   const baseUrl = evoya?.api?.baseUrl?.replace(/\/$/, '');
@@ -89,6 +98,7 @@ export default function AgentResourceSettings({
     setConfiguration(undefined);
     setError('');
     setSaving(false);
+    setSaved(undefined);
     if (agentUuid)
       void request(controller.signal)
         .then(setConfiguration)
@@ -116,7 +126,14 @@ export default function AgentResourceSettings({
   useEffect(() => {
     setQuery('');
     setError('');
+    setSaved(undefined);
   }, [category]);
+
+  useEffect(() => {
+    if (!saved) return;
+    const timeout = window.setTimeout(() => setSaved(undefined), 3000);
+    return () => window.clearTimeout(timeout);
+  }, [saved]);
 
   const labels: Record<Category, string> = {
     dataSources: t(
@@ -128,14 +145,23 @@ export default function AgentResourceSettings({
   if (evoya?.type !== 'dashboard' || (panel !== 'menu' && !category))
     return null;
   const restricted = t(
-    'components.molecules.configurationMenu.resources.privateOnly'
+    'components.molecules.configurationMenu.resources.readOnly',
+    { defaultValue: "You don't have permission to change this selection." }
   );
   const save = async (nextSelected: string[]) => {
-    if (!category || !configuration?.canEdit || saving) return;
+    if (
+      !category ||
+      !configuration?.canEdit ||
+      !configuration.available ||
+      disabled ||
+      saving
+    )
+      return;
     const previousSelected = selected;
     setSelected(nextSelected);
     setSaving(true);
     setError('');
+    setSaved(undefined);
     const controller = new AbortController();
     saveController.current = controller;
     try {
@@ -145,6 +171,7 @@ export default function AgentResourceSettings({
       });
       if (controller.signal.aborted) return;
       setConfiguration(next);
+      setSaved({ category });
     } catch {
       if (controller.signal.aborted) return;
       setSelected(previousSelected);
@@ -156,6 +183,11 @@ export default function AgentResourceSettings({
 
   if (category && configuration) {
     const entries = configuration.groups[category];
+    const emptyReadOnlyList = !configuration.canEdit && entries.length === 0;
+    const normalizedQuery = query.trim().toLowerCase();
+    const visibleEntries = entries.filter((entry) =>
+      entry.name.toLowerCase().includes(normalizedQuery)
+    );
     return (
       <div className="w-full">
         <div className="border-b px-3 py-2.5 space-y-2">
@@ -164,6 +196,7 @@ export default function AgentResourceSettings({
               variant="ghost"
               size="sm"
               disabled={saving}
+              aria-label={t('common.actions.back', { defaultValue: 'Back' })}
               onClick={() => {
                 onCategoryChange(undefined);
                 setError('');
@@ -171,55 +204,130 @@ export default function AgentResourceSettings({
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             </Button>
-            <h3 className="font-medium">{labels[category]}</h3>
+            <h3 className="min-w-0 truncate font-medium">{labels[category]}</h3>
+            <span
+              role="status"
+              aria-live="polite"
+              className="ml-auto flex shrink-0 items-center gap-1 text-xs text-muted-foreground"
+            >
+              {saved?.category === category ? (
+                <>
+                  <Check
+                    className="h-3.5 w-3.5 text-primary"
+                    aria-hidden="true"
+                  />
+                  {t('components.molecules.configurationMenu.resources.saved', {
+                    defaultValue: 'Permanently saved'
+                  })}
+                </>
+              ) : null}
+            </span>
           </div>
-          <Input
-            aria-label={t(
-              'components.molecules.configurationMenu.resources.search'
-            )}
-            placeholder={t(
-              'components.molecules.configurationMenu.resources.search'
-            )}
-            className="h-10 rounded-xl border-transparent bg-white/55 text-base shadow-sm focus-visible:ring-1 focus-visible:ring-primary/20 md:text-sm"
-            autoFocus
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
+          {!emptyReadOnlyList && (
+            <Input
+              aria-label={t(
+                'components.molecules.configurationMenu.resources.search'
+              )}
+              placeholder={t(
+                'components.molecules.configurationMenu.resources.search'
+              )}
+              className="h-10 rounded-xl border-transparent bg-white/55 text-base shadow-sm focus-visible:ring-1 focus-visible:ring-primary/20 md:text-sm"
+              autoFocus
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          )}
         </div>
         <div className="max-h-[280px] overflow-y-auto p-2 space-y-1">
-          {entries
-            .filter((entry) =>
-              entry.name.toLowerCase().includes(query.trim().toLowerCase())
-            )
-            .map((entry) => (
-              <label
-                key={entry.id}
-                className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 hover:bg-accent/70"
-              >
-                <Checkbox
-                  checked={selected.includes(entry.id)}
-                  disabled={
-                    !configuration.canEdit ||
-                    entry.editable === false ||
-                    disabled ||
-                    saving
+          {visibleEntries.map((entry) => {
+            const readOnly =
+              !configuration.available ||
+              !configuration.canEdit ||
+              entry.editable === false;
+            const rowDisabled = readOnly || disabled || saving;
+            const tooltipText = readOnly
+              ? restricted
+              : t(
+                  'components.molecules.configurationMenu.resources.permanentChanges',
+                  {
+                    defaultValue: 'Changes are saved permanently.'
                   }
-                  onCheckedChange={(checked) =>
-                    void save(
-                      checked === true
-                        ? [...selected, entry.id]
-                        : selected.filter((id) => id !== entry.id)
-                    )
-                  }
-                />
-                <span className="break-words text-sm">{entry.name}</span>
-              </label>
-            ))}
-          {!entries.some((entry) =>
-            entry.name.toLowerCase().includes(query.trim().toLowerCase())
-          ) && (
-            <p className="text-sm text-muted-foreground">
-              {t('chat.input.no_results')}
+                );
+            return (
+              <TooltipProvider key={entry.id} delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <label
+                      aria-disabled={rowDisabled}
+                      tabIndex={readOnly ? 0 : undefined}
+                      aria-label={
+                        readOnly ? `${entry.name}: ${restricted}` : undefined
+                      }
+                      className={cn(
+                        'flex min-h-11 items-center gap-3 rounded-lg px-3 py-2',
+                        rowDisabled
+                          ? 'cursor-not-allowed text-muted-foreground'
+                          : 'cursor-pointer hover:bg-accent/70'
+                      )}
+                      onClick={
+                        rowDisabled
+                          ? (event) => event.preventDefault()
+                          : undefined
+                      }
+                    >
+                      <span className="inline-flex shrink-0">
+                        <Checkbox
+                          aria-label={entry.name}
+                          aria-description={tooltipText}
+                          checked={selected.includes(entry.id)}
+                          disabled={rowDisabled}
+                          className={
+                            rowDisabled ? 'pointer-events-none' : undefined
+                          }
+                          onCheckedChange={(checked) =>
+                            void save(
+                              checked === true
+                                ? [...selected, entry.id]
+                                : selected.filter((id) => id !== entry.id)
+                            )
+                          }
+                        />
+                      </span>
+                      <span className="break-words text-sm">{entry.name}</span>
+                    </label>
+                  </TooltipTrigger>
+                  <TooltipPortal
+                    container={
+                      window.cl_shadowRootElement?.isConnected
+                        ? window.cl_shadowRootElement
+                        : document.body
+                    }
+                  >
+                    <TooltipContent
+                      data-resource-tooltip
+                      side="top"
+                      align="start"
+                      alignOffset={12}
+                      sideOffset={8}
+                      className="z-[10000] max-w-xs"
+                    >
+                      {tooltipText}
+                    </TooltipContent>
+                  </TooltipPortal>
+                </Tooltip>
+              </TooltipProvider>
+            );
+          })}
+          {!visibleEntries.length && (
+            <p className="px-3 py-5 text-center text-sm text-muted-foreground">
+              {emptyReadOnlyList
+                ? t(
+                    'components.molecules.configurationMenu.resources.noSelected',
+                    {
+                      defaultValue: 'No items selected.'
+                    }
+                  )
+                : t('chat.input.no_results')}
             </p>
           )}
         </div>
@@ -251,7 +359,7 @@ export default function AgentResourceSettings({
           skills: GraduationCap,
           tools: Wrench
         }[key];
-        const unavailable = disabled || !configuration?.available;
+        const unavailable = disabled || !configuration;
         const activeCount =
           configuration?.groups[key].filter((entry) => entry.active).length ??
           0;
@@ -293,12 +401,10 @@ export default function AgentResourceSettings({
                 </TooltipTrigger>
                 {unavailable && (
                   <TooltipContent className="max-w-xs">
-                    {configuration
-                      ? restricted
-                      : error ||
-                        t(
-                          'components.molecules.configurationMenu.resources.loading'
-                        )}
+                    {error ||
+                      t(
+                        'components.molecules.configurationMenu.resources.loading'
+                      )}
                   </TooltipContent>
                 )}
               </Tooltip>
