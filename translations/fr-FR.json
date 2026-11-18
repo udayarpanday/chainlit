@@ -19,6 +19,7 @@
         },
         "molecules": {
             "modelPicker": {
+                "sessionTitle": "Changer de modèle (pour cette session uniquement)",
                 "model": "Modèle",
                 "title": "Sélection du modèle (uniquement pour cette session)",
                 "search": "Rechercher des modèles...",
@@ -134,6 +135,7 @@
                     "loading": "Chargement des paramètres de l’agent…",
                     "loadError": "Impossible de charger les paramètres de l’agent. Rouvrez le menu pour réessayer.",
                     "saved": "Enregistré définitivement",
+                    "noSelected": "Aucun élément sélectionné.",
                     "permanentChanges": "Les modifications sont enregistrées définitivement.",
                     "saveError": "Impossible d’enregistrer les paramètres. Vos modifications n’ont pas été enregistrées.",
                     "readOnly": "Vous n'avez pas l'autorisation de modifier cette sélection."
@@ -478,6 +480,7 @@
             "footer": "Discussion temporaire — cette discussion ne sera pas enregistrée dans votre historique"
         },
         "input": {
+            "thinkEnableTooltip": "Activer la réflexion au niveau {{effort}}",
             "reasoningOff": "Désactivé",
             "chooseReasoning": "Choisir le niveau de réflexion",
             "reasoningTokens": "{{count}} jetons",

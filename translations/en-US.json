@@ -19,6 +19,7 @@
         },
         "molecules": {
             "modelPicker": {
+                "sessionTitle": "Switch model (this session only)",
                 "model": "Model",
                 "title": "Models",
                 "search": "Search models...",
@@ -134,6 +135,7 @@
                     "loading": "Loading agent settings…",
                     "loadError": "Unable to load agent settings. Reopen the menu to retry.",
                     "saved": "Permanently saved",
+                    "noSelected": "No items selected.",
                     "permanentChanges": "Changes are saved permanently.",
                     "saveError": "Unable to save settings. Your changes have not been saved.",
                     "readOnly": "You don't have permission to change this selection."
@@ -482,6 +484,7 @@
             "footer": "Temporary chat, this chat won't be saved to your history"
         },
         "input": {
+            "thinkEnableTooltip": "Enable thinking at {{effort}}",
             "reasoningOff": "Off",
             "chooseReasoning": "Choose reasoning effort",
             "reasoningTokens": "{{count}} tokens",

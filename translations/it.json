@@ -19,6 +19,7 @@
         },
         "molecules": {
             "modelPicker": {
+                "sessionTitle": "Cambia modello (solo per questa sessione)",
                 "model": "Modello",
                 "title": "Selettore modello (solo per questa sessione)",
                 "search": "Cerca modelli...",
@@ -134,6 +135,7 @@
                     "loading": "Caricamento delle impostazioni dell’agente…",
                     "loadError": "Impossibile caricare le impostazioni dell’agente. Riapri il menu per riprovare.",
                     "saved": "Salvato definitivamente",
+                    "noSelected": "Nessun elemento selezionato.",
                     "permanentChanges": "Le modifiche vengono salvate definitivamente.",
                     "saveError": "Impossibile salvare le impostazioni. Le modifiche non sono state salvate.",
                     "readOnly": "Non hai il permesso di modificare questa selezione."
@@ -478,6 +480,7 @@
             "footer": "Chat temporanea — questa chat non verrà salvata nella cronologia"
         },
         "input": {
+            "thinkEnableTooltip": "Attiva il ragionamento al livello {{effort}}",
             "reasoningOff": "Disattivato",
             "chooseReasoning": "Scegli il livello di ragionamento",
             "reasoningTokens": "{{count}} token",

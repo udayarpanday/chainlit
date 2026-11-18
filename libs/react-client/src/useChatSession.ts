@@ -38,11 +38,11 @@ import {
   modesState,
   projectAccess,
   promptState,
-  sttModelState,
   resumeThreadErrorState,
   sessionIdState,
   sessionState,
   sideViewState,
+  sttModelState,
   tasklistState,
   temporaryChatState,
   threadIdToResumeState,
@@ -80,6 +80,7 @@ import {
 import { OutputAudioChunk } from './types/audio';
 
 import { ChainlitContext } from './context';
+import { SidebarElementsPayload, applySidebarElements } from './sidebar';
 import {
   getChainlitTabId,
   getScopedSessionStorageItem,
@@ -91,7 +92,6 @@ import {
   resetTaskLoading
 } from './taskLoading';
 import type { IToken } from './useChatData';
-import { applySidebarElements, SidebarElementsPayload } from './sidebar';
 
 type EvoyaCreatorWindow = Window &
   typeof globalThis & {
@@ -136,9 +136,13 @@ const normalizeReasoningConfig = (
     const values = config.values.filter(
       (item: unknown): item is string => typeof item === 'string'
     );
+    const oneClick = config.oneClick ?? config.one_click_thinking_effort;
     return {
       type: 'effort',
       values,
+      ...(typeof oneClick === 'string' && values.includes(oneClick)
+        ? { oneClick }
+        : {}),
       ...(typeof config.default === 'string' ? { default: config.default } : {})
     };
   }
@@ -165,14 +169,22 @@ const normalizeReasoningSpec = (
   reasoningType?: unknown,
   supportedParametersValue?: unknown
 ): ReasoningSpec => {
+  const supportedParameters = parseObject(supportedParametersValue);
   const raw = asObject(value);
   if (raw) {
     if (raw.type === 'none') return { type: 'none' };
-    const normalized = normalizeReasoningConfig(raw.type, raw);
+    const config = asObject(
+      raw.type === 'effort'
+        ? supportedParameters?.reasoning_effort
+        : supportedParameters?.reasoning_max_tokens
+    );
+    const normalized = normalizeReasoningConfig(raw.type, {
+      ...config,
+      ...raw
+    });
     if (normalized) return normalized;
   }
 
-  const supportedParameters = parseObject(supportedParametersValue);
   const type =
     reasoningType === 'effort' || reasoningType === 'max_tokens'
       ? reasoningType
@@ -293,7 +305,7 @@ const useChatSession = () => {
   const setInitialTranscript = useSetRecoilState(initialTranscriptState);
   const setChatArchived = useSetRecoilState(chatArchived);
   const setProjectAccess = useSetRecoilState(projectAccess);
-    const setSttModel = useSetRecoilState(sttModelState);
+  const setSttModel = useSetRecoilState(sttModelState);
 
   const token = getScopedSessionStorageItem('chainlit_token') || '';
   const tabId = getChainlitTabId();

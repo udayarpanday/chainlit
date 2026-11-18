@@ -183,6 +183,11 @@ export default function AgentResourceSettings({
 
   if (category && configuration) {
     const entries = configuration.groups[category];
+    const emptyReadOnlyList = !configuration.canEdit && entries.length === 0;
+    const normalizedQuery = query.trim().toLowerCase();
+    const visibleEntries = entries.filter((entry) =>
+      entry.name.toLowerCase().includes(normalizedQuery)
+    );
     return (
       <div className="w-full">
         <div className="border-b px-3 py-2.5 space-y-2">
@@ -218,43 +223,46 @@ export default function AgentResourceSettings({
               ) : null}
             </span>
           </div>
-          <Input
-            aria-label={t(
-              'components.molecules.configurationMenu.resources.search'
-            )}
-            placeholder={t(
-              'components.molecules.configurationMenu.resources.search'
-            )}
-            className="h-10 rounded-xl border-transparent bg-white/55 text-base shadow-sm focus-visible:ring-1 focus-visible:ring-primary/20 md:text-sm"
-            autoFocus
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
+          {!emptyReadOnlyList && (
+            <Input
+              aria-label={t(
+                'components.molecules.configurationMenu.resources.search'
+              )}
+              placeholder={t(
+                'components.molecules.configurationMenu.resources.search'
+              )}
+              className="h-10 rounded-xl border-transparent bg-white/55 text-base shadow-sm focus-visible:ring-1 focus-visible:ring-primary/20 md:text-sm"
+              autoFocus
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          )}
         </div>
         <div className="max-h-[280px] overflow-y-auto p-2 space-y-1">
-          {entries
-            .filter((entry) =>
-              entry.name.toLowerCase().includes(query.trim().toLowerCase())
-            )
-            .map((entry) => {
-              const readOnly =
-                !configuration.available ||
-                !configuration.canEdit ||
-                entry.editable === false;
-              const rowDisabled = readOnly || disabled || saving;
-              const tooltipText = readOnly
-                ? restricted
-                : t(
-                    'components.molecules.configurationMenu.resources.permanentChanges',
-                    {
-                      defaultValue: 'Changes are saved permanently.'
-                    }
-                  );
-              return (
-                <TooltipProvider key={entry.id} delayDuration={100}>
-                  <Tooltip>
+          {visibleEntries.map((entry) => {
+            const readOnly =
+              !configuration.available ||
+              !configuration.canEdit ||
+              entry.editable === false;
+            const rowDisabled = readOnly || disabled || saving;
+            const tooltipText = readOnly
+              ? restricted
+              : t(
+                  'components.molecules.configurationMenu.resources.permanentChanges',
+                  {
+                    defaultValue: 'Changes are saved permanently.'
+                  }
+                );
+            return (
+              <TooltipProvider key={entry.id} delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <label
                       aria-disabled={rowDisabled}
+                      tabIndex={readOnly ? 0 : undefined}
+                      aria-label={
+                        readOnly ? `${entry.name}: ${restricted}` : undefined
+                      }
                       className={cn(
                         'flex min-h-11 items-center gap-3 rounded-lg px-3 py-2',
                         rowDisabled
@@ -267,62 +275,59 @@ export default function AgentResourceSettings({
                           : undefined
                       }
                     >
-                      <TooltipTrigger asChild>
-                        <span
-                          className="inline-flex shrink-0"
-                          tabIndex={readOnly ? 0 : undefined}
-                          aria-label={
-                            readOnly
-                              ? `${entry.name}: ${restricted}`
-                              : undefined
+                      <span className="inline-flex shrink-0">
+                        <Checkbox
+                          aria-label={entry.name}
+                          aria-description={tooltipText}
+                          checked={selected.includes(entry.id)}
+                          disabled={rowDisabled}
+                          className={
+                            rowDisabled ? 'pointer-events-none' : undefined
                           }
-                        >
-                          <Checkbox
-                            aria-label={entry.name}
-                            aria-description={tooltipText}
-                            checked={selected.includes(entry.id)}
-                            disabled={rowDisabled}
-                            className={
-                              rowDisabled ? 'pointer-events-none' : undefined
-                            }
-                            onCheckedChange={(checked) =>
-                              void save(
-                                checked === true
-                                  ? [...selected, entry.id]
-                                  : selected.filter((id) => id !== entry.id)
-                              )
-                            }
-                          />
-                        </span>
-                      </TooltipTrigger>
+                          onCheckedChange={(checked) =>
+                            void save(
+                              checked === true
+                                ? [...selected, entry.id]
+                                : selected.filter((id) => id !== entry.id)
+                            )
+                          }
+                        />
+                      </span>
                       <span className="break-words text-sm">{entry.name}</span>
                     </label>
-                    <TooltipPortal
-                      container={
-                        window.cl_shadowRootElement?.isConnected
-                          ? window.cl_shadowRootElement
-                          : document.body
-                      }
+                  </TooltipTrigger>
+                  <TooltipPortal
+                    container={
+                      window.cl_shadowRootElement?.isConnected
+                        ? window.cl_shadowRootElement
+                        : document.body
+                    }
+                  >
+                    <TooltipContent
+                      data-resource-tooltip
+                      side="top"
+                      align="start"
+                      alignOffset={12}
+                      sideOffset={8}
+                      className="z-[10000] max-w-xs"
                     >
-                      <TooltipContent
-                        data-resource-tooltip
-                        side="top"
-                        align="start"
-                        sideOffset={8}
-                        className="z-[10000] max-w-xs"
-                      >
-                        {tooltipText}
-                      </TooltipContent>
-                    </TooltipPortal>
-                  </Tooltip>
-                </TooltipProvider>
-              );
-            })}
-          {!entries.some((entry) =>
-            entry.name.toLowerCase().includes(query.trim().toLowerCase())
-          ) && (
-            <p className="text-sm text-muted-foreground">
-              {t('chat.input.no_results')}
+                      {tooltipText}
+                    </TooltipContent>
+                  </TooltipPortal>
+                </Tooltip>
+              </TooltipProvider>
+            );
+          })}
+          {!visibleEntries.length && (
+            <p className="px-3 py-5 text-center text-sm text-muted-foreground">
+              {emptyReadOnlyList
+                ? t(
+                    'components.molecules.configurationMenu.resources.noSelected',
+                    {
+                      defaultValue: 'No items selected.'
+                    }
+                  )
+                : t('chat.input.no_results')}
             </p>
           )}
         </div>

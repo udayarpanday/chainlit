@@ -12,6 +12,7 @@ import type {
 import {
   getEffortTranslationKey,
   getInitialReasoning,
+  getOneClickReasoning,
   normalizeMaxTokenValue
 } from '@/components/ModelPicker/reasoning';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,9 @@ interface Props {
   onSelect: (selection: ModelReasoningSelection) => Promise<boolean>;
 }
 
+const isOffEffort = (effort: string) =>
+  ['none', 'off', 'disabled'].includes(effort.toLowerCase());
+
 export default function ThinkingControl({
   model,
   active,
@@ -49,11 +53,10 @@ export default function ThinkingControl({
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
-  // Use the model default for the one-click label. Manual selections come
-  // from the acknowledged session override.
-  const applied = enabled
-    ? getInitialReasoning(model)
-    : getInitialReasoning(model, active);
+  // Match the configured preset applied by the backend's think_enabled flag.
+  // Manual and inherited selections come from the session override.
+  const oneClick = getOneClickReasoning(model);
+  const applied = enabled ? oneClick : getInitialReasoning(model, active);
   const spec = model.reasoning;
   const [tokens, setTokens] = useState(String(applied?.max_tokens ?? ''));
 
@@ -63,7 +66,7 @@ export default function ThinkingControl({
   }, [model.id, applied?.max_tokens]);
 
   const effortLabel = (effort: string) => {
-    if (['none', 'off', 'disabled'].includes(effort.toLowerCase())) {
+    if (isOffEffort(effort)) {
       return t('chat.input.reasoningOff', { defaultValue: 'Off' });
     }
     const key = getEffortTranslationKey(effort);
@@ -74,6 +77,11 @@ export default function ThinkingControl({
   };
 
   const currentEffort = applied?.effort;
+  const off = currentEffort !== undefined && isOffEffort(currentEffort);
+  const hasActiveEffort = currentEffort ? !off : (applied?.max_tokens ?? 0) > 0;
+  const presetEffort = oneClick?.effort;
+  const showEnableHint =
+    off && !enabled && presetEffort && !isOffEffort(presetEffort);
   const label = currentEffort
     ? effortLabel(currentEffort)
     : applied?.max_tokens !== undefined
@@ -96,19 +104,16 @@ export default function ThinkingControl({
   };
 
   if (spec.type === 'none') return null;
-  const isActive =
-    enabled ||
-    (currentEffort !== undefined
-      ? !['none', 'off', 'disabled'].includes(currentEffort.toLowerCase())
-      : (applied?.max_tokens ?? 0) > 0);
 
   return (
     <div
       className={cn(
-        'mx-2 flex h-7 items-center rounded-md border text-xs font-medium',
-        isActive
-          ? 'border-primary/25 bg-primary/10 text-primary'
-          : 'border-border bg-muted text-muted-foreground'
+        'mx-2 flex h-7 items-center rounded-full border text-xs font-medium text-muted-foreground',
+        off
+          ? 'border-muted-foreground/30 transition-colors hover:bg-muted/60'
+          : hasActiveEffort
+            ? 'border-border bg-muted'
+            : 'border-border'
       )}
     >
       <TooltipProvider>
@@ -122,16 +127,24 @@ export default function ThinkingControl({
               onClick={onToggle}
               variant="ghost"
               size="sm"
-              className="h-full gap-1.5 rounded-r-none px-2 text-xs text-inherit hover:bg-primary/10 hover:text-inherit"
+              className="h-full gap-1.5 rounded-full px-2 text-xs text-inherit hover:bg-transparent hover:text-inherit"
             >
-              <Brain className="!size-5 shrink-0" />
+              <Brain
+                className="!size-5 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
               {label}
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            {t('chat.input.thinkTooltip', {
-              defaultValue: 'Think longer to handle complex tasks'
-            })}
+            {showEnableHint
+              ? t('chat.input.thinkEnableTooltip', {
+                  defaultValue: 'Enable thinking at {{effort}}',
+                  effort: effortLabel(presetEffort)
+                })
+              : t('chat.input.thinkTooltip', {
+                  defaultValue: 'Think longer to handle complex tasks'
+                })}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -145,9 +158,12 @@ export default function ThinkingControl({
             aria-label={t('chat.input.chooseReasoning', {
               defaultValue: 'Choose reasoning effort'
             })}
-            className="h-full rounded-l-none border-l border-current/10 px-1.5 text-inherit hover:bg-primary/10 hover:text-inherit"
+            className="h-full rounded-full pl-1 pr-2 text-inherit hover:bg-transparent hover:text-inherit"
           >
-            <ChevronDown className="!size-3.5" aria-hidden="true" />
+            <ChevronDown
+              className="!size-3.5 text-muted-foreground"
+              aria-hidden="true"
+            />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent

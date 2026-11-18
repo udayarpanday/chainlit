@@ -19,6 +19,7 @@
         },
         "molecules": {
             "modelPicker": {
+                "sessionTitle": "Modell wechseln (nur für diese Sitzung)",
                 "model": "Modell",
                 "title": "Modellauswahl (nur für diese Chatsitzung)",
                 "search": "Modelle suchen...",
@@ -134,6 +135,7 @@
                     "loading": "Agenteneinstellungen werden geladen…",
                     "loadError": "Die Agenteneinstellungen konnten nicht geladen werden. Öffnen Sie das Menü erneut, um es noch einmal zu versuchen.",
                     "saved": "Dauerhaft gespeichert",
+                    "noSelected": "Keine Einträge ausgewählt.",
                     "permanentChanges": "Änderungen werden dauerhaft gespeichert.",
                     "saveError": "Die Einstellungen konnten nicht gespeichert werden. Ihre Änderungen wurden nicht gespeichert.",
                     "readOnly": "Sie haben keine Berechtigung, diese Auswahl zu ändern."
@@ -481,6 +483,7 @@
             "footer": "Temporärer Chat — dieser Chat wird nicht in Ihrem Verlauf gespeichert"
         },
         "input": {
+            "thinkEnableTooltip": "Denken mit Stufe {{effort}} aktivieren",
             "reasoningOff": "Aus",
             "chooseReasoning": "Denkaufwand auswählen",
             "reasoningTokens": "{{count}} Tokens",
